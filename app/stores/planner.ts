@@ -1,0 +1,191 @@
+import { defineStore } from 'pinia'
+import type { PlannerState } from '~/types/planner'
+import {
+  aggregateTemplate,
+  aggregateTemplateByCategory,
+  createInitialState,
+  getActiveTemplate,
+  getTemplateById
+} from '~/utils/planner'
+
+export const usePlannerStore = defineStore('planner', {
+  state: (): PlannerState => createInitialState(),
+  getters: {
+    activeTemplate: state => getActiveTemplate(state),
+    activeTemplateActivityTotals(state) {
+      const template = getActiveTemplate(state)
+      return template ? aggregateTemplate(template, state.activities) : new Map<string, number>()
+    },
+    activeTemplateCategoryTotals(state) {
+      const template = getActiveTemplate(state)
+      return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
+    },
+    yearlyProjectionHours(state) {
+      const template = getActiveTemplate(state)
+
+      if (!template) {
+        return new Map<string, number>()
+      }
+
+      const weeklyTotals = aggregateTemplate(template, state.activities)
+      const excludedWeeks = state.appliedWeeks.filter(week =>
+        state.settings.projectionDefaults.excludedWeekStatuses.includes(week.status as 'vacation' | 'off')
+      ).length
+      const includedWeeks = Math.max((52 * state.settings.projectionDefaults.years) - excludedWeeks, 0)
+      const projected = new Map<string, number>()
+
+      for (const [activityId, hours] of weeklyTotals) {
+        projected.set(activityId, hours * includedWeeks)
+      }
+
+      return projected
+    }
+  },
+  actions: {
+    hydrate(state: PlannerState | null) {
+      if (state?.templates?.length) {
+        this.$patch(state)
+        this.ensureActiveTemplate()
+      }
+    },
+    ensureDefaultWeek() {
+      const template = this.activeTemplate
+
+      if (!template || this.appliedWeeks.some(week => week.templateId === template.id)) {
+        return
+      }
+
+      this.appliedWeeks.unshift({
+        id: 'seed-week',
+        startDate: new Date().toISOString().slice(0, 10),
+        templateId: template.id,
+        status: 'normal',
+        notes: 'Seeded automatically after template creation.'
+      })
+    },
+    ensureActiveTemplate() {
+      const template = this.activeTemplate
+      this.settings.activeTemplateId = template?.id ?? null
+    },
+    selectTemplate(templateId: string) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template) {
+        return
+      }
+
+      this.settings.activeTemplateId = template.id
+    },
+    createTemplate() {
+      const source = this.activeTemplate
+
+      if (!source) {
+        return
+      }
+
+      const templateId = `template-${Date.now()}`
+
+      this.templates.unshift({
+        ...source,
+        id: templateId,
+        name: `New Template ${this.templates.length + 1}`,
+        description: 'Fresh scenario copied from the current active template.',
+        slots: [...source.slots]
+      })
+      this.settings.activeTemplateId = templateId
+    },
+    renameActiveTemplate(name: string) {
+      const template = this.activeTemplate
+
+      if (!template) {
+        return
+      }
+
+      template.name = name.trim() || template.name
+    },
+    updateActiveTemplateDescription(description: string) {
+      const template = this.activeTemplate
+
+      if (!template) {
+        return
+      }
+
+      template.description = description.trim()
+    },
+    updateSlot(slotIndex: number, activityId: string) {
+      const template = this.activeTemplate
+
+      if (!template || slotIndex < 0 || slotIndex >= template.slots.length) {
+        return
+      }
+
+      template.slots[slotIndex] = activityId
+    },
+    applyTimeRange(activityId: string, dayIndexes: number[], startHour: number, endHour: number) {
+      const template = this.activeTemplate
+
+      if (!template || startHour < 0 || endHour > 24 || startHour >= endHour) {
+        return
+      }
+
+      for (const dayIndex of dayIndexes) {
+        if (dayIndex < 0 || dayIndex > 6) {
+          continue
+        }
+
+        for (let hour = startHour; hour < endHour; hour += 1) {
+          const index = (dayIndex * 24) + hour
+          template.slots[index] = activityId
+        }
+      }
+    },
+    clearTimeRange(dayIndexes: number[], startHour: number, endHour: number) {
+      this.applyTimeRange('', dayIndexes, startHour, endHour)
+    },
+    clearActiveTemplate() {
+      const template = this.activeTemplate
+
+      if (!template) {
+        return
+      }
+
+      template.slots = template.slots.map(() => '')
+    },
+    copyDay(sourceDayIndex: number, targetDayIndex: number) {
+      const template = this.activeTemplate
+
+      if (!template || sourceDayIndex === targetDayIndex) {
+        return
+      }
+
+      const slotsPerDay = template.slots.length / 7
+      const sourceStart = sourceDayIndex * slotsPerDay
+      const targetStart = targetDayIndex * slotsPerDay
+      const slice = template.slots.slice(sourceStart, sourceStart + slotsPerDay)
+
+      template.slots.splice(targetStart, slotsPerDay, ...slice)
+    },
+    setProjectionYears(years: number) {
+      this.settings.projectionDefaults.years = years
+    },
+    duplicateTemplate(templateId: string) {
+      const source = getTemplateById(this.$state, templateId)
+
+      if (!source) {
+        return
+      }
+
+      this.templates.unshift({
+        ...source,
+        id: `${source.id}-copy-${Date.now()}`,
+        name: `${source.name} Copy`,
+        slots: [...source.slots]
+      })
+      this.settings.activeTemplateId = this.templates[0]?.id ?? null
+    },
+    resetToSeed() {
+      this.$patch(createInitialState())
+      this.ensureActiveTemplate()
+    }
+  }
+})
