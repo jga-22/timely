@@ -121,6 +121,16 @@ export const usePlannerStore = defineStore('planner', {
 
       template.slots[slotIndex] = activityId
     },
+    setSlot(dayIndex: number, hour: number, activityId: string) {
+      const template = this.activeTemplate
+
+      if (!template || dayIndex < 0 || dayIndex > 6 || hour < 0 || hour > 23) {
+        return
+      }
+
+      const index = (dayIndex * 24) + hour
+      template.slots[index] = activityId
+    },
     applyTimeRange(activityId: string, dayIndexes: number[], startHour: number, endHour: number) {
       const template = this.activeTemplate
 
@@ -167,6 +177,49 @@ export const usePlannerStore = defineStore('planner', {
     },
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
+    },
+    addCategory(name: string, color: string) {
+      const trimmedName = name.trim()
+
+      if (!trimmedName) {
+        return
+      }
+
+      this.categories.push({
+        id: `category-${Date.now()}`,
+        name: trimmedName,
+        color
+      })
+    },
+    addActivity(name: string, shortCode: string, categoryId: string) {
+      const trimmedName = name.trim()
+      const normalizedCode = shortCode.trim().slice(0, 3).toUpperCase()
+      const category = this.categories.find(item => item.id === categoryId)
+
+      if (!trimmedName || !normalizedCode || !category) {
+        return
+      }
+
+      this.activities.push({
+        id: `activity-${Date.now()}`,
+        name: trimmedName,
+        shortCode: normalizedCode,
+        categoryId,
+        color: category.color ?? '#685847'
+      })
+    },
+    removeActivity(activityId: string) {
+      const nextActivities = this.activities.filter(activity => activity.id !== activityId)
+
+      if (nextActivities.length === this.activities.length) {
+        return
+      }
+
+      this.activities = nextActivities
+
+      for (const template of this.templates) {
+        template.slots = template.slots.map(slot => slot === activityId ? '' : slot)
+      }
     },
     duplicateTemplate(templateId: string) {
       const source = getTemplateById(this.$state, templateId)

@@ -9,11 +9,10 @@ defineProps<{
 <template>
   <section class="hero panel">
     <div class="hero-copy">
-      <p class="eyebrow">Functional MVP</p>
-      <h1>Design your week, not just your tasks.</h1>
+      <!-- <p class="eyebrow">Functional MVP</p> -->
+      <h1>Design your life, not just your tasks.</h1>
       <p class="intro">
-        Build recurring weekly structure with fast block-based authoring, then refine edge cases in the grid.
-        The app remains local-first, with persistence isolated behind a storage adapter for later IndexedDB migration.
+        Build recurring weekly structure, analyze the impact of your activities, and make informed adjustments to optimize your time.
       </p>
     </div>
 

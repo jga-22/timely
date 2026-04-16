@@ -61,7 +61,7 @@ export const createInitialState = (): PlannerState => ({
     timeGranularity: 60,
     activeTemplateId: 'standard-week',
     projectionDefaults: {
-      years: 1,
+      years: 5,
       excludedWeekStatuses: ['vacation', 'off']
     }
   },
