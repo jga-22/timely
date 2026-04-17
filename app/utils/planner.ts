@@ -6,6 +6,39 @@ export const HOURS = Array.from({ length: 24 }, (_, hour) =>
   `${String(hour).padStart(2, '0')}:00`
 )
 
+export const COLORS = [
+  '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80',
+  '#34d399', '#2dd4bf', '#38bdf8', '#60a5fa', '#818cf8',
+  '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185'
+]
+
+export const TOTAL_WEEK_HOURS = 168
+
+export const getMondayDate = (date: Date): string => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d.toISOString().slice(0, 10)
+}
+
+export const addWeeks = (startDate: string, weeks: number): string => {
+  const d = new Date(startDate + 'T00:00:00')
+  d.setDate(d.getDate() + weeks * 7)
+  return d.toISOString().slice(0, 10)
+}
+
+export const formatWeekRange = (startDate: string): string => {
+  const start = new Date(startDate + 'T00:00:00')
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${fmt(start)} – ${fmt(end)}`
+}
+
+export const generateWeekDates = (fromDate: string, count: number): string[] =>
+  Array.from({ length: count }, (_, i) => addWeeks(fromDate, i))
+
 export const slotCount = (granularityMinutes: 60 | 30) => (7 * 24 * 60) / granularityMinutes
 
 export const slotDurationHours = (granularityMinutes: 60 | 30) => granularityMinutes / 60
