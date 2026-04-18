@@ -151,8 +151,9 @@ function onTouchEnd(e: TouchEvent) {
   if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
   isSelecting.value = false
   const t = e.changedTouches[0]
-  const x = Math.min(t.clientX + 16, window.innerWidth - 248)
-  const y = Math.min(t.clientY - 10, window.innerHeight - 360)
+  const isMobile = window.innerWidth <= 480
+  const x = isMobile ? 16 : Math.min(t.clientX + 16, window.innerWidth - 248)
+  const y = isMobile ? window.innerHeight - 380 : Math.min(t.clientY - 10, window.innerHeight - 360)
   menuPos.value = { x, y }
   showMenu.value = true
 }
@@ -279,6 +280,7 @@ function handleNewTemplate() {
     </div>
 
     <!-- Week grid (no palette panel — activities are in the context menu) -->
+    <div class="week-scroll-wrap">
     <div
       class="week"
       :class="{ selecting: isSelecting }"
@@ -387,6 +389,7 @@ function handleNewTemplate() {
         </div>
       </div>
     </div>
+    </div>
 
     <!-- Week stats bar -->
     <div class="week-stats">
@@ -434,23 +437,25 @@ function handleNewTemplate() {
         </button>
       </div>
 
-      <div class="year-months">
-        <div v-for="m in MONTHS" :key="m" class="m">{{ m }}</div>
-      </div>
+      <div class="year-grid-scroll">
+        <div class="year-months">
+          <div v-for="m in MONTHS" :key="m" class="m">{{ m }}</div>
+        </div>
 
-      <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
-        <div
-          v-for="(startDate, wi) in WEEK_DATES_2026"
-          :key="wi"
-          class="week-cell"
-          :class="{ empty: !appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
-          :style="appliedByDate.get(startDate) ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) } : {}"
-          :title="appliedByDate.get(startDate) ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}` : `Week ${wi + 1} · unassigned`"
-          @mousedown="isYearPainting = true; paintWeek(wi)"
-          @mouseenter="hoverWeek = wi; isYearPainting && paintWeek(wi)"
-          @mouseleave="hoverWeek = null"
-        >
-          <span class="wnum">{{ wi + 1 }}</span>
+        <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
+          <div
+            v-for="(startDate, wi) in WEEK_DATES_2026"
+            :key="wi"
+            class="week-cell"
+            :class="{ empty: !appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
+            :style="appliedByDate.get(startDate) ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) } : {}"
+            :title="appliedByDate.get(startDate) ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}` : `Week ${wi + 1} · unassigned`"
+            @mousedown="isYearPainting = true; paintWeek(wi)"
+            @mouseenter="hoverWeek = wi; isYearPainting && paintWeek(wi)"
+            @mouseleave="hoverWeek = null"
+          >
+            <span class="wnum">{{ wi + 1 }}</span>
+          </div>
         </div>
       </div>
 

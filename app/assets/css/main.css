@@ -74,6 +74,8 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;
+  grid-template-columns: minmax(0, 1fr); /* prevent implicit column from expanding beyond viewport */
+  overflow-x: clip;
   background: var(--bg);
 }
 
@@ -857,6 +859,74 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .takeaway-unit { font-family: var(--font-mono); font-style: normal; font-size: 11px; color: var(--ink-3); margin-left: 6px; letter-spacing: 0.1em; text-transform: uppercase; }
 .takeaway-body { font-size: 13px; color: var(--ink-2); margin: 14px 0 0; line-height: 1.5; }
 
+/* ── Chart toolbar & view toggle ── */
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+.view-toggle button {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: background 0.12s, color 0.12s;
+}
+.view-toggle button[data-active="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ── Week grid scroll wrapper ── */
+.week-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+  min-width: 0; /* prevent grid item from expanding beyond its track */
+}
+.week-scroll-wrap .week {
+  border-radius: 0;
+}
+
+/* ── Chart scroll wrapper ── */
+.chart-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  margin-top: 20px;
+}
+
+/* ── Year grid scroll wrapper ── */
+.year-grid-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+}
+
+/* Grid items that contain scroll areas must not auto-size beyond their track */
+.insights-grid > *,
+.planner-grid > * {
+  min-width: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1280px) {
   .insights-grid { grid-template-columns: 1fr 260px; gap: 20px; }
@@ -878,13 +948,74 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 }
 
 @media (max-width: 768px) {
-  .topbar { padding: 14px 18px; }
-  .brand-mark { font-size: 28px; }
+  .topbar { padding: 12px 16px; gap: 10px 16px; }
+  .brand-mark { font-size: 26px; }
   .brand-sub { display: none; }
-  .tab { padding: 6px 12px; font-size: 12px; }
+  .tab { padding: 7px 14px; font-size: 13px; min-height: 36px; }
   .tab .tab-num { display: none; }
   .topbar-right > span { display: none; }
+  .theme-toggle { padding: 7px 12px; min-height: 36px; }
   .view { padding: 20px 16px 56px; }
   .page-title { font-size: 32px; line-height: 1; }
+  .takeaways-grid { grid-template-columns: repeat(2, 1fr); }
+  .takeaway-cell { padding: 20px 16px; }
+  .takeaway-n { font-size: 40px; }
+
+  /* Week grid: enforce min-width so it scrolls horizontally */
+  .week { min-width: 480px; }
+
+  /* Bigger block action buttons for touch */
+  .block-action-btn { width: 26px; height: 26px; font-size: 12px; }
+
+  /* Taller inputs for touch targets */
+  .timely-input, .timely-select { height: 44px; }
+
+  /* Year painter: inner scroll wrapper handles overflow */
+  .year-months, .year-grid { min-width: 360px; }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 10px 12px;
+    padding: 12px 14px;
+  }
+  .tabs {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+  .tab { flex: 1; justify-content: center; padding: 8px 10px; font-size: 12px; }
+  .topbar-right { gap: 10px; }
+  .brand-mark { font-size: 24px; }
+
+  .view { padding: 16px 14px 56px; }
+  .page-title { font-size: 28px; }
+  .page-lede { font-size: 13px; }
+
   .takeaways-grid { grid-template-columns: 1fr; }
+  .takeaway-cell { padding: 16px 14px; }
+  .takeaway-n { font-size: 36px; }
+
+  /* Cat rows: simplify to two columns */
+  .cat-row { grid-template-columns: 28px 1fr auto; gap: 10px; padding: 12px 14px; }
+  .cat-row-name { font-size: 18px; }
+
+  /* Slot context menu fills width on phone */
+  .slot-menu {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 16px !important;
+    top: auto !important;
+    max-width: none;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* Panel padding */
+  .panel { padding: 16px; }
+  .big-stat { padding: 18px 20px; }
+  .big-stat-value { font-size: 44px; }
+  .chart-card { padding: 20px 16px; }
 }
