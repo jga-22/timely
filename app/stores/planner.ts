@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { PlannerState } from '~/types/planner'
+import type { AppliedWeek, PlannerState, WeekStatus } from '~/types/planner'
 import {
   aggregateTemplate,
   aggregateTemplateByCategory,
@@ -307,6 +307,34 @@ export const usePlannerStore = defineStore('planner', {
         slots: [...source.slots]
       })
       this.settings.activeTemplateId = this.templates[0]?.id ?? null
+    },
+    applyWeek(startDate: string, templateId: string, status: WeekStatus = 'normal', notes?: string) {
+      const existing = this.appliedWeeks.find(week => week.startDate === startDate)
+
+      if (existing) {
+        existing.templateId = templateId
+        existing.status = status
+        if (notes !== undefined) existing.notes = notes
+        return
+      }
+
+      this.appliedWeeks.push({
+        id: `week-${startDate}`,
+        startDate,
+        templateId,
+        status,
+        notes
+      })
+    },
+    updateWeek(weekId: string, changes: Partial<Pick<AppliedWeek, 'templateId' | 'status' | 'notes'>>) {
+      const week = this.appliedWeeks.find(w => w.id === weekId)
+
+      if (week) {
+        Object.assign(week, changes)
+      }
+    },
+    removeWeek(weekId: string) {
+      this.appliedWeeks = this.appliedWeeks.filter(w => w.id !== weekId)
     },
     resetToSeed() {
       this.$patch(createInitialState())
