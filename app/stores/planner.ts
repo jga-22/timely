@@ -94,6 +94,38 @@ export const usePlannerStore = defineStore('planner', {
       })
       this.settings.activeTemplateId = templateId
     },
+    deleteTemplate(templateId: string) {
+      const templateIndex = this.templates.findIndex(template => template.id === templateId)
+
+      if (templateIndex === -1) {
+        return false
+      }
+
+      if (this.templates.length <= 1) {
+        return false
+      }
+
+      const nextTemplates = this.templates.filter(template => template.id !== templateId)
+      const nextAppliedWeeks = this.appliedWeeks.filter(week => week.templateId !== templateId)
+      const fallbackTemplateId = nextTemplates[0]?.id ?? null
+
+      this.$patch({
+        templates: nextTemplates,
+        appliedWeeks: nextAppliedWeeks,
+        settings: {
+          ...this.settings,
+          activeTemplateId: this.settings.activeTemplateId === templateId
+            ? fallbackTemplateId
+            : this.settings.activeTemplateId
+        }
+      })
+
+      return true
+    },
+    setTemplateColor(templateId: string, color: string) {
+      const template = getTemplateById(this.$state, templateId)
+      if (template) template.color = color
+    },
     renameActiveTemplate(name: string) {
       const template = this.activeTemplate
 
@@ -220,6 +252,46 @@ export const usePlannerStore = defineStore('planner', {
       for (const template of this.templates) {
         template.slots = template.slots.map(slot => slot === activityId ? '' : slot)
       }
+    },
+    setWeekTemplate(startDate: string, templateId: string | null) {
+      const existing = this.appliedWeeks.find(w => w.startDate === startDate)
+      if (templateId === null) {
+        this.appliedWeeks = this.appliedWeeks.filter(w => w.startDate !== startDate)
+      } else if (existing) {
+        existing.templateId = templateId
+      } else {
+        this.appliedWeeks.push({
+          id: `${templateId}-${startDate}`,
+          startDate,
+          templateId,
+          status: 'normal',
+          notes: 'Assigned from year painter.'
+        })
+      }
+    },
+    setTemplateApplications(templateId: string, weekStartDates: string[], monthWeekStartDates: string[]) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template) {
+        return
+      }
+
+      const selectedDates = new Set(weekStartDates)
+      const monthDates = new Set(monthWeekStartDates)
+
+      this.appliedWeeks = this.appliedWeeks.filter(week => !monthDates.has(week.startDate))
+
+      const nextWeeks = monthWeekStartDates
+        .filter(startDate => selectedDates.has(startDate))
+        .map(startDate => ({
+          id: `${templateId}-${startDate}`,
+          startDate,
+          templateId,
+          status: 'normal' as const,
+          notes: `Applied from ${template.name}.`
+        }))
+
+      this.appliedWeeks.unshift(...nextWeeks.reverse())
     },
     duplicateTemplate(templateId: string) {
       const source = getTemplateById(this.$state, templateId)
