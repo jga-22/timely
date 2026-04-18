@@ -8,23 +8,34 @@ const HOUR_PX = 28
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
 
-// ── Template switcher state ──
+// ── Template switcher ──
 const renamingId = ref<string | null>(null)
 const colorPickerFor = ref<string | null>(null)
 const newTemplateOpen = ref(false)
 const newTemplateName = ref('')
 const paintTool = ref(templates.value[0]?.id ?? '')
 
-// ── Drag state ──
-const draggingActivityId = ref<string | null>(null)
-const dropPreview = ref<{ activityId: string; day: number; start: number; end: number } | null>(null)
-const dragAnchor = ref<{ day: number; hour: number } | null>(null)
+// ── Range selection ──
+type Sel = { day: number; start: number; end: number }
+const selection = ref<Sel | null>(null)
+const selAnchor = ref<{ day: number; hour: number } | null>(null)
+const isSelecting = ref(false)
+
+// ── Context menu ──
+const showMenu = ref(false)
+const menuPos = ref({ x: 0, y: 0 })
+
+// ── Block hover (keyed by day·start·end to survive re-renders) ──
+const hoveredBlockKey = ref<string | null>(null)
+
+function blockKey(day: number, start: number, end: number) {
+  return `${day}-${start}-${end}`
+}
 
 // ── Computed ──
 const totalPlanned = computed(() =>
   activeTemplate.value?.slots.filter(Boolean).length ?? 0
 )
-
 const activityHours = computed(() => {
   const h: Record<string, number> = {}
   if (!activeTemplate.value) return h
@@ -33,7 +44,6 @@ const activityHours = computed(() => {
   }
   return h
 })
-
 const hoursPerDay = computed(() => {
   const totals = new Array(7).fill(0)
   if (!activeTemplate.value) return totals
@@ -44,130 +54,153 @@ const hoursPerDay = computed(() => {
   }
   return totals
 })
-
 const blocksByDay = computed(() => {
   if (!activeTemplate.value) return {} as Record<number, ReturnType<typeof slotsToBlocks>>
   const result: Record<number, ReturnType<typeof slotsToBlocks>> = {}
-  for (let d = 0; d < 7; d++) {
-    result[d] = slotsToBlocks(activeTemplate.value.slots, d)
-  }
+  for (let d = 0; d < 7; d++) result[d] = slotsToBlocks(activeTemplate.value.slots, d)
   return result
 })
-
 const activityMap = computed(() => new Map(planner.activities.map(a => [a.id, a])))
+const templateColor = (t: typeof templates.value[0]) => t.color ?? '#5d6b7a'
 
-const templateColor = (t: typeof templates.value[0]) =>
-  t.color ?? '#5d6b7a'
+function isBlockHovered(day: number, block: { start: number; end: number }) {
+  return hoveredBlockKey.value === blockKey(day, block.start, block.end)
+}
+
+// ── Selection logic ──
+function startSelection(day: number, hour: number) {
+  isSelecting.value = true
+  selAnchor.value = { day, hour }
+  selection.value = { day, start: hour, end: hour + 1 }
+  showMenu.value = false
+}
+
+function extendSelection(day: number, hour: number) {
+  if (!isSelecting.value || !selAnchor.value) return
+  if (selAnchor.value.day !== day) return
+  const anchor = selAnchor.value.hour
+  selection.value = {
+    day,
+    start: Math.min(anchor, hour),
+    end: Math.max(anchor, hour) + 1
+  }
+}
+
+function finishSelection(e: MouseEvent) {
+  if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
+  isSelecting.value = false
+  const x = Math.min(e.clientX + 16, window.innerWidth - 248)
+  const y = Math.min(e.clientY - 10, window.innerHeight - 360)
+  menuPos.value = { x, y }
+  showMenu.value = true
+}
+
+function applyActivity(activityId: string) {
+  if (!selection.value) return
+  planner.applyTimeRange(activityId, [selection.value.day], selection.value.start, selection.value.end)
+  closeMenu()
+}
+
+function clearSelection() {
+  if (!selection.value) return
+  planner.clearTimeRange([selection.value.day], selection.value.start, selection.value.end)
+  closeMenu()
+}
+
+function closeMenu() {
+  showMenu.value = false
+  selection.value = null
+}
+
+// ── Block actions ──
+function editBlock(day: number, start: number, end: number, e: MouseEvent) {
+  selection.value = { day, start, end }
+  const x = Math.min(e.clientX + 16, window.innerWidth - 248)
+  const y = Math.min(e.clientY - 10, window.innerHeight - 360)
+  menuPos.value = { x, y }
+  showMenu.value = true
+}
+
+function deleteBlock(day: number, start: number, end: number) {
+  planner.clearTimeRange([day], start, end)
+}
+
+// ── Touch selection ──
+function slotFromPoint(x: number, y: number): { day: number; hour: number } | null {
+  const el = document.elementFromPoint(x, y) as HTMLElement | null
+  const target = el?.closest<HTMLElement>('[data-day][data-hour]')
+  if (!target) return null
+  return { day: +target.dataset.day!, hour: +target.dataset.hour! }
+}
+
+function onTouchStart(e: TouchEvent) {
+  e.preventDefault()
+  const t = e.touches[0]
+  const s = slotFromPoint(t.clientX, t.clientY)
+  if (s) startSelection(s.day, s.hour)
+}
+
+function onTouchMove(e: TouchEvent) {
+  e.preventDefault()
+  const t = e.touches[0]
+  const s = slotFromPoint(t.clientX, t.clientY)
+  if (s) extendSelection(s.day, s.hour)
+}
+
+function onTouchEnd(e: TouchEvent) {
+  if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
+  isSelecting.value = false
+  const t = e.changedTouches[0]
+  const x = Math.min(t.clientX + 16, window.innerWidth - 248)
+  const y = Math.min(t.clientY - 10, window.innerHeight - 360)
+  menuPos.value = { x, y }
+  showMenu.value = true
+}
+
+// Capture mouseup globally so releasing outside the grid still opens the menu
+onMounted(() => document.addEventListener('mouseup', handleGlobalMouseUp))
+onUnmounted(() => document.removeEventListener('mouseup', handleGlobalMouseUp))
+
+function handleGlobalMouseUp(e: MouseEvent) {
+  if (isSelecting.value) finishSelection(e)
+}
 
 // ── Year painter ──
-const isPainting = ref(false)
+const isYearPainting = ref(false)
 const hoverWeek = ref<number | null>(null)
-
 const appliedByDate = computed(() => {
   const m = new Map<string, string>()
   for (const w of appliedWeeks.value) m.set(w.startDate, w.templateId)
   return m
 })
-
 const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
-
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-// ── Drag from palette ──
-const onPaletteDragStart = (e: DragEvent, activityId: string) => {
-  draggingActivityId.value = activityId
-  e.dataTransfer!.effectAllowed = 'copy'
-  const act = activityMap.value.get(activityId)
-  if (!act) return
-  const ghost = document.createElement('div')
-  ghost.textContent = act.name
-  ghost.style.cssText = `position:fixed;top:-9999px;padding:6px 12px;background:${act.color};color:#fff;font:500 12px sans-serif;border-radius:3px;`
-  document.body.appendChild(ghost)
-  e.dataTransfer!.setDragImage(ghost, 40, 14)
-  setTimeout(() => ghost.remove(), 0)
-}
-
-const onPaletteDragEnd = () => {
-  draggingActivityId.value = null
-  dropPreview.value = null
-  dragAnchor.value = null
-}
-
-const onSlotDragOver = (e: DragEvent, day: number, hour: number) => {
-  if (!draggingActivityId.value) return
-  e.preventDefault()
-  e.dataTransfer!.dropEffect = 'copy'
-  const activityId = draggingActivityId.value
-  if (dropPreview.value?.day !== day) {
-    dragAnchor.value = { day, hour }
-    dropPreview.value = { activityId, day, start: hour, end: hour + 1 }
-  } else {
-    const anchor = dragAnchor.value?.day === day ? dragAnchor.value.hour : hour
-    dropPreview.value = {
-      activityId,
-      day,
-      start: Math.min(anchor, hour),
-      end: Math.max(anchor, hour) + 1
-    }
-  }
-}
-
-const onSlotDrop = (e: DragEvent, day: number, hour: number) => {
-  e.preventDefault()
-  const activityId = draggingActivityId.value
-  if (!activityId || !activeTemplate.value) return
-  const start = dropPreview.value?.day === day ? dropPreview.value.start : hour
-  const end   = dropPreview.value?.day === day ? dropPreview.value.end   : hour + 1
-  planner.applyTimeRange(activityId, [day], start, end)
-  dropPreview.value = null
-  draggingActivityId.value = null
-}
-
-const onGridDragLeave = (e: DragEvent, el: HTMLElement | null) => {
-  if (!el?.contains(e.relatedTarget as Node)) {
-    dropPreview.value = null
-    dragAnchor.value = null
-  }
-}
-
-const removeBlock = (day: number, start: number, end: number) => {
-  planner.clearTimeRange([day], start, end)
+function paintWeek(wi: number) {
+  const startDate = WEEK_DATES_2026[wi]
+  if (startDate) planner.setWeekTemplate(startDate, paintTool.value === 'erase' ? null : paintTool.value)
 }
 
 // ── Template management ──
-const handleNewTemplate = () => {
+function handleNewTemplate() {
   if (!newTemplateName.value.trim()) return
   planner.createTemplate()
-  const newId = planner.templates[0]?.id
-  if (newId) planner.renameActiveTemplate(newTemplateName.value.trim())
+  planner.renameActiveTemplate(newTemplateName.value.trim())
   newTemplateName.value = ''
   newTemplateOpen.value = false
 }
-
-// ── Year painter ──
-const paintWeek = (weekIdx: number) => {
-  const startDate = WEEK_DATES_2026[weekIdx]
-  if (!startDate) return
-  if (paintTool.value === 'erase') {
-    planner.setWeekTemplate(startDate, null)
-  } else {
-    planner.setWeekTemplate(startDate, paintTool.value)
-  }
-}
-
-const gridRef = ref<HTMLElement | null>(null)
 </script>
 
 <template>
-  <div class="view">
+  <div class="view" @click="colorPickerFor = null">
     <!-- Page header -->
     <div class="page-head">
       <div>
         <div class="page-kicker">01 · Planner</div>
         <h1 class="page-title">Design your <em>ideal</em> week,<br>hour by hour.</h1>
         <p class="page-lede">
-          Drag any category from the palette onto the grid to paint your week.
-          Click an existing block to remove it.
+          Click and drag a range of slots, then pick an activity from the menu.
+          Hover an existing block to edit or delete it.
         </p>
       </div>
       <div style="text-align: right">
@@ -183,7 +216,6 @@ const gridRef = ref<HTMLElement | null>(null)
       <span class="panel-sub" style="margin-right: 6px">Template</span>
 
       <div v-for="t in templates" :key="t.id" style="position: relative">
-        <!-- Rename input -->
         <input
           v-if="renamingId === t.id"
           class="timely-input"
@@ -199,21 +231,19 @@ const gridRef = ref<HTMLElement | null>(null)
           class="template-pill"
           :data-active="t.id === activeTemplate?.id"
           :style="t.id === activeTemplate?.id ? { background: templateColor(t), borderColor: templateColor(t), color: '#fff' } : {}"
+          :title="`Click to select · double-click to rename`"
           @click="planner.selectTemplate(t.id)"
           @dblclick="renamingId = t.id"
-          :title="`Click to select · double-click to rename`"
         >
           <span
             :style="{ width: '12px', height: '12px', borderRadius: '3px', background: templateColor(t), border: '1px solid rgba(0,0,0,0.15)', cursor: 'pointer', flexShrink: 0, boxShadow: t.id === activeTemplate?.id ? 'inset 0 0 0 1.5px rgba(255,255,255,0.7)' : 'none' }"
-            :title="`Change color`"
             @click.stop="colorPickerFor = colorPickerFor === t.id ? null : t.id"
           />
           <span class="t-name">{{ t.name }}</span>
-          <span style="font-family: var(--font-mono); font-size: 10px; opacity: 0.7">{{ Object.values(activityHours).reduce((a, b) => a + b, 0) === 0 ? 0 : (t.slots.filter(Boolean).length) }}h</span>
+          <span style="font-family: var(--font-mono); font-size: 10px; opacity: 0.7">{{ t.slots.filter(Boolean).length }}h</span>
         </button>
 
-        <!-- Color picker -->
-        <div v-if="colorPickerFor === t.id" class="color-pop" style="top: 34px; left: 0">
+        <div v-if="colorPickerFor === t.id" class="color-pop" style="top: 34px; left: 0" @click.stop>
           <button
             v-for="col in DESIGN_COLORS"
             :key="col.id"
@@ -224,179 +254,145 @@ const gridRef = ref<HTMLElement | null>(null)
         </div>
       </div>
 
-      <!-- New template -->
       <div v-if="newTemplateOpen" style="display: flex; gap: 4px">
         <input
+          v-model="newTemplateName"
           class="timely-input"
           autofocus
           placeholder="e.g. Launch week"
-          v-model="newTemplateName"
           style="height: 30px; width: 150px; font-size: 12px"
           @keydown.enter="handleNewTemplate"
           @keydown.escape="newTemplateOpen = false; newTemplateName = ''"
         />
         <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
       </div>
-      <button v-else class="template-pill-add" @click="newTemplateOpen = true">
-        + New template
-      </button>
+      <button v-else class="template-pill-add" @click="newTemplateOpen = true">+ New template</button>
 
       <button
         v-if="templates.length > 1"
         class="btn btn-xs btn-ghost btn-danger"
         style="margin-left: auto"
-        @click="() => { if (confirm(`Delete template '${activeTemplate?.name}'?`)) planner.deleteTemplate(activeTemplate?.id ?? '') }"
+        @click="() => { if (confirm(`Delete '${activeTemplate?.name}'?`)) planner.deleteTemplate(activeTemplate?.id ?? '') }"
       >
         Delete "{{ activeTemplate?.name }}"
       </button>
     </div>
 
-    <!-- Planner grid -->
-    <div class="planner-grid">
-      <!-- Left: Palette -->
-      <div class="panel">
-        <div class="panel-head">
-          <h2 class="panel-title">Palette</h2>
-          <span class="panel-sub">Drag onto grid</span>
-        </div>
-
-        <div class="palette">
-          <div
-            v-for="activity in planner.activities"
-            :key="activity.id"
-            class="palette-chip"
-            draggable="true"
-            :style="{ background: activity.color, color: '#fff' }"
-            @dragstart="onPaletteDragStart($event, activity.id)"
-            @dragend="onPaletteDragEnd"
-          >
-            <span>{{ activity.name }}</span>
-            <span class="palette-chip-hrs">{{ activityHours[activity.id] || 0 }}h</span>
+    <!-- Week grid (no palette panel — activities are in the context menu) -->
+    <div
+      class="week"
+      :class="{ selecting: isSelecting }"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+    >
+      <!-- Header row -->
+      <div class="week-head">
+        <div class="corner" />
+        <div v-for="(day, di) in DAYS" :key="day" class="wday">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span class="day-name">{{ day }}</span>
+            <button
+              class="btn btn-ghost btn-xs"
+              style="width:16px;height:16px;padding:0;opacity:0;transition:opacity 0.1s;font-size:10px;color:var(--ink-4)"
+              :title="`Clear ${day}`"
+              @click.stop="planner.clearTimeRange([di], 0, 24)"
+              @mouseenter="($event.target as HTMLElement).style.opacity='1'"
+              @mouseleave="($event.target as HTMLElement).style.opacity='0'"
+            >✕</button>
           </div>
+          <span class="day-hours-label">
+            {{ hoursPerDay[di] }}<span class="unit">hr</span>
+          </span>
         </div>
-
-        <div class="divider-label">How it works</div>
-        <ul style="margin: 0; padding-left: 16px; font-size: 11.5px; color: var(--ink-3); line-height: 1.7">
-          <li>Drag a chip onto any slot to add a block.</li>
-          <li>Drag across multiple slots to paint a range.</li>
-          <li>Click an existing block to remove it.</li>
-        </ul>
-
-        <div class="divider-label" style="margin-top: 16px">Quick actions</div>
-        <button
-          class="btn btn-xs"
-          @click="() => { if (confirm('Clear entire week?')) DAYS.forEach((_, d) => planner.clearTimeRange([d], 0, 24)) }"
-        >
-          Clear week
-        </button>
       </div>
 
-      <!-- Right: Week grid -->
-      <div
-        class="week"
-        ref="gridRef"
-        @dragleave="onGridDragLeave($event, gridRef)"
-      >
-        <!-- Header -->
-        <div class="week-head">
-          <div class="corner" />
-          <div v-for="(day, di) in DAYS" :key="day" class="wday">
-            <div style="display: flex; justify-content: space-between; align-items: center">
-              <span class="day-name">{{ day }}</span>
-              <button
-                style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-4);opacity:0;transition:opacity 0.1s;font-size:10px"
-                :title="`Clear ${day}`"
-                @click="planner.clearTimeRange([di], 0, 24)"
-                @mouseenter="($event.target as HTMLElement).style.opacity='1'"
-                @mouseleave="($event.target as HTMLElement).style.opacity='0'"
-              >✕</button>
-            </div>
-            <span class="day-hours-label">
-              {{ hoursPerDay[di] }}<span class="unit">hr</span>
-            </span>
+      <!-- Grid body -->
+      <div class="week-body">
+        <!-- Hour labels -->
+        <div class="hour-col">
+          <div
+            v-for="h in 24"
+            :key="h - 1"
+            class="hour-cell"
+            :class="{ major: (h - 1) % 3 === 0 }"
+          >
+            {{ (h - 1) % 3 === 0 ? formatHour(h - 1) : '' }}
           </div>
         </div>
 
-        <!-- Body -->
-        <div class="week-body">
-          <!-- Hour labels -->
-          <div class="hour-col">
-            <div
-              v-for="h in 24"
-              :key="h - 1"
-              class="hour-cell"
-              :class="{ major: (h - 1) % 3 === 0 }"
-            >
-              {{ (h - 1) % 3 === 0 ? formatHour(h - 1) : '' }}
-            </div>
-          </div>
-
-          <!-- Day columns -->
+        <!-- Day columns -->
+        <div
+          v-for="(_, dayIndex) in DAYS"
+          :key="dayIndex"
+          class="day-col"
+        >
+          <!-- Selection highlight -->
           <div
-            v-for="(_, dayIndex) in DAYS"
-            :key="dayIndex"
-            class="day-col"
+            v-if="selection && selection.day === dayIndex"
+            class="slot-selection"
+            :style="{
+              top: `${selection.start * HOUR_PX}px`,
+              height: `${(selection.end - selection.start) * HOUR_PX}px`,
+            }"
+          />
+
+          <!-- Slot cells (interaction layer) -->
+          <div
+            v-for="hour in 24"
+            :key="hour - 1"
+            class="slot"
+            :class="{ major: (hour - 1) % 3 === 0 }"
+            :data-day="dayIndex"
+            :data-hour="hour - 1"
+            @mousedown.prevent="startSelection(dayIndex, hour - 1)"
+            @mouseenter="extendSelection(dayIndex, hour - 1)"
+          />
+
+          <!-- Blocks (visual layer) -->
+          <div
+            v-for="block in blocksByDay[dayIndex]"
+            :key="`${dayIndex}-${block.start}-${block.activityId}`"
+            class="block"
+            :class="{
+              'block-sm': (block.end - block.start) * HOUR_PX < 40,
+              'block-xs': (block.end - block.start) * HOUR_PX < 24,
+            }"
+            :style="{
+              top: `${block.start * HOUR_PX}px`,
+              height: `${(block.end - block.start) * HOUR_PX - 2}px`,
+              background: activityMap.get(block.activityId)?.color ?? '#999',
+              color: '#fff',
+            }"
+            @mouseenter="hoveredBlockKey = blockKey(dayIndex, block.start, block.end)"
+            @mouseleave="hoveredBlockKey = null"
+            @mousedown.stop
           >
-            <!-- Slot cells (drop targets) -->
-            <div
-              v-for="hour in 24"
-              :key="hour - 1"
-              class="slot"
-              :class="{
-                major: (hour - 1) % 3 === 0,
-                'drop-preview': dropPreview?.day === dayIndex && (hour - 1) >= dropPreview.start && (hour - 1) < dropPreview.end
-              }"
-              @dragover="onSlotDragOver($event, dayIndex, hour - 1)"
-              @drop="onSlotDrop($event, dayIndex, hour - 1)"
-            />
+            <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
+            <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
 
-            <!-- Blocks -->
-            <div
-              v-for="block in blocksByDay[dayIndex]"
-              :key="`${dayIndex}-${block.start}-${block.activityId}`"
-              class="block"
-              :class="{
-                'block-sm': (block.end - block.start) * HOUR_PX < 40,
-                'block-xs': (block.end - block.start) * HOUR_PX < 24,
-              }"
-              :style="{
-                top: `${block.start * HOUR_PX}px`,
-                height: `${(block.end - block.start) * HOUR_PX - 2}px`,
-                background: activityMap.get(block.activityId)?.color ?? '#999',
-                color: '#fff',
-              }"
-              :title="`${activityMap.get(block.activityId)?.name} — ${formatHour(block.start)} to ${formatHour(block.end)}`"
-              @click="removeBlock(dayIndex, block.start, block.end)"
-            >
-              <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
-              <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
-              <span class="block-x">✕</span>
-            </div>
-
-            <!-- Drop ghost -->
-            <div
-              v-if="dropPreview?.day === dayIndex"
-              class="block"
-              style="background: repeating-linear-gradient(45deg, var(--accent) 0 4px, var(--accent-soft) 4px 8px); opacity: 0.5; pointer-events: none; color: #fff; border: 1px dashed rgba(255,255,255,0.6)"
-              :style="{
-                top: `${dropPreview.start * HOUR_PX}px`,
-                height: `${(dropPreview.end - dropPreview.start) * HOUR_PX - 2}px`,
-              }"
-            >
-              <div class="block-title" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em">
-                {{ dropPreview.end - dropPreview.start }}h
-              </div>
+            <div v-if="isBlockHovered(dayIndex, block)" class="block-actions">
+              <button
+                class="block-action-btn"
+                title="Edit"
+                @click.stop="editBlock(dayIndex, block.start, block.end, $event)"
+              >✎</button>
+              <button
+                class="block-action-btn"
+                title="Delete"
+                @click.stop="deleteBlock(dayIndex, block.start, block.end)"
+              >✕</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Week stats -->
+    <!-- Week stats bar -->
     <div class="week-stats">
       <div v-for="activity in planner.activities" :key="activity.id" class="stat">
         <div class="stat-label">
-          <span :style="{ width: '8px', height: '8px', borderRadius: '2px', background: activity.color }" />
+          <span :style="{ width: '8px', height: '8px', borderRadius: '2px', background: activity.color, flexShrink: 0 }" />
           {{ activity.name }}
         </div>
         <div class="stat-value">
@@ -413,7 +409,6 @@ const gridRef = ref<HTMLElement | null>(null)
           <h2 class="title">Paint your <em>2026</em> — week by week.</h2>
           <p class="page-lede" style="margin-top: 10px">
             Choose a template below, then click or drag across weeks to assign it.
-            Unassigned weeks show as empty.
           </p>
         </div>
         <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); text-align: right">
@@ -433,11 +428,7 @@ const gridRef = ref<HTMLElement | null>(null)
           <span class="dot" :style="{ background: templateColor(t) }" />
           {{ t.name }}
         </button>
-        <button
-          class="paint-tool"
-          :data-active="paintTool === 'erase'"
-          @click="paintTool = 'erase'"
-        >
+        <button class="paint-tool" :data-active="paintTool === 'erase'" @click="paintTool = 'erase'">
           <span class="dot" style="background: var(--bg-3); border: 1px dashed var(--ink-3)" />
           Erase
         </button>
@@ -447,24 +438,16 @@ const gridRef = ref<HTMLElement | null>(null)
         <div v-for="m in MONTHS" :key="m" class="m">{{ m }}</div>
       </div>
 
-      <div
-        class="year-grid"
-        @mouseup="isPainting = false"
-        @mouseleave="isPainting = false"
-      >
+      <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
         <div
           v-for="(startDate, wi) in WEEK_DATES_2026"
           :key="wi"
           class="week-cell"
           :class="{ empty: !appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
-          :style="appliedByDate.get(startDate)
-            ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) }
-            : {}"
-          :title="appliedByDate.get(startDate)
-            ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}`
-            : `Week ${wi + 1} · unassigned`"
-          @mousedown="isPainting = true; paintWeek(wi)"
-          @mouseenter="hoverWeek = wi; isPainting && paintWeek(wi)"
+          :style="appliedByDate.get(startDate) ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) } : {}"
+          :title="appliedByDate.get(startDate) ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}` : `Week ${wi + 1} · unassigned`"
+          @mousedown="isYearPainting = true; paintWeek(wi)"
+          @mouseenter="hoverWeek = wi; isYearPainting && paintWeek(wi)"
           @mouseleave="hoverWeek = null"
         >
           <span class="wnum">{{ wi + 1 }}</span>
@@ -476,10 +459,42 @@ const gridRef = ref<HTMLElement | null>(null)
         <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek])">
           {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek])!)?.name }}
         </span>
-        <span v-else style="color: var(--ink-3); font-style: italic">
-          unassigned — click to paint
-        </span>
+        <span v-else style="color: var(--ink-3); font-style: italic">unassigned — click to paint</span>
       </div>
     </div>
   </div>
+
+  <!-- Activity picker menu (teleported to body to avoid overflow clipping) -->
+  <Teleport to="body">
+    <div v-if="showMenu" class="slot-menu-overlay" @click="closeMenu" @contextmenu.prevent="closeMenu" />
+    <div
+      v-if="showMenu && selection"
+      class="slot-menu"
+      :style="{ left: `${menuPos.x}px`, top: `${menuPos.y}px` }"
+      @click.stop
+    >
+      <div class="slot-menu-head">
+        <span>{{ DAYS[selection.day] }}</span>
+        <span>{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
+      </div>
+      <div class="slot-menu-list">
+        <button
+          v-for="act in planner.activities"
+          :key="act.id"
+          class="slot-menu-chip"
+          :style="{ '--chip-bg': act.color }"
+          @click="applyActivity(act.id)"
+        >
+          <span class="chip-dot" :style="{ background: act.color }" />
+          <span class="chip-name">{{ act.name }}</span>
+          <span class="chip-hrs" style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-left: auto">{{ activityHours[act.id] || 0 }}h</span>
+        </button>
+        <div class="slot-menu-divider" />
+        <button class="slot-menu-chip slot-menu-clear" @click="clearSelection">
+          <span class="chip-dot" style="background: var(--bg-3); border: 1px solid var(--rule)" />
+          <span class="chip-name">Clear slot</span>
+        </button>
+      </div>
+    </div>
+  </Teleport>
 </template>
