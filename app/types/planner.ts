@@ -20,6 +20,7 @@ export interface WeekTemplate {
   description?: string
   granularityMinutes: 60 | 30
   slots: string[]
+  color?: string
 }
 
 export interface AppliedWeek {

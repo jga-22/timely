@@ -122,6 +122,10 @@ export const usePlannerStore = defineStore('planner', {
 
       return true
     },
+    setTemplateColor(templateId: string, color: string) {
+      const template = getTemplateById(this.$state, templateId)
+      if (template) template.color = color
+    },
     renameActiveTemplate(name: string) {
       const template = this.activeTemplate
 
@@ -247,6 +251,22 @@ export const usePlannerStore = defineStore('planner', {
 
       for (const template of this.templates) {
         template.slots = template.slots.map(slot => slot === activityId ? '' : slot)
+      }
+    },
+    setWeekTemplate(startDate: string, templateId: string | null) {
+      const existing = this.appliedWeeks.find(w => w.startDate === startDate)
+      if (templateId === null) {
+        this.appliedWeeks = this.appliedWeeks.filter(w => w.startDate !== startDate)
+      } else if (existing) {
+        existing.templateId = templateId
+      } else {
+        this.appliedWeeks.push({
+          id: `${templateId}-${startDate}`,
+          startDate,
+          templateId,
+          status: 'normal',
+          notes: 'Assigned from year painter.'
+        })
       }
     },
     setTemplateApplications(templateId: string, weekStartDates: string[], monthWeekStartDates: string[]) {

@@ -7,45 +7,19 @@ export default defineVuetifyConfiguration({
       timely: {
         dark: false,
         colors: {
-          background: '#f6f1e8',
-          surface: '#fffaf4',
-          primary: '#1b675c',
-          secondary: '#6f6254',
-          accent: '#b45309',
-          error: '#b42318',
-          info: '#155e75',
-          success: '#2e7d32',
-          warning: '#b26a00'
+          background: '#faf9f6',
+          surface:    '#faf9f6',
+          primary:    '#d97757',
+          secondary:  '#8a857d',
+          accent:     '#d97757',
+          error:      '#a04040',
+          info:       '#3c4b63',
+          success:    '#6b8f5a',
+          warning:    '#b5893a',
         }
       }
     }
   },
-  icons: {
-    defaultSet: 'mdi'
-  },
-  defaults: {
-    VCard: {
-      rounded: 'xl',
-      elevation: 0
-    },
-    VBtn: {
-      rounded: 'lg',
-      elevation: 0
-    },
-    VTextField: {
-      variant: 'outlined',
-      density: 'comfortable',
-      hideDetails: true
-    },
-    VSelect: {
-      variant: 'outlined',
-      density: 'comfortable',
-      hideDetails: true
-    },
-    VTextarea: {
-      variant: 'outlined',
-      density: 'comfortable',
-      hideDetails: true
-    }
-  }
+  icons: { defaultSet: 'mdi' },
+  defaults: {}
 })

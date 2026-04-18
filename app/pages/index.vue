@@ -1,25 +1,14 @@
 <script setup lang="ts">
-type TabId = 'planner' | 'insights' | 'setup'
-
 useHead({
-  title: 'Timely | Weekly Planner',
-  meta: [
-    {
-      name: 'description',
-      content: 'Define weekly templates, apply them to selected weeks, and inspect your time distribution.'
-    }
-  ]
+  title: 'Timely — weekly time planner',
+  meta: [{ name: 'description', content: 'Design your ideal week, hour by hour.' }]
 })
 
-const activeTab = ref<TabId>('planner')
+const activeTab = useState<string>('activeTab')
 </script>
 
 <template>
-  <v-container class="py-6" max-width="1240">
-    <PlannerHeader v-model="activeTab" class="mb-4" />
-    <PlannerTemplateToolbar class="mb-4" />
-    <PlannerView v-if="activeTab === 'planner'" />
-    <PlannerInsightsView v-else-if="activeTab === 'insights'" />
-    <PlannerLegendView v-else />
-  </v-container>
+  <PlannerView      v-if="activeTab === 'planner'" />
+  <PlannerInsightsView v-else-if="activeTab === 'insights'" />
+  <PlannerLegendView   v-else />
 </template>

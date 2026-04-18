@@ -1,173 +1,273 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import type { Activity, Category } from '~/types/planner'
-import { DAYS, projectionInsight } from '~/utils/planner'
+import {
+  WEEK_DATES_2026,
+  CURRENT_WEEK_INDEX,
+  aggregateTemplateByCategory,
+  aggregateTemplate,
+  projectionInsight,
+  getTemplateById
+} from '~/utils/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 
-const TOTAL_WEEK_HOURS = 168
-
 const planner = usePlannerStore()
-const { activeTemplateActivityTotals, yearlyProjectionHours } = storeToRefs(planner)
-const { activityMap, categoryMap, getActivityColor } = usePlannerMaps()
+const { activeTemplateActivityTotals, yearlyProjectionHours, activeTemplateCategoryTotals } = storeToRefs(planner)
+const { activityMap, categoryMap } = usePlannerMaps()
 
-const allocatedHours = computed(() =>
-  planner.activeTemplate?.slots.reduce((total, slot) => total + (slot ? 1 : 0), 0) ?? 0
-)
+const focusCat = ref<string | null>(null)
 
-const activityBreakdown = computed(() =>
-  Array.from(activeTemplateActivityTotals.value.entries())
-    .map(([activityId, hours]) => ({ activity: activityMap.value.get(activityId), hours }))
-    .filter((item): item is { activity: Activity, hours: number } => Boolean(item.activity))
-    .sort((a, b) => b.hours - a.hours)
-)
-
-const categoryBreakdown = computed(() => {
-  const totals = new Map<string, number>()
-  for (const item of activityBreakdown.value) {
-    totals.set(item.activity.categoryId, (totals.get(item.activity.categoryId) ?? 0) + item.hours)
-  }
-  return Array.from(totals.entries())
-    .map(([categoryId, hours]) => ({ category: categoryMap.value.get(categoryId), hours }))
-    .filter((item): item is { category: Category, hours: number } => Boolean(item.category))
-    .sort((a, b) => b.hours - a.hours)
-})
-
-const categoryDailyHours = computed(() =>
-  DAYS.map((day, dayIndex) => {
-    const totals = new Map<string, number>()
-    for (let hour = 0; hour < 24; hour++) {
-      const slot = planner.activeTemplate?.slots[(dayIndex * 24) + hour]
-      if (!slot) continue
-      const activity = activityMap.value.get(slot)
-      if (!activity) continue
-      totals.set(activity.categoryId, (totals.get(activity.categoryId) ?? 0) + 1)
+const weekBars = computed(() =>
+  WEEK_DATES_2026.map((startDate, i) => {
+    const applied = planner.appliedWeeks.find(w => w.startDate === startDate)
+    if (!applied) return { startDate, index: i, segments: [] as Array<{ categoryId: string; hours: number; color: string }> }
+    const template = getTemplateById(planner.$state, applied.templateId)
+    if (!template) return { startDate, index: i, segments: [] as Array<{ categoryId: string; hours: number; color: string }> }
+    const catTotals = aggregateTemplateByCategory(template, planner.$state)
+    const segments: Array<{ categoryId: string; hours: number; color: string }> = []
+    for (const [catId, hours] of catTotals) {
+      const cat = categoryMap.value.get(catId)
+      segments.push({ categoryId: catId, hours, color: cat?.color ?? '#ccc' })
     }
-    return {
-      day,
-      totals: planner.categories
-        .map(category => ({ category, hours: totals.get(category.id) ?? 0 }))
-        .filter(item => item.hours > 0)
-    }
+    segments.sort((a, b) => b.hours - a.hours)
+    return { startDate, index: i, segments }
   })
 )
+
+const categoryBreakdown = computed(() =>
+  Array.from(activeTemplateCategoryTotals.value.entries())
+    .map(([catId, hours]) => ({ category: categoryMap.value.get(catId), hours }))
+    .filter((item): item is { category: Category; hours: number } => !!item.category)
+    .sort((a, b) => b.hours - a.hours)
+)
+
+const topCategory = computed(() => categoryBreakdown.value[0] ?? null)
+
+const allocatedHours = computed(() =>
+  planner.activeTemplate?.slots.reduce((t, s) => t + (s ? 1 : 0), 0) ?? 0
+)
+
+const weeksAssigned = computed(() => planner.appliedWeeks.length)
 
 const projectionSummaries = computed(() =>
   Array.from(yearlyProjectionHours.value.entries())
     .map(([activityId, hours]) => ({ activity: activityMap.value.get(activityId), hours }))
-    .filter((item): item is { activity: Activity, hours: number } => Boolean(item.activity))
+    .filter((item): item is { activity: Activity; hours: number } => !!item.activity)
     .sort((a, b) => b.hours - a.hours)
 )
+
+const topProjection = computed(() => projectionSummaries.value[0] ?? null)
+
+// SVG chart constants
+const CHART_H = 180
+const BOTTOM = 28
+const BAR_W = 12
+const BAR_GAP = 4
+const MAX_HOURS = 168
+const LEFT = 44
+
+const totalW = LEFT + WEEK_DATES_2026.length * (BAR_W + BAR_GAP)
+const svgHeight = CHART_H + BOTTOM + 16
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+const monthLabels = computed(() => {
+  const labels: Array<{ month: string; x: number }> = []
+  let lastMonth = -1
+  WEEK_DATES_2026.forEach((date, i) => {
+    const m = new Date(date).getUTCMonth()
+    if (m !== lastMonth) {
+      labels.push({ month: MONTHS[m], x: LEFT + i * (BAR_W + BAR_GAP) })
+      lastMonth = m
+    }
+  })
+  return labels
+})
+
+function barX(i: number) { return LEFT + i * (BAR_W + BAR_GAP) }
+
+function barSegments(segments: Array<{ categoryId: string; hours: number; color: string }>, weekIndex: number) {
+  const result: Array<{ x: number; y: number; h: number; color: string; catId: string }> = []
+  let stackedH = 0
+  for (const seg of segments) {
+    const h = (seg.hours / MAX_HOURS) * CHART_H
+    result.push({ x: barX(weekIndex), y: CHART_H - stackedH - h, h, color: seg.color, catId: seg.categoryId })
+    stackedH += h
+  }
+  return result
+}
+
+const yTicks = [0, 42, 84, 126, 168]
+function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
 </script>
 
 <template>
-  <v-row dense>
-    <!-- Allocation summary -->
-    <v-col cols="12" md="6">
-      <v-card class="pa-5 fill-height">
-        <div class="text-overline text-medium-emphasis">Time Allocated</div>
-        <div class="text-h4 font-weight-bold my-2">{{ allocatedHours }} / {{ TOTAL_WEEK_HOURS }}h</div>
-        <v-progress-linear
-          :model-value="(allocatedHours / TOTAL_WEEK_HOURS) * 100"
-          color="primary"
-          height="10"
-          rounded
-        />
-        <p class="text-body-2 text-medium-emphasis mt-3">
-          {{ TOTAL_WEEK_HOURS - allocatedHours }}h still unassigned this week.
-        </p>
-      </v-card>
-    </v-col>
+  <div class="view">
+    <div class="page-head">
+      <div>
+        <div class="page-kicker">02 · Insights</div>
+        <h1 class="page-title">Where your time <em>goes</em></h1>
+        <p class="page-lede">Year-view of how your templates distribute across 52 weeks, with long-term projection.</p>
+      </div>
+    </div>
 
-    <!-- Category totals -->
-    <v-col cols="12" md="6">
-      <v-card class="pa-5 fill-height">
-        <div class="text-overline text-medium-emphasis">Categories</div>
-        <h2 class="text-h5 mb-4">Weekly breakdown</h2>
-        <v-list class="py-0" lines="one">
-          <v-list-item v-for="item in categoryBreakdown" :key="item.category.id" class="px-0">
-            <template #prepend>
-              <span class="color-dot mr-3" :style="{ backgroundColor: item.category.color ?? '#d6d3d1' }" />
-            </template>
-            <v-list-item-title>{{ item.category.name }}</v-list-item-title>
-            <template #append><strong>{{ item.hours }}h</strong></template>
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-col>
+    <div class="insights-grid">
+      <!-- Chart panel -->
+      <div class="card chart-card">
+        <div class="panel-sub" style="margin-bottom: 16px">52-week calendar · category stacking</div>
 
-    <!-- Activity breakdown -->
-    <v-col cols="12" lg="7">
-      <v-card class="pa-5 fill-height">
-        <div class="text-overline text-medium-emphasis">Activities</div>
-        <h2 class="text-h5 mb-4">Weekly breakdown</h2>
-        <div class="d-grid ga-4">
-          <div v-for="item in activityBreakdown" :key="item.activity.id">
-            <div class="d-flex justify-space-between text-body-2 mb-2">
-              <span>{{ item.activity.name }}</span>
-              <strong>{{ item.hours }}h</strong>
-            </div>
-            <v-progress-linear
-              :color="getActivityColor(item.activity.id)"
-              :model-value="(item.hours / TOTAL_WEEK_HOURS) * 100"
-              height="10"
-              rounded
+        <div class="cat-focus-strip">
+          <button :data-active="focusCat === null" @click="focusCat = null">
+            <span class="d" style="background: var(--ink)" />All
+          </button>
+          <button
+            v-for="item in categoryBreakdown"
+            :key="item.category.id"
+            :data-active="focusCat === item.category.id"
+            @click="focusCat = focusCat === item.category.id ? null : item.category.id"
+          >
+            <span class="d" :style="{ background: item.category.color }" />
+            {{ item.category.name }}
+          </button>
+        </div>
+
+        <div style="overflow-x: auto; margin-top: 20px;">
+          <svg
+            :viewBox="`0 0 ${totalW} ${svgHeight}`"
+            :width="totalW"
+            :height="svgHeight"
+            style="display: block;"
+          >
+            <!-- Y-axis grid lines + labels -->
+            <g>
+              <line
+                v-for="tick in yTicks" :key="`g${tick}`"
+                :x1="LEFT - 6" :y1="tickY(tick)"
+                :x2="totalW" :y2="tickY(tick)"
+                stroke="var(--rule-2)" stroke-width="1"
+              />
+              <text
+                v-for="tick in yTicks" :key="`l${tick}`"
+                :x="LEFT - 8" :y="tickY(tick) + 4"
+                text-anchor="end"
+                font-family="'Geist Mono', monospace"
+                font-size="9"
+                fill="var(--ink-3)"
+              >{{ tick }}h</text>
+            </g>
+
+            <!-- Stacked bars -->
+            <g v-for="week in weekBars" :key="week.startDate">
+              <template v-if="week.segments.length">
+                <rect
+                  v-for="seg in barSegments(week.segments, week.index)"
+                  :key="seg.catId"
+                  :x="seg.x" :y="seg.y"
+                  :width="BAR_W" :height="Math.max(seg.h, 0)"
+                  :fill="seg.color"
+                  :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
+                  rx="1"
+                />
+              </template>
+              <rect
+                v-else
+                :x="barX(week.index)" y="0"
+                :width="BAR_W" :height="CHART_H"
+                fill="var(--bg-3)" rx="1" opacity="0.5"
+              />
+            </g>
+
+            <!-- Current week indicator -->
+            <rect
+              :x="barX(CURRENT_WEEK_INDEX)" y="-5"
+              :width="BAR_W" height="4"
+              fill="var(--accent)" rx="1"
             />
+
+            <!-- Month labels -->
+            <text
+              v-for="label in monthLabels"
+              :key="label.month"
+              :x="label.x" :y="CHART_H + 18"
+              font-family="'Geist Mono', monospace"
+              font-size="9" fill="var(--ink-3)"
+              letter-spacing="0.08em"
+            >{{ label.month }}</text>
+          </svg>
+        </div>
+
+        <div class="chart-legend">
+          <div v-for="item in categoryBreakdown" :key="item.category.id" class="legend-item">
+            <span class="dot" :style="{ background: item.category.color }" />
+            {{ item.category.name }}
+            <span class="hours">{{ item.hours }}h/wk</span>
           </div>
         </div>
-      </v-card>
-    </v-col>
+      </div>
 
-    <!-- Projection -->
-    <v-col cols="12" lg="5">
-      <v-card class="pa-5 fill-height">
-        <div class="text-overline text-medium-emphasis">Projection</div>
-        <h2 class="text-h5 mb-4">Compound effect</h2>
-        <div class="d-grid ga-3">
-          <v-sheet
-            v-for="item in projectionSummaries"
-            :key="item.activity.id"
-            border
-            class="pa-4 rounded-lg"
-          >
-            <div class="d-flex align-center ga-3 mb-2">
-              <span class="color-dot" :style="{ backgroundColor: getActivityColor(item.activity.id) }" />
-              <strong>{{ item.activity.name }}</strong>
-            </div>
-            <div class="text-h5 font-weight-bold">{{ item.hours.toLocaleString() }}h</div>
-            <div class="text-body-2 text-medium-emphasis">{{ projectionInsight(item.hours) }}</div>
-          </v-sheet>
+      <!-- Sidebar -->
+      <div class="card" style="overflow: hidden;">
+        <div v-if="topCategory" class="big-stat">
+          <div class="big-stat-kicker">Top category</div>
+          <div class="big-stat-value" :style="{ color: topCategory.category.color }">
+            {{ topCategory.hours }}<span class="unit">h/wk</span>
+          </div>
+          <div class="big-stat-sub" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <span class="color-dot" :style="{ background: topCategory.category.color }" />
+            {{ topCategory.category.name }}
+          </div>
         </div>
-      </v-card>
-    </v-col>
 
-    <!-- Daily distribution -->
-    <v-col cols="12">
-      <v-card class="pa-5">
-        <div class="text-overline text-medium-emphasis">Daily Distribution</div>
-        <h2 class="text-h5 mb-4">Category load by day</h2>
-        <v-row dense>
-          <v-col v-for="day in categoryDailyHours" :key="day.day" cols="12" sm="6" md="4" lg>
-            <v-sheet border class="pa-4 rounded-xl fill-height">
-              <div class="text-subtitle-1 font-weight-medium mb-3">{{ day.day }}</div>
-              <div class="d-grid ga-2">
-                <div v-for="item in day.totals" :key="item.category.id">
-                  <div class="d-flex justify-space-between text-body-2 mb-1">
-                    <span>{{ item.category.name }}</span>
-                    <span>{{ item.hours }}h</span>
-                  </div>
-                  <v-progress-linear
-                    :color="item.category.color"
-                    :model-value="(item.hours / 24) * 100"
-                    height="8"
-                    rounded
-                  />
-                </div>
-              </div>
-            </v-sheet>
-          </v-col>
-        </v-row>
-      </v-card>
-    </v-col>
-  </v-row>
+        <div class="big-stat">
+          <div class="big-stat-kicker">Weeks assigned</div>
+          <div class="big-stat-value">{{ weeksAssigned }}<span class="unit">wk</span></div>
+          <div class="big-stat-sub">of 52 in 2026</div>
+        </div>
+
+        <div style="padding: 20px 28px;">
+          <div class="panel-sub" style="margin-bottom: 12px">Active template · breakdown</div>
+          <div class="year-totals">
+            <div v-for="item in categoryBreakdown" :key="item.category.id" class="total-row">
+              <span class="swatch" :style="{ background: item.category.color }" />
+              <span class="name">{{ item.category.name }}</span>
+              <span class="hrs">{{ item.hours }}h</span>
+              <span class="pct">{{ Math.round((item.hours / 168) * 100) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Takeaways strip -->
+    <div class="takeaways-grid" style="margin-top: 28px">
+      <div class="takeaway-cell">
+        <div class="takeaway-n">{{ allocatedHours }}<span class="takeaway-unit">h</span></div>
+        <div class="takeaway-body">Allocated per week in the active template.</div>
+      </div>
+      <div class="takeaway-cell">
+        <div class="takeaway-n" :style="{ color: topProjection ? 'var(--accent)' : 'var(--ink)' }">
+          {{ topProjection ? Math.round(topProjection.hours).toLocaleString() : '—' }}<span class="takeaway-unit">h</span>
+        </div>
+        <div class="takeaway-body">
+          <template v-if="topProjection">
+            Projected over {{ planner.settings.projectionDefaults.years }}yr in <strong>{{ topProjection.activity.name }}</strong>.
+            {{ projectionInsight(topProjection.hours) }}
+          </template>
+        </div>
+      </div>
+      <div class="takeaway-cell">
+        <div class="takeaway-n">{{ 168 - allocatedHours }}<span class="takeaway-unit">h</span></div>
+        <div class="takeaway-body">Unassigned hours remaining per week.</div>
+      </div>
+      <div class="takeaway-cell">
+        <div class="takeaway-n" :style="{ color: topCategory ? topCategory.category.color : 'var(--ink)' }">
+          {{ topCategory ? Math.round(topCategory.hours / 7 * 10) / 10 : '—' }}<span class="takeaway-unit">h/d</span>
+        </div>
+        <div class="takeaway-body">
+          Daily average in {{ topCategory?.category.name ?? '—' }}, the leading category.
+        </div>
+      </div>
+    </div>
+  </div>
 </template>

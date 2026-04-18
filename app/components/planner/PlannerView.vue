@@ -1,275 +1,485 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import type { Activity, Category } from '~/types/planner'
-import { DAYS } from '~/utils/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { usePlannerMaps } from '~/composables/usePlannerMaps'
+import { DAYS, DESIGN_COLORS, WEEK_DATES_2026, CURRENT_WEEK_INDEX, slotsToBlocks, formatHour } from '~/utils/planner'
 
-const HOUR_SLOTS = Array.from({ length: 24 }, (_, i) => i)
+const HOUR_PX = 28
 
 const planner = usePlannerStore()
-const { activeTemplate, appliedWeeks } = storeToRefs(planner)
-const { activityMap, getActivityColor } = usePlannerMaps()
+const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
 
-const selectedCategoryId = ref('')
-const selectedDayIndex = ref(0)
-const calendarMonth = ref(new Date().getMonth())
-const calendarYear = ref(new Date().getFullYear())
-const selectedWeekDates = ref<string[]>([])
+// ── Template switcher state ──
+const renamingId = ref<string | null>(null)
+const colorPickerFor = ref<string | null>(null)
+const newTemplateOpen = ref(false)
+const newTemplateName = ref('')
+const paintTool = ref(templates.value[0]?.id ?? '')
 
-const dayOptions = computed(() => DAYS.map((day, index) => ({ title: day, value: index })))
+// ── Drag state ──
+const draggingActivityId = ref<string | null>(null)
+const dropPreview = ref<{ activityId: string; day: number; start: number; end: number } | null>(null)
+const dragAnchor = ref<{ day: number; hour: number } | null>(null)
 
-const plannerCategories = computed(() =>
-  planner.categories.map(category => ({
-    category,
-    activity: planner.activities.find(a => a.categoryId === category.id),
-    hours: activeTemplate.value?.slots.reduce((total, slot) => {
-      const activity = activityMap.value.get(slot)
-      return total + (activity?.categoryId === category.id ? 1 : 0)
-    }, 0) ?? 0
-  })).filter((item): item is { category: Category, activity: Activity, hours: number } => Boolean(item.activity))
+// ── Computed ──
+const totalPlanned = computed(() =>
+  activeTemplate.value?.slots.filter(Boolean).length ?? 0
 )
 
-const selectedPlannerCategory = computed(() =>
-  plannerCategories.value.find(item => item.category.id === selectedCategoryId.value)
-)
-
-const visibleMonthWeekStartDates = computed(() => {
-  const monthStart = new Date(Date.UTC(calendarYear.value, calendarMonth.value, 1))
-  const monthEnd = new Date(Date.UTC(calendarYear.value, calendarMonth.value + 1, 0))
-  const offset = (monthStart.getUTCDay() + 6) % 7
-  const cursor = new Date(monthStart)
-  cursor.setUTCDate(monthStart.getUTCDate() - offset)
-
-  const weeks: string[] = []
-  while (cursor <= monthEnd || cursor.getUTCDate() <= 7) {
-    weeks.push(new Date(cursor).toISOString().slice(0, 10))
-    cursor.setUTCDate(cursor.getUTCDate() + 7)
-    if (weeks.length > 5) break
+const activityHours = computed(() => {
+  const h: Record<string, number> = {}
+  if (!activeTemplate.value) return h
+  for (const slot of activeTemplate.value.slots) {
+    if (slot) h[slot] = (h[slot] || 0) + 1
   }
-  return weeks
+  return h
 })
 
-const visibleMonthWeekStartDateSet = computed(() => new Set(visibleMonthWeekStartDates.value))
-
-const appliedWeekStartDates = computed(() =>
-  new Set(
-    appliedWeeks.value
-      .filter(week => week.templateId === activeTemplate.value?.id)
-      .map(week => week.startDate)
-  )
-)
-
-const selectedWeekLabels = computed(() =>
-  selectedWeekDates.value.slice().sort().map(date => {
-    const start = new Date(`${date}T00:00:00Z`)
-    const end = new Date(start)
-    end.setUTCDate(start.getUTCDate() + 6)
-    return {
-      date,
-      label: `${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })} – ${end.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`
+const hoursPerDay = computed(() => {
+  const totals = new Array(7).fill(0)
+  if (!activeTemplate.value) return totals
+  for (let d = 0; d < 7; d++) {
+    for (let h = 0; h < 24; h++) {
+      if (activeTemplate.value.slots[d * 24 + h]) totals[d]++
     }
-  })
-)
+  }
+  return totals
+})
 
-const selectedDayName = computed(() => DAYS[selectedDayIndex.value] ?? DAYS[0])
-const selectedDayHours = computed(() =>
-  activeTemplate.value?.slots.slice(selectedDayIndex.value * 24, (selectedDayIndex.value + 1) * 24).filter(Boolean).length ?? 0
-)
+const blocksByDay = computed(() => {
+  if (!activeTemplate.value) return {} as Record<number, ReturnType<typeof slotsToBlocks>>
+  const result: Record<number, ReturnType<typeof slotsToBlocks>> = {}
+  for (let d = 0; d < 7; d++) {
+    result[d] = slotsToBlocks(activeTemplate.value.slots, d)
+  }
+  return result
+})
 
-const getSlot = (dayIndex: number, hour: number) =>
-  activeTemplate.value?.slots[(dayIndex * 24) + hour] ?? ''
+const activityMap = computed(() => new Map(planner.activities.map(a => [a.id, a])))
 
-const isSelectedHour = (hour: number) =>
-  getSlot(selectedDayIndex.value, hour) === selectedPlannerCategory.value?.activity.id
+const templateColor = (t: typeof templates.value[0]) =>
+  t.color ?? '#5d6b7a'
 
-const getHourColor = (hour: number) => {
-  const slot = getSlot(selectedDayIndex.value, hour)
-  return slot ? getActivityColor(slot) : selectedPlannerCategory.value?.category.color ?? 'secondary'
+// ── Year painter ──
+const isPainting = ref(false)
+const hoverWeek = ref<number | null>(null)
+
+const appliedByDate = computed(() => {
+  const m = new Map<string, string>()
+  for (const w of appliedWeeks.value) m.set(w.startDate, w.templateId)
+  return m
+})
+
+const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// ── Drag from palette ──
+const onPaletteDragStart = (e: DragEvent, activityId: string) => {
+  draggingActivityId.value = activityId
+  e.dataTransfer!.effectAllowed = 'copy'
+  const act = activityMap.value.get(activityId)
+  if (!act) return
+  const ghost = document.createElement('div')
+  ghost.textContent = act.name
+  ghost.style.cssText = `position:fixed;top:-9999px;padding:6px 12px;background:${act.color};color:#fff;font:500 12px sans-serif;border-radius:3px;`
+  document.body.appendChild(ghost)
+  e.dataTransfer!.setDragImage(ghost, 40, 14)
+  setTimeout(() => ghost.remove(), 0)
 }
 
-const getHourVariant = (hour: number): 'flat' | 'tonal' | 'outlined' => {
-  if (isSelectedHour(hour)) return 'flat'
-  if (getSlot(selectedDayIndex.value, hour)) return 'tonal'
-  return 'outlined'
+const onPaletteDragEnd = () => {
+  draggingActivityId.value = null
+  dropPreview.value = null
+  dragAnchor.value = null
 }
 
-const toggleSlot = (hour: number) => {
-  const activityId = selectedPlannerCategory.value?.activity.id
-  if (!activityId) return
-  const current = getSlot(selectedDayIndex.value, hour)
-  planner.setSlot(selectedDayIndex.value, hour, current === activityId ? '' : activityId)
-}
-
-const applyTemplateToMonth = () => {
-  if (!activeTemplate.value) return
-  planner.setTemplateApplications(
-    activeTemplate.value.id,
-    selectedWeekDates.value,
-    visibleMonthWeekStartDates.value
-  )
-}
-
-watch(
-  [activeTemplate, () => planner.activities.map(a => a.id), () => planner.categories.map(c => c.id)],
-  () => {
-    if (!plannerCategories.value.some(item => item.category.id === selectedCategoryId.value)) {
-      selectedCategoryId.value = plannerCategories.value[0]?.category.id ?? ''
+const onSlotDragOver = (e: DragEvent, day: number, hour: number) => {
+  if (!draggingActivityId.value) return
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'copy'
+  const activityId = draggingActivityId.value
+  if (dropPreview.value?.day !== day) {
+    dragAnchor.value = { day, hour }
+    dropPreview.value = { activityId, day, start: hour, end: hour + 1 }
+  } else {
+    const anchor = dragAnchor.value?.day === day ? dragAnchor.value.hour : hour
+    dropPreview.value = {
+      activityId,
+      day,
+      start: Math.min(anchor, hour),
+      end: Math.max(anchor, hour) + 1
     }
-  },
-  { immediate: true }
-)
+  }
+}
 
-watch(
-  [calendarMonth, calendarYear, activeTemplate, appliedWeeks],
-  () => {
-    selectedWeekDates.value = visibleMonthWeekStartDates.value.filter(d => appliedWeekStartDates.value.has(d))
-  },
-  { immediate: true }
-)
+const onSlotDrop = (e: DragEvent, day: number, hour: number) => {
+  e.preventDefault()
+  const activityId = draggingActivityId.value
+  if (!activityId || !activeTemplate.value) return
+  const start = dropPreview.value?.day === day ? dropPreview.value.start : hour
+  const end   = dropPreview.value?.day === day ? dropPreview.value.end   : hour + 1
+  planner.applyTimeRange(activityId, [day], start, end)
+  dropPreview.value = null
+  draggingActivityId.value = null
+}
+
+const onGridDragLeave = (e: DragEvent, el: HTMLElement | null) => {
+  if (!el?.contains(e.relatedTarget as Node)) {
+    dropPreview.value = null
+    dragAnchor.value = null
+  }
+}
+
+const removeBlock = (day: number, start: number, end: number) => {
+  planner.clearTimeRange([day], start, end)
+}
+
+// ── Template management ──
+const handleNewTemplate = () => {
+  if (!newTemplateName.value.trim()) return
+  planner.createTemplate()
+  const newId = planner.templates[0]?.id
+  if (newId) planner.renameActiveTemplate(newTemplateName.value.trim())
+  newTemplateName.value = ''
+  newTemplateOpen.value = false
+}
+
+// ── Year painter ──
+const paintWeek = (weekIdx: number) => {
+  const startDate = WEEK_DATES_2026[weekIdx]
+  if (!startDate) return
+  if (paintTool.value === 'erase') {
+    planner.setWeekTemplate(startDate, null)
+  } else {
+    planner.setWeekTemplate(startDate, paintTool.value)
+  }
+}
+
+const gridRef = ref<HTMLElement | null>(null)
 </script>
 
 <template>
-  <v-row dense>
-    <!-- Left: Week Application -->
-    <v-col cols="12" lg="5">
-      <v-card class="pa-5 fill-height">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <div>
-            <div class="text-overline text-medium-emphasis">Week Application</div>
-            <h2 class="text-h5 mb-0">Apply to calendar</h2>
-          </div>
-          <v-icon icon="mdi-calendar-range" />
-        </div>
-
-        <p class="text-body-2 text-medium-emphasis mb-4">
-          Select week-start dates to apply this template. Only Monday-start weeks are selectable.
+  <div class="view">
+    <!-- Page header -->
+    <div class="page-head">
+      <div>
+        <div class="page-kicker">01 · Planner</div>
+        <h1 class="page-title">Design your <em>ideal</em> week,<br>hour by hour.</h1>
+        <p class="page-lede">
+          Drag any category from the palette onto the grid to paint your week.
+          Click an existing block to remove it.
         </p>
+      </div>
+      <div style="text-align: right">
+        <div class="page-kicker" style="margin-bottom: 6px">Planned this week</div>
+        <div style="font-family: var(--font-display); font-size: 64px; font-style: italic; line-height: 0.9; letter-spacing: -0.02em">
+          {{ totalPlanned }}<span style="font-family: var(--font-mono); font-style: normal; font-size: 12px; color: var(--ink-3); margin-left: 6px; letter-spacing: 0.1em; text-transform: uppercase">/ 168 hrs</span>
+        </div>
+      </div>
+    </div>
 
-        <v-date-picker
-          v-model="selectedWeekDates"
-          color="primary"
-          multiple
-          rounded="xl"
-          show-adjacent-months
-          show-week
-          :allowed-dates="(date: unknown) => visibleMonthWeekStartDateSet.has(new Date(date as string | Date).toISOString().slice(0, 10))"
-          :events="visibleMonthWeekStartDates"
-          event-color="secondary"
-          :month="calendarMonth"
-          :year="calendarYear"
-          @update:month="calendarMonth = Number($event)"
-          @update:year="calendarYear = Number($event)"
+    <!-- Template switcher -->
+    <div class="template-switch" style="margin-bottom: 20px">
+      <span class="panel-sub" style="margin-right: 6px">Template</span>
+
+      <div v-for="t in templates" :key="t.id" style="position: relative">
+        <!-- Rename input -->
+        <input
+          v-if="renamingId === t.id"
+          class="timely-input"
+          autofocus
+          :value="t.name"
+          style="height: 30px; width: 140px; font-size: 12px"
+          @blur="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
+          @keydown.enter="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
+          @keydown.escape="renamingId = null"
         />
+        <button
+          v-else
+          class="template-pill"
+          :data-active="t.id === activeTemplate?.id"
+          :style="t.id === activeTemplate?.id ? { background: templateColor(t), borderColor: templateColor(t), color: '#fff' } : {}"
+          @click="planner.selectTemplate(t.id)"
+          @dblclick="renamingId = t.id"
+          :title="`Click to select · double-click to rename`"
+        >
+          <span
+            :style="{ width: '12px', height: '12px', borderRadius: '3px', background: templateColor(t), border: '1px solid rgba(0,0,0,0.15)', cursor: 'pointer', flexShrink: 0, boxShadow: t.id === activeTemplate?.id ? 'inset 0 0 0 1.5px rgba(255,255,255,0.7)' : 'none' }"
+            :title="`Change color`"
+            @click.stop="colorPickerFor = colorPickerFor === t.id ? null : t.id"
+          />
+          <span class="t-name">{{ t.name }}</span>
+          <span style="font-family: var(--font-mono); font-size: 10px; opacity: 0.7">{{ Object.values(activityHours).reduce((a, b) => a + b, 0) === 0 ? 0 : (t.slots.filter(Boolean).length) }}h</span>
+        </button>
 
-        <div v-if="selectedWeekLabels.length" class="d-flex flex-wrap ga-2 mt-4">
-          <v-chip
-            v-for="week in selectedWeekLabels"
-            :key="week.date"
-            color="primary"
-            size="small"
-            variant="tonal"
-            closable
-            @click:close="selectedWeekDates = selectedWeekDates.filter(d => d !== week.date)"
+        <!-- Color picker -->
+        <div v-if="colorPickerFor === t.id" class="color-pop" style="top: 34px; left: 0">
+          <button
+            v-for="col in DESIGN_COLORS"
+            :key="col.id"
+            :style="{ background: col.bg }"
+            :data-active="t.color === col.bg"
+            @click="planner.setTemplateColor(t.id, col.bg); colorPickerFor = null"
+          />
+        </div>
+      </div>
+
+      <!-- New template -->
+      <div v-if="newTemplateOpen" style="display: flex; gap: 4px">
+        <input
+          class="timely-input"
+          autofocus
+          placeholder="e.g. Launch week"
+          v-model="newTemplateName"
+          style="height: 30px; width: 150px; font-size: 12px"
+          @keydown.enter="handleNewTemplate"
+          @keydown.escape="newTemplateOpen = false; newTemplateName = ''"
+        />
+        <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
+      </div>
+      <button v-else class="template-pill-add" @click="newTemplateOpen = true">
+        + New template
+      </button>
+
+      <button
+        v-if="templates.length > 1"
+        class="btn btn-xs btn-ghost btn-danger"
+        style="margin-left: auto"
+        @click="() => { if (confirm(`Delete template '${activeTemplate?.name}'?`)) planner.deleteTemplate(activeTemplate?.id ?? '') }"
+      >
+        Delete "{{ activeTemplate?.name }}"
+      </button>
+    </div>
+
+    <!-- Planner grid -->
+    <div class="planner-grid">
+      <!-- Left: Palette -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Palette</h2>
+          <span class="panel-sub">Drag onto grid</span>
+        </div>
+
+        <div class="palette">
+          <div
+            v-for="activity in planner.activities"
+            :key="activity.id"
+            class="palette-chip"
+            draggable="true"
+            :style="{ background: activity.color, color: '#fff' }"
+            @dragstart="onPaletteDragStart($event, activity.id)"
+            @dragend="onPaletteDragEnd"
           >
-            {{ week.label }}
-          </v-chip>
+            <span>{{ activity.name }}</span>
+            <span class="palette-chip-hrs">{{ activityHours[activity.id] || 0 }}h</span>
+          </div>
         </div>
 
-        <v-btn block class="mt-4" color="primary" @click="applyTemplateToMonth">
-          <v-icon start icon="mdi-check" />
-          Apply selected weeks
-        </v-btn>
-      </v-card>
-    </v-col>
+        <div class="divider-label">How it works</div>
+        <ul style="margin: 0; padding-left: 16px; font-size: 11.5px; color: var(--ink-3); line-height: 1.7">
+          <li>Drag a chip onto any slot to add a block.</li>
+          <li>Drag across multiple slots to paint a range.</li>
+          <li>Click an existing block to remove it.</li>
+        </ul>
 
-    <!-- Right: Day Editor -->
-    <v-col cols="12" lg="7">
-      <v-card class="pa-5">
-        <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-2">
-          <div>
-            <div class="text-overline text-medium-emphasis">Day Editor</div>
-            <h2 class="text-h5 mb-0">{{ selectedDayName }}</h2>
+        <div class="divider-label" style="margin-top: 16px">Quick actions</div>
+        <button
+          class="btn btn-xs"
+          @click="() => { if (confirm('Clear entire week?')) DAYS.forEach((_, d) => planner.clearTimeRange([d], 0, 24)) }"
+        >
+          Clear week
+        </button>
+      </div>
+
+      <!-- Right: Week grid -->
+      <div
+        class="week"
+        ref="gridRef"
+        @dragleave="onGridDragLeave($event, gridRef)"
+      >
+        <!-- Header -->
+        <div class="week-head">
+          <div class="corner" />
+          <div v-for="(day, di) in DAYS" :key="day" class="wday">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span class="day-name">{{ day }}</span>
+              <button
+                style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-4);opacity:0;transition:opacity 0.1s;font-size:10px"
+                :title="`Clear ${day}`"
+                @click="planner.clearTimeRange([di], 0, 24)"
+                @mouseenter="($event.target as HTMLElement).style.opacity='1'"
+                @mouseleave="($event.target as HTMLElement).style.opacity='0'"
+              >✕</button>
+            </div>
+            <span class="day-hours-label">
+              {{ hoursPerDay[di] }}<span class="unit">hr</span>
+            </span>
           </div>
-          <v-chip v-if="selectedPlannerCategory" :color="selectedPlannerCategory.category.color" variant="tonal">
-            {{ selectedPlannerCategory.category.name }} · {{ selectedDayHours }}h planned
-          </v-chip>
         </div>
 
-        <p class="text-body-2 text-medium-emphasis mb-4">
-          Select a category below, then click the hours you want to assign.
-        </p>
-
-        <v-sheet border class="pa-3 rounded-xl mb-4">
-          <div class="text-subtitle-2 mb-3">Categories</div>
-          <div class="category-palette">
-            <v-btn
-              v-for="item in plannerCategories"
-              :key="item.category.id"
-              :color="item.category.color"
-              :variant="selectedCategoryId === item.category.id ? 'flat' : 'tonal'"
-              class="text-none"
-              @click="selectedCategoryId = item.category.id"
+        <!-- Body -->
+        <div class="week-body">
+          <!-- Hour labels -->
+          <div class="hour-col">
+            <div
+              v-for="h in 24"
+              :key="h - 1"
+              class="hour-cell"
+              :class="{ major: (h - 1) % 3 === 0 }"
             >
-              {{ item.category.name }}
-              <span class="text-caption ml-2 opacity-70">{{ item.hours }}h</span>
-            </v-btn>
+              {{ (h - 1) % 3 === 0 ? formatHour(h - 1) : '' }}
+            </div>
           </div>
-        </v-sheet>
 
-        <v-row dense class="mb-3">
-          <v-col cols="12" sm="5">
-            <v-select v-model="selectedDayIndex" :items="dayOptions" label="Day" />
-          </v-col>
-        </v-row>
+          <!-- Day columns -->
+          <div
+            v-for="(_, dayIndex) in DAYS"
+            :key="dayIndex"
+            class="day-col"
+          >
+            <!-- Slot cells (drop targets) -->
+            <div
+              v-for="hour in 24"
+              :key="hour - 1"
+              class="slot"
+              :class="{
+                major: (hour - 1) % 3 === 0,
+                'drop-preview': dropPreview?.day === dayIndex && (hour - 1) >= dropPreview.start && (hour - 1) < dropPreview.end
+              }"
+              @dragover="onSlotDragOver($event, dayIndex, hour - 1)"
+              @drop="onSlotDrop($event, dayIndex, hour - 1)"
+            />
 
-        <v-sheet border class="pa-3 rounded-xl">
-          <div class="d-flex align-center justify-space-between mb-3">
-            <div class="text-subtitle-1 font-weight-medium">{{ selectedDayName }}</div>
-            <div class="text-body-2 text-medium-emphasis">{{ selectedDayHours }}h planned</div>
-          </div>
-          <div class="hour-grid">
-            <v-btn
-              v-for="hour in HOUR_SLOTS"
-              :key="`${selectedDayName}-${hour}`"
-              :color="getHourColor(hour)"
-              :disabled="!selectedPlannerCategory"
-              :variant="getHourVariant(hour)"
-              class="text-caption"
-              size="small"
-              @click="toggleSlot(hour)"
+            <!-- Blocks -->
+            <div
+              v-for="block in blocksByDay[dayIndex]"
+              :key="`${dayIndex}-${block.start}-${block.activityId}`"
+              class="block"
+              :class="{
+                'block-sm': (block.end - block.start) * HOUR_PX < 40,
+                'block-xs': (block.end - block.start) * HOUR_PX < 24,
+              }"
+              :style="{
+                top: `${block.start * HOUR_PX}px`,
+                height: `${(block.end - block.start) * HOUR_PX - 2}px`,
+                background: activityMap.get(block.activityId)?.color ?? '#999',
+                color: '#fff',
+              }"
+              :title="`${activityMap.get(block.activityId)?.name} — ${formatHour(block.start)} to ${formatHour(block.end)}`"
+              @click="removeBlock(dayIndex, block.start, block.end)"
             >
-              {{ String(hour).padStart(2, '0') }}
-            </v-btn>
+              <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
+              <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
+              <span class="block-x">✕</span>
+            </div>
+
+            <!-- Drop ghost -->
+            <div
+              v-if="dropPreview?.day === dayIndex"
+              class="block"
+              style="background: repeating-linear-gradient(45deg, var(--accent) 0 4px, var(--accent-soft) 4px 8px); opacity: 0.5; pointer-events: none; color: #fff; border: 1px dashed rgba(255,255,255,0.6)"
+              :style="{
+                top: `${dropPreview.start * HOUR_PX}px`,
+                height: `${(dropPreview.end - dropPreview.start) * HOUR_PX - 2}px`,
+              }"
+            >
+              <div class="block-title" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em">
+                {{ dropPreview.end - dropPreview.start }}h
+              </div>
+            </div>
           </div>
-        </v-sheet>
-      </v-card>
-    </v-col>
-  </v-row>
+        </div>
+      </div>
+    </div>
+
+    <!-- Week stats -->
+    <div class="week-stats">
+      <div v-for="activity in planner.activities" :key="activity.id" class="stat">
+        <div class="stat-label">
+          <span :style="{ width: '8px', height: '8px', borderRadius: '2px', background: activity.color }" />
+          {{ activity.name }}
+        </div>
+        <div class="stat-value">
+          {{ activityHours[activity.id] || 0 }}<span class="unit">hr</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Year painter -->
+    <div class="year-paint">
+      <div class="year-paint-head">
+        <div>
+          <div class="page-kicker">Assign templates</div>
+          <h2 class="title">Paint your <em>2026</em> — week by week.</h2>
+          <p class="page-lede" style="margin-top: 10px">
+            Choose a template below, then click or drag across weeks to assign it.
+            Unassigned weeks show as empty.
+          </p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); text-align: right">
+          {{ appliedWeeks.length }} / 52 assigned
+        </div>
+      </div>
+
+      <div class="paint-tools" style="margin-bottom: 18px">
+        <span class="panel-sub" style="margin-right: 6px">Paint with</span>
+        <button
+          v-for="t in templates"
+          :key="t.id"
+          class="paint-tool"
+          :data-active="paintTool === t.id"
+          @click="paintTool = t.id"
+        >
+          <span class="dot" :style="{ background: templateColor(t) }" />
+          {{ t.name }}
+        </button>
+        <button
+          class="paint-tool"
+          :data-active="paintTool === 'erase'"
+          @click="paintTool = 'erase'"
+        >
+          <span class="dot" style="background: var(--bg-3); border: 1px dashed var(--ink-3)" />
+          Erase
+        </button>
+      </div>
+
+      <div class="year-months">
+        <div v-for="m in MONTHS" :key="m" class="m">{{ m }}</div>
+      </div>
+
+      <div
+        class="year-grid"
+        @mouseup="isPainting = false"
+        @mouseleave="isPainting = false"
+      >
+        <div
+          v-for="(startDate, wi) in WEEK_DATES_2026"
+          :key="wi"
+          class="week-cell"
+          :class="{ empty: !appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
+          :style="appliedByDate.get(startDate)
+            ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) }
+            : {}"
+          :title="appliedByDate.get(startDate)
+            ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}`
+            : `Week ${wi + 1} · unassigned`"
+          @mousedown="isPainting = true; paintWeek(wi)"
+          @mouseenter="hoverWeek = wi; isPainting && paintWeek(wi)"
+          @mouseleave="hoverWeek = null"
+        >
+          <span class="wnum">{{ wi + 1 }}</span>
+        </div>
+      </div>
+
+      <div v-if="hoverWeek !== null" style="margin-top: 14px; font-size: 13px; color: var(--ink-2)">
+        <span class="panel-sub" style="margin-right: 8px">Week {{ hoverWeek + 1 }}</span>
+        <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek])">
+          {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek])!)?.name }}
+        </span>
+        <span v-else style="color: var(--ink-3); font-style: italic">
+          unassigned — click to paint
+        </span>
+      </div>
+    </div>
+  </div>
 </template>
-
-<style scoped>
-.category-palette {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.hour-grid {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-@media (min-width: 960px) {
-  .hour-grid {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1280px) {
-  .hour-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-}
-</style>
