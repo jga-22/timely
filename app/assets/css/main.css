@@ -437,11 +437,10 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .slot {
   height: 28px;
   border-top: 1px solid transparent;
+  cursor: pointer;
 }
 .slot.major { border-top: 1px solid var(--rule-2); }
-
-/* Crosshair cursor when a brush is active */
-.week.has-brush .slot { cursor: crosshair; }
+.week.selecting .slot { cursor: ns-resize; }
 
 /* ── Selection highlight ── */
 .slot-selection {
@@ -473,7 +472,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   user-select: none;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.block { pointer-events: none; }
+.block { pointer-events: auto; cursor: default; }
 
 /* ── Block action buttons ── */
 .block-actions {

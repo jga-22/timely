@@ -25,8 +25,12 @@ const isSelecting = ref(false)
 const showMenu = ref(false)
 const menuPos = ref({ x: 0, y: 0 })
 
-// ── Slot hover (for block action buttons) ──
-const hoveredCell = ref<{ day: number; hour: number } | null>(null)
+// ── Block hover (keyed by day·start·end to survive re-renders) ──
+const hoveredBlockKey = ref<string | null>(null)
+
+function blockKey(day: number, start: number, end: number) {
+  return `${day}-${start}-${end}`
+}
 
 // ── Computed ──
 const totalPlanned = computed(() =>
@@ -60,9 +64,7 @@ const activityMap = computed(() => new Map(planner.activities.map(a => [a.id, a]
 const templateColor = (t: typeof templates.value[0]) => t.color ?? '#5d6b7a'
 
 function isBlockHovered(day: number, block: { start: number; end: number }) {
-  return hoveredCell.value?.day === day
-    && hoveredCell.value.hour >= block.start
-    && hoveredCell.value.hour < block.end
+  return hoveredBlockKey.value === blockKey(day, block.start, block.end)
 }
 
 // ── Selection logic ──
@@ -344,8 +346,7 @@ function handleNewTemplate() {
             :data-day="dayIndex"
             :data-hour="hour - 1"
             @mousedown.prevent="startSelection(dayIndex, hour - 1)"
-            @mouseenter="extendSelection(dayIndex, hour - 1); hoveredCell = { day: dayIndex, hour: hour - 1 }"
-            @mouseleave="hoveredCell = null"
+            @mouseenter="extendSelection(dayIndex, hour - 1)"
           />
 
           <!-- Blocks (visual layer) -->
@@ -362,26 +363,23 @@ function handleNewTemplate() {
               height: `${(block.end - block.start) * HOUR_PX - 2}px`,
               background: activityMap.get(block.activityId)?.color ?? '#999',
               color: '#fff',
-              pointerEvents: 'none',
             }"
+            @mouseenter="hoveredBlockKey = blockKey(dayIndex, block.start, block.end)"
+            @mouseleave="hoveredBlockKey = null"
+            @mousedown.stop
           >
             <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
             <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
 
-            <!-- Action buttons — re-enabled via pointer-events: auto -->
             <div v-if="isBlockHovered(dayIndex, block)" class="block-actions">
               <button
                 class="block-action-btn"
                 title="Edit"
-                style="pointer-events: auto"
-                @mousedown.stop
                 @click.stop="editBlock(dayIndex, block.start, block.end, $event)"
               >✎</button>
               <button
                 class="block-action-btn"
                 title="Delete"
-                style="pointer-events: auto"
-                @mousedown.stop
                 @click.stop="deleteBlock(dayIndex, block.start, block.end)"
               >✕</button>
             </div>
