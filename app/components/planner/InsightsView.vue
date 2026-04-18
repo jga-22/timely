@@ -5,7 +5,6 @@ import {
   WEEK_DATES_2026,
   CURRENT_WEEK_INDEX,
   aggregateTemplateByCategory,
-  aggregateTemplate,
   projectionInsight,
   getTemplateById
 } from '~/utils/planner'
@@ -13,11 +12,19 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 
 const planner = usePlannerStore()
-const { activeTemplateActivityTotals, yearlyProjectionHours, activeTemplateCategoryTotals } = storeToRefs(planner)
+const { yearlyProjectionHours, activeTemplateCategoryTotals } = storeToRefs(planner)
 const { activityMap, categoryMap } = usePlannerMaps()
 
 const focusCat = ref<string | null>(null)
+const viewMode = ref<'weekly' | 'monthly'>('weekly')
 
+onMounted(() => {
+  if (window.innerWidth < 768) viewMode.value = 'monthly'
+})
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// ── Per-week bars ──
 const weekBars = computed(() =>
   WEEK_DATES_2026.map((startDate, i) => {
     const applied = planner.appliedWeeks.find(w => w.startDate === startDate)
@@ -34,6 +41,34 @@ const weekBars = computed(() =>
     return { startDate, index: i, segments }
   })
 )
+
+// ── Per-month bars (avg hrs/week within each month) ──
+type Segment = { categoryId: string; hours: number; color: string }
+const monthBars = computed(() => {
+  const buckets: Array<typeof weekBars.value> = Array.from({ length: 12 }, () => [])
+  for (const week of weekBars.value) {
+    const m = new Date(week.startDate).getUTCMonth()
+    buckets[m].push(week)
+  }
+  return MONTHS.map((month, m) => {
+    const weeks = buckets[m]
+    if (!weeks.length) return { month, segments: [] as Segment[] }
+    const catTotals = new Map<string, { hours: number; color: string }>()
+    for (const week of weeks) {
+      for (const seg of week.segments) {
+        const e = catTotals.get(seg.categoryId)
+        if (e) e.hours += seg.hours
+        else catTotals.set(seg.categoryId, { hours: seg.hours, color: seg.color })
+      }
+    }
+    const segments: Segment[] = []
+    for (const [categoryId, { hours, color }] of catTotals) {
+      segments.push({ categoryId, hours: hours / weeks.length, color })
+    }
+    segments.sort((a, b) => b.hours - a.hours)
+    return { month, segments }
+  })
+})
 
 const categoryBreakdown = computed(() =>
   Array.from(activeTemplateCategoryTotals.value.entries())
@@ -59,20 +94,26 @@ const projectionSummaries = computed(() =>
 
 const topProjection = computed(() => projectionSummaries.value[0] ?? null)
 
-// SVG chart constants
+// ── SVG constants ──
 const CHART_H = 180
 const BOTTOM = 28
-const BAR_W = 12
-const BAR_GAP = 4
 const MAX_HOURS = 168
 const LEFT = 44
 
-const totalW = LEFT + WEEK_DATES_2026.length * (BAR_W + BAR_GAP)
+// Weekly
+const BAR_W = 12
+const BAR_GAP = 4
+const totalW_weekly = LEFT + WEEK_DATES_2026.length * (BAR_W + BAR_GAP)
+
+// Monthly
+const BAR_W_M = 28
+const BAR_GAP_M = 10
+const totalW_monthly = LEFT + 12 * (BAR_W_M + BAR_GAP_M)
+
+const totalW = computed(() => viewMode.value === 'monthly' ? totalW_monthly : totalW_weekly)
 const svgHeight = CHART_H + BOTTOM + 16
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-const monthLabels = computed(() => {
+const weeklyMonthLabels = computed(() => {
   const labels: Array<{ month: string; x: number }> = []
   let lastMonth = -1
   WEEK_DATES_2026.forEach((date, i) => {
@@ -85,14 +126,19 @@ const monthLabels = computed(() => {
   return labels
 })
 
-function barX(i: number) { return LEFT + i * (BAR_W + BAR_GAP) }
+function weekBarX(i: number) { return LEFT + i * (BAR_W + BAR_GAP) }
+function monthBarX(i: number) { return LEFT + i * (BAR_W_M + BAR_GAP_M) }
 
-function barSegments(segments: Array<{ categoryId: string; hours: number; color: string }>, weekIndex: number) {
-  const result: Array<{ x: number; y: number; h: number; color: string; catId: string }> = []
+function buildSegments(
+  segs: Segment[],
+  x: number,
+  bw: number
+): Array<{ x: number; y: number; h: number; w: number; color: string; catId: string }> {
+  const result = []
   let stackedH = 0
-  for (const seg of segments) {
+  for (const seg of segs) {
     const h = (seg.hours / MAX_HOURS) * CHART_H
-    result.push({ x: barX(weekIndex), y: CHART_H - stackedH - h, h, color: seg.color, catId: seg.categoryId })
+    result.push({ x, y: CHART_H - stackedH - h, h, w: bw, color: seg.color, catId: seg.categoryId })
     stackedH += h
   }
   return result
@@ -100,6 +146,9 @@ function barSegments(segments: Array<{ categoryId: string; hours: number; color:
 
 const yTicks = [0, 42, 84, 126, 168]
 function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
+
+// Current month index for monthly indicator
+const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]).getUTCMonth()
 </script>
 
 <template>
@@ -115,7 +164,15 @@ function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
     <div class="insights-grid">
       <!-- Chart panel -->
       <div class="card chart-card">
-        <div class="panel-sub" style="margin-bottom: 16px">52-week calendar · category stacking</div>
+        <div class="chart-toolbar">
+          <div class="panel-sub">
+            {{ viewMode === 'monthly' ? '12-month overview · avg hrs/week' : '52-week calendar · category stacking' }}
+          </div>
+          <div class="view-toggle">
+            <button :data-active="viewMode === 'monthly'" @click="viewMode = 'monthly'">Monthly</button>
+            <button :data-active="viewMode === 'weekly'" @click="viewMode = 'weekly'">Weekly</button>
+          </div>
+        </div>
 
         <div class="cat-focus-strip">
           <button :data-active="focusCat === null" @click="focusCat = null">
@@ -132,7 +189,7 @@ function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
           </button>
         </div>
 
-        <div style="overflow-x: auto; margin-top: 20px;">
+        <div class="chart-scroll">
           <svg
             :viewBox="`0 0 ${totalW} ${svgHeight}`"
             :width="totalW"
@@ -157,43 +214,80 @@ function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
               >{{ tick }}h</text>
             </g>
 
-            <!-- Stacked bars -->
-            <g v-for="week in weekBars" :key="week.startDate">
-              <template v-if="week.segments.length">
+            <!-- Monthly view -->
+            <template v-if="viewMode === 'monthly'">
+              <g v-for="(bar, mi) in monthBars" :key="bar.month">
+                <template v-if="bar.segments.length">
+                  <rect
+                    v-for="seg in buildSegments(bar.segments, monthBarX(mi), BAR_W_M)"
+                    :key="seg.catId"
+                    :x="seg.x" :y="seg.y"
+                    :width="seg.w" :height="Math.max(seg.h, 0)"
+                    :fill="seg.color"
+                    :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
+                    rx="2"
+                  />
+                </template>
                 <rect
-                  v-for="seg in barSegments(week.segments, week.index)"
-                  :key="seg.catId"
-                  :x="seg.x" :y="seg.y"
-                  :width="BAR_W" :height="Math.max(seg.h, 0)"
-                  :fill="seg.color"
-                  :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
-                  rx="1"
+                  v-else
+                  :x="monthBarX(mi)" y="0"
+                  :width="BAR_W_M" :height="CHART_H"
+                  fill="var(--bg-3)" rx="2" opacity="0.5"
                 />
-              </template>
+                <!-- Month label -->
+                <text
+                  :x="monthBarX(mi) + BAR_W_M / 2" :y="CHART_H + 18"
+                  text-anchor="middle"
+                  font-family="'Geist Mono', monospace"
+                  font-size="9" fill="var(--ink-3)"
+                  letter-spacing="0.06em"
+                >{{ bar.month }}</text>
+              </g>
+              <!-- Current month indicator -->
               <rect
-                v-else
-                :x="barX(week.index)" y="0"
-                :width="BAR_W" :height="CHART_H"
-                fill="var(--bg-3)" rx="1" opacity="0.5"
+                :x="monthBarX(CURRENT_MONTH)" y="-5"
+                :width="BAR_W_M" height="4"
+                fill="var(--accent)" rx="1"
               />
-            </g>
+            </template>
 
-            <!-- Current week indicator -->
-            <rect
-              :x="barX(CURRENT_WEEK_INDEX)" y="-5"
-              :width="BAR_W" height="4"
-              fill="var(--accent)" rx="1"
-            />
-
-            <!-- Month labels -->
-            <text
-              v-for="label in monthLabels"
-              :key="label.month"
-              :x="label.x" :y="CHART_H + 18"
-              font-family="'Geist Mono', monospace"
-              font-size="9" fill="var(--ink-3)"
-              letter-spacing="0.08em"
-            >{{ label.month }}</text>
+            <!-- Weekly view -->
+            <template v-else>
+              <g v-for="week in weekBars" :key="week.startDate">
+                <template v-if="week.segments.length">
+                  <rect
+                    v-for="seg in buildSegments(week.segments, weekBarX(week.index), BAR_W)"
+                    :key="seg.catId"
+                    :x="seg.x" :y="seg.y"
+                    :width="seg.w" :height="Math.max(seg.h, 0)"
+                    :fill="seg.color"
+                    :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
+                    rx="1"
+                  />
+                </template>
+                <rect
+                  v-else
+                  :x="weekBarX(week.index)" y="0"
+                  :width="BAR_W" :height="CHART_H"
+                  fill="var(--bg-3)" rx="1" opacity="0.5"
+                />
+              </g>
+              <!-- Current week indicator -->
+              <rect
+                :x="weekBarX(CURRENT_WEEK_INDEX)" y="-5"
+                :width="BAR_W" height="4"
+                fill="var(--accent)" rx="1"
+              />
+              <!-- Month labels -->
+              <text
+                v-for="label in weeklyMonthLabels"
+                :key="label.month"
+                :x="label.x" :y="CHART_H + 18"
+                font-family="'Geist Mono', monospace"
+                font-size="9" fill="var(--ink-3)"
+                letter-spacing="0.08em"
+              >{{ label.month }}</text>
+            </template>
           </svg>
         </div>
 
