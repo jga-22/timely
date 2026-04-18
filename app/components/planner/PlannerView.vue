@@ -86,13 +86,19 @@ function extendSelection(day: number, hour: number) {
   }
 }
 
+function openMenuAt(clientX: number, clientY: number) {
+  const small = window.innerWidth <= 480
+  menuPos.value = {
+    x: small ? 16 : Math.min(clientX + 16, window.innerWidth - 248),
+    y: small ? window.innerHeight - 380 : Math.min(clientY - 10, window.innerHeight - 360),
+  }
+  showMenu.value = true
+}
+
 function finishSelection(e: MouseEvent) {
   if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
   isSelecting.value = false
-  const x = Math.min(e.clientX + 16, window.innerWidth - 248)
-  const y = Math.min(e.clientY - 10, window.innerHeight - 360)
-  menuPos.value = { x, y }
-  showMenu.value = true
+  openMenuAt(e.clientX, e.clientY)
 }
 
 function applyActivity(activityId: string) {
@@ -115,17 +121,17 @@ function closeMenu() {
 // ── Block actions ──
 function editBlock(day: number, start: number, end: number, e: MouseEvent) {
   selection.value = { day, start, end }
-  const x = Math.min(e.clientX + 16, window.innerWidth - 248)
-  const y = Math.min(e.clientY - 10, window.innerHeight - 360)
-  menuPos.value = { x, y }
-  showMenu.value = true
+  openMenuAt(e.clientX, e.clientY)
 }
 
 function deleteBlock(day: number, start: number, end: number) {
   planner.clearTimeRange([day], start, end)
 }
 
-// ── Touch selection ──
+// ── Touch: tap-to-select (no drag — keeps page scroll free) ──
+const touchOrigin = ref<{ x: number; y: number } | null>(null)
+const TOUCH_SLOP = 8
+
 function slotFromPoint(x: number, y: number): { day: number; hour: number } | null {
   const el = document.elementFromPoint(x, y) as HTMLElement | null
   const target = el?.closest<HTMLElement>('[data-day][data-hour]')
@@ -134,28 +140,41 @@ function slotFromPoint(x: number, y: number): { day: number; hour: number } | nu
 }
 
 function onTouchStart(e: TouchEvent) {
-  e.preventDefault()
   const t = e.touches[0]
-  const s = slotFromPoint(t.clientX, t.clientY)
-  if (s) startSelection(s.day, s.hour)
+  touchOrigin.value = { x: t.clientX, y: t.clientY }
 }
 
-function onTouchMove(e: TouchEvent) {
-  e.preventDefault()
-  const t = e.touches[0]
-  const s = slotFromPoint(t.clientX, t.clientY)
-  if (s) extendSelection(s.day, s.hour)
+function onTouchMove(_e: TouchEvent) {
+  // intentionally empty — browser handles scroll natively
 }
 
 function onTouchEnd(e: TouchEvent) {
-  if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
-  isSelecting.value = false
+  if (!touchOrigin.value) return
   const t = e.changedTouches[0]
-  const isMobile = window.innerWidth <= 480
-  const x = isMobile ? 16 : Math.min(t.clientX + 16, window.innerWidth - 248)
-  const y = isMobile ? window.innerHeight - 380 : Math.min(t.clientY - 10, window.innerHeight - 360)
-  menuPos.value = { x, y }
-  showMenu.value = true
+  const moved =
+    Math.abs(t.clientX - touchOrigin.value.x) > TOUCH_SLOP ||
+    Math.abs(t.clientY - touchOrigin.value.y) > TOUCH_SLOP
+  touchOrigin.value = null
+  if (moved) return // was a scroll gesture, not a tap
+
+  // Did the user tap on an existing block?
+  const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null
+  const blockEl = el?.closest<HTMLElement>('[data-block-day]')
+  if (blockEl) {
+    selection.value = {
+      day: +blockEl.dataset.blockDay!,
+      start: +blockEl.dataset.blockStart!,
+      end: +blockEl.dataset.blockEnd!,
+    }
+    openMenuAt(t.clientX, t.clientY)
+    return
+  }
+
+  // Tap on an empty slot → select that single hour
+  const slot = slotFromPoint(t.clientX, t.clientY)
+  if (!slot) return
+  selection.value = { day: slot.day, start: slot.hour, end: slot.hour + 1 }
+  openMenuAt(t.clientX, t.clientY)
 }
 
 // Capture mouseup globally so releasing outside the grid still opens the menu
@@ -284,9 +303,9 @@ function handleNewTemplate() {
     <div
       class="week"
       :class="{ selecting: isSelecting }"
-      @touchstart="onTouchStart"
-      @touchmove="onTouchMove"
-      @touchend="onTouchEnd"
+      @touchstart.passive="onTouchStart"
+      @touchmove.passive="onTouchMove"
+      @touchend.passive="onTouchEnd"
     >
       <!-- Header row -->
       <div class="week-head">
@@ -360,6 +379,9 @@ function handleNewTemplate() {
               'block-sm': (block.end - block.start) * HOUR_PX < 40,
               'block-xs': (block.end - block.start) * HOUR_PX < 24,
             }"
+            :data-block-day="dayIndex"
+            :data-block-start="block.start"
+            :data-block-end="block.end"
             :style="{
               top: `${block.start * HOUR_PX}px`,
               height: `${(block.end - block.start) * HOUR_PX - 2}px`,
