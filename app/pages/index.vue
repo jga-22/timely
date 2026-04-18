@@ -10,22 +10,32 @@ const COLORS = ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80', '#34d399'
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const TOTAL_WEEK_HOURS = 24 * 7
 
+const navItems = [
+  { id: 'planner', label: 'Planner', icon: 'mdi-calendar-week' },
+  { id: 'insights', label: 'Insights', icon: 'mdi-chart-box-outline' },
+  { id: 'setup', label: 'Legend', icon: 'mdi-palette-outline' }
+] as const
+
 useHead({
   title: 'Timely | Weekly Planner',
   meta: [
     {
       name: 'description',
-      content: 'Paint a weekly routine, inspect the breakdown, and manage your categories and activities locally.'
+      content: 'Define weekly templates, apply them to selected weeks, and inspect your time distribution.'
     }
   ]
 })
 
 const planner = usePlannerStore()
-const { activeTemplate, activeTemplateActivityTotals, yearlyProjectionHours } = storeToRefs(planner)
+const { activeTemplate, activeTemplateActivityTotals, appliedWeeks, templates, yearlyProjectionHours } = storeToRefs(planner)
 
 const activeTab = ref<TabId>('planner')
-const selectedActivityId = ref('')
-const isPainting = ref(false)
+const selectedCategoryId = ref('')
+const selectedDayIndex = ref(0)
+const templateNameDraft = ref('')
+const calendarMonth = ref(new Date().getMonth())
+const calendarYear = ref(new Date().getFullYear())
+const selectedWeekDates = ref<string[]>([])
 
 const newCategoryName = ref('')
 const newCategoryColor = ref(COLORS[4])
@@ -33,22 +43,32 @@ const newActivityName = ref('')
 const newActivityCode = ref('')
 const newActivityCategoryId = ref('')
 
-const templateOptions = computed(() => planner.templates.map(template => ({
-  id: template.id,
-  name: template.name
+const templateOptions = computed(() => templates.value.map(template => ({
+  title: template.name,
+  value: template.id
 })))
+
+const dayOptions = computed(() => DAYS.map((day, index) => ({ title: day, value: index })))
+const categoryOptions = computed(() => planner.categories.map(category => ({ title: category.name, value: category.id })))
+const canDeleteTemplate = computed(() => templates.value.length > 1)
 
 const activityMap = computed(() => new Map(planner.activities.map(activity => [activity.id, activity])))
 const categoryMap = computed(() => new Map(planner.categories.map(category => [category.id, category])))
 
-const groupedActivities = computed(() =>
+const plannerCategories = computed(() =>
   planner.categories.map(category => ({
     category,
-    activities: planner.activities.filter(activity => activity.categoryId === category.id)
-  })).filter(group => group.activities.length > 0)
+    activity: planner.activities.find(activity => activity.categoryId === category.id),
+    hours: activeTemplate.value?.slots.reduce((total, slot) => {
+      const activity = activityMap.value.get(slot)
+      return total + (activity?.categoryId === category.id ? 1 : 0)
+    }, 0) ?? 0
+  })).filter((item): item is { category: Category, activity: Activity, hours: number } => Boolean(item.activity))
 )
 
-const selectedActivity = computed(() => activityMap.value.get(selectedActivityId.value))
+const selectedPlannerCategory = computed(() =>
+  plannerCategories.value.find(item => item.category.id === selectedCategoryId.value)
+)
 
 const allocatedHours = computed(() =>
   activeTemplate.value?.slots.reduce((total, slot) => total + (slot ? 1 : 0), 0) ?? 0
@@ -120,6 +140,65 @@ const projectionSummaries = computed(() =>
     .sort((left, right) => right.hours - left.hours)
 )
 
+const selectedDayName = computed(() => DAYS[selectedDayIndex.value] ?? DAYS[0])
+const selectedDayHours = computed(() =>
+  activeTemplate.value?.slots.slice(selectedDayIndex.value * 24, (selectedDayIndex.value + 1) * 24).filter(Boolean).length ?? 0
+)
+
+const visibleMonthWeekStartDates = computed(() => {
+  const monthStart = new Date(Date.UTC(calendarYear.value, calendarMonth.value, 1))
+  const monthEnd = new Date(Date.UTC(calendarYear.value, calendarMonth.value + 1, 0))
+  const offset = (monthStart.getUTCDay() + 6) % 7
+  const cursor = new Date(monthStart)
+  cursor.setUTCDate(monthStart.getUTCDate() - offset)
+
+  const weeks: string[] = []
+
+  while (cursor <= monthEnd || cursor.getUTCDate() <= 7) {
+    const weekStart = new Date(cursor)
+    weeks.push(weekStart.toISOString().slice(0, 10))
+
+    cursor.setUTCDate(cursor.getUTCDate() + 7)
+
+    if (weeks.length > 5) {
+      break
+    }
+  }
+
+  return weeks
+})
+
+const visibleMonthWeekStartDateSet = computed(() => new Set(visibleMonthWeekStartDates.value))
+const appliedWeekStartDates = computed(() =>
+  new Set(
+    appliedWeeks.value
+      .filter(week => week.templateId === activeTemplate.value?.id)
+      .map(week => week.startDate)
+  )
+)
+const visibleMonthLabel = computed(() =>
+  new Date(Date.UTC(calendarYear.value, calendarMonth.value, 1)).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  })
+)
+const selectedWeekLabels = computed(() =>
+  selectedWeekDates.value
+    .slice()
+    .sort()
+    .map((date) => {
+      const weekStart = new Date(`${date}T00:00:00Z`)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setUTCDate(weekStart.getUTCDate() + 6)
+
+      return {
+        date,
+        label: `${weekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })} - ${weekEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`
+      }
+    })
+)
+
 const projectionInsight = (hours: number) => {
   if (hours > 8000) {
     return 'Mastery-level repetition.'
@@ -145,29 +224,49 @@ const getActivityColor = (activityId: string) =>
   ?? categoryMap.value.get(activityMap.value.get(activityId)?.categoryId ?? '')?.color
   ?? '#d6d3d1'
 
-const getActivityCode = (activityId: string) => activityMap.value.get(activityId)?.shortCode ?? ''
-
 const getSlot = (dayIndex: number, hour: number) => activeTemplate.value?.slots[(dayIndex * 24) + hour] ?? ''
+const isSelectedHour = (hour: number) => getSlot(selectedDayIndex.value, hour) === selectedPlannerCategory.value?.activity.id
+const getHourColor = (hour: number) => getSlot(selectedDayIndex.value, hour) ? getActivityColor(getSlot(selectedDayIndex.value, hour)) : selectedPlannerCategory.value?.category.color ?? 'secondary'
+const getHourVariant = (hour: number) => isSelectedHour(hour) ? 'flat' : getSlot(selectedDayIndex.value, hour) ? 'tonal' : 'outlined'
 
-const stopPainting = () => {
-  isPainting.value = false
+const saveTemplateName = () => {
+  planner.renameActiveTemplate(templateNameDraft.value)
+  templateNameDraft.value = activeTemplate.value?.name ?? ''
 }
 
-const paintCell = (dayIndex: number, hour: number) => {
-  planner.setSlot(dayIndex, hour, selectedActivityId.value)
-}
+const toggleSlot = (hour: number) => {
+  const activityId = selectedPlannerCategory.value?.activity.id
 
-const handlePointerDown = (dayIndex: number, hour: number) => {
-  isPainting.value = true
-  paintCell(dayIndex, hour)
-}
-
-const handlePointerEnter = (dayIndex: number, hour: number) => {
-  if (!isPainting.value) {
+  if (!activityId) {
     return
   }
 
-  paintCell(dayIndex, hour)
+  const currentSlot = getSlot(selectedDayIndex.value, hour)
+  planner.setSlot(selectedDayIndex.value, hour, currentSlot === activityId ? '' : activityId)
+}
+
+const applyTemplateToMonth = () => {
+  if (!activeTemplate.value) {
+    return
+  }
+
+  planner.setTemplateApplications(
+    activeTemplate.value.id,
+    selectedWeekDates.value,
+    visibleMonthWeekStartDates.value
+  )
+}
+
+const deleteActiveTemplate = () => {
+  if (!activeTemplate.value) {
+    return
+  }
+
+  const deleted = planner.deleteTemplate(activeTemplate.value.id)
+
+  if (deleted) {
+    templateNameDraft.value = planner.activeTemplate?.name ?? ''
+  }
 }
 
 const addCategory = () => {
@@ -185,807 +284,469 @@ const addActivity = () => {
 const removeActivity = (activityId: string) => {
   planner.removeActivity(activityId)
 
-  if (selectedActivityId.value === activityId) {
-    selectedActivityId.value = planner.activities[0]?.id ?? ''
+  if (selectedPlannerCategory.value?.activity.id === activityId) {
+    selectedCategoryId.value = plannerCategories.value[0]?.category.id ?? ''
   }
 }
 
-watch(() => planner.activities.map(activity => activity.id), (activityIds) => {
-  if (!activityIds.includes(selectedActivityId.value)) {
-    selectedActivityId.value = activityIds[0] ?? ''
-  }
-
+watch([activeTemplate, () => planner.activities.map(activity => activity.id), () => planner.categories.map(category => category.id)], () => {
   if (!newActivityCategoryId.value) {
     newActivityCategoryId.value = planner.categories[0]?.id ?? ''
   }
+
+  if (!plannerCategories.value.some(item => item.category.id === selectedCategoryId.value)) {
+    selectedCategoryId.value = plannerCategories.value[0]?.category.id ?? ''
+  }
+
+  templateNameDraft.value = activeTemplate.value?.name ?? ''
 }, { immediate: true })
 
-onMounted(() => {
-  window.addEventListener('pointerup', stopPainting)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('pointerup', stopPainting)
-})
+watch([calendarMonth, calendarYear, activeTemplate, appliedWeeks], () => {
+  selectedWeekDates.value = visibleMonthWeekStartDates.value
+    .filter(startDate => appliedWeekStartDates.value.has(startDate))
+}, { immediate: true })
 </script>
 
 <template>
-  <main class="planner-page">
-    <section class="hero panel">
-      <div>
-        <h1>Design your ideal week.</h1>
-        <p class="hero-copy">Paint recurring time blocks, see the breakdown instantly, and inspect what that routine compounds into over time.</p>
+  <v-container class="py-6" max-width="1240">
+    <v-card class="pa-6 mb-4">
+      <div class="text-center">
+        <div class="text-overline text-medium-emphasis mb-2">Timely</div>
+        <h1 class="text-h3 text-md-h2 font-weight-bold mb-3">Design your ideal week.</h1>
+        <p class="text-body-1 text-medium-emphasis mx-auto hero-copy">
+          Define a clean weekly template, choose where it applies, and inspect how your time compounds.
+        </p>
       </div>
 
-      <div class="hero-stats">
-        <article>
-          <span>Templates</span>
-          <strong>{{ planner.templates.length }}</strong>
-        </article>
-        <article>
-          <span>Allocated</span>
-          <strong>{{ allocatedHours }} / {{ TOTAL_WEEK_HOURS }}h</strong>
-        </article>
-        <article>
-          <span>Projection</span>
-          <strong>{{ planner.settings.projectionDefaults.years }} years</strong>
-        </article>
-      </div>
-    </section>
-
-    <section class="toolbar panel">
-      <div class="tab-row">
-        <button
-          v-for="tab in [
-            { id: 'planner', label: 'Planner' },
-            { id: 'insights', label: 'Insights' },
-            { id: 'setup', label: 'Legend' }
-          ]"
-          :key="tab.id"
-          class="tab-button"
-          :class="{ active: activeTab === tab.id }"
-          type="button"
-          @click="activeTab = tab.id as TabId"
+      <div class="d-flex justify-center mt-6">
+        <v-btn-toggle
+          v-model="activeTab"
+          color="primary"
+          density="comfortable"
+          mandatory
+          rounded="xl"
         >
-          {{ tab.label }}
-        </button>
-      </div>
-
-      <div class="template-row">
-        <select
-          :value="activeTemplate?.id ?? ''"
-          @change="planner.selectTemplate(($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="option in templateOptions" :key="option.id" :value="option.id">
-            {{ option.name }}
-          </option>
-        </select>
-        <button type="button" @click="planner.createTemplate()">New</button>
-        <button type="button" @click="planner.duplicateTemplate(activeTemplate?.id ?? '')">Duplicate</button>
-        <button type="button" @click="planner.clearActiveTemplate()">Clear</button>
-      </div>
-    </section>
-
-    <section v-if="activeTab === 'planner'" class="planner-layout">
-      <aside class="panel palette-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Paint Mode</p>
-            <h2>Select activity</h2>
-          </div>
-          <button
-            class="erase-button"
-            :class="{ active: !selectedActivityId }"
-            type="button"
-            aria-label="Erase"
-            title="Erase"
-            @click="selectedActivityId = ''"
+          <v-btn
+            v-for="tab in navItems"
+            :key="tab.id"
+            :value="tab.id"
+            size="large"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M18.2 3.8a2.75 2.75 0 0 1 3.89 3.89l-9.27 9.27a3 3 0 0 1-2.12.88H7.8a3 3 0 0 1-2.12-.88l-2-2a2.75 2.75 0 0 1 0-3.89l9.27-9.27a2.75 2.75 0 0 1 3.89 0Zm-3.12 1.41L5.1 15.2a.75.75 0 0 0 0 1.06l1.65 1.65a1 1 0 0 0 .7.29h2.84a1 1 0 0 0 .7-.29l3.02-3.02-5.65-5.66Zm.7 11.8h5.47a.75.75 0 0 1 0 1.5h-6.97l1.5-1.5Z" fill="currentColor" />
-            </svg>
-          </button>
-        </div>
+            <v-icon :icon="tab.icon" start />
+            {{ tab.label }}
+          </v-btn>
+        </v-btn-toggle>
+      </div>
+    </v-card>
 
-        <div class="selected-card">
-          <span class="swatch large" :style="{ backgroundColor: selectedActivity ? getActivityColor(selectedActivity.id) : '#d6d3d1' }" />
-          <div>
-            <strong>{{ selectedActivity?.name ?? 'Erase mode' }}</strong>
-            <p>{{ selectedActivity?.shortCode ?? 'Blank cells' }}</p>
-          </div>
-        </div>
+    <v-card class="pa-4 mb-4">
+      <v-row class="align-center" dense>
+        <v-col cols="12" md="4">
+          <v-select
+            :items="templateOptions"
+            :model-value="activeTemplate?.id ?? ''"
+            item-title="title"
+            item-value="value"
+            label="Template"
+            @update:model-value="planner.selectTemplate(String($event ?? ''))"
+          />
+        </v-col>
+        <v-col cols="6" md="2">
+          <v-btn block color="primary" variant="tonal" @click="planner.createTemplate()">New</v-btn>
+        </v-col>
+        <v-col cols="6" md="2">
+          <v-btn block variant="tonal" @click="planner.duplicateTemplate(activeTemplate?.id ?? '')">Duplicate</v-btn>
+        </v-col>
+        <v-col cols="6" md="2">
+          <v-btn block color="error" variant="text" :disabled="!canDeleteTemplate" @click="deleteActiveTemplate()">Delete</v-btn>
+        </v-col>
+        <v-col cols="6" md="2">
+          <v-btn block variant="text" @click="planner.clearActiveTemplate()">Clear</v-btn>
+        </v-col>
+      </v-row>
+    </v-card>
 
-        <section v-for="group in groupedActivities" :key="group.category.id" class="palette-group">
-          <p class="group-title">{{ group.category.name }}</p>
-
-          <button
-            v-for="activity in group.activities"
-            :key="activity.id"
-            class="palette-item"
-            :class="{ active: selectedActivityId === activity.id }"
-            type="button"
-            @click="selectedActivityId = activity.id"
-          >
-            <span class="swatch" :style="{ backgroundColor: getActivityColor(activity.id) }" />
-            <span>{{ activity.name }}</span>
-            <strong>{{ activity.shortCode }}</strong>
-          </button>
-        </section>
-      </aside>
-
-      <section class="panel grid-panel">
-        <div class="grid-header">
-          <div class="time-label">Time</div>
-          <div v-for="day in DAYS" :key="day" class="day-label">{{ day }}</div>
-        </div>
-
-        <div class="grid-body">
-          <template v-for="hour in HOURS" :key="hour">
-            <div class="hour-label">{{ String(hour).padStart(2, '0') }}:00</div>
-
-            <button
-              v-for="(day, dayIndex) in DAYS"
-              :key="`${day}-${hour}`"
-              class="grid-cell"
-              :style="{
-                backgroundColor: getSlot(dayIndex, hour) ? getActivityColor(getSlot(dayIndex, hour)) : '#f8f4ee',
-                borderColor: getSlot(dayIndex, hour) ? getActivityColor(getSlot(dayIndex, hour)) : 'rgba(65, 53, 38, 0.12)',
-                color: getSlot(dayIndex, hour) ? 'rgba(47, 36, 24, 0.72)' : 'transparent'
-              }"
-              type="button"
-              @pointerdown.prevent="handlePointerDown(dayIndex, hour)"
-              @pointerenter="handlePointerEnter(dayIndex, hour)"
-            >
-              {{ getActivityCode(getSlot(dayIndex, hour)) }}
-            </button>
-          </template>
-        </div>
-      </section>
-    </section>
-
-    <section v-else-if="activeTab === 'insights'" class="insights-layout">
-      <article class="panel stat-panel">
-        <span>Time allocated</span>
-        <strong>{{ allocatedHours }} / {{ TOTAL_WEEK_HOURS }}h</strong>
-        <div class="progress-track">
-          <div class="progress-bar" :style="{ width: `${(allocatedHours / TOTAL_WEEK_HOURS) * 100}%` }" />
-        </div>
-      </article>
-
-      <article class="panel stat-panel">
-        <span>Unallocated</span>
-        <strong>{{ TOTAL_WEEK_HOURS - allocatedHours }}h</strong>
-        <p>Open space left in the week.</p>
-      </article>
-
-      <article class="panel chart-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Activities</p>
-            <h2>Weekly breakdown</h2>
-          </div>
-        </div>
-
-        <div class="bar-list">
-          <div v-for="item in activityBreakdown" :key="item.activity.id" class="bar-item">
-            <div class="bar-copy">
-              <span>{{ item.activity.name }}</span>
-              <strong>{{ item.hours }}h</strong>
-            </div>
-            <div class="bar-track">
-              <div class="bar-fill" :style="{ width: `${(item.hours / TOTAL_WEEK_HOURS) * 100}%`, backgroundColor: getActivityColor(item.activity.id) }" />
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel chart-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Categories</p>
-            <h2>Daily distribution</h2>
-          </div>
-        </div>
-
-        <div class="daily-chart">
-          <div v-for="day in categoryDailyHours" :key="day.day" class="day-bar">
-            <div class="stack">
-              <div
-                v-for="item in day.totals"
-                :key="item.category.id"
-                class="stack-segment"
-                :style="{ height: `${(item.hours / 24) * 100}%`, backgroundColor: item.category.color ?? '#d6d3d1' }"
-                :title="`${item.category.name}: ${item.hours}h`"
-              >
-                <span v-if="item.hours >= 2">{{ item.hours }}</span>
-              </div>
-            </div>
-            <strong>{{ day.day }}</strong>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel chart-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Projection</p>
-            <h2>Compound effect</h2>
-          </div>
-        </div>
-
-        <div class="projection-grid">
-          <div v-for="item in projectionSummaries" :key="item.activity.id" class="projection-card">
-            <div class="projection-title">
-              <span class="swatch" :style="{ backgroundColor: getActivityColor(item.activity.id) }" />
-              <strong>{{ item.activity.name }}</strong>
-            </div>
-            <div class="projection-hours">{{ item.hours.toLocaleString() }}h</div>
-            <p>{{ projectionInsight(item.hours) }}</p>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel chart-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Summary</p>
-            <h2>Category totals</h2>
-          </div>
-        </div>
-
-        <ul class="summary-list">
-          <li v-for="item in categoryBreakdown" :key="item.category.id">
-            <div class="summary-label">
-              <span class="swatch" :style="{ backgroundColor: item.category.color ?? '#d6d3d1' }" />
-              <span>{{ item.category.name }}</span>
-            </div>
-            <strong>{{ item.hours }}h</strong>
-          </li>
-        </ul>
-      </article>
-    </section>
-
-    <section v-else class="setup-layout">
-      <article class="panel setup-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Activities</p>
-            <h2>Manage activities</h2>
-          </div>
-        </div>
-
-        <form class="setup-form" @submit.prevent="addActivity()">
-          <input v-model.trim="newActivityName" type="text" placeholder="Activity name" required>
-          <input v-model.trim="newActivityCode" type="text" maxlength="3" placeholder="Code" required>
-          <select v-model="newActivityCategoryId" required>
-            <option disabled value="">Category</option>
-            <option v-for="category in planner.categories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
-          <button type="submit">Add activity</button>
-        </form>
-
-        <div class="setup-list">
-          <div v-for="activity in planner.activities" :key="activity.id" class="setup-item">
-            <div class="setup-item-copy">
-              <span class="swatch" :style="{ backgroundColor: getActivityColor(activity.id) }" />
+    <template v-if="activeTab === 'planner'">
+      <v-row dense>
+        <v-col cols="12" lg="5">
+          <v-card class="pa-5 fill-height">
+            <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <strong>{{ activity.name }}</strong>
-                <p>{{ activity.shortCode }} · {{ categoryMap.get(activity.categoryId)?.name }}</p>
+                <div class="text-overline text-medium-emphasis">Weekly Setup</div>
+                <h2 class="text-h5 mb-0">Template and application</h2>
+              </div>
+              <v-icon icon="mdi-calendar-range" />
+            </div>
+
+            <v-text-field
+              v-model="templateNameDraft"
+              label="Template name"
+              placeholder="Weekly template name"
+              class="mb-4"
+              @blur="saveTemplateName()"
+              @keyup.enter="saveTemplateName()"
+            />
+
+            <v-text-field
+              :model-value="visibleMonthLabel"
+              label="Visible month"
+              class="mb-4"
+              readonly
+            />
+
+            <div class="text-body-2 text-medium-emphasis mb-3">
+              Pick the week starts you want to activate in this month. Only valid week-start dates are selectable.
+            </div>
+
+            <v-date-picker
+              v-model="selectedWeekDates"
+              color="primary"
+              multiple
+              rounded="xl"
+              show-adjacent-months
+              show-week
+              :allowed-dates="(date: unknown) => visibleMonthWeekStartDateSet.has(new Date(date as string | Date).toISOString().slice(0, 10))"
+              :events="visibleMonthWeekStartDates"
+              event-color="secondary"
+              :month="calendarMonth"
+              :year="calendarYear"
+              @update:month="calendarMonth = Number($event)"
+              @update:year="calendarYear = Number($event)"
+            />
+
+            <div class="d-flex flex-wrap ga-2 mt-4">
+              <v-chip
+                v-for="week in selectedWeekLabels"
+                :key="week.date"
+                color="primary"
+                size="small"
+                variant="tonal"
+              >
+                {{ week.label }}
+              </v-chip>
+            </div>
+
+            <v-btn block class="mt-4" color="primary" @click="applyTemplateToMonth()">Apply selected weeks</v-btn>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" lg="7">
+          <v-card class="pa-5">
+            <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4">
+              <div>
+                <div class="text-overline text-medium-emphasis">Daily Setup</div>
+                <h2 class="text-h5 mb-0">{{ selectedDayName }}</h2>
+              </div>
+              <v-chip
+                v-if="selectedPlannerCategory"
+                :color="selectedPlannerCategory.category.color"
+                variant="tonal"
+              >
+                {{ selectedPlannerCategory.category.name }} · {{ selectedDayHours }}h planned
+              </v-chip>
+            </div>
+
+            <div class="text-body-2 text-medium-emphasis mb-4">
+              Select a category first, then choose the hours you want for the selected day.
+            </div>
+
+            <v-sheet border class="pa-3 rounded-xl mb-4">
+              <div class="text-subtitle-2 mb-3">Categories</div>
+              <div class="category-strip">
+                <v-btn
+                  v-for="item in plannerCategories"
+                  :key="item.category.id"
+                  :color="item.category.color"
+                  :variant="selectedCategoryId === item.category.id ? 'flat' : 'tonal'"
+                  class="justify-space-between text-none"
+                  min-width="180"
+                  @click="selectedCategoryId = item.category.id"
+                >
+                  <span>{{ item.category.name }}</span>
+                  <span class="text-caption ml-3">{{ item.hours }}h</span>
+                </v-btn>
+              </div>
+            </v-sheet>
+
+            <v-row dense class="mb-2">
+              <v-col cols="12" sm="5">
+                <v-select
+                  v-model="selectedDayIndex"
+                  :items="dayOptions"
+                  item-title="title"
+                  item-value="value"
+                  label="Day"
+                />
+              </v-col>
+            </v-row>
+
+            <v-sheet border class="pa-3 rounded-xl">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div>
+                  <div class="text-subtitle-1 font-weight-medium">{{ selectedDayName }}</div>
+                  <div class="text-body-2 text-medium-emphasis">{{ selectedDayHours }}h planned</div>
+                </div>
+              </div>
+
+              <div class="hour-grid">
+                <v-btn
+                  v-for="hour in HOURS"
+                  :key="`${selectedDayName}-${hour}`"
+                  :color="getHourColor(hour)"
+                  :disabled="!selectedPlannerCategory"
+                  :variant="getHourVariant(hour)"
+                  class="text-caption"
+                  size="small"
+                  @click="toggleSlot(hour)"
+                >
+                  {{ String(hour).padStart(2, '0') }}
+                </v-btn>
+              </div>
+            </v-sheet>
+          </v-card>
+        </v-col>
+      </v-row>
+    </template>
+
+    <template v-else-if="activeTab === 'insights'">
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Time allocated</div>
+            <div class="text-h4 font-weight-bold mb-4">{{ allocatedHours }} / {{ TOTAL_WEEK_HOURS }}h</div>
+            <v-progress-linear
+              :model-value="(allocatedHours / TOTAL_WEEK_HOURS) * 100"
+              color="primary"
+              height="10"
+              rounded
+            />
+            <div class="text-body-2 text-medium-emphasis mt-4">
+              {{ TOTAL_WEEK_HOURS - allocatedHours }}h still open in the current week.
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="6">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Category totals</div>
+            <h2 class="text-h5 mb-4">Weekly breakdown</h2>
+            <v-list class="py-0" lines="one">
+              <v-list-item v-for="item in categoryBreakdown" :key="item.category.id" class="px-0">
+                <template #prepend>
+                  <span class="color-dot mr-3" :style="{ backgroundColor: item.category.color ?? '#d6d3d1' }" />
+                </template>
+                <v-list-item-title>{{ item.category.name }}</v-list-item-title>
+                <template #append>
+                  <strong>{{ item.hours }}h</strong>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" lg="7">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Activities</div>
+            <h2 class="text-h5 mb-4">Weekly breakdown</h2>
+            <div class="d-grid ga-4">
+              <div v-for="item in activityBreakdown" :key="item.activity.id">
+                <div class="d-flex justify-space-between text-body-2 mb-2">
+                  <span>{{ item.activity.name }}</span>
+                  <strong>{{ item.hours }}h</strong>
+                </div>
+                <v-progress-linear
+                  :color="getActivityColor(item.activity.id)"
+                  :model-value="(item.hours / TOTAL_WEEK_HOURS) * 100"
+                  height="10"
+                  rounded
+                />
               </div>
             </div>
-            <button
-              type="button"
-              class="ghost-button"
-              :aria-label="`Delete ${activity.name}`"
-              :title="`Delete ${activity.name}`"
-              @click="removeActivity(activity.id)"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 3.75A2.25 2.25 0 0 1 11.25 1.5h1.5A2.25 2.25 0 0 1 15 3.75V4.5h3.75a.75.75 0 0 1 0 1.5H18l-.8 12.06A2.25 2.25 0 0 1 14.96 20.25H9.04A2.25 2.25 0 0 1 6.8 18.06L6 6H5.25a.75.75 0 0 1 0-1.5H9v-.75Zm1.5.75h3v-.75a.75.75 0 0 0-.75-.75h-1.5a.75.75 0 0 0-.75.75v.75Zm-2.2 1.5.8 12a.75.75 0 0 0 .74.7h5.92a.75.75 0 0 0 .74-.7l.8-12H8.3Zm2.95 2.25a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm3.75 0a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Z" fill="currentColor" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
+          </v-card>
+        </v-col>
 
-      <article class="panel setup-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Categories</p>
-            <h2>Manage categories</h2>
-          </div>
-        </div>
-
-        <form class="setup-form" @submit.prevent="addCategory()">
-          <input v-model.trim="newCategoryName" type="text" placeholder="Category name" required>
-          <div class="color-row">
-            <button
-              v-for="color in COLORS"
-              :key="color"
-              class="color-chip"
-              :class="{ active: newCategoryColor === color }"
-              :style="{ backgroundColor: color }"
-              type="button"
-              @click="newCategoryColor = color"
-            />
-          </div>
-          <button type="submit">Add category</button>
-        </form>
-
-        <div class="setup-list">
-          <div v-for="category in planner.categories" :key="category.id" class="setup-item">
-            <div class="setup-item-copy">
-              <span class="swatch" :style="{ backgroundColor: category.color ?? '#d6d3d1' }" />
-              <strong>{{ category.name }}</strong>
+        <v-col cols="12" lg="5">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Projection</div>
+            <h2 class="text-h5 mb-4">Compound effect</h2>
+            <div class="d-grid ga-3">
+              <v-sheet
+                v-for="item in projectionSummaries"
+                :key="item.activity.id"
+                border
+                class="pa-4 rounded-lg"
+              >
+                <div class="d-flex align-center ga-3 mb-2">
+                  <span class="color-dot" :style="{ backgroundColor: getActivityColor(item.activity.id) }" />
+                  <strong>{{ item.activity.name }}</strong>
+                </div>
+                <div class="text-h5 font-weight-bold">{{ item.hours.toLocaleString() }}h</div>
+                <div class="text-body-2 text-medium-emphasis">{{ projectionInsight(item.hours) }}</div>
+              </v-sheet>
             </div>
-          </div>
-        </div>
-      </article>
-    </section>
-  </main>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12">
+          <v-card class="pa-5">
+            <div class="text-overline text-medium-emphasis">Daily distribution</div>
+            <h2 class="text-h5 mb-4">Category load by day</h2>
+            <v-row dense>
+              <v-col v-for="day in categoryDailyHours" :key="day.day" cols="12" sm="6" md="4" lg>
+                <v-sheet border class="pa-4 rounded-xl fill-height">
+                  <div class="text-subtitle-1 font-weight-medium mb-3">{{ day.day }}</div>
+                  <div class="d-grid ga-2">
+                    <div v-for="item in day.totals" :key="item.category.id">
+                      <div class="d-flex justify-space-between text-body-2 mb-1">
+                        <span>{{ item.category.name }}</span>
+                        <span>{{ item.hours }}h</span>
+                      </div>
+                      <v-progress-linear
+                        :color="item.category.color"
+                        :model-value="(item.hours / 24) * 100"
+                        height="8"
+                        rounded
+                      />
+                    </div>
+                  </div>
+                </v-sheet>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+      </v-row>
+    </template>
+
+    <template v-else>
+      <v-row dense>
+        <v-col cols="12" lg="6">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Activities</div>
+            <h2 class="text-h5 mb-4">Manage activities</h2>
+
+            <v-form @submit.prevent="addActivity()">
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field v-model.trim="newActivityName" label="Activity name" required />
+                </v-col>
+                <v-col cols="12" sm="4">
+                  <v-text-field v-model.trim="newActivityCode" label="Code" maxlength="3" required />
+                </v-col>
+                <v-col cols="12" sm="8">
+                  <v-select
+                    v-model="newActivityCategoryId"
+                    :items="categoryOptions"
+                    item-title="title"
+                    item-value="value"
+                    label="Category"
+                    required
+                  />
+                </v-col>
+                <v-col cols="12">
+                  <v-btn block color="primary" type="submit">Add activity</v-btn>
+                </v-col>
+              </v-row>
+            </v-form>
+
+            <v-list class="mt-4">
+              <v-list-item v-for="activity in planner.activities" :key="activity.id" class="px-0">
+                <template #prepend>
+                  <span class="color-dot mr-3" :style="{ backgroundColor: getActivityColor(activity.id) }" />
+                </template>
+                <v-list-item-title>{{ activity.name }}</v-list-item-title>
+                <v-list-item-subtitle>{{ activity.shortCode }} · {{ categoryMap.get(activity.categoryId)?.name }}</v-list-item-subtitle>
+                <template #append>
+                  <v-btn
+                    :aria-label="`Delete ${activity.name}`"
+                    :title="`Delete ${activity.name}`"
+                    color="error"
+                    icon="mdi-delete-outline"
+                    variant="text"
+                    @click="removeActivity(activity.id)"
+                  />
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" lg="6">
+          <v-card class="pa-5 fill-height">
+            <div class="text-overline text-medium-emphasis">Categories</div>
+            <h2 class="text-h5 mb-4">Manage categories</h2>
+
+            <v-form @submit.prevent="addCategory()">
+              <v-text-field v-model.trim="newCategoryName" class="mb-4" label="Category name" required />
+
+              <div class="text-subtitle-2 mb-2">Color</div>
+              <div class="d-flex flex-wrap ga-2 mb-4">
+                <v-btn
+                  v-for="color in COLORS"
+                  :key="color"
+                  :color="color"
+                  :icon="newCategoryColor === color ? 'mdi-check' : undefined"
+                  min-width="36"
+                  size="small"
+                  variant="flat"
+                  @click="newCategoryColor = color"
+                />
+              </div>
+
+              <v-btn block color="primary" type="submit">Add category</v-btn>
+            </v-form>
+
+            <v-list class="mt-4">
+              <v-list-item v-for="category in planner.categories" :key="category.id" class="px-0">
+                <template #prepend>
+                  <span class="color-dot mr-3" :style="{ backgroundColor: category.color ?? '#d6d3d1' }" />
+                </template>
+                <v-list-item-title>{{ category.name }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+      </v-row>
+    </template>
+  </v-container>
 </template>
 
 <style scoped>
-.planner-page {
-  width: min(1320px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 1.5rem 0 3rem;
+.hero-copy {
+  max-width: 680px;
 }
 
-.panel,
-.planner-layout,
-.insights-layout,
-.setup-layout,
-.hero-stats,
-.toolbar,
-.tab-row,
-.template-row,
-.palette-group,
-.bar-list,
-.setup-list {
+.category-strip {
   display: grid;
-  gap: 1rem;
-}
-
-.panel {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
-}
-
-.hero,
-.toolbar {
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: 1rem;
-}
-
-.hero h1,
-.hero p,
-.panel-heading h2,
-.panel-heading p,
-.stat-panel p,
-.projection-card p,
-.setup-item p {
-  margin-top: 0;
-}
-
-.hero h1 {
-  margin-bottom: 0.75rem;
-  font-family: "IBM Plex Serif", Georgia, serif;
-  font-size: clamp(2.6rem, 4vw, 4.4rem);
-  line-height: 0.95;
-}
-
-.hero-copy,
-.eyebrow,
-.group-title,
-.selected-card p,
-.stat-panel span,
-.setup-item p,
-.projection-card p {
-  color: var(--text-soft);
-}
-
-.hero-stats {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.hero-stats article,
-.selected-card,
-.palette-item,
-.stat-panel,
-.chart-panel,
-.setup-item,
-.setup-form input,
-.setup-form select,
-.setup-form button,
-.toolbar select,
-.toolbar button,
-.tab-button {
-  border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  background: var(--surface-strong);
-}
-
-.hero-stats article,
-.stat-panel,
-.chart-panel,
-.setup-panel {
-  padding: 1rem;
-}
-
-.hero-stats article strong,
-.stat-panel strong {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 1.4rem;
-}
-
-.toolbar {
-  align-items: center;
-}
-
-.tab-row {
-  grid-auto-flow: column;
-  justify-content: start;
-}
-
-.tab-button,
-.toolbar button,
-.toolbar select,
-.setup-form button,
-.ghost-button,
-.erase-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.75rem 1rem;
-  color: var(--text-main);
-  cursor: pointer;
-}
-
-.tab-button.active,
-.erase-button.active {
-  background: var(--accent);
-  border-color: transparent;
-  color: white;
-}
-
-.template-row {
-  grid-auto-flow: column;
-  justify-content: start;
-}
-
-.toolbar select {
-  min-width: 220px;
-}
-
-.planner-layout {
-  grid-template-columns: 320px minmax(0, 1fr);
-  align-items: start;
-}
-
-.palette-panel,
-.grid-panel {
-  padding: 1rem;
-}
-
-.panel-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: start;
-  margin-bottom: 1rem;
-}
-
-.eyebrow,
-.group-title {
-  margin-bottom: 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-}
-
-.selected-card,
-.setup-item,
-.setup-item-copy,
-.summary-label,
-.bar-copy,
-.projection-title {
-  display: flex;
-  align-items: center;
   gap: 0.75rem;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(180px, 1fr);
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
-.selected-card,
-.setup-item {
-  padding: 0.9rem;
+.hour-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
-.swatch {
-  width: 0.85rem;
-  height: 0.85rem;
+.color-dot {
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 999px;
+  display: inline-block;
   flex: none;
 }
 
-.swatch.large {
-  width: 1rem;
-  height: 1rem;
-}
-
-.palette-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.8rem 0.9rem;
-  text-align: left;
-}
-
-.palette-item.active {
-  border-color: var(--accent);
-  background: rgba(15, 118, 110, 0.1);
-}
-
-.grid-panel {
-  overflow: auto;
-}
-
-.grid-header,
-.grid-body {
-  display: grid;
-  grid-template-columns: 72px repeat(7, minmax(92px, 1fr));
-  gap: 0.45rem;
-  min-width: 760px;
-}
-
-.time-label,
-.day-label,
-.hour-label {
-  font-size: 0.82rem;
-  color: var(--text-soft);
-}
-
-.time-label,
-.hour-label {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-right: 0.4rem;
-}
-
-.day-label {
-  text-align: center;
-  font-weight: 700;
-}
-
-.grid-cell {
-  min-height: 2.3rem;
-  border-width: 1px;
-  border-style: solid;
-  border-radius: 12px;
-  font-weight: 700;
-  touch-action: none;
-  user-select: none;
-}
-
-.insights-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.progress-track,
-.bar-track {
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(47, 36, 24, 0.08);
-}
-
-.progress-track {
-  height: 0.6rem;
-  margin-top: 0.75rem;
-}
-
-.progress-bar,
-.bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.bar-item {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.bar-copy {
-  justify-content: space-between;
-}
-
-.bar-track {
-  height: 0.7rem;
-}
-
-.daily-chart {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.75rem;
-  min-height: 280px;
-}
-
-.day-bar {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 0.5rem;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column-reverse;
-  justify-content: flex-start;
-  min-height: 240px;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--surface-strong);
-  border: 1px solid var(--panel-border);
-}
-
-.stack-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(47, 36, 24, 0.7);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.projection-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.projection-card {
-  padding: 1rem;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 250, 243, 0.9));
-  border: 1px solid var(--panel-border);
-}
-
-.projection-hours {
-  margin: 0.65rem 0 0.35rem;
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.summary-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.8rem;
-}
-
-.summary-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.85rem 0;
-  border-top: 1px solid var(--panel-border);
-}
-
-.summary-list li:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.setup-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.setup-form {
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.setup-form input,
-.setup-form select,
-.setup-form button {
-  width: 100%;
-}
-
-.setup-form input,
-.setup-form select {
-  padding: 0.8rem 0.9rem;
-  color: var(--text-main);
-}
-
-.setup-form button {
-  background: var(--accent);
-  border-color: transparent;
-  color: white;
-}
-
-.setup-item {
-  justify-content: space-between;
-}
-
-.ghost-button {
-  background: transparent;
-  padding: 0.65rem;
-}
-
-.erase-button {
-  width: 2.75rem;
-  padding: 0;
-}
-
-.erase-button svg,
-.ghost-button svg {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-.color-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.color-chip {
-  width: 1.8rem;
-  height: 1.8rem;
-  border-radius: 999px;
-  border: 2px solid transparent;
-  cursor: pointer;
-}
-
-.color-chip.active {
-  border-color: white;
-  box-shadow: 0 0 0 1px rgba(47, 36, 24, 0.25);
-}
-
-@media (max-width: 1100px) {
-  .planner-layout,
-  .insights-layout,
-  .setup-layout,
-  .hero {
-    grid-template-columns: 1fr;
+@media (min-width: 960px) {
+  .hour-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 780px) {
-  .planner-page {
-    width: min(100% - 1rem, 100%);
-    padding-top: 1rem;
-  }
-
-  .hero-stats,
-  .projection-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tab-row,
-  .template-row {
-    grid-auto-flow: row;
-  }
-
-  .daily-chart {
-    grid-template-columns: repeat(7, minmax(72px, 1fr));
-    overflow-x: auto;
+@media (min-width: 1280px) {
+  .hour-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 }
 </style>

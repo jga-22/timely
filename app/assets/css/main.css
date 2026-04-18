@@ -1,22 +1,3 @@
-:root {
-  color-scheme: light;
-  --page-bg: #f4efe6;
-  --panel-bg: rgba(255, 251, 245, 0.88);
-  --panel-border: rgba(65, 53, 38, 0.12);
-  --surface-strong: #fffaf3;
-  --surface-muted: #efe6d8;
-  --text-main: #2f2418;
-  --text-soft: #685847;
-  --accent: #0f766e;
-  --accent-strong: #155e75;
-  --accent-soft: rgba(15, 118, 110, 0.12);
-  --warning: #b45309;
-  --shadow: 0 20px 50px rgba(57, 43, 28, 0.12);
-  --radius-xl: 28px;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-}
-
 *,
 *::before,
 *::after {
@@ -31,25 +12,16 @@ body,
 
 body {
   margin: 0;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 30%),
-    radial-gradient(circle at top right, rgba(180, 83, 9, 0.12), transparent 26%),
-    linear-gradient(180deg, #fbf7f1 0%, var(--page-bg) 60%, #efe6d9 100%);
-  color: var(--text-main);
+    radial-gradient(circle at top left, rgba(27, 103, 92, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(180, 83, 9, 0.08), transparent 28%),
+    #f6f1e8;
 }
 
 a {
   color: inherit;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-.app-shell {
-  min-height: 100vh;
+.v-application {
+  background: transparent !important;
 }

@@ -2,7 +2,7 @@
 
 ## 1. Product overview
 
-A lightweight personal web app that helps users model their **theoretical week**, visualize how their time is distributed, simulate future trajectories, and compare planned weeks with real-life exceptions such as vacations, days off, or route changes.
+A lightweight personal web app that helps users model their **theoretical week**,visualize how their time is distributed, simulate future trajectories, and compare planned weeks with real-life exceptions such as vacations, days off, or route changes.
 
 The product is intentionally simple:
 - no required backend
@@ -10,8 +10,6 @@ The product is intentionally simple:
 - no separate database at first
 - local-first storage in the browser
 - easy to publish and share publicly
-
-The first target user is the creator, but the app should be simple enough for other people to use without onboarding friction.
 
 ---
 
@@ -90,7 +88,7 @@ A reflective individual who wants to intentionally design their week and underst
 ## 6. User needs
 
 Users need to:
-- create a weekly plan quickly without filling 168 cells manually
+- create a weekly plan quickly
 - define reusable activities and categories
 - assign colors and short labels
 - see charts summarizing time distribution
@@ -146,36 +144,15 @@ Basic usage should be easy, while simulations and exception handling can be laye
 - As a user, I want simple interpretations of my current structure.
 - As a user, I want to compare multiple templates such as normal week, vacation week, and intense project week.
 
-### Portability
-- As a user, I want to export and import my data as JSON so that I do not lose my setup.
-
 ---
 
 ## 9. Functional requirements
 
-## 9.1 Weekly grid editor
+## 9.1 Weekly template editor
 The app must allow the user to:
-- choose time granularity:
-  - v1 default: 1 hour
-  - optional later: 30 minutes
-- use a recurring block builder as the primary template creation workflow
-- define:
-  - activity
-  - start time
-  - end time
-  - one or more days
-- apply one block to multiple selected days at once
-- clear a selected time range across multiple days
-- edit blocks across 7 days
-- assign each block an activity ID
-- select and paint multiple cells quickly
-- erase cells
-- duplicate one day to another
-- copy an entire template
+- Create, update and delete weekly templates
+- Select a day of the template and apply the different categories per block time
 
-For v1 UX:
-- primary authoring = recurring block builder
-- secondary refinement = weekly grid editor
 
 ## 9.2 Categories and activities
 The app must allow the user to:
@@ -304,11 +281,12 @@ A simple layout with 4 main sections:
 ### Planner screen
 Contains:
 - recurring block builder
-- weekly time grid
+- weekly templae setup
 - activity palette
 - category/activity table
 - quick actions: apply block, clear block, erase, copy day, clear week
 - summary charts below or beside the grid
+- visual summary of the template time repartition
 
 ### Templates screen
 Contains:
