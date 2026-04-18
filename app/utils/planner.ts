@@ -2,6 +2,20 @@ import type { Activity, PlannerState, WeekTemplate } from '~/types/planner'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+export const PALETTE = [
+  '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80',
+  '#34d399', '#2dd4bf', '#38bdf8', '#60a5fa', '#818cf8',
+  '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185'
+]
+
+export const projectionInsight = (hours: number): string => {
+  if (hours > 8000) return 'Mastery-level repetition.'
+  if (hours > 4000) return 'Enough time to become highly proficient.'
+  if (hours > 1000) return 'A meaningful long-term investment.'
+  if (hours > 500) return 'A habit with visible compounding.'
+  return 'Small, but it still adds up.'
+}
+
 export const HOURS = Array.from({ length: 24 }, (_, hour) =>
   `${String(hour).padStart(2, '0')}:00`
 )
