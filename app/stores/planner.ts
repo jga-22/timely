@@ -3,6 +3,7 @@ import type { AppliedWeek, PlannerState, WeekStatus } from '~/types/planner'
 import {
   aggregateTemplate,
   aggregateTemplateByCategory,
+  createEmptySlots,
   createInitialState,
   getActiveTemplate,
   getTemplateById
@@ -78,19 +79,16 @@ export const usePlannerStore = defineStore('planner', {
     },
     createTemplate() {
       const source = this.activeTemplate
-
-      if (!source) {
-        return
-      }
-
       const templateId = `template-${Date.now()}`
+      const granularity = source?.granularityMinutes ?? 60
 
       this.templates.unshift({
-        ...source,
         id: templateId,
         name: `New Template ${this.templates.length + 1}`,
-        description: 'Fresh scenario copied from the current active template.',
-        slots: [...source.slots]
+        description: 'Empty template — paint your ideal week.',
+        granularityMinutes: granularity,
+        color: source?.color,
+        slots: createEmptySlots(granularity)
       })
       this.settings.activeTemplateId = templateId
     },
