@@ -21,9 +21,39 @@ const selection = ref<Sel | null>(null)
 const selAnchor = ref<{ day: number; hour: number } | null>(null)
 const isSelecting = ref(false)
 
-// ── Context menu ──
+// Whether the current selection overlaps any existing (non-empty) slot —
+// used to switch the action bar between "Apply" (fresh) and "Change/Delete" (editing).
+const selectionHasActivity = computed(() => {
+  const sel = selection.value
+  const tpl = activeTemplate.value
+  if (!sel || !tpl) return false
+  for (let h = sel.start; h < sel.end; h++) {
+    if (tpl.slots[sel.day * 24 + h]) return true
+  }
+  return false
+})
+
+// ── Action bar (appears after selection, before activity picker) ──
+const showActionBar = ref(false)
+const actionBarPos = ref({ x: 0, y: 0 })
+
+// ── Activity picker menu ──
 const showMenu = ref(false)
 const menuPos = ref({ x: 0, y: 0 })
+
+// ── Resize state ──
+const isEditingSize = ref(false)
+const editSizeSnapshot = ref<Sel | null>(null)
+const editSizeActivityId = ref<string | null>(null)
+const resizing = ref<'top' | 'bottom' | null>(null)
+const resizeDayEl = ref<HTMLElement | null>(null)
+
+// Default activity applied when confirming an empty selection (falls back to work / first)
+const defaultActivityId = computed(() => {
+  const acts = planner.activities
+  const work = acts.find(a => a.categoryId === 'work') ?? acts.find(a => /work/i.test(a.name))
+  return work?.id ?? acts[0]?.id ?? ''
+})
 
 // ── Block hover (keyed by day·start·end to survive re-renders) ──
 const hoveredBlockKey = ref<string | null>(null)
@@ -73,6 +103,7 @@ function startSelection(day: number, hour: number) {
   selAnchor.value = { day, hour }
   selection.value = { day, start: hour, end: hour + 1 }
   showMenu.value = false
+  showActionBar.value = false
 }
 
 function extendSelection(day: number, hour: number) {
@@ -84,6 +115,15 @@ function extendSelection(day: number, hour: number) {
     start: Math.min(anchor, hour),
     end: Math.max(anchor, hour) + 1
   }
+}
+
+function openActionBarAt(clientX: number, clientY: number) {
+  const small = window.innerWidth <= 480
+  actionBarPos.value = {
+    x: small ? 16 : Math.min(clientX + 16, window.innerWidth - 240),
+    y: small ? window.innerHeight - 120 : Math.min(clientY - 10, window.innerHeight - 120),
+  }
+  showActionBar.value = true
 }
 
 function openMenuAt(clientX: number, clientY: number) {
@@ -98,34 +138,126 @@ function openMenuAt(clientX: number, clientY: number) {
 function finishSelection(e: MouseEvent) {
   if (!isSelecting.value || !selection.value) { isSelecting.value = false; return }
   isSelecting.value = false
-  openMenuAt(e.clientX, e.clientY)
+  openActionBarAt(e.clientX, e.clientY)
 }
 
 function applyActivity(activityId: string) {
   if (!selection.value) return
   planner.applyTimeRange(activityId, [selection.value.day], selection.value.start, selection.value.end)
-  closeMenu()
+  closeAll()
 }
 
 function clearSelection() {
   if (!selection.value) return
   planner.clearTimeRange([selection.value.day], selection.value.start, selection.value.end)
-  closeMenu()
+  closeAll()
 }
 
-function closeMenu() {
+function pickFromActionBar() {
+  if (!selection.value) return
+  showActionBar.value = false
+  openMenuAt(actionBarPos.value.x, actionBarPos.value.y)
+}
+
+function closeAll() {
   showMenu.value = false
+  showActionBar.value = false
+  isEditingSize.value = false
+  editSizeSnapshot.value = null
+  editSizeActivityId.value = null
   selection.value = null
 }
 
+function enterSizeEdit() {
+  const sel = selection.value
+  const tpl = activeTemplate.value
+  if (!sel || !tpl) return
+  editSizeSnapshot.value = { ...sel }
+  // Capture the first non-empty activity in the original range (if any).
+  let existing: string | null = null
+  for (let h = sel.start; h < sel.end; h++) {
+    const v = tpl.slots[sel.day * 24 + h]
+    if (v) { existing = v; break }
+  }
+  editSizeActivityId.value = existing
+  isEditingSize.value = true
+  showActionBar.value = false
+}
+
+function confirmSizeEdit() {
+  const sel = selection.value
+  const snap = editSizeSnapshot.value
+  if (sel && snap) {
+    const activityId = editSizeActivityId.value || defaultActivityId.value
+    // Clear the original range first so shrinking/shifting doesn't leave orphan slots
+    planner.clearTimeRange([snap.day], snap.start, snap.end)
+    if (activityId) {
+      planner.applyTimeRange(activityId, [sel.day], sel.start, sel.end)
+    }
+  }
+  closeAll()
+}
+
+function cancelSizeEdit() {
+  if (editSizeSnapshot.value) selection.value = { ...editSizeSnapshot.value }
+  isEditingSize.value = false
+  editSizeSnapshot.value = null
+  editSizeActivityId.value = null
+  if (selection.value) openActionBarAt(actionBarPos.value.x, actionBarPos.value.y)
+}
+
 // ── Block actions ──
-function editBlock(day: number, start: number, end: number, e: MouseEvent) {
+function selectBlock(day: number, start: number, end: number, _activityId: string, e: MouseEvent | { clientX: number; clientY: number }) {
   selection.value = { day, start, end }
-  openMenuAt(e.clientX, e.clientY)
+  openActionBarAt(e.clientX, e.clientY)
 }
 
 function deleteBlock(day: number, start: number, end: number) {
   planner.clearTimeRange([day], start, end)
+}
+
+// ── Resize logic ──
+function startResize(side: 'top' | 'bottom', e: PointerEvent) {
+  if (!selection.value) return
+  e.stopPropagation()
+  e.preventDefault()
+  resizing.value = side
+  const target = e.currentTarget as HTMLElement
+  resizeDayEl.value = target.closest<HTMLElement>('.day-col')
+  showActionBar.value = false
+  document.addEventListener('pointermove', onResizeMove)
+  document.addEventListener('pointerup', onResizeEnd, { once: true })
+}
+
+function hourFromPointer(clientY: number): number | null {
+  const col = resizeDayEl.value
+  if (!col) return null
+  const rect = col.getBoundingClientRect()
+  const y = clientY - rect.top
+  const hour = Math.round(y / HOUR_PX)
+  return Math.max(0, Math.min(24, hour))
+}
+
+function onResizeMove(e: PointerEvent) {
+  if (!resizing.value || !selection.value) return
+  const hour = hourFromPointer(e.clientY)
+  if (hour === null) return
+  const cur = selection.value
+  if (resizing.value === 'top') {
+    const newStart = Math.min(hour, cur.end - 1)
+    selection.value = { ...cur, start: Math.max(0, newStart) }
+  } else {
+    const newEnd = Math.max(hour, cur.start + 1)
+    selection.value = { ...cur, end: Math.min(24, newEnd) }
+  }
+}
+
+function onResizeEnd(_e: PointerEvent) {
+  document.removeEventListener('pointermove', onResizeMove)
+  resizing.value = null
+  resizeDayEl.value = null
+  // Stay in edit mode after a drag so users can keep adjusting.
+  // The floating "Done" button exits edit mode and reopens the action bar.
 }
 
 // ── Touch: tap-to-select (no drag — keeps page scroll free) ──
@@ -161,20 +293,19 @@ function onTouchEnd(e: TouchEvent) {
   const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null
   const blockEl = el?.closest<HTMLElement>('[data-block-day]')
   if (blockEl) {
-    selection.value = {
-      day: +blockEl.dataset.blockDay!,
-      start: +blockEl.dataset.blockStart!,
-      end: +blockEl.dataset.blockEnd!,
-    }
-    openMenuAt(t.clientX, t.clientY)
+    const day = +blockEl.dataset.blockDay!
+    const start = +blockEl.dataset.blockStart!
+    const end = +blockEl.dataset.blockEnd!
+    const actId = activeTemplate.value?.slots[day * 24 + start] || ''
+    selectBlock(day, start, end, actId, { clientX: t.clientX, clientY: t.clientY })
     return
   }
 
-  // Tap on an empty slot → select that single hour
+  // Tap on an empty slot → select that single hour, show action bar
   const slot = slotFromPoint(t.clientX, t.clientY)
   if (!slot) return
   selection.value = { day: slot.day, start: slot.hour, end: slot.hour + 1 }
-  openMenuAt(t.clientX, t.clientY)
+  openActionBarAt(t.clientX, t.clientY)
 }
 
 // Capture mouseup globally so releasing outside the grid still opens the menu
@@ -209,6 +340,15 @@ function handleNewTemplate() {
   newTemplateName.value = ''
   newTemplateOpen.value = false
 }
+
+function confirmDeleteActiveTemplate() {
+  const t = activeTemplate.value
+  if (!t) return
+  if (templates.value.length <= 1) return
+  if (confirm(`Delete template '${t.name}'? This cannot be undone.`)) {
+    planner.deleteTemplate(t.id)
+  }
+}
 </script>
 
 <template>
@@ -219,8 +359,8 @@ function handleNewTemplate() {
         <div class="page-kicker">01 · Planner</div>
         <h1 class="page-title">Design your <em>ideal</em> week,<br>hour by hour.</h1>
         <p class="page-lede">
-          Click and drag a range of slots, then pick an activity from the menu.
-          Hover an existing block to edit or delete it.
+          Drag across empty slots to select a range, or tap a block to modify it.
+          Use the handles to resize, then apply a category.
         </p>
       </div>
       <div style="text-align: right">
@@ -290,11 +430,12 @@ function handleNewTemplate() {
 
       <button
         v-if="templates.length > 1"
-        class="btn btn-xs btn-ghost btn-danger"
-        style="margin-left: auto"
-        @click="() => { if (confirm(`Delete '${activeTemplate?.name}'?`)) planner.deleteTemplate(activeTemplate?.id ?? '') }"
+        type="button"
+        class="btn btn-xs btn-ghost btn-danger delete-template-btn"
+        @click.stop="confirmDeleteActiveTemplate"
       >
-        Delete "{{ activeTemplate?.name }}"
+        <span class="delete-template-btn-label">Delete "{{ activeTemplate?.name }}"</span>
+        <span class="delete-template-btn-icon" aria-hidden="true">✕</span>
       </button>
     </div>
 
@@ -352,11 +493,47 @@ function handleNewTemplate() {
           <div
             v-if="selection && selection.day === dayIndex"
             class="slot-selection"
+            :class="{ 'is-resizing': resizing, 'is-editing': isEditingSize }"
             :style="{
               top: `${selection.start * HOUR_PX}px`,
               height: `${(selection.end - selection.start) * HOUR_PX}px`,
             }"
-          />
+          >
+            <template v-if="isEditingSize">
+              <button
+                type="button"
+                class="resize-handle top"
+                aria-label="Drag to change start"
+                @pointerdown="startResize('top', $event)"
+                @click.stop
+              ><span /></button>
+              <span class="selection-duration">{{ selection.end - selection.start }}h</span>
+              <button
+                type="button"
+                class="resize-handle bottom"
+                aria-label="Drag to change end"
+                @pointerdown="startResize('bottom', $event)"
+                @click.stop
+              ><span /></button>
+              <div class="resize-confirm" @mousedown.stop @pointerdown.stop>
+                <button
+                  type="button"
+                  class="resize-confirm-btn is-cancel"
+                  title="Cancel resize"
+                  aria-label="Cancel resize"
+                  @click.stop="cancelSizeEdit"
+                >✕</button>
+                <button
+                  type="button"
+                  class="resize-confirm-btn is-validate"
+                  title="Save resize"
+                  aria-label="Save resize"
+                  @click.stop="confirmSizeEdit"
+                >✓</button>
+              </div>
+            </template>
+            <span v-else class="selection-duration">{{ selection.end - selection.start }}h</span>
+          </div>
 
           <!-- Slot cells (interaction layer) -->
           <div
@@ -391,16 +568,12 @@ function handleNewTemplate() {
             @mouseenter="hoveredBlockKey = blockKey(dayIndex, block.start, block.end)"
             @mouseleave="hoveredBlockKey = null"
             @mousedown.stop
+            @click.stop="selectBlock(dayIndex, block.start, block.end, block.activityId, $event)"
           >
             <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
             <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
 
             <div v-if="isBlockHovered(dayIndex, block)" class="block-actions">
-              <button
-                class="block-action-btn"
-                title="Edit"
-                @click.stop="editBlock(dayIndex, block.start, block.end, $event)"
-              >✎</button>
               <button
                 class="block-action-btn"
                 title="Delete"
@@ -491,9 +664,43 @@ function handleNewTemplate() {
     </div>
   </div>
 
+  <!-- Action bar: appears after a selection, before picking an activity -->
+  <Teleport to="body">
+    <div v-if="showActionBar" class="slot-menu-overlay" @click="closeAll" @contextmenu.prevent="closeAll" />
+    <div
+      v-if="showActionBar && selection"
+      class="selection-bar"
+      :style="{ left: `${actionBarPos.x}px`, top: `${actionBarPos.y}px` }"
+      @click.stop
+      @mousedown.stop
+    >
+      <div class="selection-bar-head">
+        <span class="sb-day">{{ DAYS[selection.day] }}</span>
+        <span class="sb-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
+        <span class="sb-dur">{{ selection.end - selection.start }}h</span>
+      </div>
+      <p class="selection-bar-hint">Pick an action below — use Edit to adjust the range.</p>
+      <div class="selection-bar-actions">
+        <button class="btn btn-sm btn-primary" @click="pickFromActionBar">
+          {{ selectionHasActivity ? 'Change…' : 'Apply…' }}
+        </button>
+        <button class="btn btn-sm btn-ghost" @click="enterSizeEdit">
+          <span aria-hidden="true">✎</span> Edit
+        </button>
+        <button
+          v-if="selectionHasActivity"
+          class="btn btn-sm btn-ghost btn-danger"
+          @click="clearSelection"
+        >Delete</button>
+        <button class="btn btn-sm btn-ghost" @click="closeAll">Cancel</button>
+      </div>
+    </div>
+
+  </Teleport>
+
   <!-- Activity picker menu (teleported to body to avoid overflow clipping) -->
   <Teleport to="body">
-    <div v-if="showMenu" class="slot-menu-overlay" @click="closeMenu" @contextmenu.prevent="closeMenu" />
+    <div v-if="showMenu" class="slot-menu-overlay" @click="closeAll" @contextmenu.prevent="closeAll" />
     <div
       v-if="showMenu && selection"
       class="slot-menu"

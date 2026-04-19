@@ -451,11 +451,65 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   background: var(--accent-soft);
   border: 1px solid var(--accent);
   border-radius: 2px;
-  z-index: 3;
+  z-index: 4;
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.9;
 }
-.week.selecting .slot { cursor: ns-resize; }
+.slot-selection.is-resizing,
+.slot-selection.is-editing {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.slot-selection .selection-duration {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+.resize-handle {
+  position: absolute;
+  left: 0; right: 0;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: ns-resize;
+  pointer-events: auto;
+  padding: 0;
+  z-index: 5;
+  touch-action: none;
+}
+.resize-handle.top { top: -7px; }
+.resize-handle.bottom { bottom: -7px; }
+.resize-handle span {
+  display: block;
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--bg);
+}
+.resize-handle:hover span,
+.slot-selection.is-resizing .resize-handle span {
+  background: var(--ink);
+}
+@media (hover: none), (max-width: 768px) {
+  .resize-handle { height: 22px; }
+  .resize-handle.top { top: -11px; }
+  .resize-handle.bottom { bottom: -11px; }
+  .resize-handle span { width: 36px; height: 6px; border-radius: 3px; }
+}
 
 /* ── Blocks ── */
 .block {
@@ -839,6 +893,104 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .slot-menu-clear { color: var(--ink-2); }
 .slot-menu-clear:hover { background: var(--bg-3); }
 
+/* ── Selection action bar (shown before activity picker) ── */
+.selection-bar {
+  position: fixed;
+  z-index: 30;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  padding: 14px 16px 12px;
+  min-width: 240px;
+  max-width: 280px;
+}
+.selection-bar-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.selection-bar-head .sb-day { color: var(--ink); font-weight: 600; }
+.selection-bar-head .sb-range { flex: 1; }
+.selection-bar-head .sb-dur {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.selection-bar-hint {
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.35;
+}
+.selection-bar-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.selection-bar-actions .btn { flex: 1; justify-content: center; }
+
+/* Validate / cancel buttons in the top-right of the selection while editing size */
+.resize-confirm {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  pointer-events: auto;
+  z-index: 6;
+}
+.resize-confirm-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  padding: 0;
+}
+.resize-confirm-btn.is-validate {
+  background: var(--ok, #6b8f5a);
+  color: #fff;
+  border-color: transparent;
+}
+.resize-confirm-btn.is-validate:hover { filter: brightness(1.1); }
+.resize-confirm-btn.is-cancel {
+  background: var(--bg);
+  color: var(--ink-2);
+}
+.resize-confirm-btn.is-cancel:hover {
+  background: #f7ece8;
+  color: #a04040;
+  border-color: #d9b4a8;
+}
+@media (hover: none), (max-width: 768px) {
+  .resize-confirm-btn { width: 28px; height: 28px; font-size: 14px; }
+}
+
+/* ── Delete-template button ── */
+.delete-template-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.delete-template-btn .delete-template-btn-icon { display: none; }
+
 /* ── Takeaways strip ── */
 .takeaways-grid {
   display: grid;
@@ -1016,6 +1168,35 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
     min-width: 0;
     width: auto;
   }
+
+  /* Selection bar: dock to bottom on phone */
+  .selection-bar {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 16px !important;
+    top: auto !important;
+    max-width: none;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* Hide the time range on blocks — only show the category name */
+  .block-meta { display: none; }
+  .block { padding: 4px 6px; }
+  .block-title { font-size: 11px; }
+
+  /* Collapse delete-template button to an icon on phone */
+  .delete-template-btn .delete-template-btn-label { display: none; }
+  .delete-template-btn .delete-template-btn-icon {
+    display: inline-flex;
+    width: 14px;
+    height: 14px;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .delete-template-btn { padding: 6px 10px; }
 
   /* Panel padding */
   .panel { padding: 16px; }
