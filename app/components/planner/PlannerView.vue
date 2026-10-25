@@ -332,6 +332,12 @@ function paintWeek(wi: number) {
   if (startDate) planner.setWeekTemplate(startDate, paintTool.value === 'erase' ? null : paintTool.value)
 }
 
+// Background colour for a year cell: the template painted on that week
+const cellStyle = (startDate: string) => {
+  const tpl = templateById.value.get(appliedByDate.value.get(startDate) ?? '')
+  return tpl ? { '--c': templateColor(tpl) } : undefined
+}
+
 // ── Template management ──
 function handleNewTemplate() {
   if (!newTemplateName.value.trim()) return
@@ -354,83 +360,76 @@ function confirmDeleteActiveTemplate() {
 <template>
   <div class="view" @click="colorPickerFor = null">
     <!-- Page header -->
-    <div class="page-head">
-      <div>
-        <h1 class="page-title">Design your <em>ideal</em> week,<br>hour by hour.</h1>
-        <p class="page-lede">
-          Drag across empty slots to select a range, or tap a block to modify it.
-          Use the handles to resize, then apply a category.
-        </p>
-      </div>
-      <div style="text-align: right">
-        <div class="page-kicker" style="margin-bottom: 6px">Planned this week</div>
-        <div style="font-family: var(--font-display); font-size: 64px; font-style: italic; line-height: 0.9; letter-spacing: -0.02em">
-          {{ totalPlanned }}<span style="font-family: var(--font-mono); font-style: normal; font-size: 12px; color: var(--ink-3); margin-left: 6px; letter-spacing: 0.1em; text-transform: uppercase">/ 168 hrs</span>
-        </div>
-      </div>
-    </div>
+    <header class="page-head">
+      <h1 class="page-title">Design your ideal week, hour by hour.</h1>
+      <p class="page-lede">
+        Drag across empty slots to select a range, or tap a block to modify it.
+        Use the handles to resize, then apply a category.
+      </p>
+      <p class="page-meta">{{ totalPlanned }} of 168 hours planned this week</p>
+    </header>
 
     <!-- Template switcher -->
-    <div class="template-switch" style="margin-bottom: 20px">
-      <span class="panel-sub" style="margin-right: 6px">Template</span>
+    <div class="template-switch">
+      <span class="field-label">Template</span>
 
-      <div v-for="t in templates" :key="t.id" style="position: relative">
+      <div v-for="t in templates" :key="t.id" class="template-chip-wrap">
         <input
           v-if="renamingId === t.id"
-          class="timely-input"
+          class="pill-input"
           autofocus
           :value="t.name"
-          style="height: 30px; width: 140px; font-size: 12px"
           @blur="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
           @keydown.enter="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
           @keydown.escape="renamingId = null"
         />
         <button
           v-else
-          class="template-pill"
+          class="chip"
           :data-active="t.id === activeTemplate?.id"
-          :style="t.id === activeTemplate?.id ? { background: templateColor(t), borderColor: templateColor(t), color: '#fff' } : {}"
-          :title="`Click to select · double-click to rename`"
+          title="Click to select, double-click to rename"
           @click="planner.selectTemplate(t.id)"
           @dblclick="renamingId = t.id"
         >
           <span
-            :style="{ width: '12px', height: '12px', borderRadius: '3px', background: templateColor(t), border: '1px solid rgba(0,0,0,0.15)', cursor: 'pointer', flexShrink: 0, boxShadow: t.id === activeTemplate?.id ? 'inset 0 0 0 1.5px rgba(255,255,255,0.7)' : 'none' }"
+            class="dot dot-action"
+            :style="{ background: templateColor(t) }"
+            title="Change colour"
             @click.stop="colorPickerFor = colorPickerFor === t.id ? null : t.id"
           />
           <span class="t-name">{{ t.name }}</span>
-          <span style="font-family: var(--font-mono); font-size: 10px; opacity: 0.7">{{ t.slots.filter(Boolean).length }}h</span>
+          <span class="pill-count">{{ t.slots.filter(Boolean).length }}h</span>
         </button>
 
-        <div v-if="colorPickerFor === t.id" class="color-pop" style="top: 34px; left: 0" @click.stop>
+        <div v-if="colorPickerFor === t.id" class="color-pop" @click.stop>
           <button
             v-for="col in DESIGN_COLORS"
             :key="col.id"
             :style="{ background: col.bg }"
             :data-active="t.color === col.bg"
+            :aria-label="`Colour ${col.id}`"
             @click="planner.setTemplateColor(t.id, col.bg); colorPickerFor = null"
           />
         </div>
       </div>
 
-      <div v-if="newTemplateOpen" style="display: flex; gap: 4px">
+      <div v-if="newTemplateOpen" class="new-template-form">
         <input
           v-model="newTemplateName"
-          class="timely-input"
+          class="pill-input"
           autofocus
           placeholder="e.g. Launch week"
-          style="height: 30px; width: 150px; font-size: 12px"
           @keydown.enter="handleNewTemplate"
           @keydown.escape="newTemplateOpen = false; newTemplateName = ''"
         />
         <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
       </div>
-      <button v-else class="template-pill-add" @click="newTemplateOpen = true">+ New template</button>
+      <button v-else class="chip-add" @click="newTemplateOpen = true">+ New template</button>
 
       <button
         v-if="templates.length > 1"
         type="button"
-        class="btn btn-xs btn-ghost btn-danger delete-template-btn"
+        class="btn btn-xs btn-danger delete-template-btn"
         @click.stop="confirmDeleteActiveTemplate"
       >
         <span class="delete-template-btn-label">Delete "{{ activeTemplate?.name }}"</span>
@@ -438,195 +437,185 @@ function confirmDeleteActiveTemplate() {
       </button>
     </div>
 
-    <!-- Week grid (no palette panel — activities are in the context menu) -->
+    <!-- Week grid (activities are picked from the selection menu) -->
     <div class="week-scroll-wrap">
-    <div
-      class="week"
-      :class="{ selecting: isSelecting }"
-      @touchstart.passive="onTouchStart"
-      @touchmove.passive="onTouchMove"
-      @touchend.passive="onTouchEnd"
-    >
-      <!-- Header row -->
-      <div class="week-head">
-        <div class="corner" />
-        <div v-for="(day, di) in DAYS" :key="day" class="wday">
-          <div style="display: flex; justify-content: space-between; align-items: center">
-            <span class="day-name">{{ day }}</span>
-            <button
-              class="btn btn-ghost btn-xs"
-              style="width:16px;height:16px;padding:0;opacity:0;transition:opacity 0.1s;font-size:10px;color:var(--ink-4)"
-              :title="`Clear ${day}`"
-              @click.stop="planner.clearTimeRange([di], 0, 24)"
-              @mouseenter="($event.target as HTMLElement).style.opacity='1'"
-              @mouseleave="($event.target as HTMLElement).style.opacity='0'"
-            >✕</button>
-          </div>
-          <span class="day-hours-label">
-            {{ hoursPerDay[di] }}<span class="unit">hr</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Grid body -->
-      <div class="week-body">
-        <!-- Hour labels -->
-        <div class="hour-col">
-          <div
-            v-for="h in 24"
-            :key="h - 1"
-            class="hour-cell"
-            :class="{ major: (h - 1) % 3 === 0 }"
-          >
-            {{ (h - 1) % 3 === 0 ? formatHour(h - 1) : '' }}
-          </div>
-        </div>
-
-        <!-- Day columns -->
-        <div
-          v-for="(_, dayIndex) in DAYS"
-          :key="dayIndex"
-          class="day-col"
-        >
-          <!-- Selection highlight -->
-          <div
-            v-if="selection && selection.day === dayIndex"
-            class="slot-selection"
-            :class="{ 'is-resizing': resizing, 'is-editing': isEditingSize }"
-            :style="{
-              top: `${selection.start * HOUR_PX}px`,
-              height: `${(selection.end - selection.start) * HOUR_PX}px`,
-            }"
-          >
-            <template v-if="isEditingSize">
+      <div
+        class="week"
+        :class="{ selecting: isSelecting }"
+        @touchstart.passive="onTouchStart"
+        @touchmove.passive="onTouchMove"
+        @touchend.passive="onTouchEnd"
+      >
+        <!-- Header row -->
+        <div class="week-head">
+          <div class="corner" />
+          <div v-for="(day, di) in DAYS" :key="day" class="wday">
+            <div class="wday-top">
+              <span class="day-name">{{ day }}</span>
               <button
                 type="button"
-                class="resize-handle top"
-                aria-label="Drag to change start"
-                @pointerdown="startResize('top', $event)"
-                @click.stop
-              ><span /></button>
-              <span class="selection-duration">{{ selection.end - selection.start }}h</span>
-              <button
-                type="button"
-                class="resize-handle bottom"
-                aria-label="Drag to change end"
-                @pointerdown="startResize('bottom', $event)"
-                @click.stop
-              ><span /></button>
-              <div class="resize-confirm" @mousedown.stop @pointerdown.stop>
-                <button
-                  type="button"
-                  class="resize-confirm-btn is-cancel"
-                  title="Cancel resize"
-                  aria-label="Cancel resize"
-                  @click.stop="cancelSizeEdit"
-                >✕</button>
-                <button
-                  type="button"
-                  class="resize-confirm-btn is-validate"
-                  title="Save resize"
-                  aria-label="Save resize"
-                  @click.stop="confirmSizeEdit"
-                >✓</button>
-              </div>
-            </template>
-            <span v-else class="selection-duration">{{ selection.end - selection.start }}h</span>
-          </div>
-
-          <!-- Slot cells (interaction layer) -->
-          <div
-            v-for="hour in 24"
-            :key="hour - 1"
-            class="slot"
-            :class="{ major: (hour - 1) % 3 === 0 }"
-            :data-day="dayIndex"
-            :data-hour="hour - 1"
-            @mousedown.prevent="startSelection(dayIndex, hour - 1)"
-            @mouseenter="extendSelection(dayIndex, hour - 1)"
-          />
-
-          <!-- Blocks (visual layer) -->
-          <div
-            v-for="block in blocksByDay[dayIndex]"
-            :key="`${dayIndex}-${block.start}-${block.activityId}`"
-            class="block"
-            :class="{
-              'block-sm': (block.end - block.start) * HOUR_PX < 40,
-              'block-xs': (block.end - block.start) * HOUR_PX < 24,
-            }"
-            :data-block-day="dayIndex"
-            :data-block-start="block.start"
-            :data-block-end="block.end"
-            :style="{
-              top: `${block.start * HOUR_PX}px`,
-              height: `${(block.end - block.start) * HOUR_PX - 2}px`,
-              background: activityMap.get(block.activityId)?.color ?? '#999',
-              color: '#fff',
-            }"
-            @mouseenter="hoveredBlockKey = blockKey(dayIndex, block.start, block.end)"
-            @mouseleave="hoveredBlockKey = null"
-            @mousedown.stop
-            @click.stop="selectBlock(dayIndex, block.start, block.end, block.activityId, $event)"
-          >
-            <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
-            <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
-
-            <div v-if="isBlockHovered(dayIndex, block)" class="block-actions">
-              <button
-                class="block-action-btn"
-                title="Delete"
-                @click.stop="deleteBlock(dayIndex, block.start, block.end)"
+                class="day-clear"
+                :title="`Clear ${day}`"
+                :aria-label="`Clear ${day}`"
+                @click.stop="planner.clearTimeRange([di], 0, 24)"
               >✕</button>
+            </div>
+            <span class="day-hours-label">{{ hoursPerDay[di] }} h</span>
+          </div>
+        </div>
+
+        <!-- Grid body -->
+        <div class="week-body">
+          <!-- Hour labels -->
+          <div class="hour-col">
+            <div
+              v-for="h in 24"
+              :key="h - 1"
+              class="hour-cell"
+            >
+              {{ (h - 1) % 3 === 0 ? formatHour(h - 1) : '' }}
+            </div>
+          </div>
+
+          <!-- Day columns -->
+          <div
+            v-for="(_, dayIndex) in DAYS"
+            :key="dayIndex"
+            class="day-col"
+          >
+            <!-- Selection highlight -->
+            <div
+              v-if="selection && selection.day === dayIndex"
+              class="slot-selection"
+              :class="{ 'is-resizing': resizing, 'is-editing': isEditingSize }"
+              :style="{
+                top: `${selection.start * HOUR_PX}px`,
+                height: `${(selection.end - selection.start) * HOUR_PX}px`,
+              }"
+            >
+              <template v-if="isEditingSize">
+                <button
+                  type="button"
+                  class="resize-handle top"
+                  aria-label="Drag to change start"
+                  @pointerdown="startResize('top', $event)"
+                  @click.stop
+                ><span /></button>
+                <span class="selection-duration">{{ selection.end - selection.start }}h</span>
+                <button
+                  type="button"
+                  class="resize-handle bottom"
+                  aria-label="Drag to change end"
+                  @pointerdown="startResize('bottom', $event)"
+                  @click.stop
+                ><span /></button>
+                <div class="resize-confirm" @mousedown.stop @pointerdown.stop>
+                  <button
+                    type="button"
+                    class="resize-confirm-btn is-cancel"
+                    title="Cancel resize"
+                    aria-label="Cancel resize"
+                    @click.stop="cancelSizeEdit"
+                  >✕</button>
+                  <button
+                    type="button"
+                    class="resize-confirm-btn is-validate"
+                    title="Save resize"
+                    aria-label="Save resize"
+                    @click.stop="confirmSizeEdit"
+                  >✓</button>
+                </div>
+              </template>
+              <span v-else class="selection-duration">{{ selection.end - selection.start }}h</span>
+            </div>
+
+            <!-- Slot cells (interaction layer) -->
+            <div
+              v-for="hour in 24"
+              :key="hour - 1"
+              class="slot"
+              :class="{ major: (hour - 1) % 3 === 0 }"
+              :data-day="dayIndex"
+              :data-hour="hour - 1"
+              @mousedown.prevent="startSelection(dayIndex, hour - 1)"
+              @mouseenter="extendSelection(dayIndex, hour - 1)"
+            />
+
+            <!-- Blocks (visual layer) -->
+            <div
+              v-for="block in blocksByDay[dayIndex]"
+              :key="`${dayIndex}-${block.start}-${block.activityId}`"
+              class="block"
+              :class="{
+                'block-sm': (block.end - block.start) * HOUR_PX < 40,
+                'block-xs': (block.end - block.start) * HOUR_PX < 24,
+              }"
+              :data-block-day="dayIndex"
+              :data-block-start="block.start"
+              :data-block-end="block.end"
+              :style="{
+                top: `${block.start * HOUR_PX}px`,
+                height: `${(block.end - block.start) * HOUR_PX - 2}px`,
+                '--c': activityMap.get(block.activityId)?.color ?? '#999',
+              }"
+              @mouseenter="hoveredBlockKey = blockKey(dayIndex, block.start, block.end)"
+              @mouseleave="hoveredBlockKey = null"
+              @mousedown.stop
+              @click.stop="selectBlock(dayIndex, block.start, block.end, block.activityId, $event)"
+            >
+              <div class="block-title">{{ activityMap.get(block.activityId)?.name }}</div>
+              <div class="block-meta">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</div>
+
+              <div v-if="isBlockHovered(dayIndex, block)" class="block-actions">
+                <button
+                  type="button"
+                  class="block-action-btn"
+                  title="Delete"
+                  aria-label="Delete block"
+                  @click.stop="deleteBlock(dayIndex, block.start, block.end)"
+                >✕</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    </div>
 
-    <!-- Week stats bar -->
+    <!-- Hours per activity this week -->
     <div class="week-stats">
       <div v-for="activity in planner.activities" :key="activity.id" class="stat">
-        <div class="stat-label">
-          <span :style="{ width: '8px', height: '8px', borderRadius: '2px', background: activity.color, flexShrink: 0 }" />
+        <span class="stat-label">
+          <span class="dot" :style="{ background: activity.color }" />
           {{ activity.name }}
-        </div>
-        <div class="stat-value">
-          {{ activityHours[activity.id] || 0 }}<span class="unit">hr</span>
-        </div>
+        </span>
+        <span class="stat-value">{{ activityHours[activity.id] || 0 }}<span class="unit">h</span></span>
       </div>
     </div>
 
     <!-- Year painter -->
-    <div class="year-paint">
+    <section class="section">
       <div class="year-paint-head">
         <div>
-          <div class="page-kicker">Assign templates</div>
-          <h2 class="title">Paint your <em>2026</em> — week by week.</h2>
-          <p class="page-lede" style="margin-top: 10px">
-            Choose a template below, then click or drag across weeks to assign it.
-          </p>
+          <h2 class="section-title">Year</h2>
+          <p class="section-lede">Choose a template, then click or drag across weeks to assign it.</p>
         </div>
-        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); text-align: right">
-          {{ appliedWeeks.length }} / 52 assigned
-        </div>
+        <div class="year-count">{{ appliedWeeks.length }} / 52 weeks assigned</div>
       </div>
 
-      <div class="paint-tools" style="margin-bottom: 18px">
-        <span class="panel-sub" style="margin-right: 6px">Paint with</span>
+      <div class="paint-tools">
+        <span class="field-label">Paint with</span>
         <button
           v-for="t in templates"
           :key="t.id"
-          class="paint-tool"
+          class="chip"
           :data-active="paintTool === t.id"
           @click="paintTool = t.id"
         >
           <span class="dot" :style="{ background: templateColor(t) }" />
           {{ t.name }}
         </button>
-        <button class="paint-tool" :data-active="paintTool === 'erase'" @click="paintTool = 'erase'">
-          <span class="dot" style="background: var(--bg-3); border: 1px dashed var(--ink-3)" />
+        <button class="chip" :data-active="paintTool === 'erase'" @click="paintTool = 'erase'">
+          <span class="dot dot-erase" />
           Erase
         </button>
       </div>
@@ -641,26 +630,24 @@ function confirmDeleteActiveTemplate() {
             v-for="(startDate, wi) in WEEK_DATES_2026"
             :key="wi"
             class="week-cell"
-            :class="{ empty: !appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
-            :style="appliedByDate.get(startDate) ? { background: templateColor(templateById.get(appliedByDate.get(startDate)!)!) } : {}"
+            :class="{ 'is-filled': !!appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
+            :style="cellStyle(startDate)"
             :title="appliedByDate.get(startDate) ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}` : `Week ${wi + 1} · unassigned`"
             @mousedown="isYearPainting = true; paintWeek(wi)"
             @mouseenter="hoverWeek = wi; isYearPainting && paintWeek(wi)"
             @mouseleave="hoverWeek = null"
-          >
-            <span class="wnum">{{ wi + 1 }}</span>
-          </div>
+          >{{ wi + 1 }}</div>
         </div>
       </div>
 
-      <div v-if="hoverWeek !== null" style="margin-top: 14px; font-size: 13px; color: var(--ink-2)">
-        <span class="panel-sub" style="margin-right: 8px">Week {{ hoverWeek + 1 }}</span>
+      <div v-if="hoverWeek !== null" class="week-readout">
+        Week {{ hoverWeek + 1 }} ·
         <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)">
           {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)!)?.name }}
         </span>
-        <span v-else style="color: var(--ink-3); font-style: italic">unassigned — click to paint</span>
+        <span v-else class="muted">unassigned, click to paint</span>
       </div>
-    </div>
+    </section>
   </div>
 
   <!-- Action bar: appears after a selection, before picking an activity -->
@@ -678,23 +665,22 @@ function confirmDeleteActiveTemplate() {
         <span class="sb-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
         <span class="sb-dur">{{ selection.end - selection.start }}h</span>
       </div>
-      <p class="selection-bar-hint">Pick an action below — use Edit to adjust the range.</p>
+      <p class="selection-bar-hint">Pick an action below, or use Edit to adjust the range.</p>
       <div class="selection-bar-actions">
         <button class="btn btn-sm btn-primary" @click="pickFromActionBar">
           {{ selectionHasActivity ? 'Change…' : 'Apply…' }}
         </button>
-        <button class="btn btn-sm btn-ghost" @click="enterSizeEdit">
+        <button class="btn btn-sm btn-outline" @click="enterSizeEdit">
           <span aria-hidden="true">✎</span> Edit
         </button>
         <button
           v-if="selectionHasActivity"
-          class="btn btn-sm btn-ghost btn-danger"
+          class="btn btn-sm btn-danger"
           @click="clearSelection"
         >Delete</button>
-        <button class="btn btn-sm btn-ghost" @click="closeAll">Cancel</button>
+        <button class="btn btn-sm" @click="closeAll">Cancel</button>
       </div>
     </div>
-
   </Teleport>
 
   <!-- Activity picker menu (teleported to body to avoid overflow clipping) -->
@@ -715,16 +701,15 @@ function confirmDeleteActiveTemplate() {
           v-for="act in planner.activities"
           :key="act.id"
           class="slot-menu-chip"
-          :style="{ '--chip-bg': act.color }"
           @click="applyActivity(act.id)"
         >
-          <span class="chip-dot" :style="{ background: act.color }" />
+          <span class="dot" :style="{ background: act.color }" />
           <span class="chip-name">{{ act.name }}</span>
-          <span class="chip-hrs" style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-left: auto">{{ activityHours[act.id] || 0 }}h</span>
+          <span class="chip-hrs">{{ activityHours[act.id] || 0 }}h</span>
         </button>
         <div class="slot-menu-divider" />
         <button class="slot-menu-chip slot-menu-clear" @click="clearSelection">
-          <span class="chip-dot" style="background: var(--bg-3); border: 1px solid var(--rule)" />
+          <span class="dot dot-erase" />
           <span class="chip-name">Clear slot</span>
         </button>
       </div>

@@ -8,6 +8,8 @@ const props = defineProps<{ dimensionId: string }>()
 const planner = usePlannerStore()
 
 const newHabitName = ref('')
+// Only one habit shows its details at a time, keeping the list calm
+const openHabitId = ref<string | null>(null)
 
 const habits = computed(() => planner.habits.filter(habit => habit.dimensionId === props.dimensionId))
 
@@ -29,7 +31,16 @@ const scheduledLabel = (activityId?: string) => {
 
   const hours = scheduledWeeklyMinutesForActivity(planner.$state, activityId) / 60
 
-  return `${Math.round(hours * 10) / 10} h/wk scheduled`
+  return `${Math.round(hours * 10) / 10} h a week scheduled`
+}
+
+const toggleDetails = (habitId: string) => {
+  openHabitId.value = openHabitId.value === habitId ? null : habitId
+}
+
+const removeHabit = (habitId: string) => {
+  if (openHabitId.value === habitId) openHabitId.value = null
+  planner.removeHabit(habitId)
 }
 
 const addHabit = () => {
@@ -42,23 +53,41 @@ const addHabit = () => {
   <div class="habit-list">
     <p v-if="!habits.length" class="habit-empty">No daily habits yet for this dimension.</p>
 
-    <div v-for="habit in habits" :key="habit.id" class="habit-row">
-      <v-text-field
-        :model-value="habit.name"
-        aria-label="Habit name"
-        density="compact"
-        variant="underlined"
-        hide-details
-        class="habit-name"
-        @update:model-value="planner.updateHabit(habit.id, { name: $event })"
-      />
+    <div v-for="habit in habits" :key="habit.id" class="habit-row" :class="{ 'is-open': openHabitId === habit.id }">
+      <div class="habit-main">
+        <v-text-field
+          :model-value="habit.name"
+          aria-label="Habit name"
+          density="compact"
+          variant="underlined"
+          hide-details
+          class="habit-name"
+          @update:model-value="planner.updateHabit(habit.id, { name: $event })"
+        />
 
-      <div class="habit-controls">
+        <button
+          type="button"
+          class="habit-toggle"
+          :aria-expanded="openHabitId === habit.id"
+          @click="toggleDetails(habit.id)"
+        >
+          {{ openHabitId === habit.id ? 'Done' : 'Details' }}
+        </button>
+      </div>
+
+      <div class="habit-meta">
+        <span>About {{ weeklyRate(habit) }} a week</span>
+        <span v-if="scheduledLabel(habit.activityId)">{{ scheduledLabel(habit.activityId) }}</span>
+        <span v-else class="habit-unlinked">Not linked to an activity</span>
+      </div>
+
+      <div v-if="openHabitId === habit.id" class="habit-controls">
         <v-text-field
           :model-value="habit.frequency.count"
           aria-label="Frequency count"
           type="number"
           min="0"
+          label="Count"
           density="compact"
           variant="outlined"
           hide-details
@@ -69,6 +98,7 @@ const addHabit = () => {
           :model-value="habit.frequency.period"
           :items="PERIOD_ITEMS"
           aria-label="Frequency period"
+          label="Period"
           density="compact"
           variant="outlined"
           hide-details
@@ -80,6 +110,7 @@ const addHabit = () => {
           aria-label="Minutes per occurrence"
           type="number"
           min="0"
+          label="Minutes each"
           suffix="min"
           density="compact"
           variant="outlined"
@@ -91,6 +122,7 @@ const addHabit = () => {
           :model-value="habit.activityId ?? null"
           :items="activityItems"
           aria-label="Linked activity"
+          label="Linked activity"
           placeholder="Link activity"
           clearable
           density="compact"
@@ -100,18 +132,15 @@ const addHabit = () => {
           @update:model-value="planner.setHabitActivity(habit.id, $event)"
         />
         <v-btn
-          icon="mdi-delete-outline"
           variant="text"
+          color="error"
           size="small"
-          aria-label="Remove habit"
-          @click="planner.removeHabit(habit.id)"
-        />
-      </div>
-
-      <div class="habit-meta">
-        <span>≈ {{ weeklyRate(habit) }} / week</span>
-        <span v-if="scheduledLabel(habit.activityId)">· {{ scheduledLabel(habit.activityId) }}</span>
-        <span v-else class="habit-unlinked">· not linked to an activity</span>
+          prepend-icon="mdi-delete-outline"
+          class="habit-remove"
+          @click="removeHabit(habit.id)"
+        >
+          Remove
+        </v-btn>
       </div>
     </div>
 
@@ -119,6 +148,7 @@ const addHabit = () => {
       <v-text-field
         v-model="newHabitName"
         placeholder="New daily habit"
+        aria-label="New daily habit"
         density="compact"
         variant="outlined"
         hide-details
@@ -135,50 +165,77 @@ const addHabit = () => {
 .habit-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .habit-empty {
+  margin: 0 0 var(--space-3);
   color: var(--ink-3);
-  margin: 0 0 12px;
 }
 
 .habit-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 0;
+  gap: var(--space-1);
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--rule-2);
 }
 
-.habit-controls {
+.habit-main {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
-.habit-count { max-width: 84px; }
-.habit-period { min-width: 130px; flex: 0 1 130px; }
-.habit-minutes { max-width: 120px; }
-.habit-activity { min-width: 180px; flex: 1 1 180px; }
+.habit-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-toggle {
+  flex: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent);
+}
+.habit-toggle:hover { background: var(--bg-3); }
 
 .habit-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  font-size: var(--fs-sm);
   color: var(--ink-3);
-  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.habit-meta span + span::before {
+  content: "·";
+  margin-right: var(--space-3);
 }
 
 .habit-unlinked {
   color: var(--warn);
 }
 
+.habit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.habit-count { max-width: 96px; }
+.habit-period { min-width: 140px; flex: 0 1 140px; }
+.habit-minutes { max-width: 140px; }
+.habit-activity { min-width: 180px; flex: 1 1 180px; }
+
 .habit-add {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
 }
 
 .habit-add-input {

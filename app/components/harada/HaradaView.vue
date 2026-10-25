@@ -50,18 +50,16 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 
 <template>
   <div class="view harada-view">
-    <div class="page-head">
-      <div>
-        <h1 class="page-title">The best version of <em>me</em></h1>
-        <p class="page-lede">
-          One five-year ambition, eight life dimensions. Select a cell, then a tab to edit its goal,
-          its daily habits or its measurable one-year target.
-        </p>
-      </div>
-    </div>
+    <header class="page-head">
+      <h1 class="page-title">The best version of me</h1>
+      <p class="page-lede">
+        One five-year ambition and eight life dimensions. Select a cell, then a tab to edit its goal,
+        its daily habits or its measurable one-year target.
+      </p>
+    </header>
 
-    <div v-if="!dimensions.length" class="card harada-empty">
-      <p>No Harada grid yet.</p>
+    <div v-if="!dimensions.length" class="empty-state">
+      <p>No goals yet. Start from the starter grid and adapt it.</p>
       <v-btn color="primary" variant="flat" prepend-icon="mdi-sprout-outline" @click="planner.seedHaradaGoals()">
         Load starter grid
       </v-btn>
@@ -91,19 +89,19 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
           >
             <span class="cell-num">{{ String(dimension.order).padStart(2, '0') }}</span>
             <span class="cell-title">{{ dimension.name }}</span>
-            <span v-if="dimension.targetTbd" class="cell-tag">to define</span>
+            <span v-if="dimension.targetTbd" class="cell-tag">To define</span>
           </button>
 
           <div v-else class="harada-cell harada-centre">
-            <span class="cell-num">Ambition · {{ ambition?.horizonYears ?? 5 }} years</span>
+            <span class="cell-num">Ambition, {{ ambition?.horizonYears ?? 5 }} years</span>
             <span class="cell-title">{{ ambition?.statement }}</span>
           </div>
         </template>
       </div>
 
-      <v-card v-if="selected" variant="outlined" class="harada-panel">
+      <section v-if="selected" class="harada-panel">
         <div class="harada-panel-head">
-          <div class="harada-panel-kicker">Dimension {{ selected.order }} of {{ sortedDimensions.length }}</div>
+          <p class="harada-panel-kicker">Dimension {{ selected.order }} of {{ sortedDimensions.length }}</p>
           <h2 class="harada-panel-title">{{ selected.name }}</h2>
 
           <v-tabs v-model="activeTab" color="primary" density="comfortable" class="harada-panel-tabs">
@@ -152,31 +150,36 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
         </v-window>
 
         <div class="harada-panel-foot">
-          <v-select
-            :model-value="selected.categoryIds"
-            :items="categoryItems"
-            label="Timely categories counted towards this dimension"
-            multiple
-            chips
-            closable-chips
-            variant="outlined"
-            density="comfortable"
-            hide-details
-            @update:model-value="planner.updateDimension(selected.id, { categoryIds: $event })"
-          />
-
           <p v-if="alignment" class="alignment-line">
-            Scheduled {{ formatHours(alignment.plannedMinutesPerWeek) }}/wk
+            Scheduled {{ formatHours(alignment.plannedMinutesPerWeek) }} per week
             <template v-if="alignment.targetMinutesPerWeek > 0">
-              against {{ formatHours(alignment.targetMinutesPerWeek) }}/wk of habits
+              against {{ formatHours(alignment.targetMinutesPerWeek) }} of habits
             </template>
             <template v-else>
               · no measured habits yet
             </template>
             <span v-if="alignment.unlinkedHabits"> · {{ alignment.unlinkedHabits }} unlinked</span>
           </p>
+
+          <details class="disclosure">
+            <summary>Counted categories</summary>
+            <div class="disclosure-body">
+              <v-select
+                :model-value="selected.categoryIds"
+                :items="categoryItems"
+                label="Timely categories counted towards this dimension"
+                multiple
+                chips
+                closable-chips
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                @update:model-value="planner.updateDimension(selected.id, { categoryIds: $event })"
+              />
+            </div>
+          </details>
         </div>
-      </v-card>
+      </section>
     </template>
   </div>
 </template>
@@ -185,30 +188,22 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 .harada-view {
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
 .ambition-edit {
   max-width: 720px;
+  margin-bottom: var(--space-6);
 }
 
-.harada-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 28px 32px;
-  color: var(--ink-2);
-}
-
+/* 3x3 grid separated by hairlines, as in the prototype */
 .harada-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
+  overflow: hidden;
   background: var(--rule);
   border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  border-radius: var(--radius);
 }
 
 .harada-cell {
@@ -216,9 +211,9 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-3);
   min-height: 128px;
-  padding: 20px;
+  padding: var(--space-5);
   background: var(--bg);
   color: var(--ink);
   text-align: left;
@@ -227,12 +222,12 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 
 button.harada-cell:hover,
 button.harada-cell:focus-visible {
-  background: var(--bg-2);
+  background: var(--bg-3);
   outline: none;
 }
 
 .harada-cell.is-active {
-  background: var(--bg-3);
+  background: var(--bg-4);
 }
 
 .harada-cell.is-active::before {
@@ -246,110 +241,106 @@ button.harada-cell:focus-visible {
 }
 
 .harada-centre {
-  background: var(--ink);
-  color: var(--bg);
   justify-content: center;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .cell-num {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .harada-centre .cell-num {
-  color: var(--bg-3);
+  color: var(--on-accent);
+  opacity: 0.75;
 }
 
 .cell-title {
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 600;
   line-height: 1.35;
 }
 
 .harada-centre .cell-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
-  font-style: italic;
-  line-height: 1.2;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .cell-tag {
   align-self: flex-start;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  font-weight: 500;
   color: var(--warn);
 }
 
 .harada-panel {
-  overflow: hidden;
+  margin-top: var(--space-6);
 }
 
 .harada-panel-head {
-  padding: 24px 28px 0;
+  padding-bottom: var(--space-2);
 }
 
 .harada-panel-kicker {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-sm);
   color: var(--ink-3);
-  margin-bottom: 8px;
 }
 
 .harada-panel-title {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.1;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.harada-panel-tabs :deep(.v-tab) {
+  min-width: 0;
+  padding: 0 var(--space-2);
+  letter-spacing: 0;
+}
+
+.harada-panel-tabs :deep(.v-tab:first-child) {
+  padding-left: 0;
 }
 
 .harada-panel-body {
-  padding: 24px 28px;
+  padding: var(--space-5) 0 0;
 }
 
 .target-tbd {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .harada-panel-foot {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 28px 24px;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rule-2);
 }
 
 .alignment-line {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--ink-3);
   margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 600px) {
   .harada-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .harada-centre {
     order: -1;
     grid-column: 1 / -1;
     min-height: 100px;
-  }
-
-  .harada-panel-head,
-  .harada-panel-body,
-  .harada-panel-foot {
-    padding-left: 18px;
-    padding-right: 18px;
   }
 }
 </style>
