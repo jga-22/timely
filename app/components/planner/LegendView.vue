@@ -2,9 +2,15 @@
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { DESIGN_COLORS } from '~/utils/planner'
+import type { Category } from '~/types/planner'
+
+/** Only this many categories fill the Goals grid */
+const GOAL_GRID_SIZE = 8
 
 const planner = usePlannerStore()
 const { categoryMap } = usePlannerMaps()
+
+const orderedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 
 // Category rename
 const renamingCatId = ref<string | null>(null)
@@ -17,20 +23,46 @@ function startRename(catId: string, name: string) {
 }
 
 function commitRename(catId: string) {
-  const cat = planner.categories.find(c => c.id === catId)
-  if (cat && renameBuffer.value.trim()) cat.name = renameBuffer.value.trim()
+  if (renamingCatId.value !== catId) return
+  if (renameBuffer.value.trim()) planner.updateCategory(catId, { name: renameBuffer.value.trim() })
   renamingCatId.value = null
 }
 
 function setCategoryColor(catId: string, color: string) {
-  const cat = planner.categories.find(c => c.id === catId)
-  if (cat) {
-    cat.color = color
-    for (const act of planner.activities) {
-      if (act.categoryId === catId) act.color = color
-    }
-  }
+  planner.setCategoryColor(catId, color)
   colorPickerFor.value = null
+}
+
+// Category removal: empty categories go at once, others first hand their contents to another category
+const removingId = ref<string | null>(null)
+const moveToId = ref('')
+
+const activityCount = (categoryId: string) => planner.activities.filter(activity => activity.categoryId === categoryId).length
+const habitCount = (categoryId: string) => planner.habits.filter(habit => habit.categoryId === categoryId).length
+
+const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
+
+const contentSummary = (categoryId: string) => {
+  const parts: string[] = []
+  if (activityCount(categoryId)) parts.push(plural(activityCount(categoryId), 'activity', 'activities'))
+  if (habitCount(categoryId)) parts.push(plural(habitCount(categoryId), 'habit', 'habits'))
+  return parts.join(' and ')
+}
+
+const otherCategories = (categoryId: string) => orderedCategories.value.filter(category => category.id !== categoryId)
+
+function askRemove(cat: Category) {
+  if (!activityCount(cat.id) && !habitCount(cat.id)) {
+    planner.removeCategory(cat.id)
+    return
+  }
+
+  removingId.value = cat.id
+  moveToId.value = otherCategories(cat.id)[0]?.id ?? ''
+}
+
+function confirmRemove(catId: string) {
+  if (planner.removeCategory(catId, moveToId.value)) removingId.value = null
 }
 
 // New category form
@@ -92,19 +124,15 @@ const projYears = computed({
 function closePopovers() {
   colorPickerFor.value = null
 }
-
-function removeCategory(catId: string) {
-  planner.$patch({ categories: planner.categories.filter(c => c.id !== catId) })
-}
 </script>
 
 <template>
   <div class="view" @click="closePopovers">
     <header class="page-head">
-      <h1 class="page-title">Activities and categories</h1>
+      <h1 class="page-title">Categories and activities</h1>
       <p class="page-lede">
-        The building blocks of your week. Changes apply to every template and projection.
-        Double-click a category name to rename it.
+        The building blocks of your week. Each category is one of your life areas, with its goals in Goals.
+        Changes apply to every template and projection. Double-click a category name to rename it.
       </p>
     </header>
 
@@ -116,72 +144,100 @@ function removeCategory(catId: string) {
             <h2 class="section-title">Categories</h2>
           </div>
           <div class="cat-list">
-            <div
-              v-for="cat in planner.categories"
-              :key="cat.id"
-              class="cat-row"
-              @click.stop
-            >
-              <!-- Colour swatch, opens the colour picker -->
-              <div class="swatch-wrap">
-                <button
-                  class="big-swatch"
-                  :style="{ background: cat.color ?? '#888' }"
-                  title="Change colour"
-                  aria-label="Change colour"
-                  @click.stop="colorPickerFor = colorPickerFor === cat.id ? null : cat.id"
-                />
-                <div v-if="colorPickerFor === cat.id" class="color-pop" @click.stop>
+            <template v-for="(cat, index) in orderedCategories" :key="cat.id">
+              <div class="cat-row cat-row-category" @click.stop>
+                <!-- Colour swatch, opens the colour picker -->
+                <div class="swatch-wrap">
                   <button
-                    v-for="dc in DESIGN_COLORS"
-                    :key="dc.id"
-                    :style="{ background: dc.bg }"
-                    :data-active="cat.color === dc.bg"
-                    :aria-label="`Colour ${dc.id}`"
-                    @click="setCategoryColor(cat.id, dc.bg)"
+                    class="big-swatch"
+                    :style="{ background: cat.color ?? '#888' }"
+                    title="Change colour"
+                    aria-label="Change colour"
+                    @click.stop="colorPickerFor = colorPickerFor === cat.id ? null : cat.id"
                   />
+                  <div v-if="colorPickerFor === cat.id" class="color-pop" @click.stop>
+                    <button
+                      v-for="dc in DESIGN_COLORS"
+                      :key="dc.id"
+                      :style="{ background: dc.bg }"
+                      :data-active="cat.color === dc.bg"
+                      :aria-label="`Colour ${dc.id}`"
+                      @click="setCategoryColor(cat.id, dc.bg)"
+                    />
+                  </div>
+                </div>
+
+                <!-- Name -->
+                <div class="cat-name-wrap">
+                  <input
+                    v-if="renamingCatId === cat.id"
+                    v-model="renameBuffer"
+                    class="cat-name-input"
+                    aria-label="Category name"
+                    @keydown.enter="commitRename(cat.id)"
+                    @keydown.escape="renamingCatId = null"
+                    @blur="commitRename(cat.id)"
+                    @click.stop
+                  />
+                  <span
+                    v-else
+                    class="cat-row-name"
+                    title="Double-click to rename"
+                    @dblclick.stop="startRename(cat.id, cat.name)"
+                  >{{ cat.name }}</span>
+                  <span class="cat-meta">
+                    {{ plural(activityCount(cat.id), 'activity', 'activities') }}<template v-if="habitCount(cat.id)"> · {{ plural(habitCount(cat.id), 'habit', 'habits') }}</template>
+                  </span>
+                </div>
+
+                <!-- Hours: per week and per year -->
+                <div class="cat-hrs">
+                  <span class="n">{{ catHoursPerWeek.get(cat.id) ?? 0 }}</span> h/wk ·
+                  <span class="n">{{ Math.round((catHoursPerWeek.get(cat.id) ?? 0) * 52) }}</span> h/yr
+                </div>
+
+                <div class="cat-actions">
+                  <button
+                    class="btn btn-xs"
+                    title="Move up"
+                    aria-label="Move up"
+                    :disabled="index === 0"
+                    @click.stop="planner.moveCategory(cat.id, -1)"
+                  >↑</button>
+                  <button
+                    class="btn btn-xs"
+                    title="Move down"
+                    aria-label="Move down"
+                    :disabled="index === orderedCategories.length - 1"
+                    @click.stop="planner.moveCategory(cat.id, 1)"
+                  >↓</button>
+                  <button
+                    class="btn btn-xs btn-danger"
+                    title="Delete category"
+                    aria-label="Delete category"
+                    @click.stop="askRemove(cat)"
+                  >✕</button>
                 </div>
               </div>
 
-              <!-- Name -->
-              <div class="cat-name-wrap">
-                <input
-                  v-if="renamingCatId === cat.id"
-                  v-model="renameBuffer"
-                  class="cat-name-input"
-                  aria-label="Category name"
-                  @keydown.enter="commitRename(cat.id)"
-                  @keydown.escape="renamingCatId = null"
-                  @blur="commitRename(cat.id)"
-                  @click.stop
-                />
-                <span
-                  v-else
-                  class="cat-row-name"
-                  title="Double-click to rename"
-                  @dblclick.stop="startRename(cat.id, cat.name)"
-                >{{ cat.name }}</span>
-                <span class="cat-meta">
-                  {{ planner.activities.filter(a => a.categoryId === cat.id).length }} {{ planner.activities.filter(a => a.categoryId === cat.id).length === 1 ? 'activity' : 'activities' }}
-                </span>
+              <div v-if="removingId === cat.id" class="cat-remove" @click.stop>
+                <p class="cat-remove-note">
+                  Its {{ contentSummary(cat.id) }} must move to another category before {{ cat.name }} is removed.
+                </p>
+                <div v-if="otherCategories(cat.id).length" class="cat-remove-row">
+                  <select v-model="moveToId" class="timely-select" aria-label="Move contents to">
+                    <option v-for="other in otherCategories(cat.id)" :key="other.id" :value="other.id">{{ other.name }}</option>
+                  </select>
+                  <button class="btn btn-xs btn-primary" :disabled="!moveToId" @click="confirmRemove(cat.id)">Move and remove</button>
+                  <button class="btn btn-xs" @click="removingId = null">Cancel</button>
+                </div>
+                <p v-else class="cat-remove-note">Add another category first, then remove this one.</p>
               </div>
-
-              <!-- Hours: per week and per year -->
-              <div class="cat-hrs">
-                <span class="n">{{ catHoursPerWeek.get(cat.id) ?? 0 }}</span> h/wk ·
-                <span class="n">{{ Math.round((catHoursPerWeek.get(cat.id) ?? 0) * 52) }}</span> h/yr
-              </div>
-
-              <div class="cat-actions">
-                <button
-                  class="btn btn-xs btn-danger"
-                  title="Delete category"
-                  aria-label="Delete category"
-                  @click.stop="removeCategory(cat.id)"
-                >✕</button>
-              </div>
-            </div>
+            </template>
           </div>
+          <p v-if="orderedCategories.length > GOAL_GRID_SIZE" class="config-note">
+            Only the first {{ GOAL_GRID_SIZE }} categories appear in the Goals grid. The others still work in Planner and Insights.
+          </p>
         </section>
 
         <section class="section">
@@ -277,7 +333,7 @@ function removeCategory(catId: string) {
               <div class="field">
                 <label class="field-label" for="new-act-cat">Category</label>
                 <select id="new-act-cat" v-model="newActCatId" class="timely-select">
-                  <option v-for="cat in planner.categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                  <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                 </select>
               </div>
             </div>

@@ -1,9 +1,15 @@
 export type WeekStatus = 'normal' | 'vacation' | 'off' | 'custom'
 
+/** A life area that is at once a planner category, a Harada grid cell and a goal holder */
 export interface Category {
   id: string
   name: string
   color?: string
+  /** Position in the list; the first eight fill the Goals grid */
+  order: number
+  goal5y?: string
+  target1y?: string
+  targetTbd?: boolean
 }
 
 export interface Activity {
@@ -50,25 +56,12 @@ export interface Ambition {
   horizonYears: number
 }
 
-/** One of the eight life dimensions around the ambition */
-export interface Dimension {
-  id: string
-  name: string
-  ambitionId: string
-  order: number
-  goal5y: string
-  target1y: string
-  targetTbd: boolean
-  /** Timely categories whose scheduled time counts towards this dimension */
-  categoryIds: string[]
-}
-
 export type HabitPeriod = 'day' | 'week' | 'month'
 
 /** A recurring daily attitude, measurable when linked to a Timely activity */
 export interface Habit {
   id: string
-  dimensionId: string
+  categoryId: string
   name: string
   frequency: { count: number; period: HabitPeriod }
   activityId?: string
@@ -83,6 +76,5 @@ export interface PlannerState {
   templates: WeekTemplate[]
   appliedWeeks: AppliedWeek[]
   ambition: Ambition | null
-  dimensions: Dimension[]
   habits: Habit[]
 }

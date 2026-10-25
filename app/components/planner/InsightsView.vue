@@ -7,8 +7,8 @@ import {
   aggregateTemplateByCategory,
   projectionInsight,
   getTemplateById,
-  dimensionAlignments,
-  type DimensionAlignment
+  categoryAlignments,
+  type CategoryAlignment
 } from '~/utils/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
@@ -98,36 +98,36 @@ const topProjection = computed(() => projectionSummaries.value[0] ?? null)
 
 // ── Goals vs. planned time ──
 const goalAlignment = computed(() => {
-  const alignments = dimensionAlignments(planner.$state)
-  return [...planner.dimensions]
+  const alignments = categoryAlignments(planner.$state)
+  return [...planner.categories]
     .sort((a, b) => a.order - b.order)
-    .map(dimension => ({ dimension, ...alignments.get(dimension.id)! }))
+    .map(category => ({ category, ...alignments.get(category.id)! }))
 })
 
 const goalScale = computed(() =>
-  Math.max(1, ...goalAlignment.value.flatMap(row => [row.plannedMinutesPerWeek, row.targetMinutesPerWeek]))
+  Math.max(1, ...goalAlignment.value.flatMap(row => [row.habitMinutesPerWeek, row.targetMinutesPerWeek]))
 )
 
 const goalBarWidth = (minutes: number) => `${Math.min((minutes / goalScale.value) * 100, 100)}%`
 
 const formatGoalHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`
 
-const goalFigures = (row: DimensionAlignment) => {
-  if (row.targetMinutesPerWeek > 0) return `${formatGoalHours(row.plannedMinutesPerWeek)} / ${formatGoalHours(row.targetMinutesPerWeek)}`
-  if (row.plannedMinutesPerWeek > 0) return `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled`
+const goalFigures = (row: CategoryAlignment) => {
+  if (row.targetMinutesPerWeek > 0) return `${formatGoalHours(row.habitMinutesPerWeek)} / ${formatGoalHours(row.targetMinutesPerWeek)}`
+  if (row.habitMinutesPerWeek > 0) return `${formatGoalHours(row.habitMinutesPerWeek)} scheduled`
   return '—'
 }
 
-const goalLabel = (row: DimensionAlignment) =>
+const goalLabel = (row: CategoryAlignment) =>
   row.targetMinutesPerWeek > 0
-    ? `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled, ${formatGoalHours(row.targetMinutesPerWeek)} target`
-    : `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled, no target yet`
+    ? `${formatGoalHours(row.habitMinutesPerWeek)} scheduled through habits, ${formatGoalHours(row.targetMinutesPerWeek)} target`
+    : `${formatGoalHours(row.habitMinutesPerWeek)} scheduled through habits, no target yet`
 
 // One calm line per row, only for what is missing
-const goalNotes = (row: DimensionAlignment) => {
+const goalNotes = (row: CategoryAlignment) => {
   const notes: string[] = []
   if (row.targetMinutesPerWeek === 0) notes.push('No target yet')
-  if (row.plannedMinutesPerWeek === 0) notes.push('No time planned')
+  if (row.habitMinutesPerWeek === 0) notes.push('No time planned')
   if (row.targetMinutesPerWeek > 0 && row.unlinkedHabits) {
     notes.push(`${row.unlinkedHabits} ${row.unlinkedHabits === 1 ? 'habit' : 'habits'} not linked to an activity`)
   }
@@ -207,13 +207,14 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
       <div class="section-head">
         <h2 class="section-title">Goals vs. planned time</h2>
         <p class="section-lede">
-          Hours scheduled per week against each dimension's habit target. The tick marks the target.
+          Hours scheduled per week through each category's habits, against what those habits ask for.
+          The tick marks the target; the quiet line is everything scheduled in the category.
         </p>
       </div>
 
       <div class="goal-list">
-        <div v-for="row in goalAlignment" :key="row.dimension.id" class="goal-row">
-          <div class="goal-name">{{ row.dimension.name }}</div>
+        <div v-for="row in goalAlignment" :key="row.category.id" class="goal-row">
+          <div class="goal-name">{{ row.category.name }}</div>
 
           <div
             class="goal-track"
@@ -221,7 +222,7 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
             role="img"
             :aria-label="goalLabel(row)"
           >
-            <span class="goal-fill" :style="{ width: goalBarWidth(row.plannedMinutesPerWeek) }" />
+            <span class="goal-fill" :style="{ width: goalBarWidth(row.habitMinutesPerWeek) }" />
             <span
               v-if="row.targetMinutesPerWeek > 0"
               class="goal-target"
@@ -229,7 +230,10 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
             />
           </div>
 
-          <div class="goal-figures">{{ goalFigures(row) }}</div>
+          <div class="goal-figures">
+            {{ goalFigures(row) }}
+            <span v-if="row.totalMinutesPerWeek" class="goal-total">{{ formatGoalHours(row.totalMinutesPerWeek) }} scheduled in total</span>
+          </div>
 
           <div v-if="goalNotes(row).length" class="goal-flags">
             <span v-for="note in goalNotes(row)" :key="note">{{ note }}</span>

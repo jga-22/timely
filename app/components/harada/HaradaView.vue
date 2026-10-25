@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { countedCategoryIdsByDimension, dimensionAlignments } from '~/utils/planner'
+import { HARADA_HINTS, categoryAlignments } from '~/utils/planner'
 
-const DEFAULT_DIMENSION_ID = 'professionnelle'
+/** The Harada grid has eight outer cells around the ambition */
+const GRID_SIZE = 8
+const DEFAULT_CATEGORY_ID = 'professionnelle'
 
 const TAB_ITEMS = [
   { value: 'goal', label: '5-year goal' },
@@ -12,44 +15,40 @@ const TAB_ITEMS = [
 ]
 
 const planner = usePlannerStore()
-const { ambition, dimensions, categories } = storeToRefs(planner)
+const { ambition, categories } = storeToRefs(planner)
 
 const selectedId = ref<string | null>(null)
 const activeTab = ref('goal')
 
-const sortedDimensions = computed(() => [...dimensions.value].sort((a, b) => a.order - b.order))
+const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
 
-// Same 3x3 layout as the prototype: four dimensions, the ambition, four dimensions
-const gridCells = computed(() => {
-  const items = sortedDimensions.value
-  return [...items.slice(0, 4), null, ...items.slice(4)]
-})
+// The first eight categories fill the grid; missing ones stay as empty placeholders
+const gridSlots = computed<Array<Category | null>>(() =>
+  Array.from({ length: GRID_SIZE }, (_, index) => sortedCategories.value[index] ?? null)
+)
 
-const selected = computed(() =>
-  sortedDimensions.value.find(dimension => dimension.id === selectedId.value)
-    ?? sortedDimensions.value.find(dimension => dimension.id === DEFAULT_DIMENSION_ID)
-    ?? sortedDimensions.value[0]
+// Same 3x3 layout as the prototype: four categories, the ambition, four categories
+const gridCells = computed<Array<Category | 'centre' | null>>(() => [
+  ...gridSlots.value.slice(0, 4),
+  'centre',
+  ...gridSlots.value.slice(4)
+])
+
+const selected = computed<Category | null>(() =>
+  gridSlots.value.find(category => category?.id === selectedId.value)
+    ?? gridSlots.value.find(category => category?.id === DEFAULT_CATEGORY_ID)
+    ?? gridSlots.value[0]
     ?? null
 )
 
+const alignments = computed(() => categoryAlignments(planner.$state))
+
 const alignment = computed(() =>
-  selected.value ? dimensionAlignments(planner.$state).get(selected.value.id) ?? null : null
+  selected.value ? alignments.value.get(selected.value.id) ?? null : null
 )
 
-// Says which dimension counts a category when it is linked here too (first by order wins)
-const categoryItems = computed(() => {
-  const counted = countedCategoryIdsByDimension(dimensions.value)
-
-  return categories.value.map(category => {
-    const owner = sortedDimensions.value.find(dimension => counted.get(dimension.id)?.includes(category.id))
-    const subtitle = owner && owner.id !== selected.value?.id ? `Counted in ${owner.name}` : undefined
-
-    return { title: category.name, value: category.id, props: { subtitle } }
-  })
-})
-
-const selectDimension = (dimensionId: string) => {
-  selectedId.value = dimensionId
+const selectCategory = (categoryId: string) => {
+  selectedId.value = categoryId
   activeTab.value = 'goal'
 }
 
@@ -61,12 +60,12 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
     <header class="page-head">
       <h1 class="page-title">The best version of me</h1>
       <p class="page-lede">
-        One five-year ambition and eight life dimensions. Select a cell, then a tab to edit its goal,
-        its daily habits or its measurable one-year target.
+        One five-year ambition, surrounded by eight life categories. Select a cell, then a tab to edit its goal,
+        its daily habits or its measurable one-year target. Categories are set up in Configuration.
       </p>
     </header>
 
-    <div v-if="!dimensions.length" class="empty-state">
+    <div v-if="!categories.length" class="empty-state">
       <p>No goals yet. Start from the starter grid and adapt it.</p>
       <v-btn color="primary" variant="flat" prepend-icon="mdi-sprout-outline" @click="planner.seedHaradaGoals()">
         Load starter grid
@@ -86,30 +85,33 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
       </div>
 
       <div class="harada-grid">
-        <template v-for="(dimension, index) in gridCells" :key="dimension?.id ?? `centre-${index}`">
-          <button
-            v-if="dimension"
-            type="button"
-            class="harada-cell"
-            :class="{ 'is-active': selected?.id === dimension.id }"
-            :aria-pressed="selected?.id === dimension.id"
-            @click="selectDimension(dimension.id)"
-          >
-            <span class="cell-num">{{ String(dimension.order).padStart(2, '0') }}</span>
-            <span class="cell-title">{{ dimension.name }}</span>
-            <span class="cell-status">{{ dimension.targetTbd ? 'To define' : '' }}</span>
-          </button>
-
-          <div v-else class="harada-cell harada-centre">
+        <template v-for="(cell, index) in gridCells" :key="typeof cell === 'string' ? 'centre' : cell?.id ?? `empty-${index}`">
+          <div v-if="cell === 'centre'" class="harada-cell harada-centre">
             <span class="cell-num">Ambition, {{ ambition?.horizonYears ?? 5 }} years</span>
             <span class="cell-title">{{ ambition?.statement }}</span>
           </div>
+
+          <button
+            v-else-if="cell"
+            type="button"
+            class="harada-cell"
+            :class="{ 'is-active': selected?.id === cell.id }"
+            :aria-pressed="selected?.id === cell.id"
+            @click="selectCategory(cell.id)"
+          >
+            <span class="cell-num">{{ String(cell.order).padStart(2, '0') }}</span>
+            <span class="cell-title">{{ cell.name }}</span>
+            <span v-if="HARADA_HINTS[cell.id]" class="cell-hint">{{ HARADA_HINTS[cell.id] }}</span>
+            <span class="cell-status">{{ cell.targetTbd ? 'To define' : '' }}</span>
+          </button>
+
+          <div v-else class="harada-cell harada-empty" aria-hidden="true" />
         </template>
       </div>
 
       <section v-if="selected" class="harada-panel">
         <div class="harada-panel-head">
-          <p class="harada-panel-kicker">Dimension {{ selected.order }} of {{ sortedDimensions.length }}</p>
+          <p class="harada-panel-kicker">Category {{ selected.order }} of {{ sortedCategories.length }}</p>
           <h2 class="harada-panel-title">{{ selected.name }}</h2>
 
           <v-tabs v-model="activeTab" color="primary" density="comfortable" class="harada-panel-tabs">
@@ -122,70 +124,55 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
         <v-window v-model="activeTab" class="harada-panel-body">
           <v-window-item value="goal">
             <v-textarea
-              :model-value="selected.goal5y"
+              :model-value="selected.goal5y ?? ''"
               label="5-year goal"
               variant="outlined"
               auto-grow
               rows="2"
               hide-details
-              @update:model-value="planner.updateDimension(selected.id, { goal5y: $event })"
+              @update:model-value="planner.updateCategory(selected.id, { goal5y: $event })"
             />
           </v-window-item>
 
           <v-window-item value="habits">
-            <HaradaHabitList :dimension-id="selected.id" />
+            <HaradaHabitList :category-id="selected.id" />
           </v-window-item>
 
           <v-window-item value="target">
             <v-textarea
-              :model-value="selected.target1y"
+              :model-value="selected.target1y ?? ''"
               label="Measurable 1-year target"
               variant="outlined"
               auto-grow
               rows="2"
               hide-details
-              @update:model-value="planner.updateDimension(selected.id, { target1y: $event })"
+              @update:model-value="planner.updateCategory(selected.id, { target1y: $event })"
             />
             <v-checkbox
-              :model-value="selected.targetTbd"
+              :model-value="!!selected.targetTbd"
               label="Target still to be defined"
               density="compact"
               hide-details
               class="target-tbd"
-              @update:model-value="planner.updateDimension(selected.id, { targetTbd: !!$event })"
+              @update:model-value="planner.updateCategory(selected.id, { targetTbd: !!$event })"
             />
           </v-window-item>
         </v-window>
 
         <div class="harada-panel-foot">
           <p v-if="alignment" class="alignment-line">
-            Scheduled {{ formatHours(alignment.plannedMinutesPerWeek) }} per week
+            Habit time: {{ formatHours(alignment.habitMinutesPerWeek) }} scheduled per week
             <template v-if="alignment.targetMinutesPerWeek > 0">
-              against {{ formatHours(alignment.targetMinutesPerWeek) }} of habits
+              against {{ formatHours(alignment.targetMinutesPerWeek) }} asked by the habits
             </template>
             <template v-else>
               · no measured habits yet
             </template>
             <span v-if="alignment.unlinkedHabits"> · {{ alignment.unlinkedHabits }} unlinked</span>
           </p>
-
-          <details class="disclosure">
-            <summary>Counted categories</summary>
-            <div class="disclosure-body">
-              <v-select
-                :model-value="selected.categoryIds"
-                :items="categoryItems"
-                label="Timely categories counted towards this dimension"
-                multiple
-                chips
-                closable-chips
-                variant="outlined"
-                density="comfortable"
-                hide-details
-                @update:model-value="planner.updateDimension(selected.id, { categoryIds: $event })"
-              />
-            </div>
-          </details>
+          <p v-if="alignment && alignment.totalMinutesPerWeek" class="alignment-total">
+            {{ formatHours(alignment.totalMinutesPerWeek) }} a week across all activities in this category
+          </p>
         </div>
       </section>
     </template>
@@ -253,6 +240,10 @@ button.harada-cell:focus-visible {
   color: var(--on-accent);
 }
 
+.harada-empty {
+  background: var(--bg-2);
+}
+
 .cell-num {
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -274,6 +265,13 @@ button.harada-cell:focus-visible {
 .harada-centre .cell-title {
   font-weight: 500;
   line-height: 1.45;
+}
+
+.cell-hint {
+  margin-top: calc(var(--space-1) * -1);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--ink-3);
 }
 
 /* Reserved on every cell so titles line up across the grid */
@@ -335,11 +333,19 @@ button.harada-cell:focus-visible {
   border-top: 1px solid var(--rule-2);
 }
 
-.alignment-line {
+.alignment-line,
+.alignment-total {
   margin: 0;
   font-size: var(--fs-sm);
-  color: var(--ink-2);
   font-variant-numeric: tabular-nums;
+}
+
+.alignment-line {
+  color: var(--ink-2);
+}
+
+.alignment-total {
+  color: var(--ink-3);
 }
 
 @media (max-width: 600px) {

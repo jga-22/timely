@@ -51,7 +51,7 @@ const resizeDayEl = ref<HTMLElement | null>(null)
 // Default activity applied when confirming an empty selection (falls back to work / first)
 const defaultActivityId = computed(() => {
   const acts = planner.activities
-  const work = acts.find(a => a.categoryId === 'work') ?? acts.find(a => /work/i.test(a.name))
+  const work = acts.find(a => /work/i.test(a.name))
   return work?.id ?? acts[0]?.id ?? ''
 })
 

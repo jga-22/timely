@@ -3,7 +3,7 @@ import type { HabitPeriod } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { habitWeeklyOccurrences, scheduledWeeklyMinutesForActivity } from '~/utils/planner'
 
-const props = defineProps<{ dimensionId: string }>()
+const props = defineProps<{ categoryId: string }>()
 
 const planner = usePlannerStore()
 
@@ -11,7 +11,7 @@ const newHabitName = ref('')
 // Only one habit shows its details at a time, keeping the list calm
 const openHabitId = ref<string | null>(null)
 
-const habits = computed(() => planner.habits.filter(habit => habit.dimensionId === props.dimensionId))
+const habits = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId))
 
 const PERIOD_ITEMS: Array<{ title: string; value: HabitPeriod }> = [
   { title: 'per day', value: 'day' },
@@ -44,14 +44,14 @@ const removeHabit = (habitId: string) => {
 }
 
 const addHabit = () => {
-  planner.addHabit(props.dimensionId, newHabitName.value)
+  planner.addHabit(props.categoryId, newHabitName.value)
   newHabitName.value = ''
 }
 </script>
 
 <template>
   <div class="habit-list">
-    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this dimension.</p>
+    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this category.</p>
 
     <div v-for="habit in habits" :key="habit.id" class="habit-row" :class="{ 'is-open': openHabitId === habit.id }">
       <div class="habit-main">

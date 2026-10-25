@@ -998,6 +998,24 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .cat-row:hover .cat-actions .btn,
 .cat-actions .btn:focus-visible { opacity: 1; }
 
+/* Categories carry reorder controls beside delete */
+.cat-row-category { grid-template-columns: 20px minmax(0, 1fr) auto auto; }
+.cat-row-category .cat-actions { display: flex; gap: 2px; }
+.cat-row-category .cat-actions .btn:disabled { opacity: 0; }
+.cat-remove {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3) 36px;
+  padding: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}
+.cat-remove-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.cat-remove-note { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.config-note { margin: var(--space-3) 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
+
 .form-section + .form-section {
   margin-top: var(--space-6);
   padding-top: var(--space-6);
@@ -1084,6 +1102,12 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   color: var(--ink-3);
 }
 .goal-flags span + span::before { content: "\00b7"; margin: 0 6px; }
+.goal-total {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
 
 /* ── Panels and metrics shared by views ── */
 .empty-state {

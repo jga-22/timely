@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Ambition, AppliedWeek, Dimension, Habit, HabitPeriod, PlannerState, WeekStatus } from '~/types/planner'
+import type { Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   aggregateTemplate,
   aggregateTemplateByCategory,
@@ -10,14 +10,14 @@ import {
   getTemplateById
 } from '~/utils/planner'
 
+/** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
+const numberCategories = (categories: Category[]): Category[] =>
+  [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
+
 export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => createInitialState(),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
-    activeTemplateActivityTotals(state) {
-      const template = getActiveTemplate(state)
-      return template ? aggregateTemplate(template, state.activities) : new Map<string, number>()
-    },
     activeTemplateCategoryTotals(state) {
       const template = getActiveTemplate(state)
       return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
@@ -45,7 +45,7 @@ export const usePlannerStore = defineStore('planner', {
   },
   actions: {
     hydrate(state: PlannerState | null) {
-      if (state?.templates?.length) {
+      if (state) {
         this.$patch(state)
         this.ensureActiveTemplate()
       }
@@ -134,34 +134,6 @@ export const usePlannerStore = defineStore('planner', {
 
       template.name = name.trim() || template.name
     },
-    updateActiveTemplateDescription(description: string) {
-      const template = this.activeTemplate
-
-      if (!template) {
-        return
-      }
-
-      template.description = description.trim()
-    },
-    updateSlot(slotIndex: number, activityId: string) {
-      const template = this.activeTemplate
-
-      if (!template || slotIndex < 0 || slotIndex >= template.slots.length) {
-        return
-      }
-
-      template.slots[slotIndex] = activityId
-    },
-    setSlot(dayIndex: number, hour: number, activityId: string) {
-      const template = this.activeTemplate
-
-      if (!template || dayIndex < 0 || dayIndex > 6 || hour < 0 || hour > 23) {
-        return
-      }
-
-      const index = (dayIndex * 24) + hour
-      template.slots[index] = activityId
-    },
     applyTimeRange(activityId: string, dayIndexes: number[], startHour: number, endHour: number) {
       const template = this.activeTemplate
 
@@ -183,29 +155,6 @@ export const usePlannerStore = defineStore('planner', {
     clearTimeRange(dayIndexes: number[], startHour: number, endHour: number) {
       this.applyTimeRange('', dayIndexes, startHour, endHour)
     },
-    clearActiveTemplate() {
-      const template = this.activeTemplate
-
-      if (!template) {
-        return
-      }
-
-      template.slots = template.slots.map(() => '')
-    },
-    copyDay(sourceDayIndex: number, targetDayIndex: number) {
-      const template = this.activeTemplate
-
-      if (!template || sourceDayIndex === targetDayIndex) {
-        return
-      }
-
-      const slotsPerDay = template.slots.length / 7
-      const sourceStart = sourceDayIndex * slotsPerDay
-      const targetStart = targetDayIndex * slotsPerDay
-      const slice = template.slots.slice(sourceStart, sourceStart + slotsPerDay)
-
-      template.slots.splice(targetStart, slotsPerDay, ...slice)
-    },
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
     },
@@ -219,8 +168,69 @@ export const usePlannerStore = defineStore('planner', {
       this.categories.push({
         id: `category-${Date.now()}`,
         name: trimmedName,
-        color
+        color,
+        order: Math.max(0, ...this.categories.map(category => category.order)) + 1
       })
+    },
+    updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
+      const category = this.categories.find(item => item.id === categoryId)
+      if (category) Object.assign(category, changes)
+    },
+    setCategoryColor(categoryId: string, color: string) {
+      const category = this.categories.find(item => item.id === categoryId)
+
+      if (!category) {
+        return
+      }
+
+      category.color = color
+      for (const activity of this.activities) {
+        if (activity.categoryId === categoryId) activity.color = color
+      }
+    },
+    moveCategory(categoryId: string, offset: -1 | 1) {
+      const ordered = numberCategories(this.categories)
+      const index = ordered.findIndex(category => category.id === categoryId)
+      const targetIndex = index + offset
+
+      if (index === -1 || targetIndex < 0 || targetIndex >= ordered.length) {
+        return
+      }
+
+      const current = ordered[index]!
+      ordered[index] = ordered[targetIndex]!
+      ordered[targetIndex] = current
+      this.categories = numberCategories(ordered)
+    },
+    /** Removes a category; its activities and habits must first move to another category */
+    removeCategory(categoryId: string, targetCategoryId?: string): boolean {
+      if (!this.categories.some(category => category.id === categoryId)) {
+        return false
+      }
+
+      const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
+        || this.habits.some(habit => habit.categoryId === categoryId)
+      const target = targetCategoryId && targetCategoryId !== categoryId
+        && this.categories.some(category => category.id === targetCategoryId)
+        ? targetCategoryId
+        : null
+
+      if (hasContent && !target) {
+        return false
+      }
+
+      if (target) {
+        for (const activity of this.activities) {
+          if (activity.categoryId === categoryId) activity.categoryId = target
+        }
+
+        for (const habit of this.habits) {
+          if (habit.categoryId === categoryId) habit.categoryId = target
+        }
+      }
+
+      this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
+      return true
     },
     addActivity(name: string, shortCode: string, categoryId: string) {
       const trimmedName = name.trim()
@@ -272,93 +282,27 @@ export const usePlannerStore = defineStore('planner', {
         })
       }
     },
-    setTemplateApplications(templateId: string, weekStartDates: string[], monthWeekStartDates: string[]) {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template) {
-        return
-      }
-
-      const selectedDates = new Set(weekStartDates)
-      const monthDates = new Set(monthWeekStartDates)
-
-      this.appliedWeeks = this.appliedWeeks.filter(week => !monthDates.has(week.startDate))
-
-      const nextWeeks = monthWeekStartDates
-        .filter(startDate => selectedDates.has(startDate))
-        .map(startDate => ({
-          id: `${templateId}-${startDate}`,
-          startDate,
-          templateId,
-          status: 'normal' as const,
-          notes: `Applied from ${template.name}.`
-        }))
-
-      this.appliedWeeks.unshift(...nextWeeks.reverse())
-    },
-    duplicateTemplate(templateId: string) {
-      const source = getTemplateById(this.$state, templateId)
-
-      if (!source) {
-        return
-      }
-
-      this.templates.unshift({
-        ...source,
-        id: `${source.id}-copy-${Date.now()}`,
-        name: `${source.name} Copy`,
-        slots: [...source.slots]
-      })
-      this.settings.activeTemplateId = this.templates[0]?.id ?? null
-    },
-    applyWeek(startDate: string, templateId: string, status: WeekStatus = 'normal', notes?: string) {
-      const existing = this.appliedWeeks.find(week => week.startDate === startDate)
-
-      if (existing) {
-        existing.templateId = templateId
-        existing.status = status
-        if (notes !== undefined) existing.notes = notes
-        return
-      }
-
-      this.appliedWeeks.push({
-        id: `week-${startDate}`,
-        startDate,
-        templateId,
-        status,
-        notes
-      })
-    },
-    updateWeek(weekId: string, changes: Partial<Pick<AppliedWeek, 'templateId' | 'status' | 'notes'>>) {
-      const week = this.appliedWeeks.find(w => w.id === weekId)
-
-      if (week) {
-        Object.assign(week, changes)
-      }
-    },
-    removeWeek(weekId: string) {
-      this.appliedWeeks = this.appliedWeeks.filter(w => w.id !== weekId)
-    },
+    /** Starter grid for an empty planner; existing categories and activities are never replaced */
     seedHaradaGoals() {
+      if (this.categories.length) {
+        return
+      }
+
       this.$patch(createHaradaSeed())
     },
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
       if (this.ambition) Object.assign(this.ambition, changes)
     },
-    updateDimension(dimensionId: string, changes: Partial<Pick<Dimension, 'name' | 'goal5y' | 'target1y' | 'targetTbd' | 'categoryIds'>>) {
-      const dimension = this.dimensions.find(item => item.id === dimensionId)
-      if (dimension) Object.assign(dimension, changes)
-    },
-    addHabit(dimensionId: string, name: string) {
+    addHabit(categoryId: string, name: string) {
       const trimmedName = name.trim()
 
-      if (!trimmedName || !this.dimensions.some(dimension => dimension.id === dimensionId)) {
+      if (!trimmedName || !this.categories.some(category => category.id === categoryId)) {
         return
       }
 
       this.habits.push({
         id: `habit-${Date.now()}`,
-        dimensionId,
+        categoryId,
         name: trimmedName,
         frequency: { count: 1, period: 'week' }
       })
@@ -384,9 +328,5 @@ export const usePlannerStore = defineStore('planner', {
     removeHabit(habitId: string) {
       this.habits = this.habits.filter(habit => habit.id !== habitId)
     },
-    resetToSeed() {
-      this.$patch(createInitialState())
-      this.ensureActiveTemplate()
-    }
   }
 })
