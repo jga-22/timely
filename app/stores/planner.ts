@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
+import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   aggregateTemplateByCategory,
   createEmptySlots,
@@ -7,7 +7,9 @@ import {
   createInitialState,
   getActiveTemplate,
   getTemplateById,
-  yearlyActivityHours
+  validateActivityFields,
+  yearlyActivityHours,
+  type ActivityFieldErrors
 } from '~/utils/planner'
 
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
@@ -161,9 +163,13 @@ export const usePlannerStore = defineStore('planner', {
         return
       }
 
+      // A6: only activities still on the old category colour follow the change; hand-picked colours stay
+      const previous = category.color?.toLowerCase()
       category.color = color
       for (const activity of this.activities) {
-        if (activity.categoryId === categoryId) activity.color = color
+        if (activity.categoryId === categoryId && previous && activity.color.toLowerCase() === previous) {
+          activity.color = color
+        }
       }
     },
     moveCategory(categoryId: string, offset: -1 | 1) {
@@ -210,22 +216,49 @@ export const usePlannerStore = defineStore('planner', {
       this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
       return true
     },
-    addActivity(name: string, shortCode: string, categoryId: string) {
-      const trimmedName = name.trim()
-      const normalizedCode = shortCode.trim().slice(0, 3).toUpperCase()
-      const category = this.categories.find(item => item.id === categoryId)
+    /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
+    addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
+      const fields = { name, shortCode, categoryId }
 
-      if (!trimmedName || !normalizedCode || !category) {
-        return
+      if (Object.keys(validateActivityFields(this.$state, fields)).length) {
+        return null
       }
 
+      const category = this.categories.find(item => item.id === categoryId)
+      const id = `activity-${Date.now()}`
+
       this.activities.push({
-        id: `activity-${Date.now()}`,
-        name: trimmedName,
-        shortCode: normalizedCode,
+        id,
+        name: name.trim(),
+        shortCode: shortCode.trim().toUpperCase(),
         categoryId,
-        color: category.color ?? '#685847'
+        color: color ?? category?.color ?? '#685847'
       })
+
+      return id
+    },
+    /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
+    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
+      const activity = this.activities.find(item => item.id === activityId)
+
+      if (!activity) {
+        return {}
+      }
+
+      const errors = validateActivityFields(this.$state, changes, activityId)
+
+      if (Object.keys(errors).length) {
+        return errors
+      }
+
+      // Changing the category moves the activity's hours with it; its slots and habit links stay as they are
+      Object.assign(activity, {
+        ...changes,
+        ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
+        ...(changes.shortCode !== undefined ? { shortCode: changes.shortCode.trim().toUpperCase() } : {})
+      })
+
+      return {}
     },
     removeActivity(activityId: string) {
       const nextActivities = this.activities.filter(activity => activity.id !== activityId)

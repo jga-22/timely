@@ -440,7 +440,7 @@ Not supported: touch painting of weeks, and keyboard operation of the grid (see 
 
 ### 4.13 Configuration (`app/components/planner/LegendView.vue`)
 
-Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0, 1fr)`) with the lists, right column (340px) with the forms. Gap 48px. Stacks at 1024px with gap 32px.
+Page: "Categories". Layout `.config-grid`: left column (`minmax(0, 1fr)`) with the lists, right column (340px) with the forms. Gap 48px. Stacks at 1024px with gap 32px.
 
 **Category rows** (`.cat-row.cat-row-category`): grid `20px | 1fr | auto | auto`, gap 16px, padding 12px 0, `border-bottom: 1px solid var(--rule-2)`.
 
@@ -452,12 +452,9 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 - Removal panel (`.cat-remove`): appears under the row when the category holds content. Background `--bg-2`, 1px `--rule` border, radius 6px, indented 36px. Text: "Its N activities and M habits must move to another category before X is removed." A select (`.timely-select`) of other categories, "Move and remove" (`.btn-xs.btn-primary`) and "Cancel". With no other category: "Add another category first, then remove this one." Empty categories are removed at once.
 - Note under the list when more than eight categories: "Only the first 8 categories appear in the Goals grid. The others still work in Planner and Visualization." (`.config-note`, 13px `--ink-3`).
 
-**Activity rows** (`.cat-row`, no reorder): grid `20px | 1fr | auto | 28px`. Colour is a 16px dot (`.dot-lg`), not a button. Name is 15px 400 (`.is-activity`). Meta: "SHORTCODE · category name". Hours as above. Delete (`.btn-xs.btn-danger`, ✕) hover-revealed.
-
 **Forms** (right column, `.form-section` separated by a rule and 32px spacing):
 
 - "New category": live preview (`.new-cat-preview`, colour at 14% tint, dot, name, 15px 500; placeholder label "New Category"), name field (placeholder "e.g. Wellness"), colour popover inline (`.color-pop-inline`), primary block button "Add category" (disabled until a name is typed). Enter in the name field submits.
-- "New activity": name (placeholder "e.g. Meditation"), short code (max 3 characters, placeholder "MED") and category select in a two-column row, primary block button "Add activity".
 - Projection moved to Visualization (4.11).
 
 ### 4.14 Charts and legends (summary)
@@ -477,6 +474,20 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 - Page header: "Home", a one-line lede saying the day overview comes in a later update, and today's date as `p.page-meta`. The date is client only (null until mounted, FR-DATE-6).
 - Two quiet inline links, to Planner and Goals, built with `useNav().link`. Links use `--accent` and underline (global `a` rule in `main.css`).
 - Replaced in slice 4 by the Day, Week and Month overview (FR-HOME-1 to 10).
+
+### 4.17 Planner activities (`app/components/planner/PlannerView.vue`, `.act-*` in `main.css`)
+
+Placed between the template bar and the week grid (slice 2a). The 24x7 activity grid (slice 2b) goes between this section and the year. Section title "Activities"; lede "Hours are for {template}, the template being edited. Select an activity to see its detail."
+
+- Layout (`.act-layout`): two columns of `minmax(0, 1fr)`, gap 48px. The list is on the left; the detail is on the right, with a 1px `--rule-2` left rule and 32px padding. At 768px and below it is one column, driven by `data-selected`: with an activity selected only the detail shows, with "Back to list" (`.act-back`, phones only); with none only the list shows.
+- Rows (`.act-row`, a button with `aria-pressed`): 44px minimum height, grid `16px | 1fr | auto`, 1px `--rule-2` bottom rule. Hover `--bg-3`. Selected `--bg-4` with a 3px `--accent` inset bar. Name 15px 500; meta 12px `--ink-3` ("CODE · category"); hours 13px `--ink-2`, tabular, "h/wk".
+- Empty list: "No activities yet. Add one to plan when it happens." (`.act-empty`).
+- Add (`.chip-add` text link "+ Add activity", `.act-add-trigger`) reveals `.act-add`: name, short code and category (a two-column row), colour (`.color-pop-inline`), primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Errors (`.field-error`, 13px `--danger`, `aria-invalid`) show after submit. Adding selects the new activity.
+- Detail head (`.act-detail-head`): "Back to list" (phones), colour dot and name (`h3.act-detail-name`, 18px 600), and "Edit" (`.btn-sm.btn-outline`, named "Edit {name}"). In edit mode "Done" (`.btn-sm.btn-primary`) replaces it; Done returns focus to Edit.
+- View mode (`dl.act-facts`, 120px label column, 13px): short code; category (link to Goals); colour (palette name, or "Custom (#hex)"); hours ("N h a week in {template}", then the quiet line "Also N h in {other}"); habits (names of the linked habits, or "None linked yet." and "Link habits in Goals"). No inputs.
+- Edit mode (`.act-edit`, `.form-stack`): name, short code (max 3, `.timely-input`), category (`.timely-select`) and colour (inline palette, the active swatch ringed). Changes apply at once (FR-UX-6). A clash or an empty name shows a `.field-error` line and is not applied; leaving the field restores the last accepted value and keeps the message until the next valid entry. Escape closes the delete confirmation first, otherwise leaves edit mode.
+- Delete (`.act-delete`, below a 1px rule): "Delete activity" (`.btn-sm.btn-danger`) opens `.act-confirm` (`--bg-2` panel, 1px `--rule` border, radius 6px). It states the impact in one sentence ("Clears 29 h in 3 templates and unlinks 1 habit." or "Nothing is scheduled or linked to it."), then "Delete" (`.btn-sm.btn-danger`) and "Cancel" (`.btn-sm`). Focus opens on Cancel; Escape cancels; nothing changes before Delete. No `confirm()`.
+- Swatches are 20px, as in the category popover (see section 6 on touch targets).
 
 ## 5. Colour handling for categories and activities
 
@@ -501,7 +512,7 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Goals, Visualization, Configuration. Fail for the Planner grid. | The week grid and year grid use mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Goals, Visualization, Configuration and the Planner activity list, detail and forms (4.17). Fail for the Planner grid. | The week grid and year grid use mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |

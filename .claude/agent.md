@@ -31,7 +31,7 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 - `app/pages/index.vue`: switches the view by the `tab` route query (`useNav`, see URL state below).
 - `app/components/harada/`: Goals view (`HaradaView.vue`, `HabitList.vue`).
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea.
-- `app/components/planner/`: `PlannerView.vue` (week grid + year grid), `LegendView.vue` (the Configuration tab). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
+- `app/components/planner/`: `PlannerView.vue` (template bar, activity list and detail, week grid, year grid), `LegendView.vue` (the Configuration tab; categories only until slice 3). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/composables/usePlannerYear.ts`: today and the selected year, client-only. `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
@@ -78,6 +78,7 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 ## Current state
 
 - Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Visualization and projections, week status removed, storage version 6.
+- Slice 2a (Planner activities: list, detail, edit, add and delete; activities leave Configuration) is done in one commit. Selection and edit mode are in the URL (`item`, `edit`). Recolouring a category keeps hand-picked activity colours (A6). Slice 2b (the 24x7 activity grid) is next.
 - Slice 1 (shell, URL state, Visualization) is done in one commit: tabs Home (default), Goals, Planner, Visualization and a transitional Configuration; `VizVisualizationView` replaces Insights; the projection horizon moved from Configuration to Visualization. Storage version unchanged (6).
 - Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign, navigation order. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
 
@@ -85,7 +86,7 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 
 - Move template management into Configuration (today it lives in the Planner's template switcher).
 - Most seeded habits are not linked to activities yet; Economic and Social have no activities (Environment has Errands), so they show "No target yet". Add activities and link habits in the app or the seed.
-- Hydration: the slice 0 dev-build check (fresh load and reload after an edit) showed no hydration warning, so the earlier "Hydration completed but contains mismatches" note may be stale. Re-check in dev after each slice; a client-only wrapper is the fallback.
+- Hydration: "Hydration completed but contains mismatches" appears in the production build whenever the saved state differs from the seed (slice 2a: a changed ambition sentence on Goals is enough; fresh loads are clean). The server renders the seed and the client restores storage before hydrating. A client-only wrapper is the fallback, but it changes server output; decide with the owner.
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.

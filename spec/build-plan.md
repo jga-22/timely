@@ -24,7 +24,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 | --- | --- | --- | --- | --- | --- |
 | 0 | Date foundation | FR-DATE-1 to 6 | M | none | Done (commit "feat: date foundation (real today, ISO weeks, year switcher, effective template)"); FR-DATE-6 partial until Home |
 | 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Done (one commit; see status log); FR-UX-5 and FR-VIZ-5/6 partial |
-| 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Not started |
+| 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | In progress: 2a done (commit), 2b pending |
 | 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Not started |
 | 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Not started |
 | 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |

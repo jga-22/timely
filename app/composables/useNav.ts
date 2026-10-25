@@ -5,6 +5,7 @@
  * item  id of the selected category, activity or habit. A screen ignores an id it does not know.
  * edit  "1" puts the selected item in edit mode.
  * Switching tab drops item and edit. Use `go` for a history entry (Back works) and `link` for NuxtLink.
+ * Within a screen, `setSelection` changes item and edit and keeps the tab.
  */
 export const TABS = [
   { id: 'home', label: 'Home', num: '01' },
@@ -50,5 +51,11 @@ export const useNav = () => {
   /** Navigate with a history entry, so browser Back returns to the previous screen */
   const go = (to: TabId, target?: NavTarget) => router.push(toLocation(to, target))
 
-  return { tab, item, edit, link, go }
+  /** Change the selection or edit mode on the current screen. `replace` leaves no history entry (FR-UX-5) */
+  const setSelection = (target: NavTarget = {}, replace = false) => {
+    const location = toLocation(tab.value, target)
+    return replace ? router.replace(location) : router.push(location)
+  }
+
+  return { tab, item, edit, link, go, setSelection }
 }

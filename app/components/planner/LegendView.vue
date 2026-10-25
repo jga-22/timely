@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
-import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { DESIGN_COLORS } from '~/utils/planner'
 import type { Category } from '~/types/planner'
 
@@ -8,7 +7,6 @@ import type { Category } from '~/types/planner'
 const GOAL_GRID_SIZE = 8
 
 const planner = usePlannerStore()
-const { categoryMap } = usePlannerMaps()
 
 const orderedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 
@@ -76,24 +74,6 @@ function addCategory() {
   newCatName.value = ''
 }
 
-// New activity form
-const newActName = ref('')
-const newActCode = ref('')
-const newActCatId = ref(planner.categories[0]?.id ?? '')
-
-watch(
-  () => planner.categories,
-  () => { if (!newActCatId.value) newActCatId.value = planner.categories[0]?.id ?? '' },
-  { immediate: true }
-)
-
-function addActivity() {
-  if (!newActName.value.trim() || !newActCode.value.trim() || !newActCatId.value) return
-  planner.addActivity(newActName.value, newActCode.value, newActCatId.value)
-  newActName.value = ''
-  newActCode.value = ''
-}
-
 // Hours per week from active template
 const catHoursPerWeek = computed(() => {
   const map = new Map<string, number>()
@@ -107,15 +87,6 @@ const catHoursPerWeek = computed(() => {
   return map
 })
 
-const actHoursPerWeek = computed(() => {
-  const map = new Map<string, number>()
-  if (!planner.activeTemplate) return map
-  for (const slot of planner.activeTemplate.slots) {
-    if (slot) map.set(slot, (map.get(slot) ?? 0) + 1)
-  }
-  return map
-})
-
 function closePopovers() {
   colorPickerFor.value = null
 }
@@ -124,9 +95,9 @@ function closePopovers() {
 <template>
   <div class="view" @click="closePopovers">
     <header class="page-head">
-      <h1 class="page-title">Categories and activities</h1>
+      <h1 class="page-title">Categories</h1>
       <p class="page-lede">
-        The building blocks of your week. Each category is one of your life areas, with its goals in Goals.
+        Your life areas. Each category has its goals in Goals, and groups the activities you plan in Planner.
         Changes apply to every template and projection. Double-click a category name to rename it.
       </p>
     </header>
@@ -234,33 +205,6 @@ function closePopovers() {
             Only the first {{ GOAL_GRID_SIZE }} categories appear in the Goals grid. The others still work in Planner and Visualization.
           </p>
         </section>
-
-        <section class="section">
-          <div class="list-head">
-            <h2 class="section-title">Activities</h2>
-          </div>
-          <div class="cat-list">
-            <div v-for="act in planner.activities" :key="act.id" class="cat-row">
-              <span class="dot dot-lg" :style="{ background: act.color ?? '#888' }" />
-              <div class="cat-name-wrap">
-                <span class="cat-row-name is-activity">{{ act.name }}</span>
-                <span class="cat-meta">{{ act.shortCode }} · {{ categoryMap.get(act.categoryId)?.name ?? '—' }}</span>
-              </div>
-              <div class="cat-hrs">
-                <span class="n">{{ actHoursPerWeek.get(act.id) ?? 0 }}</span> h/wk ·
-                <span class="n">{{ Math.round((actHoursPerWeek.get(act.id) ?? 0) * 52) }}</span> h/yr
-              </div>
-              <div class="cat-actions">
-                <button
-                  class="btn btn-xs btn-danger"
-                  title="Delete activity"
-                  aria-label="Delete activity"
-                  @click="planner.removeActivity(act.id)"
-                >✕</button>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <!-- Right: forms -->
@@ -302,44 +246,6 @@ function closePopovers() {
 
           <button class="btn btn-primary btn-block" :disabled="!newCatName.trim()" @click="addCategory">
             Add category
-          </button>
-        </div>
-
-        <div class="form-section">
-          <h2 class="section-title">New activity</h2>
-
-          <div class="form-stack">
-            <div class="field">
-              <label class="field-label" for="new-act-name">Name</label>
-              <input id="new-act-name" v-model="newActName" class="timely-input" placeholder="e.g. Meditation" />
-            </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label class="field-label" for="new-act-code">Short code</label>
-                <input
-                  id="new-act-code"
-                  v-model="newActCode"
-                  class="timely-input"
-                  placeholder="MED"
-                  maxlength="3"
-                />
-              </div>
-              <div class="field">
-                <label class="field-label" for="new-act-cat">Category</label>
-                <select id="new-act-cat" v-model="newActCatId" class="timely-select">
-                  <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <button
-            class="btn btn-primary btn-block"
-            :disabled="!newActName.trim() || !newActCode.trim() || !newActCatId"
-            @click="addActivity"
-          >
-            Add activity
           </button>
         </div>
       </aside>
