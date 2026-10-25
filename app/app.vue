@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useTheme } from 'vuetify'
+
 type TabId = 'planner' | 'insights' | 'goals' | 'config'
 
 const activeTab = useState<TabId>('activeTab', () => 'goals')
 const dark = useState('dark', () => false)
+const theme = useTheme()
 
 const TABS = [
   { id: 'goals'    as TabId, num: '01', label: 'Goals' },
@@ -11,11 +14,10 @@ const TABS = [
   { id: 'insights' as TabId, num: '04', label: 'Insights' },
 ]
 
-const dateLabel = 'WK 16 · APR 18'
-
 watch(dark, (v) => {
   if (import.meta.client) {
     document.documentElement.setAttribute('data-theme', v ? 'dark' : '')
+    theme.global.name.value = v ? 'timelyDark' : 'timely'
   }
 }, { immediate: true })
 
@@ -35,12 +37,9 @@ const toggleDark = () => {
   <VApp>
     <div class="app">
       <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark">timely<span class="brand-dot" /></span>
-          <span class="brand-sub">weekly · yearly</span>
-        </div>
+        <div class="brand">timely</div>
 
-        <nav class="tabs" role="tablist">
+        <nav class="tabs" role="tablist" aria-label="Sections">
           <button
             v-for="tab in TABS"
             :key="tab.id"
@@ -49,33 +48,28 @@ const toggleDark = () => {
             :aria-selected="activeTab === tab.id"
             @click="activeTab = tab.id"
           >
-            <span class="tab-num">{{ tab.num }}</span>
+            <span class="tab-num" aria-hidden="true">{{ tab.num }}</span>
             {{ tab.label }}
           </button>
         </nav>
 
-        <div class="topbar-right">
-          <span><span class="dot" /> {{ dateLabel }}</span>
-          <button class="theme-toggle" @click="toggleDark">
-            <!-- Sun -->
-            <svg v-if="dark" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="2.2" stroke="currentColor" stroke-width="1" />
-              <line x1="6" y1="0.8" x2="6" y2="2.4" stroke="currentColor" stroke-width="1" />
-              <line x1="6" y1="9.6" x2="6" y2="11.2" stroke="currentColor" stroke-width="1" />
-              <line x1="0.8" y1="6" x2="2.4" y2="6" stroke="currentColor" stroke-width="1" />
-              <line x1="9.6" y1="6" x2="11.2" y2="6" stroke="currentColor" stroke-width="1" />
-              <line x1="2.3" y1="2.3" x2="3.5" y2="3.5" stroke="currentColor" stroke-width="1" />
-              <line x1="8.5" y1="8.5" x2="9.7" y2="9.7" stroke="currentColor" stroke-width="1" />
-              <line x1="9.7" y1="2.3" x2="8.5" y2="3.5" stroke="currentColor" stroke-width="1" />
-              <line x1="3.5" y1="8.5" x2="2.3" y2="9.7" stroke="currentColor" stroke-width="1" />
-            </svg>
-            <!-- Moon -->
-            <svg v-else width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M9.5 7.2A3.8 3.8 0 0 1 4.8 2.5 3.8 3.8 0 1 0 9.5 7.2Z" stroke="currentColor" stroke-width="1" fill="currentColor" />
-            </svg>
-            {{ dark ? 'Light' : 'Dark' }}
-          </button>
-        </div>
+        <button
+          class="theme-toggle"
+          type="button"
+          :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'"
+          :title="dark ? 'Light theme' : 'Dark theme'"
+          @click="toggleDark"
+        >
+          <!-- Sun -->
+          <svg v-if="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6" />
+          </svg>
+          <!-- Moon -->
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+          </svg>
+        </button>
       </header>
 
       <NuxtPage />
