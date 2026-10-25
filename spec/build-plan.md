@@ -24,7 +24,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 | --- | --- | --- | --- | --- | --- |
 | 0 | Date foundation | FR-DATE-1 to 6 | M | none | Done (commit "feat: date foundation (real today, ISO weeks, year switcher, effective template)"); FR-DATE-6 partial until Home |
 | 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Done (one commit; see status log); FR-UX-5 and FR-VIZ-5/6 partial |
-| 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | In progress: 2a done (commit), 2b pending |
+| 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Done (2a and 2b). FR-PLAN-17 partial until the edit-mode question is decided |
 | 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Not started |
 | 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Not started |
 | 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |
@@ -73,7 +73,7 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 
 ### Slice 5: cleanup
 
-- Remove the old drag-select week grid, action bar, resize handles, dead CSS and dead store actions; remove stale docs; update `frontend-design.md` catalogue, breakpoints and screenshots (add Home and Visualization shots).
+- Already done in slice 2b: the old drag-select week grid, its action bar, resize handles, activity menu, week totals, their CSS and the `applyTimeRange` and `clearTimeRange` store actions. Still to do: `slotsToBlocks` has no caller until Home (slice 4) uses it; remove stale docs; update `frontend-design.md` catalogue, breakpoints and screenshots (add Home and Visualization shots).
 
 ### Slice 6: journal experiment (low priority)
 
@@ -92,3 +92,4 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 | 2026-10-25 | Plan written from PRD v3. |
 | 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |
 | 2026-10-25 | Slice 1 done in one commit: Home (placeholder, default), Goals, Planner, Visualization and transitional Configuration; URL state in `useNav`; Insights replaced by Visualization; horizon moved to Visualization. FR-VIZ-1 to 4 Done; FR-VIZ-5 and 6, FR-UX-5, FR-APP-7 and 8 Partial. FR-DATE-6 and FR-APP-6 Done. |
+| 2026-10-26 | Slice 2b done in one commit: 24x7 activity grid (hourly; pointer and keyboard painting; inline reassign confirmation; template overview; touch), old week grid retired (Q1). FR-PLAN-13, 15, 16, 18, 19, 20 Done; FR-PLAN-17 Partial (painting while an activity is selected, not only in edit mode: owner to confirm); FR-TPL-5 Done. The activity grid is client-only (`ClientOnly`) because server HTML kept seed cells after hydration. |

@@ -18,15 +18,15 @@ Screenshots in `screens/` (Goals and Planner from the v2 build; Home and Visuali
 | File | Size | Notes |
 | --- | --- | --- |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, with an activity selected (slice 2a; the week grid below is still the old one) |
-| `planner-activity-detail-desktop-light.png` | 1280 px wide | Activities section crop, detail view, light (slice 2a; a crop, not a viewport) |
+| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, Training selected (slice 2b: activity grid with taken and free hours) |
+| `planner-activity-detail-desktop-light.png` | 1280 px wide | Viewport at 1280 px scrolled to the activities list and detail, light (slice 2b) |
 | `home-desktop-light.png` | 1280 px wide | Home placeholder, light (slice 1) |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light (slice 1; replaces Insights) |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light (slice 1) |
 | `configuration-desktop-light.png` | 1280 px wide | Configuration, light: categories only (slice 2a; removed in slice 3) |
 | `goals-mobile-light.png` | 400 px wide | Goals, light |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, activities list (slice 2a) |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark |
+| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: activities, activity grid, year (slice 2b) |
+| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page (slice 2b) |
 
 All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). For v3, add `home-*` and `visualization-*` captures at 1280 and 400 px, light and dark.
 
@@ -68,6 +68,6 @@ Specified (v3, not built): four screens, **Home** (default; today, week and mont
 
 ## 3. Open items for the team
 
-- Owner decisions still open are in PRD 23.3 (retire the drag-select grid, unassigned weeks, basis of goals vs. planned, Home period navigation, week status, cross-category habit links). Assumptions to confirm are in 23.2.
+- Owner decisions still open are in PRD 23.3 (unassigned weeks, basis of goals vs. planned, Home period navigation, week status, cross-category habit links). Assumptions to confirm are in 23.2.
 - `frontend-design.md` must be updated slice by slice as the v3 screens are built (see Contents).
 - The root `README.md` still describes an older scaffold; a rewrite is out of scope for this spec.

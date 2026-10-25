@@ -31,7 +31,7 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 - `app/pages/index.vue`: switches the view by the `tab` route query (`useNav`, see URL state below).
 - `app/components/harada/`: Goals view (`HaradaView.vue`, `HabitList.vue`).
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea.
-- `app/components/planner/`: `PlannerView.vue` (template bar, activity list and detail, week grid, year grid), `LegendView.vue` (the Configuration tab; categories only until slice 3). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
+- `app/components/planner/`: `PlannerView.vue` (template bar, activity list and detail, year grid), `ActivityGrid.vue` (the 24x7 activity grid, client only), `LegendView.vue` (the Configuration tab; categories only until slice 3). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/composables/usePlannerYear.ts`: today and the selected year, client-only. `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
@@ -78,7 +78,7 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 ## Current state
 
 - Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Visualization and projections, week status removed, storage version 6.
-- Slice 2a (Planner activities: list, detail, edit, add and delete; activities leave Configuration) is done in one commit. Selection and edit mode are in the URL (`item`, `edit`). Recolouring a category keeps hand-picked activity colours (A6). Slice 2b (the 24x7 activity grid) is next.
+- Slice 2a (Planner activities: list, detail, edit, add and delete; activities leave Configuration) is done in one commit. Selection and edit mode are in the URL (`item`, `edit`). Recolouring a category keeps hand-picked activity colours (A6). Slice 2b (the 24x7 activity grid; the old week grid is retired) is done in its own commit, so slice 2 is complete except the FR-PLAN-17 edit-mode question. Next: slice 3 (Goals).
 - Slice 1 (shell, URL state, Visualization) is done in one commit: tabs Home (default), Goals, Planner, Visualization and a transitional Configuration; `VizVisualizationView` replaces Insights; the projection horizon moved from Configuration to Visualization. Storage version unchanged (6).
 - Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign, navigation order. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
 

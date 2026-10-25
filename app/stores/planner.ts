@@ -2,14 +2,18 @@ import { defineStore } from 'pinia'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   aggregateTemplateByCategory,
+  applyActivityCells,
   createEmptySlots,
   createHaradaSeed,
   createInitialState,
   getActiveTemplate,
   getTemplateById,
+  rangeConflicts,
   validateActivityFields,
   yearlyActivityHours,
-  type ActivityFieldErrors
+  type ActivityFieldErrors,
+  type HourConflict,
+  type PaintMode
 } from '~/utils/planner'
 
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
@@ -114,26 +118,26 @@ export const usePlannerStore = defineStore('planner', {
 
       template.name = name.trim() || template.name
     },
-    applyTimeRange(activityId: string, dayIndexes: number[], startHour: number, endHour: number) {
-      const template = this.activeTemplate
+    /**
+     * Paints one activity's hours in one hourly template (FR-PLAN-17, 18). `add` takes hours held by other
+     * activities only when `reassign` is true; otherwise nothing changes and the conflicts are returned for confirmation.
+     * Returns [] when the change was applied.
+     */
+    setActivitySlots(templateId: string, activityId: string, cells: number[], mode: PaintMode, reassign = false): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
 
-      if (!template || startHour < 0 || endHour > 24 || startHour >= endHour) {
-        return
+      if (!template || template.granularityMinutes !== 60 || !this.activities.some(activity => activity.id === activityId)) {
+        return []
       }
 
-      for (const dayIndex of dayIndexes) {
-        if (dayIndex < 0 || dayIndex > 6) {
-          continue
-        }
+      const conflicts = mode === 'add' ? rangeConflicts(template.slots, cells, activityId) : []
 
-        for (let hour = startHour; hour < endHour; hour += 1) {
-          const index = (dayIndex * 24) + hour
-          template.slots[index] = activityId
-        }
+      if (conflicts.length && !reassign) {
+        return conflicts
       }
-    },
-    clearTimeRange(dayIndexes: number[], startHour: number, endHour: number) {
-      this.applyTimeRange('', dayIndexes, startHour, endHour)
+
+      template.slots = applyActivityCells(template.slots, cells, activityId, mode)
+      return []
     },
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
