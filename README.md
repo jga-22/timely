@@ -1,6 +1,6 @@
 # timely
 
-Nuxt scaffold for a local-first weekly planning app based on `weekly_planner_prd_and_design_doc.md`.
+Nuxt scaffold for a local-first weekly planning app based on `spec/weekly_planner_prd_and_design_doc.md` (see `spec/README.md`).
 
 ## Stack
 

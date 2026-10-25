@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grille Harada — Meilleure version de moi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue: #1B4B8F;
+    --blue-deep: #12335F;
+    --blue-tint: #EEF3FA;
+    --blue-tint-2: #DCE7F5;
+    --ink: #1A2230;
+    --soft: #6B7385;
+    --line: #E2E6EE;
+    --white: #FFFFFF;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+  }
+
+  header{
+    margin-bottom: 48px;
+    max-width: 640px;
+  }
+
+  .eyebrow{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 14px;
+  }
+
+  h1{
+    font-weight: 600;
+    font-size: clamp(28px, 4.4vw, 40px);
+    line-height: 1.2;
+    margin: 0 0 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub{
+    font-size: 15px;
+    color: var(--soft);
+    line-height: 1.6;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+
+  .cell{
+    background: var(--white);
+    color: var(--ink);
+    padding: 22px 20px;
+    min-height: 128px;
+    cursor: pointer;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    position: relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+
+  .cell:hover, .cell:focus-visible{
+    background: var(--blue-tint);
+    outline: none;
+  }
+
+  .cell.active{
+    background: var(--blue-tint-2);
+  }
+
+  .cell.active::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width: 3px;
+    background: var(--blue);
+  }
+
+  .cell .num{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: 0.02em;
+  }
+
+  .cell .title{
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 10px;
+    line-height: 1.3;
+  }
+
+  .cell .hint{
+    font-size: 12px;
+    color: var(--soft);
+    margin-top: 10px;
+  }
+
+  .cell.center{
+    background: var(--blue);
+    color: var(--white);
+    align-items:flex-start;
+    justify-content:center;
+    padding: 22px 20px;
+  }
+
+  .cell.center .num{ color: rgba(255,255,255,0.65); }
+
+  .cell.center .title{
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--white);
+    margin-top: 8px;
+  }
+
+  .cell.center:hover{ background: var(--blue); cursor:default; }
+
+  .panel{
+    border: 1px solid var(--line);
+  }
+
+  .panel-head{
+    padding: 30px 32px 0;
+  }
+
+  .p-eyebrow{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 8px;
+  }
+
+  .panel h2{
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .tabs{
+    display:flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab{
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--soft);
+    padding: 12px 4px;
+    margin-right: 26px;
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab.active{
+    color: var(--blue);
+    font-weight: 600;
+    border-bottom: 2px solid var(--blue);
+  }
+
+  .tab-content{
+    padding: 28px 32px 34px;
+    min-height: 220px;
+  }
+
+  .obj-row{
+    display:flex;
+    align-items:flex-start;
+    gap: 10px;
+    max-width: 640px;
+  }
+
+  .objective{
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+    max-width: 600px;
+    margin: 0;
+    flex: 1;
+  }
+
+  [contenteditable="true"]{
+    border-radius: 2px;
+    outline: none;
+    transition: background 0.15s ease;
+  }
+
+  [contenteditable="true"]:hover{
+    background: var(--blue-tint);
+  }
+
+  [contenteditable="true"]:focus{
+    background: var(--blue-tint);
+    box-shadow: 0 0 0 1px var(--blue-tint-2);
+  }
+
+  .save-status{
+    font-size: 12px;
+    color: var(--soft);
+    margin-top: 14px;
+  }
+
+  .tbd{
+    display:inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--blue-tint);
+    color: var(--blue);
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .actions{
+    margin: 0;
+    padding: 0;
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 32px;
+  }
+
+  .actions li{
+    list-style:none;
+    display:flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14.5px;
+    line-height: 1.4;
+  }
+
+  .actions li .n{
+    color: var(--blue);
+    font-weight: 600;
+    min-width: 18px;
+    font-size: 13px;
+  }
+
+  footer{
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--soft);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 780px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+    .cell.center{ order:-1; grid-column: 1 / -1; min-height: 100px; }
+    .actions{ grid-template-columns: 1fr; }
+    .panel-head{ padding: 24px 20px 0; }
+    .tab-content{ padding: 22px 20px 26px; }
+    .tabs{ overflow-x:auto; white-space:nowrap; }
+    .tab{ margin-right: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Méthode Harada · grille personnelle</div>
+    <h1>La meilleure version de moi, dimension par dimension</h1>
+    <p class="sub">Une ambition à cinq ans, portée par huit dimensions de vie. Touche une case, puis un onglet pour l'objectif, les attitudes quotidiennes ou la cible mesurable à un an. Chaque champ est modifiable directement.</p>
+    <p class="save-status" id="save-status">Modifications enregistrées automatiquement</p>
+  </header>
+
+  <div class="grid" id="grid">
+
+    <button class="cell" data-key="physique" tabindex="0">
+      <span class="num">01</span>
+      <span class="title">Physique</span>
+      <span class="hint">Sport · alimentation · organisation</span>
+    </button>
+
+    <button class="cell" data-key="spirituelle" tabindex="0">
+      <span class="num">02</span>
+      <span class="title">Spirituelle</span>
+      <span class="hint">Méditation · religion / journal</span>
+    </button>
+
+    <button class="cell" data-key="relationnelle" tabindex="0">
+      <span class="num">03</span>
+      <span class="title">Relationnelle & émotionnelle</span>
+      <span class="hint">Famille · gestion des émotions</span>
+    </button>
+
+    <button class="cell" data-key="economique" tabindex="0">
+      <span class="num">04</span>
+      <span class="title">Économique</span>
+      <span class="hint">Suivi · plan</span>
+    </button>
+
+    <div class="cell center">
+      <span class="num">Ambition · 5 ans</span>
+      <span class="title">Meilleur père, époux, fils et frère — CDO / CIO d'ici 5 ans</span>
+    </div>
+
+    <button class="cell" data-key="cognitive" tabindex="0">
+      <span class="num">05</span>
+      <span class="title">Cognitive</span>
+      <span class="hint">AE / IA · projet perso</span>
+    </button>
+
+    <button class="cell" data-key="sociale" tabindex="0">
+      <span class="num">06</span>
+      <span class="title">Sociale</span>
+      <span class="hint">Communauté · aide</span>
+    </button>
+
+    <button class="cell" data-key="professionnel" tabindex="0">
+      <span class="num">07</span>
+      <span class="title">Professionnelle</span>
+      <span class="hint">Networking · leadership · CDO/CIO</span>
+    </button>
+
+    <button class="cell" data-key="environnement" tabindex="0">
+      <span class="num">08</span>
+      <span class="title">Environnement</span>
+      <span class="hint">Durabilité · rythme de vie</span>
+    </button>
+
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="p-eyebrow" id="p-eyebrow"></div>
+      <h2 id="p-title"></h2>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="obj5">Objectif 5 ans</button>
+        <button class="tab" data-tab="actions">Attitudes quotidiennes</button>
+        <button class="tab" data-tab="obj1">Objectif mesurable à 1 an</button>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-content"></div>
+  </div>
+
+  <footer>
+    Grille inspirée de la méthode Harada (Takashi Harada), popularisée via le cas Shohei Ohtani — Harvard Business School.
+    Les objectifs marqués « à définir » restent à chiffrer pour devenir pleinement actionnables.
+  </footer>
+
+</div>
+
+<script>
+  const data = {
+    physique: {
+      title: "Dimension physique",
+      obj5: "Forme optimale, énergie stable, zéro dette de sommeil.",
+      obj5tbd: true,
+      obj1: "À définir — ex. 3 séances de sport par semaine tenues sur l'année, bilan santé complet réalisé.",
+      obj1tbd: true,
+      actions: [
+        "Sport régulier (fréquence et type à fixer)",
+        "Alimentation structurée, pas d'improvisation",
+        "Sommeil et récupération organisés",
+        "Suivi d'indicateurs simples (poids, forme)",
+        "Check-up médical annuel",
+        "Limiter les écrans avant le coucher",
+        "Hydratation quotidienne",
+        "Étirements et mobilité"
+      ]
+    },
+    spirituelle: {
+      title: "Dimension spirituelle",
+      obj5: "Clarté intérieure, sérénité face à la pression professionnelle.",
+      obj5tbd: true,
+      obj1: "À définir — ex. 10 minutes de méditation quotidienne tenues, journal hebdomadaire régulier.",
+      obj1tbd: true,
+      actions: [
+        "Méditation régulière",
+        "Temps de réflexion / journal",
+        "Lecture inspirante",
+        "Moments de silence sans écran",
+        "Clarifier ses valeurs personnelles",
+        "Gratitude quotidienne",
+        "Retraite ou temps long une fois par an",
+        "Aligner ses actions sur ses valeurs"
+      ]
+    },
+    relationnelle: {
+      title: "Dimension relationnelle & émotionnelle",
+      obj5: "Être reconnu par ma famille comme un père, un époux, un fils et un frère présent et fiable.",
+      obj5tbd: false,
+      obj1: "Rituel hebdomadaire avec mon épouse et rituel mensuel individuel avec chaque enfant, tenus à 90 % sur l'année.",
+      obj1tbd: false,
+      actions: [
+        "Temps dédié à mon épouse (rituel de couple)",
+        "Temps dédié à mes enfants, individualisé",
+        "Appels et visites réguliers à mes parents",
+        "Lien actif avec mon frère / ma sœur",
+        "Rituel familial (ex. dimanche en famille)",
+        "Cercle d'amis proches entretenu",
+        "Reconnaître, exprimer et réguler mes émotions",
+        "Résoudre les tensions rapidement, ne rien laisser traîner"
+      ]
+    },
+    economique: {
+      title: "Dimension économique",
+      obj5: "Indépendance financière, patrimoine cible.",
+      obj5tbd: true,
+      obj1: "À définir — ex. taux d'épargne cible atteint, montant précis investi sur l'année.",
+      obj1tbd: true,
+      actions: [
+        "Suivi budgétaire mensuel",
+        "Plan d'épargne / investissement structuré",
+        "Revue patrimoniale annuelle",
+        "Diversification des revenus",
+        "Protection de la famille (assurances, prévoyance)",
+        "Objectifs chiffrés par échéance",
+        "Réduire les dépenses non alignées avec mes valeurs",
+        "Formation continue en finance personnelle"
+      ]
+    },
+    cognitive: {
+      title: "Dimension cognitive",
+      obj5: "Rester à la pointe sur l'IA et l'architecture d'entreprise, capable de porter un projet propre.",
+      obj5tbd: false,
+      obj1: "Certification IA / architecture d'entreprise obtenue et un projet personnel lancé — app de dev perso ou app d'architecture d'entreprise (arbitrage à trancher).",
+      obj1tbd: false,
+      actions: [
+        "Veille active IA / architecture d'entreprise",
+        "Trancher puis lancer le projet perso (app dev perso ou app EA)",
+        "Lecture technique régulière",
+        "Formation certifiante ciblée",
+        "Expérimentation concrète (prototypes, POC perso)",
+        "Partager ses connaissances (articles, talks)",
+        "Apprendre un nouveau domaine chaque année",
+        "Remettre en question ses acquis régulièrement"
+      ]
+    },
+    sociale: {
+      title: "Dimension sociale",
+      obj5: "Rôle actif dans une communauté professionnelle ou entrepreneuriale.",
+      obj5tbd: true,
+      obj1: "À définir — ex. rejoindre une communauté active, démarrer un mentorat sur l'année.",
+      obj1tbd: true,
+      actions: [
+        "Participation active à une ou plusieurs communautés",
+        "Mentorat, aide à d'autres",
+        "Engagement associatif ou entrepreneurial",
+        "Contribution à un collectif ou réseau",
+        "Organisation d'événements ou de rencontres",
+        "Visibilité (contenu, prises de parole)",
+        "Entretenir le réseau existant",
+        "Nouvelles connexions qualifiées chaque trimestre"
+      ]
+    },
+    professionnel: {
+      title: "Dimension professionnelle",
+      obj5: "Décrocher un poste de CDO ou CIO d'ici cinq ans.",
+      obj5tbd: false,
+      obj1: "Occuper un rôle élargi (ex. Lead Enterprise Architect) couvrant IT et data, avec 3 initiatives stratégiques livrées et visibles du comité de direction.",
+      obj1tbd: false,
+      actions: [
+        "Networking ciblé auprès de dirigeants IT / data",
+        "Développer une posture et une communication exécutive",
+        "Missions à impact visible sur la roadmap digitale",
+        "Executive education / certification stratégique",
+        "Identifier un mentor ou un sponsor interne",
+        "Élargir le périmètre : de l'EA vers la gouvernance IT/data globale",
+        "Valoriser la valeur créée avec des résultats chiffrés",
+        "Publier des articles professionnels pour construire ma marque perso"
+      ]
+    },
+    environnement: {
+      title: "Dimension environnement",
+      obj5: "Mode de vie durable, cohérent avec mes valeurs.",
+      obj5tbd: true,
+      obj1: "À définir — ex. rituel dominical fixe tenu toute l'année, empreinte réduite sur un poste identifié.",
+      obj1tbd: true,
+      actions: [
+        "Réduire mon empreinte au quotidien",
+        "Rituels du dimanche : repos, nature, famille",
+        "Choix de consommation alignés",
+        "Optimiser le cadre de vie et de travail",
+        "Point à définir",
+        "Sensibiliser mon entourage",
+        "Bilan annuel simple de mes choix",
+        "Cohérence entre discours pro (transformation durable) et vie perso"
+      ]
+    }
+  };
+
+  const keys = Object.keys(data);
+  let currentKey = 'professionnel';
+  let currentTab = 'obj5';
+
+  const cells = document.querySelectorAll('.cell[data-key]');
+  const tabs = document.querySelectorAll('.tab');
+  const tabContent = document.getElementById('tab-content');
+  const pTitle = document.getElementById('p-title');
+  const pEyebrow = document.getElementById('p-eyebrow');
+
+  function renderTabContent(){
+    const d = data[currentKey];
+    if(currentTab === 'obj5' || currentTab === 'obj1'){
+      const field = currentTab;
+      const tbdFlag = field + 'tbd';
+      tabContent.innerHTML = `
+        <div class="obj-row">
+          <p class="objective" contenteditable="true" data-field="${field}"></p>
+          <span class="tbd" style="${d[tbdFlag] ? '' : 'display:none;'}">à définir</span>
+        </div>`;
+      tabContent.querySelector('.objective').textContent = d[field];
+      tabContent.querySelector('.objective').addEventListener('input', onEditableInput);
+    } else {
+      tabContent.innerHTML = `<ul class="actions">${d.actions.map((a,i) => `<li><span class="n">${String(i+1).padStart(2,'0')}</span><span class="a-text" contenteditable="true" data-field="actions" data-index="${i}"></span></li>`).join('')}</ul>`;
+      tabContent.querySelectorAll('.a-text').forEach((el, i) => {
+        el.textContent = d.actions[i];
+        el.addEventListener('input', onEditableInput);
+      });
+    }
+  }
+
+  function onEditableInput(e){
+    const el = e.target;
+    const field = el.dataset.field;
+    const d = data[currentKey];
+    if(field === 'actions'){
+      const idx = parseInt(el.dataset.index, 10);
+      d.actions[idx] = el.textContent;
+    } else {
+      d[field] = el.textContent;
+      d[field + 'tbd'] = false;
+      const badge = el.closest('.obj-row').querySelector('.tbd');
+      if(badge) badge.style.display = 'none';
+    }
+    scheduleSave();
+  }
+
+  let saveTimeout;
+  function scheduleSave(){
+    const statusEl = document.getElementById('save-status');
+    if(statusEl) statusEl.textContent = 'Modification en cours…';
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      try{
+        await window.storage.set('harada-data', JSON.stringify(data), false);
+        if(statusEl) statusEl.textContent = 'Enregistré';
+      }catch(err){
+        if(statusEl) statusEl.textContent = 'Modifications gardées pour cette session uniquement';
+      }
+    }, 700);
+  }
+
+  async function loadSaved(){
+    try{
+      const res = await window.storage.get('harada-data', false);
+      if(res && res.value){
+        const saved = JSON.parse(res.value);
+        Object.keys(saved).forEach(k => {
+          if(data[k]){
+            data[k].obj5 = saved[k].obj5 ?? data[k].obj5;
+            data[k].obj5tbd = saved[k].obj5tbd ?? data[k].obj5tbd;
+            data[k].obj1 = saved[k].obj1 ?? data[k].obj1;
+            data[k].obj1tbd = saved[k].obj1tbd ?? data[k].obj1tbd;
+            data[k].actions = saved[k].actions ?? data[k].actions;
+          }
+        });
+      }
+    }catch(err){
+      /* pas de sauvegarde existante, on garde les valeurs par défaut */
+    }
+  }
+
+  function render(key){
+    currentKey = key;
+    const d = data[key];
+    cells.forEach(c => c.classList.toggle('active', c.dataset.key === key));
+    pEyebrow.textContent = `Dimension ${keys.indexOf(key)+1} sur 8`;
+    pTitle.textContent = d.title;
+    renderTabContent();
+  }
+
+  cells.forEach(c => {
+    c.addEventListener('click', () => render(c.dataset.key));
+    c.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); render(c.dataset.key); }
+    });
+  });
+
+  tabs.forEach(t => {
+    t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      currentTab = t.dataset.tab;
+      renderTabContent();
+    });
+  });
+
+  loadSaved().then(() => render('professionnel'));
+</script>
+
+</body>
+</html>
