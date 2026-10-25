@@ -9,9 +9,9 @@ const theme = useTheme()
 
 const TABS = [
   { id: 'goals'    as TabId, num: '01', label: 'Goals' },
-  { id: 'config'   as TabId, num: '02', label: 'Configuration' },
-  { id: 'planner'  as TabId, num: '03', label: 'Planner' },
-  { id: 'insights' as TabId, num: '04', label: 'Insights' },
+  { id: 'planner'  as TabId, num: '02', label: 'Planner' },
+  { id: 'insights' as TabId, num: '03', label: 'Insights' },
+  { id: 'config'   as TabId, num: '04', label: 'Configuration' },
 ]
 
 watch(dark, (v) => {
