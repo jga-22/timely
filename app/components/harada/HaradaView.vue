@@ -52,7 +52,6 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
   <div class="view harada-view">
     <div class="page-head">
       <div>
-        <div class="page-kicker">03 · Goals</div>
         <h1 class="page-title">The best version of <em>me</em></h1>
         <p class="page-lede">
           One five-year ambition, eight life dimensions. Select a cell, then a tab to edit its goal,

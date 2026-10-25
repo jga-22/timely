@@ -102,7 +102,6 @@ function removeCategory(catId: string) {
   <div class="view" @click="closePopovers">
     <div class="page-head">
       <div>
-        <div class="page-kicker">03 · Configuration</div>
         <h1 class="page-title">Activities &amp; <em>categories</em></h1>
         <p class="page-lede">Manage the building blocks of your week. Changes propagate to all templates and projections.</p>
       </div>

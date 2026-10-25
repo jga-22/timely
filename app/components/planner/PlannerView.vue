@@ -356,7 +356,6 @@ function confirmDeleteActiveTemplate() {
     <!-- Page header -->
     <div class="page-head">
       <div>
-        <div class="page-kicker">01 · Planner</div>
         <h1 class="page-title">Design your <em>ideal</em> week,<br>hour by hour.</h1>
         <p class="page-lede">
           Drag across empty slots to select a range, or tap a block to modify it.

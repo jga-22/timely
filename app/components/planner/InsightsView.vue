@@ -171,7 +171,6 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
   <div class="view">
     <div class="page-head">
       <div>
-        <div class="page-kicker">02 · Insights</div>
         <h1 class="page-title">Where your time <em>goes</em></h1>
         <p class="page-lede">Year-view of how your templates distribute across 52 weeks, with long-term projection.</p>
       </div>
