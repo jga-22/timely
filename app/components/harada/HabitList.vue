@@ -55,12 +55,9 @@ const addHabit = () => {
 
     <div v-for="habit in habits" :key="habit.id" class="habit-row" :class="{ 'is-open': openHabitId === habit.id }">
       <div class="habit-main">
-        <v-text-field
+        <AutoTextarea
           :model-value="habit.name"
           aria-label="Habit name"
-          density="compact"
-          variant="underlined"
-          hide-details
           class="habit-name"
           @update:model-value="planner.updateHabit(habit.id, { name: $event })"
         />
@@ -182,7 +179,7 @@ const addHabit = () => {
 
 .habit-main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-4);
 }
 
@@ -193,6 +190,7 @@ const addHabit = () => {
 
 .habit-toggle {
   flex: none;
+  margin-top: var(--space-2);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius);
   font-size: var(--fs-sm);

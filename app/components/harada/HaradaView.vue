@@ -74,12 +74,10 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 
     <template v-else>
       <div v-if="ambition" class="ambition-edit">
-        <v-text-field
+        <AutoTextarea
           :model-value="ambition.statement"
           label="5-year ambition"
-          variant="underlined"
-          density="comfortable"
-          hide-details
+          class="ambition-input"
           @update:model-value="planner.updateAmbition({ statement: $event })"
         />
       </div>
@@ -123,13 +121,10 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 
         <v-window v-model="activeTab" class="harada-panel-body">
           <v-window-item value="goal">
-            <v-textarea
+            <AutoTextarea
               :model-value="selected.goal5y ?? ''"
               label="5-year goal"
-              variant="outlined"
-              auto-grow
-              rows="2"
-              hide-details
+              class="goal-input"
               @update:model-value="planner.updateCategory(selected.id, { goal5y: $event })"
             />
           </v-window-item>
@@ -139,13 +134,9 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
           </v-window-item>
 
           <v-window-item value="target">
-            <v-textarea
+            <AutoTextarea
               :model-value="selected.target1y ?? ''"
               label="Measurable 1-year target"
-              variant="outlined"
-              auto-grow
-              rows="2"
-              hide-details
               @update:model-value="planner.updateCategory(selected.id, { target1y: $event })"
             />
             <v-checkbox
@@ -188,6 +179,11 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
 .ambition-edit {
   max-width: 720px;
   margin-bottom: var(--space-6);
+}
+
+.ambition-input :deep(.auto-textarea),
+.goal-input :deep(.auto-textarea) {
+  font-size: 16px;
 }
 
 /* 3x3 grid separated by hairlines, as in the prototype */
