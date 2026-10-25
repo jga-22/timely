@@ -14,12 +14,13 @@ const TABS = [
   { id: 'config'   as TabId, num: '04', label: 'Configuration' },
 ]
 
+// Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
 watch(dark, (v) => {
   if (import.meta.client) {
     document.documentElement.setAttribute('data-theme', v ? 'dark' : '')
     theme.global.name.value = v ? 'timelyDark' : 'timely'
   }
-}, { immediate: true })
+})
 
 onMounted(() => {
   const saved = localStorage.getItem('timely.dark')

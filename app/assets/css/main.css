@@ -13,6 +13,7 @@
   --ink-4:       #9aa1b1;   /* decoration only, never text */
   --rule:        #e2e6ee;
   --rule-2:      #eef1f6;
+  --control-border: #737e95;   /* boundary of inputs, outline buttons and swatch rings: 3:1 or more on every surface */
   --accent:      #1b4b8f;
   --accent-deep: #12335f;
   --accent-soft: #dce7f5;
@@ -54,6 +55,7 @@ html[data-theme="dark"] {
   --ink-4:       #5d6780;
   --rule:        #28324a;
   --rule-2:      #1d2639;
+  --control-border: #78859e;
   --accent:      #86aee8;
   --accent-deep: #b5cdf1;
   --accent-soft: #223156;
@@ -114,6 +116,10 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .v-application .v-btn,
 .v-application .v-tab { text-transform: none !important; letter-spacing: normal !important; }
 .v-application .v-btn { border-radius: var(--radius); }
+/* Outlined Vuetify fields (Goals habits) use the control boundary, and full-strength labels */
+.v-application .v-field--variant-outlined .v-field__outline { --v-field-border-opacity: 1; color: var(--control-border); }
+.v-application .v-field--variant-outlined.v-field--focused .v-field__outline { color: var(--accent); }
+.v-application .v-label { opacity: 1; color: var(--ink-2); }
 
 /* ── App shell and topbar ── */
 .app {
@@ -307,7 +313,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .btn-primary:hover { background: var(--accent-deep); }
 .btn-primary:disabled,
 .btn-primary:disabled:hover { background: var(--accent); color: var(--on-accent); }
-.btn-outline { border-color: var(--rule); color: var(--ink); }
+.btn-outline { border-color: var(--control-border); color: var(--ink); }
 .btn-outline:hover { border-color: var(--ink-3); background: transparent; }
 .btn-danger { color: var(--danger); }
 .btn-danger:hover { background: var(--danger-tint); color: var(--danger); }
@@ -330,7 +336,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .timely-select {
   height: 36px;
   padding: 0 12px;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--ink);
@@ -379,7 +385,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 }
 .chip .t-name,
 .chip .chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chip .pill-count { font-size: var(--fs-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chip .pill-count { font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
 .chip-add {
   display: inline-flex;
@@ -400,7 +406,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--control-border);
 }
 .dot-lg { width: 16px; height: 16px; }
 .dot-action { cursor: pointer; }
@@ -431,7 +437,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--control-border);
 }
 .color-pop button[data-active="true"] {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
@@ -639,7 +645,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .resize-confirm-btn.is-cancel {
   background: var(--bg);
   color: var(--ink-2);
-  box-shadow: inset 0 0 0 1px var(--rule);
+  box-shadow: inset 0 0 0 1px var(--control-border);
 }
 .resize-confirm-btn.is-cancel:hover { background: var(--danger-tint); color: var(--danger); }
 
@@ -688,19 +694,30 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 @media (hover: none) {
   .block-actions { display: none; }
 }
+/* 24px hit area with a 20px visible disc, so the blocks look the same as before */
 .block-action-btn {
+  position: relative;
+  z-index: 0;
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 1px solid var(--rule);
-  background: var(--bg);
   color: var(--ink-2);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1;
 }
-.block-action-btn:hover { background: var(--danger-tint); color: var(--danger); border-color: transparent; }
+.block-action-btn::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  border-radius: 50%;
+  border: 1px solid var(--control-border);
+  background: var(--bg);
+}
+.block-action-btn:hover { color: var(--danger); }
+.block-action-btn:hover::before { background: var(--danger-tint); border-color: transparent; }
 
 /* ── Week totals: a single quiet legend row ── */
 .week-stats {
@@ -757,7 +774,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .paint-tools .field-label { margin-right: var(--space-2); font-weight: 400; color: var(--ink-3); }
 .dot-erase {
   background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--ink-4);
+  box-shadow: inset 0 0 0 1px var(--control-border);
 }
 
 .year-grid-scroll {
@@ -858,7 +875,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   padding: 0 var(--space-3);
   border-radius: 4px;
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .segmented button:hover { color: var(--ink); }
 .segmented button[data-active="true"] {
@@ -948,7 +965,7 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--control-border);
   cursor: pointer;
 }
 .big-swatch.is-static { cursor: default; }
@@ -1245,7 +1262,6 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 
   /* Week grid keeps its width and scrolls horizontally */
   .week { min-width: 480px; }
-  .block-action-btn { width: 26px; height: 26px; font-size: 12px; }
   .year-months,
   .year-grid { min-width: 360px; }
 

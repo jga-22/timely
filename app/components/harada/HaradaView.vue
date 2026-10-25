@@ -210,10 +210,14 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
   transition: background 0.15s ease;
 }
 
-button.harada-cell:hover,
-button.harada-cell:focus-visible {
+button.harada-cell:hover {
   background: var(--bg-3);
-  outline: none;
+}
+
+/* Inset ring: the grid frame has overflow hidden, so an outside outline would be clipped */
+button.harada-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .harada-cell.is-active {
@@ -249,7 +253,6 @@ button.harada-cell:focus-visible {
 
 .harada-centre .cell-num {
   color: var(--on-accent);
-  opacity: 0.75;
 }
 
 .cell-title {
@@ -267,7 +270,7 @@ button.harada-cell:focus-visible {
   margin-top: calc(var(--space-1) * -1);
   font-size: var(--fs-xs);
   line-height: 1.35;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* Reserved on every cell so titles line up across the grid */
