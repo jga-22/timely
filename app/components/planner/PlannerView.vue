@@ -272,7 +272,7 @@ function slotFromPoint(x: number, y: number): { day: number; hour: number } | nu
 }
 
 function onTouchStart(e: TouchEvent) {
-  const t = e.touches[0]
+  const t = e.touches[0]!
   touchOrigin.value = { x: t.clientX, y: t.clientY }
 }
 
@@ -282,7 +282,7 @@ function onTouchMove(_e: TouchEvent) {
 
 function onTouchEnd(e: TouchEvent) {
   if (!touchOrigin.value) return
-  const t = e.changedTouches[0]
+  const t = e.changedTouches[0]!
   const moved =
     Math.abs(t.clientX - touchOrigin.value.x) > TOUCH_SLOP ||
     Math.abs(t.clientY - touchOrigin.value.y) > TOUCH_SLOP
@@ -656,8 +656,8 @@ function confirmDeleteActiveTemplate() {
 
       <div v-if="hoverWeek !== null" style="margin-top: 14px; font-size: 13px; color: var(--ink-2)">
         <span class="panel-sub" style="margin-right: 8px">Week {{ hoverWeek + 1 }}</span>
-        <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek])">
-          {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek])!)?.name }}
+        <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)">
+          {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)!)?.name }}
         </span>
         <span v-else style="color: var(--ink-3); font-style: italic">unassigned — click to paint</span>
       </div>

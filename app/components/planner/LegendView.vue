@@ -35,7 +35,7 @@ function setCategoryColor(catId: string, color: string) {
 
 // New category form
 const newCatName = ref('')
-const newCatColor = ref(DESIGN_COLORS[0].bg)
+const newCatColor = ref(DESIGN_COLORS[0]!.bg)
 const newCatPreviewLabel = computed(() => newCatName.value.trim() || 'New Category')
 
 function addCategory() {

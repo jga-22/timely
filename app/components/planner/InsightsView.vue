@@ -49,10 +49,10 @@ const monthBars = computed(() => {
   const buckets: Array<typeof weekBars.value> = Array.from({ length: 12 }, () => [])
   for (const week of weekBars.value) {
     const m = new Date(week.startDate).getUTCMonth()
-    buckets[m].push(week)
+    buckets[m]!.push(week)
   }
   return MONTHS.map((month, m) => {
-    const weeks = buckets[m]
+    const weeks = buckets[m] ?? []
     if (!weeks.length) return { month, segments: [] as Segment[] }
     const catTotals = new Map<string, { hours: number; color: string }>()
     for (const week of weeks) {
@@ -135,7 +135,7 @@ const weeklyMonthLabels = computed(() => {
   WEEK_DATES_2026.forEach((date, i) => {
     const m = new Date(date).getUTCMonth()
     if (m !== lastMonth) {
-      labels.push({ month: MONTHS[m], x: LEFT + i * (BAR_W + BAR_GAP) })
+      labels.push({ month: MONTHS[m] ?? '', x: LEFT + i * (BAR_W + BAR_GAP) })
       lastMonth = m
     }
   })
@@ -164,7 +164,7 @@ const yTicks = [0, 42, 84, 126, 168]
 function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
 
 // Current month index for monthly indicator
-const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]).getUTCMonth()
+const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth()
 </script>
 
 <template>

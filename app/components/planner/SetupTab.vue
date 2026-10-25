@@ -17,7 +17,7 @@ const newActivityCode = ref('')
 const newActivityCategoryId = ref('')
 
 const newCategoryName = ref('')
-const newCategoryColor = ref(COLORS[4])
+const newCategoryColor = ref(COLORS[4]!)
 
 watch(
   () => planner.categories.map(c => c.id),
