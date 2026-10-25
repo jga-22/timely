@@ -97,7 +97,7 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
           >
             <span class="cell-num">{{ String(dimension.order).padStart(2, '0') }}</span>
             <span class="cell-title">{{ dimension.name }}</span>
-            <span v-if="dimension.targetTbd" class="cell-tag">To define</span>
+            <span class="cell-status">{{ dimension.targetTbd ? 'To define' : '' }}</span>
           </button>
 
           <div v-else class="harada-cell harada-centre">
@@ -218,7 +218,6 @@ const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: var(--space-3);
   min-height: 128px;
   padding: var(--space-5);
@@ -277,10 +276,13 @@ button.harada-cell:focus-visible {
   line-height: 1.45;
 }
 
-.cell-tag {
-  align-self: flex-start;
+/* Reserved on every cell so titles line up across the grid */
+.cell-status {
+  min-height: 1.25em;
+  margin-top: auto;
   font-size: var(--fs-xs);
   font-weight: 500;
+  line-height: 1.25;
   color: var(--warn);
 }
 

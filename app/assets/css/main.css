@@ -768,7 +768,8 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .year-months {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 4px;
+  gap: 3px;
+  max-width: 520px;
   margin-bottom: var(--space-2);
 }
 .year-months .m {
@@ -778,28 +779,37 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
 .year-grid {
   display: grid;
   grid-template-columns: repeat(13, minmax(0, 1fr));
-  gap: 4px;
+  gap: 3px;
+  max-width: 520px;
 }
+/* Quiet cells: hairline outline when open, a light tint of the template colour when painted */
 .week-cell {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  border-radius: var(--radius);
-  background: var(--bg-2);
-  box-shadow: inset 0 0 0 1px var(--rule-2);
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rule);
   font-size: var(--fs-xs);
+  line-height: 1;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
   transition: background 0.1s;
 }
-.week-cell:hover { background: var(--bg-4); color: var(--ink); }
+.week-cell:hover { background: var(--bg-3); color: var(--ink); }
 .week-cell.is-filled {
-  background: color-mix(in srgb, var(--c) 26%, var(--bg));
-  color: var(--ink);
+  background: color-mix(in srgb, var(--c) 16%, var(--bg));
+  box-shadow: none;
+  color: var(--ink-2);
 }
-.week-cell.is-current { box-shadow: inset 0 0 0 2px var(--accent); }
+/* Current week: accent number and a hairline ring, no heavy frame */
+.week-cell.is-current {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
 .week-readout {
   margin-top: var(--space-3);
   font-size: var(--fs-sm);
