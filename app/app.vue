@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type TabId = 'planner' | 'insights' | 'config'
+type TabId = 'planner' | 'insights' | 'goals' | 'config'
 
 const activeTab = useState<TabId>('activeTab', () => 'planner')
 const dark = useState('dark', () => false)
@@ -7,7 +7,8 @@ const dark = useState('dark', () => false)
 const TABS = [
   { id: 'planner'  as TabId, num: '01', label: 'Planner' },
   { id: 'insights' as TabId, num: '02', label: 'Insights' },
-  { id: 'config'   as TabId, num: '03', label: 'Configuration' },
+  { id: 'goals'    as TabId, num: '03', label: 'Goals' },
+  { id: 'config'   as TabId, num: '04', label: 'Configuration' },
 ]
 
 const dateLabel = 'WK 16 · APR 18'

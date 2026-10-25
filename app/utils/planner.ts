@@ -1,4 +1,4 @@
-import type { Activity, PlannerState, WeekTemplate } from '~/types/planner'
+import type { Activity, Dimension, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -214,7 +214,153 @@ const createSeedAppliedWeeks = () => {
     .filter(Boolean) as import('~/types/planner').AppliedWeek[]
 }
 
+/** Bump when the persisted shape changes; older saves are normalised on load */
+export const PLANNER_STATE_VERSION = 2
+
+const HARADA_AMBITION_ID = 'ambition-harada'
+
+/** Seed Harada grid from the prototype: [id, name, categoryIds, goal5y, target1y, targetTbd, habits] */
+const HARADA_DIMENSIONS: Array<[string, string, string[], string, string, boolean, Array<[string, number, HabitPeriod, string?, number?]>]> = [
+  ['physique', 'Physique', ['health'],
+    'Forme optimale, énergie stable, zéro dette de sommeil.',
+    "À définir — ex. 3 séances de sport par semaine tenues sur l'année, bilan santé complet réalisé.", true, [
+      ['Sport régulier (fréquence et type à fixer)', 3, 'week', 'training', 60],
+      ["Alimentation structurée, pas d'improvisation", 1, 'day'],
+      ['Sommeil et récupération organisés', 1, 'day'],
+      ["Suivi d'indicateurs simples (poids, forme)", 1, 'week'],
+      ['Check-up médical annuel', 1, 'month'],
+      ['Limiter les écrans avant le coucher', 1, 'day'],
+      ['Hydratation quotidienne', 1, 'day'],
+      ['Étirements et mobilité', 3, 'week']
+    ]],
+  ['spirituelle', 'Spirituelle', ['rest'],
+    'Clarté intérieure, sérénité face à la pression professionnelle.',
+    'À définir — ex. 10 minutes de méditation quotidienne tenues, journal hebdomadaire régulier.', true, [
+      ['Méditation régulière', 1, 'day'],
+      ['Temps de réflexion / journal', 3, 'week'],
+      ['Lecture inspirante', 3, 'week', 'reading', 30],
+      ['Moments de silence sans écran', 1, 'day'],
+      ['Clarifier ses valeurs personnelles', 1, 'month'],
+      ['Gratitude quotidienne', 1, 'day'],
+      ['Retraite ou temps long une fois par an', 1, 'month'],
+      ['Aligner ses actions sur ses valeurs', 1, 'week']
+    ]],
+  ['relationnelle', 'Relationnelle & émotionnelle', ['family'],
+    "Être reconnu par ma famille comme un père, un époux, un fils et un frère présent et fiable.",
+    "Rituel hebdomadaire avec mon épouse et rituel mensuel individuel avec chaque enfant, tenus à 90 % sur l'année.", false, [
+      ['Temps dédié à mon épouse (rituel de couple)', 1, 'week'],
+      ['Temps dédié à mes enfants, individualisé', 1, 'month'],
+      ['Appels et visites réguliers à mes parents', 1, 'week'],
+      ['Lien actif avec mon frère / ma sœur', 1, 'week'],
+      ['Rituel familial (ex. dimanche en famille)', 1, 'week'],
+      ['Cercle d\'amis proches entretenu', 1, 'month'],
+      ['Reconnaître, exprimer et réguler mes émotions', 1, 'day'],
+      ["Résoudre les tensions rapidement, ne rien laisser traîner", 1, 'day']
+    ]],
+  ['economique', 'Économique', ['work'],
+    'Indépendance financière, patrimoine cible.',
+    "À définir — ex. taux d'épargne cible atteint, montant précis investi sur l'année.", true, [
+      ['Suivi budgétaire mensuel', 1, 'month'],
+      ['Plan d\'épargne / investissement structuré', 1, 'month'],
+      ['Revue patrimoniale annuelle', 1, 'month'],
+      ['Diversification des revenus', 1, 'month'],
+      ['Protection de la famille (assurances, prévoyance)', 1, 'month'],
+      ['Objectifs chiffrés par échéance', 1, 'month'],
+      ['Réduire les dépenses non alignées avec mes valeurs', 1, 'week'],
+      ['Formation continue en finance personnelle', 1, 'month']
+    ]],
+  ['cognitive', 'Cognitive', ['learning'],
+    "Rester à la pointe sur l'IA et l'architecture d'entreprise, capable de porter un projet propre.",
+    "Certification IA / architecture d'entreprise obtenue et un projet personnel lancé — app de dev perso ou app d'architecture d'entreprise (arbitrage à trancher).", false, [
+      ["Veille active IA / architecture d'entreprise", 3, 'week'],
+      ['Trancher puis lancer le projet perso (app dev perso ou app EA)', 2, 'week'],
+      ['Lecture technique régulière', 3, 'week', 'learning', 45],
+      ['Formation certifiante ciblée', 2, 'week'],
+      ['Expérimentation concrète (prototypes, POC perso)', 1, 'week'],
+      ['Partager ses connaissances (articles, talks)', 1, 'month'],
+      ['Apprendre un nouveau domaine chaque année', 1, 'month'],
+      ['Remettre en question ses acquis régulièrement', 1, 'month']
+    ]],
+  ['sociale', 'Sociale', [],
+    'Rôle actif dans une communauté professionnelle ou entrepreneuriale.',
+    "À définir — ex. rejoindre une communauté active, démarrer un mentorat sur l'année.", true, [
+      ['Participation active à une ou plusieurs communautés', 1, 'week'],
+      ['Mentorat, aide à d\'autres', 1, 'week'],
+      ['Engagement associatif ou entrepreneurial', 1, 'month'],
+      ['Contribution à un collectif ou réseau', 1, 'month'],
+      ['Organisation d\'événements ou de rencontres', 1, 'month'],
+      ['Visibilité (contenu, prises de parole)', 1, 'week'],
+      ['Entretenir le réseau existant', 1, 'week'],
+      ['Nouvelles connexions qualifiées chaque trimestre', 1, 'month']
+    ]],
+  ['professionnelle', 'Professionnelle', ['work'],
+    "Décrocher un poste de CDO ou CIO d'ici cinq ans.",
+    'Occuper un rôle élargi (ex. Lead Enterprise Architect) couvrant IT et data, avec 3 initiatives stratégiques livrées et visibles du comité de direction.', false, [
+      ['Networking ciblé auprès de dirigeants IT / data', 1, 'week'],
+      ['Développer une posture et une communication exécutive', 1, 'week'],
+      ['Missions à impact visible sur la roadmap digitale', 1, 'day'],
+      ['Executive education / certification stratégique', 1, 'month'],
+      ['Identifier un mentor ou un sponsor interne', 1, 'month'],
+      ["Élargir le périmètre : de l'EA vers la gouvernance IT/data globale", 1, 'month'],
+      ['Valoriser la valeur créée avec des résultats chiffrés', 1, 'month'],
+      ['Publier des articles professionnels pour construire ma marque perso', 1, 'month']
+    ]],
+  ['environnement', 'Environnement', ['rest'],
+    'Mode de vie durable, cohérent avec mes valeurs.',
+    "À définir — ex. rituel dominical fixe tenu toute l'année, empreinte réduite sur un poste identifié.", true, [
+      ['Réduire mon empreinte au quotidien', 1, 'day'],
+      ['Rituels du dimanche : repos, nature, famille', 1, 'week'],
+      ['Choix de consommation alignés', 1, 'day'],
+      ['Optimiser le cadre de vie et de travail', 1, 'month'],
+      ['Point à définir', 1, 'week'],
+      ['Sensibiliser mon entourage', 1, 'month'],
+      ['Bilan annuel simple de mes choix', 1, 'month'],
+      ['Cohérence entre discours pro (transformation durable) et vie perso', 1, 'month']
+    ]]
+]
+
+/** Harada grid seed: one 5-year ambition, 8 dimensions and their daily/weekly/monthly habits */
+export const createHaradaSeed = (): Pick<PlannerState, 'ambition' | 'dimensions' | 'habits'> => {
+  const habits: Habit[] = []
+
+  const dimensions = HARADA_DIMENSIONS.map(([id, name, categoryIds, goal5y, target1y, targetTbd, items], index) => {
+    items.forEach(([habitName, count, period, activityId, minutesPerOccurrence], habitIndex) => {
+      habits.push({
+        id: `${id}-${habitIndex + 1}`,
+        dimensionId: id,
+        name: habitName,
+        frequency: { count, period },
+        ...(activityId ? { activityId } : {}),
+        ...(minutesPerOccurrence ? { minutesPerOccurrence } : {})
+      })
+    })
+
+    return { id, name, ambitionId: HARADA_AMBITION_ID, order: index + 1, goal5y, target1y, targetTbd, categoryIds }
+  })
+
+  return {
+    ambition: {
+      id: HARADA_AMBITION_ID,
+      statement: "Meilleur père, époux, fils et frère — CDO / CIO d'ici 5 ans",
+      horizonYears: 5
+    },
+    dimensions,
+    habits
+  }
+}
+
+/** Default-merge a persisted state so saves written before Harada goals still load */
+export const normalizePlannerState = (raw: Partial<PlannerState>): PlannerState => ({
+  ...raw,
+  version: PLANNER_STATE_VERSION,
+  ambition: raw.ambition ?? null,
+  dimensions: raw.dimensions ?? [],
+  habits: raw.habits ?? []
+}) as PlannerState
+
 export const createInitialState = (): PlannerState => ({
+  version: PLANNER_STATE_VERSION,
+  ...createHaradaSeed(),
   settings: {
     timeGranularity: 60,
     activeTemplateId: 'standard-week',
@@ -292,4 +438,65 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   }
 
   return categoryTotals
+}
+
+/** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */
+export const habitWeeklyOccurrences = (habit: Habit): number => {
+  const { count, period } = habit.frequency
+
+  if (period === 'day') return count * 7
+  if (period === 'week') return count
+
+  return (count * 12) / 52
+}
+
+/** Scheduled minutes per week for one activity, from the active template */
+export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityId: string): number => {
+  const template = getActiveTemplate(state)
+
+  if (!template) {
+    return 0
+  }
+
+  return (aggregateTemplate(template, state.activities).get(activityId) ?? 0) * 60
+}
+
+/** Scheduled minutes per week for one category, from the active template */
+export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
+  const template = getActiveTemplate(state)
+
+  if (!template) {
+    return 0
+  }
+
+  return (aggregateTemplateByCategory(template, state).get(categoryId) ?? 0) * 60
+}
+
+export interface DimensionAlignment {
+  plannedMinutesPerWeek: number
+  targetMinutesPerWeek: number
+  unlinkedHabits: number
+  coverage: number | null
+}
+
+/** Compares scheduled time (its categories) against the measurable target (its habits) */
+export const dimensionAlignment = (dimension: Dimension, state: PlannerState): DimensionAlignment => {
+  const habits = state.habits.filter(habit => habit.dimensionId === dimension.id)
+
+  const plannedMinutesPerWeek = dimension.categoryIds.reduce(
+    (total, categoryId) => total + scheduledWeeklyMinutesForCategory(state, categoryId),
+    0
+  )
+
+  const targetMinutesPerWeek = habits.reduce(
+    (total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0),
+    0
+  )
+
+  return {
+    plannedMinutesPerWeek,
+    targetMinutesPerWeek,
+    unlinkedHabits: habits.filter(habit => !habit.activityId).length,
+    coverage: targetMinutesPerWeek > 0 ? plannedMinutesPerWeek / targetMinutesPerWeek : null
+  }
 }

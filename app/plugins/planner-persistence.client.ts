@@ -10,9 +10,9 @@ export default defineNuxtPlugin(() => {
   planner.ensureDefaultWeek()
   planner.ensureActiveTemplate()
 
-  const { categories, activities, templates, appliedWeeks, settings } = storeToRefs(planner)
+  const { categories, activities, templates, appliedWeeks, settings, ambition, dimensions, habits } = storeToRefs(planner)
 
-  watch([categories, activities, templates, appliedWeeks, settings], () => {
+  watch([categories, activities, templates, appliedWeeks, settings, ambition, dimensions, habits], () => {
     adapter.save(planner.$state)
   }, { deep: true })
 })

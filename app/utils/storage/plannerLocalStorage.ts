@@ -1,5 +1,6 @@
 import type { PlannerState } from '~/types/planner'
 import type { PlannerStorageAdapter } from '~/types/storage'
+import { normalizePlannerState } from '~/utils/planner'
 
 export const PLANNER_STORAGE_KEY = 'timely-planner-state'
 
@@ -16,7 +17,7 @@ export const createPlannerLocalStorageAdapter = (): PlannerStorageAdapter => ({
     }
 
     try {
-      return JSON.parse(raw) as PlannerState
+      return normalizePlannerState(JSON.parse(raw) as Partial<PlannerState>)
     } catch (error) {
       console.warn('Unable to restore planner state from localStorage.', error)
       return null

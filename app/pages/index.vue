@@ -10,5 +10,6 @@ const activeTab = useState<string>('activeTab')
 <template>
   <PlannerView      v-if="activeTab === 'planner'" />
   <PlannerInsightsView v-else-if="activeTab === 'insights'" />
+  <HaradaView          v-else-if="activeTab === 'goals'" />
   <PlannerLegendView   v-else />
 </template>

@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import type { AppliedWeek, PlannerState, WeekStatus } from '~/types/planner'
+import type { Ambition, AppliedWeek, Dimension, Habit, HabitPeriod, PlannerState, WeekStatus } from '~/types/planner'
 import {
   aggregateTemplate,
   aggregateTemplateByCategory,
   createEmptySlots,
+  createHaradaSeed,
   createInitialState,
   getActiveTemplate,
   getTemplateById
@@ -250,6 +251,10 @@ export const usePlannerStore = defineStore('planner', {
       for (const template of this.templates) {
         template.slots = template.slots.map(slot => slot === activityId ? '' : slot)
       }
+
+      for (const habit of this.habits) {
+        if (habit.activityId === activityId) delete habit.activityId
+      }
     },
     setWeekTemplate(startDate: string, templateId: string | null) {
       const existing = this.appliedWeeks.find(w => w.startDate === startDate)
@@ -333,6 +338,51 @@ export const usePlannerStore = defineStore('planner', {
     },
     removeWeek(weekId: string) {
       this.appliedWeeks = this.appliedWeeks.filter(w => w.id !== weekId)
+    },
+    seedHaradaGoals() {
+      this.$patch(createHaradaSeed())
+    },
+    updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
+      if (this.ambition) Object.assign(this.ambition, changes)
+    },
+    updateDimension(dimensionId: string, changes: Partial<Pick<Dimension, 'name' | 'goal5y' | 'target1y' | 'targetTbd' | 'categoryIds'>>) {
+      const dimension = this.dimensions.find(item => item.id === dimensionId)
+      if (dimension) Object.assign(dimension, changes)
+    },
+    addHabit(dimensionId: string, name: string) {
+      const trimmedName = name.trim()
+
+      if (!trimmedName || !this.dimensions.some(dimension => dimension.id === dimensionId)) {
+        return
+      }
+
+      this.habits.push({
+        id: `habit-${Date.now()}`,
+        dimensionId,
+        name: trimmedName,
+        frequency: { count: 1, period: 'week' }
+      })
+    },
+    updateHabit(habitId: string, changes: Partial<Pick<Habit, 'name' | 'minutesPerOccurrence'>>) {
+      const habit = this.habits.find(item => item.id === habitId)
+      if (habit) Object.assign(habit, changes)
+    },
+    setHabitFrequency(habitId: string, count: number, period: HabitPeriod) {
+      const habit = this.habits.find(item => item.id === habitId)
+      if (habit) habit.frequency = { count: Math.max(count, 0), period }
+    },
+    setHabitActivity(habitId: string, activityId: string | null) {
+      const habit = this.habits.find(item => item.id === habitId)
+
+      if (!habit) {
+        return
+      }
+
+      if (activityId) habit.activityId = activityId
+      else delete habit.activityId
+    },
+    removeHabit(habitId: string) {
+      this.habits = this.habits.filter(habit => habit.id !== habitId)
     },
     resetToSeed() {
       this.$patch(createInitialState())

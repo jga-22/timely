@@ -21,3 +21,4 @@ npm run build
 - seeded planner state with categories, activities, one weekly template, and applied weeks
 - Pinia store with local persistence
 - planner dashboard page showing the weekly grid, weekly totals, and yearly projections
+- Goals (Harada) tab: a 3x3 grid with a 5-year ambition and eight dimensions, each with a 5-year goal, daily/weekly habits (optionally linked to a Timely activity with minutes per occurrence), and a measurable 1-year target; Insights compares scheduled time per dimension with habit targets

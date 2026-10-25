@@ -6,7 +6,8 @@ import {
   CURRENT_WEEK_INDEX,
   aggregateTemplateByCategory,
   projectionInsight,
-  getTemplateById
+  getTemplateById,
+  dimensionAlignment
 } from '~/utils/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
@@ -93,6 +94,21 @@ const projectionSummaries = computed(() =>
 )
 
 const topProjection = computed(() => projectionSummaries.value[0] ?? null)
+
+// ── Goals vs. planned time ──
+const goalAlignment = computed(() =>
+  [...planner.dimensions]
+    .sort((a, b) => a.order - b.order)
+    .map(dimension => ({ dimension, ...dimensionAlignment(dimension, planner.$state) }))
+)
+
+const goalScale = computed(() =>
+  Math.max(1, ...goalAlignment.value.flatMap(row => [row.plannedMinutesPerWeek, row.targetMinutesPerWeek]))
+)
+
+const goalBarWidth = (minutes: number) => `${Math.min((minutes / goalScale.value) * 100, 100)}%`
+
+const formatGoalHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`
 
 // ── SVG constants ──
 const CHART_H = 180
@@ -363,5 +379,162 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]).getUTCMonth(
         </div>
       </div>
     </div>
+
+    <!-- Goals vs. planned time -->
+    <div v-if="goalAlignment.length" class="card goal-alignment" style="margin-top: 28px">
+      <div class="goal-head">
+        <div class="panel-sub">Goals vs. planned time · per week</div>
+        <div class="goal-legend">
+          <span><span class="swatch-planned" /> Scheduled</span>
+          <span><span class="swatch-target" /> Habit target</span>
+        </div>
+      </div>
+
+      <div v-for="row in goalAlignment" :key="row.dimension.id" class="goal-row">
+        <div class="goal-name">{{ row.dimension.name }}</div>
+
+        <div class="goal-bars">
+          <div class="goal-track"><span class="goal-fill goal-fill-planned" :style="{ width: goalBarWidth(row.plannedMinutesPerWeek) }" /></div>
+          <div class="goal-track"><span class="goal-fill goal-fill-target" :style="{ width: goalBarWidth(row.targetMinutesPerWeek) }" /></div>
+        </div>
+
+        <div class="goal-figures">
+          {{ formatGoalHours(row.plannedMinutesPerWeek) }} / {{ formatGoalHours(row.targetMinutesPerWeek) }}
+        </div>
+
+        <div class="goal-flags">
+          <span v-if="row.plannedMinutesPerWeek === 0" class="goal-flag goal-flag-warn">No planned time</span>
+          <span v-if="row.unlinkedHabits" class="goal-flag">{{ row.unlinkedHabits }} unlinked</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.goal-alignment {
+  padding: 24px 28px;
+}
+
+.goal-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.goal-legend {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.swatch-planned,
+.swatch-target {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.swatch-planned { background: var(--ink); }
+.swatch-target { background: var(--accent); }
+
+.goal-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) 1fr minmax(90px, auto);
+  align-items: center;
+  gap: 8px 20px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule-2);
+}
+
+.goal-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.goal-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.goal-track {
+  position: relative;
+  height: 8px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.goal-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+}
+
+.goal-fill-planned { background: var(--ink); }
+.goal-fill-target { background: var(--accent); }
+
+.goal-figures {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.goal-flags {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.goal-flag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+}
+
+.goal-flag-warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+@media (max-width: 768px) {
+  .goal-alignment {
+    padding: 20px 18px;
+  }
+
+  .goal-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .goal-bars {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .goal-flags {
+    grid-column: 1 / -1;
+  }
+}
+</style>
