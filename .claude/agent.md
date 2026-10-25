@@ -28,10 +28,10 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 ## Where things are
 
 - `app/app.vue`: app shell, topbar, tab list, theme toggle.
-- `app/pages/index.vue`: switches the view by the active tab id.
+- `app/pages/index.vue`: switches the view by the `tab` route query (`useNav`, see URL state below).
 - `app/components/harada/`: Goals view (`HaradaView.vue`, `HabitList.vue`).
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea.
-- `app/components/planner/`: `PlannerView.vue` (week grid + year grid), `InsightsView.vue`, `LegendView.vue` (the Configuration tab).
+- `app/components/planner/`: `PlannerView.vue` (week grid + year grid), `LegendView.vue` (the Configuration tab). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/composables/usePlannerYear.ts`: today and the selected year, client-only. `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
@@ -54,7 +54,8 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 - **Activities are a separate level** under a category. **Habits** belong to a category, are measurable (frequency count per day/week/month plus optional `minutesPerOccurrence`) and may link to an activity.
 - **Insights compares like with like:** per category, the hours scheduled through the activities its habits link to, against the hours those habits ask for. A quiet second line shows everything scheduled in the category. An activity is never counted in two categories.
 - **Year:** the planner shows one ISO year, by default the current ISO year. It is set on mount, not persisted (a reload selects the current year again). Unassigned weeks use the active template everywhere (`effectiveTemplate`).
-- **Navigation order is Goals, Planner, Insights, Configuration.** Goals is the default tab. Templates are still managed in the Planner's template switcher, not in Configuration.
+- **Navigation order is Home, Goals, Planner, Visualization, Configuration** (Configuration is transitional; slice 3 removes it). Home is the default tab. Templates are still managed in the Planner's template switcher, not in Configuration.
+- **URL state.** Tab, selected item and edit mode live in the route query: `?tab=home|goals|planner|visualization|configuration&item=<id>&edit=1`. An unknown or missing tab shows Home. In code, `useNav()` gives `go(tab, { item, edit })` (pushes history) and `link(tab, { item, edit })` (a NuxtLink target, for Edit links to another screen). Nothing else is in the URL; the year and the Visualization Weekly or Monthly choice are view state.
 - **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so Insights shows real bars).
 - **UI language is English.** User-entered content can be in any language.
 - **Style:** one font (IBM Plex Sans), calm blue palette, minimalist, light and dark themes. Details in `spec/frontend-design.md`. Do not reintroduce serif or mono fonts or the old terracotta accent.
@@ -76,7 +77,8 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 
 ## Current state
 
-- Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Insights and projections, week status removed, storage version 6.
+- Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Visualization and projections, week status removed, storage version 6.
+- Slice 1 (shell, URL state, Visualization) is done in one commit: tabs Home (default), Goals, Planner, Visualization and a transitional Configuration; `VizVisualizationView` replaces Insights; the projection horizon moved from Configuration to Visualization. Storage version unchanged (6).
 - Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign, navigation order. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
 
 ## Open items and ideas
@@ -87,5 +89,5 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.
-- Not yet checked visually: dark theme beyond overflow, the weekly/monthly Insights charts after the redesign.
+- Not yet checked visually: the dark Visualization and the monthly chart at 400 px (slice 1 reviewed the light weekly chart at 1280 px and the light 400 px layout).
 - PR #7's title and description are outdated; the owner updates them from text we provide.

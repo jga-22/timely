@@ -116,11 +116,6 @@ const actHoursPerWeek = computed(() => {
   return map
 })
 
-const projYears = computed({
-  get: () => planner.settings.projectionDefaults.years,
-  set: (v: number) => planner.setProjectionYears(v)
-})
-
 function closePopovers() {
   colorPickerFor.value = null
 }
@@ -236,7 +231,7 @@ function closePopovers() {
             </template>
           </div>
           <p v-if="orderedCategories.length > GOAL_GRID_SIZE" class="config-note">
-            Only the first {{ GOAL_GRID_SIZE }} categories appear in the Goals grid. The others still work in Planner and Insights.
+            Only the first {{ GOAL_GRID_SIZE }} categories appear in the Goals grid. The others still work in Planner and Visualization.
           </p>
         </section>
 
@@ -346,19 +341,6 @@ function closePopovers() {
           >
             Add activity
           </button>
-        </div>
-
-        <div class="form-section">
-          <h2 class="section-title">Projection</h2>
-          <div class="field">
-            <label class="field-label" for="projection-horizon">Horizon</label>
-            <select id="projection-horizon" v-model.number="projYears" class="timely-select">
-              <option :value="1">1 year</option>
-              <option :value="3">3 years</option>
-              <option :value="5">5 years</option>
-              <option :value="10">10 years</option>
-            </select>
-          </div>
         </div>
       </aside>
     </div>

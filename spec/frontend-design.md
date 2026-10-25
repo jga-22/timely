@@ -10,7 +10,8 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | --- | --- | --- |
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | [planner-desktop-light.png](screens/planner-desktop-light.png) (dark: [planner-desktop-dark.png](screens/planner-desktop-dark.png)) | [planner-mobile-light.png](screens/planner-mobile-light.png) |
-| Insights | [insights-desktop-light.png](screens/insights-desktop-light.png) | not captured |
+| Home (placeholder) | [home-desktop-light.png](screens/home-desktop-light.png) | not captured |
+| Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
 | Configuration | [configuration-desktop-light.png](screens/configuration-desktop-light.png) | not captured |
 
 ---
@@ -147,7 +148,7 @@ Z-order: topbar 10, colour popover 20, slot menu overlay 29, slot menu and selec
 
 ### 3.1 App shell
 
-`app/app.vue` renders `VApp` > `.app` (`display: grid; grid-template-rows: auto 1fr; min-height: 100vh; overflow-x: clip`) > `header.topbar` and `<NuxtPage>`. The page component (`app/pages/index.vue`) switches on the active tab, which is held in `useState('activeTab')`, default `goals`. There is no router navigation between tabs.
+`app/app.vue` renders `VApp` > `.app` (`display: grid; grid-template-rows: auto 1fr; min-height: 100vh; overflow-x: clip`) > `header.topbar` and `<NuxtPage>`. The page component (`app/pages/index.vue`) switches on the `tab` route query, read by `useNav()` (`app/composables/useNav.ts`). An unknown or missing tab shows Home. Tab clicks push history entries, so Back and Forward work. Query parameters: `tab` (home, goals, planner, visualization, configuration), `item` (id of the selected category, activity or habit) and `edit=1` (edit mode). Edit links to another screen use `link(tab, { item, edit })` or `go(tab, { item, edit })`.
 
 `NuxtRouteAnnouncer` is mounted. Its visually hidden span measures 199px wide and is `overflow: hidden`, so the overflow probe reports it. It is not a layout issue.
 
@@ -157,7 +158,7 @@ Desktop (above 768px):
 
 - `.topbar`: `position: sticky; top: 0; z-index: 10; height: 64px; padding: 0 40px; gap: 32px; background: var(--bg); border-bottom: 1px solid var(--rule-2)`. Measured: 64px at 1280.
 - `.brand`: "timely", lowercase, `--fs-lg` 600, `-0.01em`, `--ink`.
-- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Goals, Planner, Insights, Configuration.
+- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Planner, Visualization, then Configuration (transitional, no number; slice 3 removes it).
 - `.tab`: 15px 500, `--ink-3`; hover and selected `--ink`. Height 100% of the bar. Each tab carries `.tab-num` (`01` to `04`, 12px 400, tabular, `aria-hidden`).
 - Active indicator: `.tab::after` is a 2px bar in `--accent`, `left:0; right:0; bottom:-1px`, scaled from `scaleX(0)` to `scaleX(1)` over 0.18s on `[aria-selected="true"]`.
 - `.theme-toggle`: 36x36, radius 6, icon 18px, `--ink-3`; hover `--bg-3` and `--ink`. It is the last flex item, so it sits at the right edge.
@@ -190,8 +191,8 @@ The side gutter is 16px at 400px, which meets the minimum.
 | Breakpoint | Where | Effect |
 | --- | --- | --- |
 | 1280px | `main.css` | `.view` padding |
-| 1024px | `main.css` | `.view` padding; Configuration to one column; Insights metrics to two columns |
-| 768px | `main.css` | Topbar wraps; page title 18px; week grid min width 480px; year grid min width 360px; metrics two columns; goal rows and category rows compact; Insights defaults to monthly chart (JS, `window.innerWidth < 768`) |
+| 1024px | `main.css` | `.view` padding; Configuration to one column |
+| 768px | `main.css` | Topbar wraps; page title 18px; week grid min width 480px; year grid min width 360px; metrics one column; goal rows and category rows compact; Visualization defaults to monthly chart (JS, `window.innerWidth < 768`) |
 | 600px | `HaradaView.vue` (scoped) | Harada grid to two columns; centre cell first, full width |
 | 480px | `main.css` | Floating menus dock to the bottom edge; block meta hidden; template delete shows only the glyph |
 | `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
@@ -208,7 +209,7 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | Goals | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
 | Planner | The week grid keeps its 56px label column plus seven day columns with a 480px minimum width. It scrolls horizontally inside `.week-scroll-wrap` (measured overflow 112px). Blocks show only the activity name. Selection and activity menus dock to the bottom edge. Block hover delete is hidden. Template delete shows only the glyph. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |
-| Insights | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll` (measured overflow 132px). Metrics two columns. |
+| Visualization | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
 | Configuration | Single column. Category hours hidden; move and delete controls always visible (no hover reveal). |
 
 Rule: only tables, the week grid and charts may be wider than the viewport, and each is in its own `overflow-x: auto` container. Everything else must wrap or stack.
@@ -236,7 +237,7 @@ Class names below are the ones in `main.css` unless a file is given. Components 
 - Native `<details>`. Summary is inline flex, 13px 500, `--ink-2`, padding 4px 0, no native marker. A 6px chevron (1.5px border, rotated -45deg; rotated 45deg when open) sits before the label.
 - States: default `--ink-2`; hover `--ink`; open chevron rotates; focus uses the global focus ring.
 - Body: `.disclosure-body` top padding 16px.
-- Used for "Week by week" (open by default) and "Breakdown by category" (closed) on Insights.
+- Used for "Week by week" (open by default) and "Year by category" (closed) on Visualization.
 - Habit "Details" is not a disclosure; it is a text toggle button (4.11).
 
 ### 4.4 Buttons
@@ -260,7 +261,7 @@ Rules: one primary action per block. Destructive actions are text-coloured, neve
 
 ### 4.5 Chips (`.chip`, `.chip-add`)
 
-- `.chip`: 32px high (28px in the Insights focus strip), padding 0 12px, radius 6px, 1px transparent border, `--bg-3` background, `--ink-2` 13px text, max width 220px with ellipsis.
+- `.chip`: 32px high (28px in the Visualization focus strip), padding 0 12px, radius 6px, 1px transparent border, `--bg-3` background, `--ink-2` 13px text, max width 220px with ellipsis.
 - States: default; hover `--bg-4` background and `--ink`; selected via `data-active="true"`: `--accent-soft` background, 1px `--accent` border, `--ink`.
 - Inside a chip: `.dot` (colour, with a `--control-border` ring so dark colours stay visible), name, and `.pill-count` (12px `--ink-2`, tabular).
 - `.chip-add`: accent-coloured text link, 13px 500, underline on hover. Used for "+ New template".
@@ -347,11 +348,13 @@ Row (`.habit-row`): column, gap 4px, padding 16px 0, `border-bottom: 1px solid v
 - Empty: `.habit-empty` "No daily habits yet for this category." (`--ink-3`).
 - Add (`.habit-add`): top margin 24px, wrap, gap 8px. A Vuetify text field ("New daily habit") grows (min 220px) and "Add habit" is a primary button, disabled when the field is blank. Submit is by Enter.
 
-### 4.11 Insights (`app/components/planner/InsightsView.vue`)
+### 4.11 Visualization (`app/components/viz/VisualizationView.vue`)
 
-Page: "Where your time goes". Two sections.
+Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
-**Goals vs. planned time** (first, primary). Section lede explains the tick and the quiet line. Each row (`.goal-row`) is a grid: name (minmax 140 to 220px), track (fluid), figures (auto). Row divider `--rule-2`, first row no divider.
+Page: "Where your time goes". Toolbar, then sections in this order: the year metrics, goals vs. planned overview, week by week, year by category.
+
+**Goals vs. planned time** (overview for all categories, FR-VIZ-6; the primary view is the Goals detail). Each name links to its category in Goals. Section lede explains the tick and the quiet line. Each row (`.goal-row`) is a grid: name (minmax 140 to 220px), track (fluid), figures (auto). Row divider `--rule-2`, first row no divider.
 
 - `.goal-name`: 15px 500.
 - `.goal-track`: 6px high, radius 3px, `--bg-3`. `role="img"` with an `aria-label` that spells out scheduled and target hours.
@@ -362,9 +365,9 @@ Page: "Where your time goes". Two sections.
 - `.goal-flags` (12px `--ink-3`, `·` separators, spanning the second column): "No target yet", "No time planned", "N habits not linked to an activity". One line per row, only for what is missing.
 - Mobile: track moves to its own full-width row; flags full width.
 
-**The year** (secondary). Lede: "N of 52 weeks assigned to a template."
+**The year.** Lede: "2026, each week under the template that governs it."
 
-- Metrics (`.metrics`, four columns; two from 1024px; two on phones with 16px gap). Each `.metric`: `.metric-value` (28px 600, tabular, `-0.01em`, unit `h` at 13px 500) above `.metric-label` (13px, `--ink-3`). Values: allocated hours per week, projected hours for the top activity over the projection horizon (with a `projectionInsight` sentence), unassigned hours (168 minus allocated), and the daily average of the leading category (`h/d`). Empty: "—" and "No projection yet."
+- Metrics (`.metrics`, three columns; one column at 768px and below). Each `.metric`: `.metric-value` (28px 600, tabular, `-0.01em`, unit `h` at 13px 500) above `.metric-label` (13px, `--ink-3`). Values: planned hours in the selected year (the sum of the week chart), the daily average of the leading category over the year (`h/d`), and the top projected activity over the horizon (`projectionInsight` sentence). Empty: "—" and "No projection yet."
 - "Week by week" disclosure (open): toolbar (lede left; segmented control right), focus strip of chips (All plus each category), SVG chart in `.chart-scroll`, and a legend (`.chart-legend`).
 - Segmented control (`.segmented`): track `--bg-3`, padding 2px, radius 6px. Buttons 28px high, 13px `--ink-3`; selected has `--bg` background, `--ink`, 600.
 - Chart: viewBox matches width. Weekly: 52 bars, 12px wide with 4px gaps, left axis 44px, plot height 180px, bottom 28px for labels. Monthly: 12 bars, 28px wide with 10px gaps, value = average hours per week within the month. Y ticks at 0, 42, 84, 126, 168 h (168 = hours in a week). Tick labels 12px `--ink-3`, tabular. Grid lines `--rule-2`.
@@ -372,8 +375,9 @@ Page: "Where your time goes". Two sections.
 - Focus: a chip selects one category; the other segments drop to opacity 0.12.
 - Empty week: full-height `--bg-3` bar (`.chart-empty`).
 - Current-week marker: a 3px accent bar 5px above the current bar (monthly: current month).
-- Legend: dot, name, `N h/wk`.
-- Breakdown disclosure (closed): rows (`.total-row`) with dot, name (500), hours, and a right-aligned percentage of 168. Last row has no divider.
+- Legend: dot, name, `N h/wk` (average per week of the selected year).
+- Unassigned weeks have no applied template. They use the active template and draw at 45% opacity; a note under the legend names that template (FR-VIZ-3).
+- Year by category (closed disclosure, FR-VIZ-4): rows (`.total-row`) with dot, name (a link to Goals), planned hours in the year and a percentage of planned hours. Percentages use largest remainder, so they add up to 100.
 
 ### 4.12 Planner week grid (`app/components/planner/PlannerView.vue`, styles in `main.css`)
 
@@ -446,7 +450,7 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 - Hours (`.cat-hrs`, 13px `--ink-3`, tabular): "N h/wk · M h/yr", numbers in 600 `--ink`. Hidden on phones.
 - Actions (`.cat-actions`): move up (↑), move down (↓), delete (✕), each `.btn-xs` 28px wide. Hidden until the row is hovered or a button is focused. Disabled arrows stay invisible. Always visible on phones.
 - Removal panel (`.cat-remove`): appears under the row when the category holds content. Background `--bg-2`, 1px `--rule` border, radius 6px, indented 36px. Text: "Its N activities and M habits must move to another category before X is removed." A select (`.timely-select`) of other categories, "Move and remove" (`.btn-xs.btn-primary`) and "Cancel". With no other category: "Add another category first, then remove this one." Empty categories are removed at once.
-- Note under the list when more than eight categories: "Only the first 8 categories appear in the Goals grid. The others still work in Planner and Insights." (`.config-note`, 13px `--ink-3`).
+- Note under the list when more than eight categories: "Only the first 8 categories appear in the Goals grid. The others still work in Planner and Visualization." (`.config-note`, 13px `--ink-3`).
 
 **Activity rows** (`.cat-row`, no reorder): grid `20px | 1fr | auto | 28px`. Colour is a 16px dot (`.dot-lg`), not a button. Name is 15px 400 (`.is-activity`). Meta: "SHORTCODE · category name". Hours as above. Delete (`.btn-xs.btn-danger`, ✕) hover-revealed.
 
@@ -454,7 +458,7 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 
 - "New category": live preview (`.new-cat-preview`, colour at 14% tint, dot, name, 15px 500; placeholder label "New Category"), name field (placeholder "e.g. Wellness"), colour popover inline (`.color-pop-inline`), primary block button "Add category" (disabled until a name is typed). Enter in the name field submits.
 - "New activity": name (placeholder "e.g. Meditation"), short code (max 3 characters, placeholder "MED") and category select in a two-column row, primary block button "Add activity".
-- "Projection": horizon select (1, 3, 5 or 10 years).
+- Projection moved to Visualization (4.11).
 
 ### 4.14 Charts and legends (summary)
 
@@ -467,6 +471,12 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 `.slot-menu`, `.selection-bar`, `.color-pop`: `--bg` background, 1px `--rule` border, radius 6px, `--shadow`. The first two are fixed and teleported to `body` so they are not clipped by the grid. Keep this pattern for any new floating element.
 
 ---
+
+### 4.16 Home placeholder (`app/components/home/HomeView.vue`)
+
+- Page header: "Home", a one-line lede saying the day overview comes in a later update, and today's date as `p.page-meta`. The date is client only (null until mounted, FR-DATE-6).
+- Two quiet inline links, to Planner and Goals, built with `useNav().link`. Links use `--accent` and underline (global `a` rule in `main.css`).
+- Replaced in slice 4 by the Day, Week and Month overview (FR-HOME-1 to 10).
 
 ## 5. Colour handling for categories and activities
 
@@ -491,7 +501,7 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Goals, Insights, Configuration. Fail for the Planner grid. | The week grid and year grid use mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Goals, Visualization, Configuration. Fail for the Planner grid. | The week grid and year grid use mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
@@ -604,3 +614,5 @@ These are facts about the code as it is today. They are not requirements for new
 - Fix pass, theme before first paint: the first animation frame in dark mode had no `data-theme` before the fix. After, it is `dark`. No hydration warning and no console error or warning in any run.
 - Fix pass, layout: 0px horizontal overflow at 1280px and 400px, light and dark, all tabs. `npx nuxi typecheck` exits 0. `npm run build` is clean; the existing Nuxt and Nitro warnings are unchanged.
 - Not verified: `prefers-color-scheme` absence beyond code reading; Vuetify's computed `on-primary`; behaviour on real touch hardware (only emulated viewports were checked).
+
+- Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `screens/home-desktop-light.png`, `screens/visualization-desktop-light.png`, `screens/visualization-mobile-light.png`.

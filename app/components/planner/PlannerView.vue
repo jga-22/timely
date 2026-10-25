@@ -7,7 +7,7 @@ const HOUR_PX = 28
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
-const { year, weeks, currentWeekIndex, shiftYear } = usePlannerYear()
+const { year, weeks, currentWeekIndex } = usePlannerYear()
 
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
@@ -602,11 +602,7 @@ function confirmDeleteActiveTemplate() {
           <p class="section-lede">Choose a template, then click or drag across weeks to assign it.</p>
         </div>
         <div class="year-controls">
-          <div class="year-nav">
-            <button class="year-step" type="button" aria-label="Previous year" :disabled="year === null" @click="shiftYear(-1)">‹</button>
-            <span class="year-label">{{ year ?? '—' }}</span>
-            <button class="year-step" type="button" aria-label="Next year" :disabled="year === null" @click="shiftYear(1)">›</button>
-          </div>
+          <YearNav />
           <div v-if="year !== null" class="year-count">{{ assignedInYear }} of {{ weeks.length }} weeks assigned</div>
         </div>
       </div>

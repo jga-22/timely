@@ -4,12 +4,13 @@ useHead({
   meta: [{ name: 'description', content: 'Design your ideal week, hour by hour.' }]
 })
 
-const activeTab = useState<string>('activeTab')
+const { tab } = useNav()
 </script>
 
 <template>
-  <HaradaView          v-if="activeTab === 'goals'" />
-  <PlannerLegendView   v-else-if="activeTab === 'config'" />
-  <PlannerView         v-else-if="activeTab === 'planner'" />
-  <PlannerInsightsView v-else />
+  <HomeView                 v-if="tab === 'home'" />
+  <HaradaView               v-else-if="tab === 'goals'" />
+  <PlannerView              v-else-if="tab === 'planner'" />
+  <VizVisualizationView     v-else-if="tab === 'visualization'" />
+  <PlannerLegendView        v-else />
 </template>
