@@ -359,7 +359,6 @@ function closePopovers() {
               <option :value="10">10 years</option>
             </select>
           </div>
-          <p class="form-note">Excluded statuses: vacation and off.</p>
         </div>
       </aside>
     </div>

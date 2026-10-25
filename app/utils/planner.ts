@@ -1,4 +1,5 @@
-import type { Activity, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
+import type { Activity, AppliedWeek, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
+import { isoWeekOf, isoWeekStarts, localDateKey, mondayOf } from '~/utils/dates'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -21,18 +22,6 @@ export const DESIGN_COLORS: Array<{ id: string; bg: string; fg: string }> = [
   { id: 'coral',      bg: '#e09070', fg: '#ffffff' },
   { id: 'ink',        bg: '#2a2a2a', fg: '#faf9f6' },
 ]
-
-/** 52 ISO week Monday start-dates for 2026 (week 1 = Dec 29 2025) */
-export const WEEK_DATES_2026: string[] = (() => {
-  const start = new Date(Date.UTC(2025, 11, 29))
-  return Array.from({ length: 52 }, (_, i) => {
-    const d = new Date(start)
-    d.setUTCDate(start.getUTCDate() + i * 7)
-    return d.toISOString().slice(0, 10)
-  })
-})()
-
-export const CURRENT_WEEK_INDEX = 15 // Week 16 (0-indexed 15) = Apr 13 2026
 
 export interface TimeBlock {
   start: number
@@ -152,27 +141,21 @@ const createVacationTemplate = (): WeekTemplate => {
   return { id: 'vacation-week', name: 'Vacation', granularityMinutes, color: '#c19a3e', slots }
 }
 
-// Seed 52 applied weeks for 2026 (similar to the design's year assignment)
-const createSeedAppliedWeeks = () => {
-  const assignment = new Array(52).fill('standard-week')
+/** Applied weeks of a year: the same pattern on every ISO week (52 or 53), so the seed is deterministic for a year */
+const createSeedAppliedWeeks = (year: number): AppliedWeek[] => {
+  const starts = isoWeekStarts(year)
+  const assignment: Array<string | null> = starts.map(() => 'standard-week')
   ;[5, 6, 7, 14, 15, 24, 25, 26, 37, 38, 46, 47].forEach(i => { assignment[i] = 'deep-work-week' })
   ;[12, 30, 31, 51].forEach(i => { assignment[i] = 'vacation-week' })
   ;[9, 19, 40].forEach(i => { assignment[i] = null })
 
-  const start = new Date(Date.UTC(2025, 11, 29))
-  return assignment
-    .map((templateId, i) => {
-      if (!templateId) return null
-      const d = new Date(start)
-      d.setUTCDate(start.getUTCDate() + i * 7)
-      const startDate = d.toISOString().slice(0, 10)
-      return { id: `seed-${i}`, startDate, templateId, status: 'normal' as const }
-    })
-    .filter(Boolean) as import('~/types/planner').AppliedWeek[]
+  return assignment.flatMap((templateId, i) =>
+    templateId ? [{ id: `seed-${i}`, startDate: starts[i]!, templateId }] : []
+  )
 }
 
 /** Bump when the persisted shape changes; while in development, a mismatch resets saves to the default seed */
-export const PLANNER_STATE_VERSION = 5
+export const PLANNER_STATE_VERSION = 6
 
 const HARADA_AMBITION_ID = 'ambition-harada'
 const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
@@ -331,6 +314,7 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
 
   if (!categories.every(category => typeof category?.id === 'string' && typeof category.name === 'string')) return false
   if (!templates.every(template => Array.isArray(template?.slots))) return false
+  if (!(state.appliedWeeks as Array<Partial<AppliedWeek> | null>).every(week => typeof week?.startDate === 'string' && typeof week.templateId === 'string')) return false
 
   const categoryIds = new Set(categories.map(category => category!.id))
   const linksToCategory = (item: { categoryId?: string } | null) =>
@@ -339,15 +323,15 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   return activities.every(linksToCategory) && habits.every(linksToCategory)
 }
 
-export const createInitialState = (): PlannerState => ({
+/** Seed for a year; the default is the ISO year of today. The store serialises this seed, so server and client share it */
+export const createInitialState = (year: number = isoWeekOf(localDateKey()).year): PlannerState => ({
   version: PLANNER_STATE_VERSION,
   ...createHaradaSeed(),
   settings: {
     timeGranularity: 60,
     activeTemplateId: 'standard-week',
     projectionDefaults: {
-      years: 5,
-      excludedWeekStatuses: ['vacation', 'off']
+      years: 5
     }
   },
   activities: [
@@ -362,7 +346,7 @@ export const createInitialState = (): PlannerState => ({
     { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
   ],
   templates: [createSeedTemplate(), createDeepWorkTemplate(), createVacationTemplate()],
-  appliedWeeks: createSeedAppliedWeeks()
+  appliedWeeks: createSeedAppliedWeeks(year)
 })
 
 export const getTemplateById = (state: PlannerState, templateId: string) =>
@@ -370,6 +354,15 @@ export const getTemplateById = (state: PlannerState, templateId: string) =>
 
 export const getActiveTemplate = (state: PlannerState) =>
   state.templates.find(template => template.id === state.settings.activeTemplateId) ?? state.templates[0]
+
+/**
+ * Template that governs the week starting on the Monday of the given date (FR-DATE-2): the applied week's
+ * template, else the active template. A deleted template is never returned; the active template takes its place.
+ */
+export const effectiveTemplate = (state: PlannerState, date: string): WeekTemplate | undefined => {
+  const applied = state.appliedWeeks.find(week => week.startDate === mondayOf(date))
+  return (applied && getTemplateById(state, applied.templateId)) || getActiveTemplate(state)
+}
 
 export const getActivityMap = (activities: Activity[]) =>
   new Map(activities.map(activity => [activity.id, activity]))
@@ -411,6 +404,25 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   }
 
   return categoryTotals
+}
+
+/** Scheduled hours per activity across the ISO weeks of a year, each week under its effective template (FR-DATE-2) */
+export const yearlyActivityHours = (state: PlannerState, year: number): Map<string, number> => {
+  const totals = new Map<string, number>()
+
+  for (const weekStart of isoWeekStarts(year)) {
+    const template = effectiveTemplate(state, weekStart)
+
+    if (!template) {
+      continue
+    }
+
+    for (const [activityId, hours] of aggregateTemplate(template, state.activities)) {
+      totals.set(activityId, (totals.get(activityId) ?? 0) + hours)
+    }
+  }
+
+  return totals
 }
 
 /** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */

@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import type { Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
-  aggregateTemplate,
   aggregateTemplateByCategory,
   createEmptySlots,
   createHaradaSeed,
   createInitialState,
   getActiveTemplate,
-  getTemplateById
+  getTemplateById,
+  yearlyActivityHours
 } from '~/utils/planner'
 
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
@@ -22,25 +22,18 @@ export const usePlannerStore = defineStore('planner', {
       const template = getActiveTemplate(state)
       return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
     },
+    /** Hours per activity over the horizon: the chosen year's scheduled hours times the horizon in years (PRD 17.11) */
     yearlyProjectionHours(state) {
-      const template = getActiveTemplate(state)
+      return (year: number) => {
+        const years = state.settings.projectionDefaults.years
+        const projected = new Map<string, number>()
 
-      if (!template) {
-        return new Map<string, number>()
+        for (const [activityId, hours] of yearlyActivityHours(state, year)) {
+          projected.set(activityId, hours * years)
+        }
+
+        return projected
       }
-
-      const weeklyTotals = aggregateTemplate(template, state.activities)
-      const excludedWeeks = state.appliedWeeks.filter(week =>
-        state.settings.projectionDefaults.excludedWeekStatuses.includes(week.status as 'vacation' | 'off')
-      ).length
-      const includedWeeks = Math.max((52 * state.settings.projectionDefaults.years) - excludedWeeks, 0)
-      const projected = new Map<string, number>()
-
-      for (const [activityId, hours] of weeklyTotals) {
-        projected.set(activityId, hours * includedWeeks)
-      }
-
-      return projected
     }
   },
   actions: {
@@ -49,21 +42,6 @@ export const usePlannerStore = defineStore('planner', {
         this.$patch(state)
         this.ensureActiveTemplate()
       }
-    },
-    ensureDefaultWeek() {
-      const template = this.activeTemplate
-
-      if (!template || this.appliedWeeks.some(week => week.templateId === template.id)) {
-        return
-      }
-
-      this.appliedWeeks.unshift({
-        id: 'seed-week',
-        startDate: new Date().toISOString().slice(0, 10),
-        templateId: template.id,
-        status: 'normal',
-        notes: 'Seeded automatically after template creation.'
-      })
     },
     ensureActiveTemplate() {
       const template = this.activeTemplate
@@ -276,9 +254,7 @@ export const usePlannerStore = defineStore('planner', {
         this.appliedWeeks.push({
           id: `${templateId}-${startDate}`,
           startDate,
-          templateId,
-          status: 'normal',
-          notes: 'Assigned from year painter.'
+          templateId
         })
       }
     },

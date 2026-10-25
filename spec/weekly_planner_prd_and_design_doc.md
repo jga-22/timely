@@ -129,7 +129,7 @@ The v2 principle "Goals before time; the app opens on Goals" is replaced: the ap
 | US-8 | As a user, I apply one activity to the same hours across several days at once. | Planned (v3): rectangle paint in the activity grid |
 | US-9 | As a user, I keep several templates and switch, rename, recolour, create and delete them. | Done (no duplicate) |
 | US-10 | As a user, I assign templates to the weeks of the year by painting a year grid. | Done (2026 only, mouse only); year handling Planned (v3) |
-| US-11 | As a user, I mark a week as vacation or off, or override slots for one week. | Not built (Q5) |
+| US-11 | As a user, I mark a week as vacation or off, or override slots for one week. | Dropped (Q5) |
 | US-12 | As a user, I see hours and percentages per category. | Done (Insights); moves to Home and Visualization |
 | US-13 | As a user, I see the year week by week (or month by month), stacked by category. | Done; moves to Visualization |
 | US-14 | As a user, I see a projection over 1, 3, 5 or 10 years. | Partial; full list Planned (v3) |
@@ -165,12 +165,12 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
-| FR-DATE-1 | "Today" comes from the device's local date. Weeks start on Monday and use ISO week numbers. | Planned (v3) | With the clock at 2026-10-25 (a Sunday), the current week is week 43, starting 2026-10-19; the year grid and charts mark it. |
-| FR-DATE-2 | **Effective template of a date:** the template of the applied week whose `startDate` is that date's Monday; if that week is unassigned, the active template (decided, Q2). One shared function serves Home, Visualization and projections. | Planned (v3) | Unit test: an assigned week returns its template; an unassigned week returns the active template; a deleted template is never returned. |
-| FR-DATE-3 | Year handling: the year grid and charts show every ISO week of a selected year (52 or 53), default the current ISO year, with previous and next controls. | Planned (v3) | 2026 shows 53 weeks, the last starting 2026-12-28; 2027 shows 52 weeks, the first starting 2027-01-04. |
-| FR-DATE-4 | Remove the hard-coded `WEEK_DATES_2026` and `CURRENT_WEEK_INDEX`; the seed assigns weeks of the current year. | Planned (v3) | No literal 2026 remains in `app/` outside comments; a fresh seed in 2027 assigns 2027 weeks. |
-| FR-DATE-5 | Remove `ensureDefaultWeek`, which writes today's UTC date (not a Monday) as `startDate` under a fixed id when the active template has no applied week. | Planned (v3) | Creating a template and reloading adds no applied week. |
-| FR-DATE-6 | Date-dependent output (Home, current-week markers) renders on the client only, so server and client never disagree about "today". | Planned (v3) | No hydration warning caused by dates; Home shows a quiet placeholder until mounted. |
+| FR-DATE-1 | "Today" comes from the device's local date. Weeks start on Monday and use ISO week numbers. | Done | With the clock at 2026-10-25 (a Sunday), the current week is week 43, starting 2026-10-19; the year grid and charts mark it. *Evidence:* `localDateKey` in `app/utils/dates.ts`, set on mount in `app/app.vue`. Node cases (ISO weeks, Monday, DST, time zones) and a browser run at 2026-10-25 show week 43 marked. |
+| FR-DATE-2 | **Effective template of a date:** the template of the applied week whose `startDate` is that date's Monday; if that week is unassigned, the active template (decided, Q2). One shared function serves Home, Visualization and projections. | Done | Unit test: an assigned week returns its template; an unassigned week returns the active template; a deleted template is never returned. *Evidence:* `effectiveTemplate` in `app/utils/planner.ts`, used by Insights bars and `yearlyProjectionHours`. Node cases: assigned, unassigned, deleted, year boundary. |
+| FR-DATE-3 | Year handling: the year grid and charts show every ISO week of a selected year (52 or 53), default the current ISO year, with previous and next controls. | Done | 2026 shows 53 weeks, the last starting 2026-12-28; 2027 shows 52 weeks, the first starting 2027-01-04. *Evidence:* Year switcher on the Planner year grid; `isoWeekStarts` gives 53 weeks for 2026 (last 2026-12-28) and 52 for 2027 (first 2027-01-04). Browser run: 2025, 2027 and boundary clocks. |
+| FR-DATE-4 | Remove the hard-coded `WEEK_DATES_2026` and `CURRENT_WEEK_INDEX`; the seed assigns weeks of the current year. | Done | No literal 2026 remains in `app/` outside comments; a fresh seed in 2027 assigns 2027 weeks. *Evidence:* `WEEK_DATES_2026` and `CURRENT_WEEK_INDEX` removed; `createInitialState(year)` seeds the current ISO year. Seed checked for 2026 and 2027 in node. |
+| FR-DATE-5 | Remove `ensureDefaultWeek`, which writes today's UTC date (not a Monday) as `startDate` under a fixed id when the active template has no applied week. | Done | Creating a template and reloading adds no applied week. *Evidence:* `ensureDefaultWeek` removed from the store and the persistence plugin; a reload keeps the applied-week count (browser run). |
+| FR-DATE-6 | Date-dependent output (Home, current-week markers) renders on the client only, so server and client never disagree about "today". | Partial | No hydration warning caused by dates; Home shows a quiet placeholder until mounted. *Evidence:* Year, today and current-week markers are null until mounted, so the first render matches the server. Dev-build fresh load and reload after an edit: no hydration warning. Home placeholder comes with slice 4. |
 
 ### 9.3 Home (new)
 
@@ -281,11 +281,11 @@ New in v3:
 
 | ID | Requirement | Status | Evidence / note |
 | --- | --- | --- | --- |
-| FR-YEAR-1 | Week grid with month labels, each week coloured by its template. | Done; to change | `WEEK_DATES_2026`. v3: every ISO week of the selected year (FR-DATE-3). |
+| FR-YEAR-1 | Week grid with month labels, each week coloured by its template. | Done | Every ISO week of the selected year (52 or 53), coloured by its applied template (`weeks` from `usePlannerYear`). |
 | FR-YEAR-2 | Pick a template or Erase, then click or drag to paint. | Done | `paintWeek`, `setWeekTemplate`. Mouse only; touch painting and keyboard are Next. |
-| FR-YEAR-3 | Hover readout and "n / 52 weeks assigned". | Done; to change | v3: "n of 52" or "n of 53"; unassigned weeks read "uses {active template}". This figure lives only here. |
-| FR-YEAR-4 | Current-week marker. | Partial | Hard-coded to week 16. Fixed by FR-DATE-1. |
-| FR-YEAR-5 | Week status, per-slot overrides and notes. | Not built | Fields exist, unused (Q5). |
+| FR-YEAR-3 | Hover readout and "n / 52 weeks assigned". | Partial | Count reads "n of 52" or "n of 53" for the selected year. The unassigned readout still says "unassigned, click to paint", not "uses {active template}". |
+| FR-YEAR-4 | Current-week marker. | Done | Marker from the clock, only in the current ISO year (`currentWeekIndex`). Browser run at 2026-10-25, 2026-12-31, 2027-01-01 and 2027-01-04. |
+| FR-YEAR-5 | Week status, per-slot overrides and notes. | Dropped (Q5) | Removed from the model: `status`, `overrides`, `notes` and `excludedWeekStatuses`. |
 | FR-YEAR-6 | Years other than 2026. | Superseded | By FR-DATE-3. |
 
 ### 9.8 Visualization (new; replaces Insights)
@@ -558,7 +558,7 @@ PlannerState (localStorage key "timely-planner-state")
 ├── settings
 │   ├── timeGranularity        60 | 30 (only 60 is used)
 │   ├── activeTemplateId       edited template; fallback for unassigned weeks
-│   └── projectionDefaults     { years, excludedWeekStatuses }
+│   └── projectionDefaults     { years }
 ├── ambition                   { id, statement, horizonYears } | null
 ├── categories[]               life areas, ordered (category = dimension)
 ├── habits[]                   belong to a category, may link an activity
@@ -580,21 +580,20 @@ Derived, never stored: today, effective templates, totals, alignments, projectio
 Source: `app/types/planner.ts`. Category and dimension are one record **(decided)**; the UI says "category" only. The screen restructure needs **no change to the stored shape**; the only addition is the journal experiment.
 
 ```ts
-type WeekStatus = "normal" | "vacation" | "off" | "custom"      // unused; Q5
 type HabitPeriod = "day" | "week" | "month"
 interface Category { id; name; color?; order; goal5y?; target1y?; targetTbd? }
 interface Activity { id; name; shortCode; categoryId; color }  // colour owned by the activity (FR-PLAN-21)
 interface Habit { id; categoryId; name; frequency: { count; period }; activityId?; minutesPerOccurrence? }
 interface Ambition { id; statement; horizonYears }
 interface WeekTemplate { id; name; description?; granularityMinutes: 60 | 30; slots: string[]; color? }
-interface AppliedWeek { id; startDate /* Monday */; templateId; status; overrides?; notes? }
+interface AppliedWeek { id; startDate /* Monday */; templateId }
 interface JournalEntry { date: string /* local YYYY-MM-DD */; text: string }   // new, experiment
 interface PlannerState { version; settings; categories; activities; templates; appliedWeeks; ambition; habits; journal }
 ```
 
 - `journal` is added with the journal slice; `isPlannerState` checks it is an array; bump the version. Habit check-ins add no data (not part of the experiment).
-- Bump `PLANNER_STATE_VERSION` to 6 in slice 0 anyway, so dev saves reseed with weeks of the current year.
-- Decided (Q5): remove week status: drop `status`, `overrides`, `notes` and `excludedWeekStatuses`; bump the version.
+- `PLANNER_STATE_VERSION` is 6 (done in slice 0), so dev saves reseed with weeks of the current year.
+- Done in slice 0 (Q5): week status removed: `status`, `overrides`, `notes` and `excludedWeekStatuses` are gone; version bumped.
 
 Integrity rules (store actions in `app/stores/planner.ts`):
 
@@ -662,7 +661,7 @@ Source: `app/utils/planner.ts`, store getters, new `app/utils/dates.ts`.
 7. **Habit target per category.** Sum over habits with minutes of `weekly occurrences x minutesPerOccurrence`.
 8. **Habit-linked scheduled time per category:** categories walked by `order`; each takes the distinct activities its habits link to, skipping those already claimed, and sums their scheduled minutes **in the active template**.
 9. **Coverage.** `linked / target` when the target is above 0, else "No target yet". "Below target" and Home's signal mean coverage below 1.
-10. **Year figures:** for each ISO week of the selected year, the category totals of its effective template. Monthly view: average per week of the weeks starting in the month. Status and overrides are not applied.
+10. **Year figures:** for each ISO week of the selected year, the category totals of its effective template. Monthly view: average per week of the weeks starting in the month. Week status and overrides no longer exist (Q5).
 11. **Projection over N years:** per activity, the selected year's total (rule 10) x N. Replaces today's rule (active template x 52 x N, with an exclusion count that is always 0).
 12. **Key message (journal):** ambition statement plus the 1-year target of category number `dayOfYear mod k` among the k categories (by order) that have a target.
 

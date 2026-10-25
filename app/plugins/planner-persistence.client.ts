@@ -7,7 +7,6 @@ export default defineNuxtPlugin(() => {
   const adapter = createPlannerLocalStorageAdapter()
 
   planner.hydrate(adapter.load())
-  planner.ensureDefaultWeek()
   planner.ensureActiveTemplate()
   // Store the restored or default state at once, so a discarded save is overwritten
   adapter.save(planner.$state)

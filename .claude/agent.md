@@ -32,7 +32,7 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 - `app/components/harada/`: Goals view (`HaradaView.vue`, `HabitList.vue`).
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea.
 - `app/components/planner/`: `PlannerView.vue` (week grid + year grid), `InsightsView.vue`, `LegendView.vue` (the Configuration tab).
-- `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations. `app/stores/planner.ts`: Pinia store and actions.
+- `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/composables/usePlannerYear.ts`: today and the selected year, client-only. `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
 - `spec/`: specifications (below). `design/` is an old gitignored design export with the previous look; do not use it.
@@ -53,6 +53,7 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 - **One list of categories.** Goal dimensions and planner categories are the same thing. `Category` has `id, name, color, order` plus `goal5y, target1y, targetTbd`. The first 8 categories by `order` form the 3x3 Goals grid. Categories are managed only in the Configuration tab.
 - **Activities are a separate level** under a category. **Habits** belong to a category, are measurable (frequency count per day/week/month plus optional `minutesPerOccurrence`) and may link to an activity.
 - **Insights compares like with like:** per category, the hours scheduled through the activities its habits link to, against the hours those habits ask for. A quiet second line shows everything scheduled in the category. An activity is never counted in two categories.
+- **Year:** the planner shows one ISO year, by default the current ISO year. It is set on mount, not persisted (a reload selects the current year again). Unassigned weeks use the active template everywhere (`effectiveTemplate`).
 - **Navigation order is Goals, Planner, Insights, Configuration.** Goals is the default tab. Templates are still managed in the Planner's template switcher, not in Configuration.
 - **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so Insights shows real bars).
 - **UI language is English.** User-entered content can be in any language.
@@ -75,15 +76,15 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 
 ## Current state
 
-- Branch `feat/harada-goals` (the base of the new work), open as PR #7 against `main` (`https://github.com/jga-22/timely`). All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
-- Shipped on the branch: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign (light and dark), new navigation order, typecheck cleanup, removal of unused legacy components.
-- The `spec/` folder and this file may still be uncommitted; check `git status`.
+- Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Insights and projections, week status removed, storage version 6.
+- Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign, navigation order. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
 
 ## Open items and ideas
 
 - Move template management into Configuration (today it lives in the Planner's template switcher).
 - Most seeded habits are not linked to activities yet; Economic and Social have no activities (Environment has Errands), so they show "No target yet". Add activities and link habits in the app or the seed.
-- "Hydration completed but contains mismatches" appears in the console when the saved state differs from the seeded default (the server renders the seed, the client restores storage). Not proven to predate the branch; a client-only wrapper would remove it but changes server output.
+- Hydration: the slice 0 dev-build check (fresh load and reload after an edit) showed no hydration warning, so the earlier "Hydration completed but contains mismatches" note may be stale. Re-check in dev after each slice; a client-only wrapper is the fallback.
+- Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.
 - Not yet checked visually: dark theme beyond overflow, the weekly/monthly Insights charts after the redesign.

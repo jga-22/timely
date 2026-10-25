@@ -2,20 +2,20 @@
 import { storeToRefs } from 'pinia'
 import type { Activity, Category } from '~/types/planner'
 import {
-  WEEK_DATES_2026,
-  CURRENT_WEEK_INDEX,
   aggregateTemplateByCategory,
+  effectiveTemplate,
   projectionInsight,
-  getTemplateById,
   categoryAlignments,
   type CategoryAlignment
 } from '~/utils/planner'
+import { monthOf } from '~/utils/dates'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 
 const planner = usePlannerStore()
 const { yearlyProjectionHours, activeTemplateCategoryTotals } = storeToRefs(planner)
 const { activityMap, categoryMap } = usePlannerMaps()
+const { year, weeks, currentWeekIndex } = usePlannerYear()
 
 const focusCat = ref<string | null>(null)
 const viewMode = ref<'weekly' | 'monthly'>('weekly')
@@ -27,11 +27,10 @@ onMounted(() => {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 // ── Per-week bars ──
+// Every ISO week of the selected year, each under its effective template (unassigned weeks use the active one)
 const weekBars = computed(() =>
-  WEEK_DATES_2026.map((startDate, i) => {
-    const applied = planner.appliedWeeks.find(w => w.startDate === startDate)
-    if (!applied) return { startDate, index: i, segments: [] as Array<{ categoryId: string; hours: number; color: string }> }
-    const template = getTemplateById(planner.$state, applied.templateId)
+  weeks.value.map((startDate, i) => {
+    const template = effectiveTemplate(planner.$state, startDate)
     if (!template) return { startDate, index: i, segments: [] as Array<{ categoryId: string; hours: number; color: string }> }
     const catTotals = aggregateTemplateByCategory(template, planner.$state)
     const segments: Array<{ categoryId: string; hours: number; color: string }> = []
@@ -49,8 +48,7 @@ type Segment = { categoryId: string; hours: number; color: string }
 const monthBars = computed(() => {
   const buckets: Array<typeof weekBars.value> = Array.from({ length: 12 }, () => [])
   for (const week of weekBars.value) {
-    const m = new Date(week.startDate).getUTCMonth()
-    buckets[m]!.push(week)
+    buckets[monthOf(week.startDate)]!.push(week)
   }
   return MONTHS.map((month, m) => {
     const weeks = buckets[m] ?? []
@@ -85,10 +83,12 @@ const allocatedHours = computed(() =>
   planner.activeTemplate?.slots.reduce((t, s) => t + (s ? 1 : 0), 0) ?? 0
 )
 
-const weeksAssigned = computed(() => planner.appliedWeeks.length)
+const assignedInYear = computed(() =>
+  weeks.value.filter(startDate => planner.appliedWeeks.some(week => week.startDate === startDate)).length
+)
 
 const projectionSummaries = computed(() =>
-  Array.from(yearlyProjectionHours.value.entries())
+  Array.from((year.value === null ? new Map<string, number>() : yearlyProjectionHours.value(year.value)).entries())
     .map(([activityId, hours]) => ({ activity: activityMap.value.get(activityId), hours }))
     .filter((item): item is { activity: Activity; hours: number } => !!item.activity)
     .sort((a, b) => b.hours - a.hours)
@@ -146,21 +146,21 @@ const LEFT = 44
 // Weekly
 const BAR_W = 12
 const BAR_GAP = 4
-const totalW_weekly = LEFT + WEEK_DATES_2026.length * (BAR_W + BAR_GAP)
+const totalW_weekly = computed(() => LEFT + weeks.value.length * (BAR_W + BAR_GAP))
 
 // Monthly
 const BAR_W_M = 28
 const BAR_GAP_M = 10
 const totalW_monthly = LEFT + 12 * (BAR_W_M + BAR_GAP_M)
 
-const totalW = computed(() => viewMode.value === 'monthly' ? totalW_monthly : totalW_weekly)
+const totalW = computed(() => viewMode.value === 'monthly' ? totalW_monthly : totalW_weekly.value)
 const svgHeight = CHART_H + BOTTOM + 16
 
 const weeklyMonthLabels = computed(() => {
   const labels: Array<{ month: string; x: number }> = []
   let lastMonth = -1
-  WEEK_DATES_2026.forEach((date, i) => {
-    const m = new Date(date).getUTCMonth()
+  weeks.value.forEach((date, i) => {
+    const m = monthOf(date)
     if (m !== lastMonth) {
       labels.push({ month: MONTHS[m] ?? '', x: LEFT + i * (BAR_W + BAR_GAP) })
       lastMonth = m
@@ -191,8 +191,8 @@ function buildSegments(
 const yTicks = [0, 42, 84, 126, 168]
 function tickY(h: number) { return CHART_H - (h / MAX_HOURS) * CHART_H }
 
-// Current month index for monthly indicator
-const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth()
+// Month of the current week, for the monthly marker; -1 when the selected year is not the current one
+const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks.value[currentWeekIndex.value]!) : -1))
 </script>
 
 <template>
@@ -246,7 +246,7 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
     <section class="section">
       <div class="section-head">
         <h2 class="section-title">The year</h2>
-        <p class="section-lede">{{ weeksAssigned }} of 52 weeks assigned to a template.</p>
+        <p v-if="year !== null" class="section-lede">{{ year }}: {{ assignedInYear }} of {{ weeks.length }} weeks assigned to a template.</p>
       </div>
 
       <div class="metrics">
@@ -285,7 +285,7 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
         <div class="disclosure-body">
           <div class="chart-toolbar">
             <p class="section-lede">
-              {{ viewMode === 'monthly' ? '12-month overview, average hours per week' : '52-week calendar, stacked by category' }}
+              {{ viewMode === 'monthly' ? '12-month overview, average hours per week' : 'Week calendar, stacked by category' }}
             </p>
             <div class="segmented" role="group" aria-label="Chart granularity">
               <button :data-active="viewMode === 'monthly'" :aria-pressed="viewMode === 'monthly'" @click="viewMode = 'monthly'">Monthly</button>
@@ -309,7 +309,7 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
             </button>
           </div>
 
-          <div class="chart-scroll">
+          <div v-if="year !== null" class="chart-scroll">
             <svg
               class="chart-svg"
               :viewBox="`0 0 ${totalW} ${svgHeight}`"
@@ -360,8 +360,9 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
                   >{{ bar.month }}</text>
                 </g>
                 <rect
+                  v-if="currentMonth >= 0"
                   class="chart-marker"
-                  :x="monthBarX(CURRENT_MONTH)" y="-5"
+                  :x="monthBarX(currentMonth)" y="-5"
                   :width="BAR_W_M" height="3"
                   rx="1"
                 />
@@ -390,8 +391,9 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
                   />
                 </g>
                 <rect
+                  v-if="currentWeekIndex >= 0"
                   class="chart-marker"
-                  :x="weekBarX(CURRENT_WEEK_INDEX)" y="-5"
+                  :x="weekBarX(currentWeekIndex)" y="-5"
                   :width="BAR_W" height="3"
                   rx="1"
                 />

@@ -22,7 +22,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 
 | # | Slice | PRD requirements | Size | Depends on | Status |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Date foundation | FR-DATE-1 to 6 | M | none | Not started |
+| 0 | Date foundation | FR-DATE-1 to 6 | M | none | Done (commit "feat: date foundation (real today, ISO weeks, year switcher, effective template)"); FR-DATE-6 partial until Home |
 | 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Not started |
 | 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Not started |
 | 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Not started |
@@ -90,3 +90,4 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 | Date | Event |
 | --- | --- |
 | 2026-10-25 | Plan written from PRD v3. |
+| 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |

@@ -764,6 +764,44 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.year-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.year-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.year-label {
+  min-width: 3.5em;
+  text-align: center;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* Quiet stepper: 28px targets, control border, tint on hover; focus uses the global outline */
+.year-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-md);
+  line-height: 1;
+  cursor: pointer;
+}
+.year-step:hover:not(:disabled) { background: var(--bg-3); color: var(--ink); }
+.year-step:disabled { opacity: 0.5; cursor: default; }
 .paint-tools {
   display: flex;
   flex-wrap: wrap;
@@ -1057,11 +1095,6 @@ button { cursor: pointer; background: none; border: none; padding: 0; }
   font-size: var(--fs-md);
   font-weight: 500;
   color: var(--ink);
-}
-.form-note {
-  margin: var(--space-3) 0 0;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
 }
 
 /* ── Goals vs planned time ── */

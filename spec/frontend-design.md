@@ -419,7 +419,8 @@ Stats row (`.week-stats`): wrapping, gap 8px 24px, top margin 16px. Each `.stat`
 
 Year painter (`section.section`):
 
-- Head: `.section-title` "Year" and lede "Choose a template, then click or drag across weeks to assign it." Right: `.year-count`, "N / 52 weeks assigned" (13px `--ink-3`, tabular).
+- Head: `.section-title` "Year" and lede "Choose a template, then click or drag across weeks to assign it." Right: the year switcher (below), then `.year-count`, "N of 52 weeks assigned" or "N of 53" (13px `--ink-3`, tabular).
+- Year switcher (`.year-controls` > `.year-nav`): stepper buttons `.year-step`, 28x28px, 1px `--control-border` outline, radius 6px, `--bg` fill, `--bg-3` on hover, 50% opacity while disabled (before mount). Labels "Previous year" and "Next year" are `aria-label`s; the glyphs are ‹ and ›. The year (`.year-label`, 15px 600, tabular) sits between them. Focus uses the global outline.
 - Paint tools (above, section 4.5).
 - Months (`.year-months`): 12 columns, 12px `--ink-3`, max width 520px.
 - Grid (`.year-grid`): 13 columns, 3px gaps, max width 520px. Four rows of 13 covers 52 weeks.
@@ -453,7 +454,7 @@ Page: "Categories and activities". Layout `.config-grid`: left column (`minmax(0
 
 - "New category": live preview (`.new-cat-preview`, colour at 14% tint, dot, name, 15px 500; placeholder label "New Category"), name field (placeholder "e.g. Wellness"), colour popover inline (`.color-pop-inline`), primary block button "Add category" (disabled until a name is typed). Enter in the name field submits.
 - "New activity": name (placeholder "e.g. Meditation"), short code (max 3 characters, placeholder "MED") and category select in a two-column row, primary block button "Add activity".
-- "Projection": horizon select (1, 3, 5 or 10 years), note "Excluded statuses: vacation and off."
+- "Projection": horizon select (1, 3, 5 or 10 years).
 
 ### 4.14 Charts and legends (summary)
 

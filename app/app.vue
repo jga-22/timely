@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useTheme } from 'vuetify'
+import { localDateKey } from '~/utils/dates'
 
 type TabId = 'planner' | 'insights' | 'goals' | 'config'
 
 const activeTab = useState<TabId>('activeTab', () => 'goals')
 const dark = useState('dark', () => false)
 const theme = useTheme()
+const { today } = usePlannerYear()
 
 const TABS = [
   { id: 'goals'    as TabId, num: '01', label: 'Goals' },
@@ -25,6 +27,8 @@ watch(dark, (v) => {
 onMounted(() => {
   const saved = localStorage.getItem('timely.dark')
   if (saved !== null) dark.value = saved === 'true'
+  // Date-dependent views read this only after mount, so server and client render the same first pass
+  today.value = localDateKey()
 })
 
 const toggleDark = () => {

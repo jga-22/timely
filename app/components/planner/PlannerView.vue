@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DAYS, DESIGN_COLORS, WEEK_DATES_2026, CURRENT_WEEK_INDEX, slotsToBlocks, formatHour } from '~/utils/planner'
+import { DAYS, DESIGN_COLORS, slotsToBlocks, formatHour } from '~/utils/planner'
 
 const HOUR_PX = 28
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
+const { year, weeks, currentWeekIndex, shiftYear } = usePlannerYear()
 
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
@@ -324,11 +325,12 @@ const appliedByDate = computed(() => {
   for (const w of appliedWeeks.value) m.set(w.startDate, w.templateId)
   return m
 })
+const assignedInYear = computed(() => weeks.value.filter(startDate => appliedByDate.value.has(startDate)).length)
 const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function paintWeek(wi: number) {
-  const startDate = WEEK_DATES_2026[wi]
+  const startDate = weeks.value[wi]
   if (startDate) planner.setWeekTemplate(startDate, paintTool.value === 'erase' ? null : paintTool.value)
 }
 
@@ -599,7 +601,14 @@ function confirmDeleteActiveTemplate() {
           <h2 class="section-title">Year</h2>
           <p class="section-lede">Choose a template, then click or drag across weeks to assign it.</p>
         </div>
-        <div class="year-count">{{ appliedWeeks.length }} / 52 weeks assigned</div>
+        <div class="year-controls">
+          <div class="year-nav">
+            <button class="year-step" type="button" aria-label="Previous year" :disabled="year === null" @click="shiftYear(-1)">‹</button>
+            <span class="year-label">{{ year ?? '—' }}</span>
+            <button class="year-step" type="button" aria-label="Next year" :disabled="year === null" @click="shiftYear(1)">›</button>
+          </div>
+          <div v-if="year !== null" class="year-count">{{ assignedInYear }} of {{ weeks.length }} weeks assigned</div>
+        </div>
       </div>
 
       <div class="paint-tools">
@@ -620,17 +629,17 @@ function confirmDeleteActiveTemplate() {
         </button>
       </div>
 
-      <div class="year-grid-scroll">
+      <div v-if="weeks.length" class="year-grid-scroll">
         <div class="year-months">
           <div v-for="m in MONTHS" :key="m" class="m">{{ m }}</div>
         </div>
 
         <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
           <div
-            v-for="(startDate, wi) in WEEK_DATES_2026"
+            v-for="(startDate, wi) in weeks"
             :key="wi"
             class="week-cell"
-            :class="{ 'is-filled': !!appliedByDate.get(startDate), 'is-current': wi === CURRENT_WEEK_INDEX }"
+            :class="{ 'is-filled': !!appliedByDate.get(startDate), 'is-current': wi === currentWeekIndex }"
             :style="cellStyle(startDate)"
             :title="appliedByDate.get(startDate) ? `Week ${wi + 1} · ${templateById.get(appliedByDate.get(startDate)!)?.name}` : `Week ${wi + 1} · unassigned`"
             @mousedown="isYearPainting = true; paintWeek(wi)"
@@ -642,8 +651,8 @@ function confirmDeleteActiveTemplate() {
 
       <div v-if="hoverWeek !== null" class="week-readout">
         Week {{ hoverWeek + 1 }} ·
-        <span v-if="appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)">
-          {{ templateById.get(appliedByDate.get(WEEK_DATES_2026[hoverWeek]!)!)?.name }}
+        <span v-if="appliedByDate.get(weeks[hoverWeek]!)">
+          {{ templateById.get(appliedByDate.get(weeks[hoverWeek]!)!)?.name }}
         </span>
         <span v-else class="muted">unassigned, click to paint</span>
       </div>
