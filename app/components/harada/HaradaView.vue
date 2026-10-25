@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { dimensionAlignment } from '~/utils/planner'
+import { countedCategoryIdsByDimension, dimensionAlignments } from '~/utils/planner'
 
 const DEFAULT_DIMENSION_ID = 'professionnelle'
 
@@ -33,12 +33,20 @@ const selected = computed(() =>
 )
 
 const alignment = computed(() =>
-  selected.value ? dimensionAlignment(selected.value, planner.$state) : null
+  selected.value ? dimensionAlignments(planner.$state).get(selected.value.id) ?? null : null
 )
 
-const categoryItems = computed(() =>
-  categories.value.map(category => ({ title: category.name, value: category.id }))
-)
+// Says which dimension counts a category when it is linked here too (first by order wins)
+const categoryItems = computed(() => {
+  const counted = countedCategoryIdsByDimension(dimensions.value)
+
+  return categories.value.map(category => {
+    const owner = sortedDimensions.value.find(dimension => counted.get(dimension.id)?.includes(category.id))
+    const subtitle = owner && owner.id !== selected.value?.id ? `Counted in ${owner.name}` : undefined
+
+    return { title: category.name, value: category.id, props: { subtitle } }
+  })
+})
 
 const selectDimension = (dimensionId: string) => {
   selectedId.value = dimensionId

@@ -7,7 +7,8 @@ import {
   aggregateTemplateByCategory,
   projectionInsight,
   getTemplateById,
-  dimensionAlignment
+  dimensionAlignments,
+  type DimensionAlignment
 } from '~/utils/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
@@ -96,11 +97,12 @@ const projectionSummaries = computed(() =>
 const topProjection = computed(() => projectionSummaries.value[0] ?? null)
 
 // ── Goals vs. planned time ──
-const goalAlignment = computed(() =>
-  [...planner.dimensions]
+const goalAlignment = computed(() => {
+  const alignments = dimensionAlignments(planner.$state)
+  return [...planner.dimensions]
     .sort((a, b) => a.order - b.order)
-    .map(dimension => ({ dimension, ...dimensionAlignment(dimension, planner.$state) }))
-)
+    .map(dimension => ({ dimension, ...alignments.get(dimension.id)! }))
+})
 
 const goalScale = computed(() =>
   Math.max(1, ...goalAlignment.value.flatMap(row => [row.plannedMinutesPerWeek, row.targetMinutesPerWeek]))
@@ -109,6 +111,28 @@ const goalScale = computed(() =>
 const goalBarWidth = (minutes: number) => `${Math.min((minutes / goalScale.value) * 100, 100)}%`
 
 const formatGoalHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`
+
+const goalFigures = (row: DimensionAlignment) => {
+  if (row.targetMinutesPerWeek > 0) return `${formatGoalHours(row.plannedMinutesPerWeek)} / ${formatGoalHours(row.targetMinutesPerWeek)}`
+  if (row.plannedMinutesPerWeek > 0) return `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled`
+  return '—'
+}
+
+const goalLabel = (row: DimensionAlignment) =>
+  row.targetMinutesPerWeek > 0
+    ? `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled, ${formatGoalHours(row.targetMinutesPerWeek)} target`
+    : `${formatGoalHours(row.plannedMinutesPerWeek)} scheduled, no target yet`
+
+// One calm line per row, only for what is missing
+const goalNotes = (row: DimensionAlignment) => {
+  const notes: string[] = []
+  if (row.targetMinutesPerWeek === 0) notes.push('No target yet')
+  if (row.plannedMinutesPerWeek === 0) notes.push('No time planned')
+  if (row.targetMinutesPerWeek > 0 && row.unlinkedHabits) {
+    notes.push(`${row.unlinkedHabits} ${row.unlinkedHabits === 1 ? 'habit' : 'habits'} not linked to an activity`)
+  }
+  return notes
+}
 
 // Softened category colour keeps the chart calm
 const soft = (color: string) => `color-mix(in srgb, ${color} 80%, var(--bg))`
@@ -193,8 +217,9 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
 
           <div
             class="goal-track"
+            :class="{ 'is-untargeted': row.targetMinutesPerWeek === 0 }"
             role="img"
-            :aria-label="`${formatGoalHours(row.plannedMinutesPerWeek)} scheduled, ${formatGoalHours(row.targetMinutesPerWeek)} target`"
+            :aria-label="goalLabel(row)"
           >
             <span class="goal-fill" :style="{ width: goalBarWidth(row.plannedMinutesPerWeek) }" />
             <span
@@ -204,13 +229,10 @@ const CURRENT_MONTH = new Date(WEEK_DATES_2026[CURRENT_WEEK_INDEX]!).getUTCMonth
             />
           </div>
 
-          <div class="goal-figures">
-            {{ formatGoalHours(row.plannedMinutesPerWeek) }} / {{ formatGoalHours(row.targetMinutesPerWeek) }}
-          </div>
+          <div class="goal-figures">{{ goalFigures(row) }}</div>
 
-          <div v-if="row.plannedMinutesPerWeek === 0 || row.unlinkedHabits" class="goal-flags">
-            <span v-if="row.plannedMinutesPerWeek === 0" class="goal-flag-warn">No planned time</span>
-            <span v-if="row.unlinkedHabits">{{ row.unlinkedHabits }} unlinked</span>
+          <div v-if="goalNotes(row).length" class="goal-flags">
+            <span v-for="note in goalNotes(row)" :key="note">{{ note }}</span>
           </div>
         </div>
       </div>

@@ -215,7 +215,7 @@ const createSeedAppliedWeeks = () => {
 }
 
 /** Bump when the persisted shape changes; older saves are normalised on load */
-export const PLANNER_STATE_VERSION = 2
+export const PLANNER_STATE_VERSION = 3
 
 const HARADA_AMBITION_ID = 'ambition-harada'
 
@@ -233,7 +233,7 @@ const HARADA_DIMENSIONS: Array<[string, string, string[], string, string, boolea
       ['Hydratation quotidienne', 1, 'day'],
       ['Étirements et mobilité', 3, 'week']
     ]],
-  ['spirituelle', 'Spirituelle', ['rest'],
+  ['spirituelle', 'Spirituelle', [],
     'Clarté intérieure, sérénité face à la pression professionnelle.',
     'À définir — ex. 10 minutes de méditation quotidienne tenues, journal hebdomadaire régulier.', true, [
       ['Méditation régulière', 1, 'day'],
@@ -257,7 +257,7 @@ const HARADA_DIMENSIONS: Array<[string, string, string[], string, string, boolea
       ['Reconnaître, exprimer et réguler mes émotions', 1, 'day'],
       ["Résoudre les tensions rapidement, ne rien laisser traîner", 1, 'day']
     ]],
-  ['economique', 'Économique', ['work'],
+  ['economique', 'Économique', [],
     'Indépendance financière, patrimoine cible.',
     "À définir — ex. taux d'épargne cible atteint, montant précis investi sur l'année.", true, [
       ['Suivi budgétaire mensuel', 1, 'month'],
@@ -305,7 +305,7 @@ const HARADA_DIMENSIONS: Array<[string, string, string[], string, string, boolea
       ['Valoriser la valeur créée avec des résultats chiffrés', 1, 'month'],
       ['Publier des articles professionnels pour construire ma marque perso', 1, 'month']
     ]],
-  ['environnement', 'Environnement', ['rest'],
+  ['environnement', 'Environnement', [],
     'Mode de vie durable, cohérent avec mes valeurs.',
     "À définir — ex. rituel dominical fixe tenu toute l'année, empreinte réduite sur un poste identifié.", true, [
       ['Réduire mon empreinte au quotidien', 1, 'day'],
@@ -349,14 +349,43 @@ export const createHaradaSeed = (): Pick<PlannerState, 'ambition' | 'dimensions'
   }
 }
 
+/** Categories the v2 seed wrongly linked to a dimension (v3 unlinks them) */
+const V2_SEEDED_CATEGORY_IDS: Record<string, string[]> = {
+  spirituelle: ['rest'],
+  economique: ['work'],
+  environnement: ['rest']
+}
+
+const sameIds = (a: string[], b: string[]) => a.length === b.length && a.every((id, index) => id === b[index])
+
+/** Only dimensions still holding the exact v2 seed are corrected; customised links are kept */
+const migrateDimensionCategoryIds = (dimensions: Dimension[]): Dimension[] => {
+  const seeded = new Map(createHaradaSeed().dimensions.map(dimension => [dimension.id, dimension.categoryIds]))
+
+  return dimensions.map(dimension => {
+    const legacy = V2_SEEDED_CATEGORY_IDS[dimension.id]
+
+    if (!legacy || !sameIds(dimension.categoryIds, legacy)) {
+      return dimension
+    }
+
+    return { ...dimension, categoryIds: seeded.get(dimension.id) ?? [] }
+  })
+}
+
 /** Default-merge a persisted state so saves written before Harada goals still load */
-export const normalizePlannerState = (raw: Partial<PlannerState>): PlannerState => ({
-  ...raw,
-  version: PLANNER_STATE_VERSION,
-  ambition: raw.ambition ?? null,
-  dimensions: raw.dimensions ?? [],
-  habits: raw.habits ?? []
-}) as PlannerState
+export const normalizePlannerState = (raw: Partial<PlannerState>): PlannerState => {
+  const isLegacy = (raw.version ?? 0) < 3
+  const dimensions = raw.dimensions ?? []
+
+  return {
+    ...raw,
+    version: PLANNER_STATE_VERSION,
+    ambition: raw.ambition ?? null,
+    dimensions: isLegacy ? migrateDimensionCategoryIds(dimensions) : dimensions,
+    habits: raw.habits ?? []
+  } as PlannerState
+}
 
 export const createInitialState = (): PlannerState => ({
   version: PLANNER_STATE_VERSION,
@@ -479,11 +508,29 @@ export interface DimensionAlignment {
   coverage: number | null
 }
 
-/** Compares scheduled time (its categories) against the measurable target (its habits) */
-export const dimensionAlignment = (dimension: Dimension, state: PlannerState): DimensionAlignment => {
+/** A category's minutes count once: the first dimension by order that lists it keeps it */
+export const countedCategoryIdsByDimension = (dimensions: Dimension[]): Map<string, string[]> => {
+  const claimed = new Set<string>()
+  const counted = new Map<string, string[]>()
+
+  for (const dimension of [...dimensions].sort((a, b) => a.order - b.order)) {
+    const categoryIds = [...new Set(dimension.categoryIds)].filter(categoryId => !claimed.has(categoryId))
+    categoryIds.forEach(categoryId => claimed.add(categoryId))
+    counted.set(dimension.id, categoryIds)
+  }
+
+  return counted
+}
+
+/** Compares scheduled time (its counted categories) against the measurable target (its habits) */
+export const dimensionAlignment = (
+  dimension: Dimension,
+  state: PlannerState,
+  countedCategoryIds: string[]
+): DimensionAlignment => {
   const habits = state.habits.filter(habit => habit.dimensionId === dimension.id)
 
-  const plannedMinutesPerWeek = dimension.categoryIds.reduce(
+  const plannedMinutesPerWeek = countedCategoryIds.reduce(
     (total, categoryId) => total + scheduledWeeklyMinutesForCategory(state, categoryId),
     0
   )
@@ -499,4 +546,13 @@ export const dimensionAlignment = (dimension: Dimension, state: PlannerState): D
     unlinkedHabits: habits.filter(habit => !habit.activityId).length,
     coverage: targetMinutesPerWeek > 0 ? plannedMinutesPerWeek / targetMinutesPerWeek : null
   }
+}
+
+export const dimensionAlignments = (state: PlannerState): Map<string, DimensionAlignment> => {
+  const counted = countedCategoryIdsByDimension(state.dimensions)
+
+  return new Map(state.dimensions.map(dimension => [
+    dimension.id,
+    dimensionAlignment(dimension, state, counted.get(dimension.id) ?? [])
+  ]))
 }
