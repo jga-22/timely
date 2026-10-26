@@ -13,30 +13,27 @@ This folder holds the product and design specification for Timely. The code is t
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 
-Screenshots in `screens/` (Planner files regenerated on 26 October 2026 from the production build of `fix/restore-original-week-grid`, clean seed; the other files from the production build after slice 6, fresh seeded state, 25 October 2026):
+Screenshots in `screens/` (regenerated on 26 October 2026 from the production build of `feat/ux-polish`, clean seed, no test paint):
 
 | File | Size | Notes |
 | --- | --- | --- |
-| `home-desktop-light.png` | 1280 px wide | Home, light, Day: the day blocks with Now, then the 24-hour timeline, then the journal |
-| `home-week-desktop-light.png` | 1280 px wide | Home, light, Week: activities by hours |
-| `home-month-desktop-light.png` | 1280 px wide | Home, light, Month: each template and its days in the header line |
-| `home-desktop-dark.png` | 1280 px wide | Home, dark, Day |
-| `home-mobile-light.png` | 400 px wide | Home, light, Day, full page |
-| `home-week-mobile-light.png` | 400 px wide | Home, light, Week, full page |
-| `home-month-mobile-light.png` | 400 px wide | Home, light, Month, full page |
-| `home-journal-desktop-light.png` | 1280 px wide | Home, light, Day, with a long journal note (Experiment card, key message, Readings) |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, Harada map, list and the first category's detail |
+| `home-desktop-light.png` | 1280 px wide | Today, light: title and date, the hour timeline with 9h, 12h, 18h and 22h, the activities list, the journal |
+| `home-desktop-dark.png` | 1280 px wide | Today, dark |
+| `home-mobile-light.png` | 400 px wide | Today, light, full page |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light: legend, vision, Harada map with attention outlines, list with attention rows, first category detail |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
-| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the category list (no matrix below 1100 px) |
-| `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to categories |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: the week grid (range select, original interaction), the Activities chips under it, and the year grid at full width |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page, clean seed, the same layout |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px, clean seed: the week grid scrolls sideways inside its frame, Activities chips wrap under it, year closed |
-| `visualization-desktop-light.png` | 1280 px wide | Visualization, light |
-| `visualization-desktop-dark.png` | 1280 px wide | Visualization, dark |
-| `visualization-mobile-light.png` | 400 px wide | Visualization, light, full page |
-| `planner-year-desktop-light.png` | 1280 px wide | Planner, light, the year grid only: empty weeks white with a hairline, planned weeks in their template colour, week 44 (current) with the accent outline |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the legend, full page |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, needed and allocated bars, verdict "On track" |
+| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
+| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
+| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
+| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
+| `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
+| `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
+| `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
+| `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
+
+`goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
 
@@ -53,9 +50,14 @@ Desktop captures are 1280 px wide. The Planner captures and the phone captures a
 
 Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-The journal experiment on Home (FR-HOME-11 to 13, slice 6) is built and marked as an experiment. Not built yet: export, import and reset (FR-APP-5). Insights and Configuration are removed.
+The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Not built yet: export, import and reset (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### UX polish (2026-10-26, branch `feat/ux-polish`, on PR #10)
+
+- One commit per item: Home is Today only (no period selector; hour timeline with 9h, 12h, 18h, 22h; journal plain); Goals compares needed and allocated hours per category with a verdict (Missing, over, On track, No time target), red attention outlines on rows and map cells, and a legend; activities can also count toward other categories (`alsoCategoryIds`, storage version 8, no migration); the Visualization tab is Insights (one planned-hours chart by year, quarter, month or week, categories in hours or weeks); the copy sweep removes intro and helper text. PRD sections 9.11 and 23.1 and the design spec are updated.
+- Known issue, not fixed here: a saved state that differs from the seed keeps stale class bindings in Goals after a reload (the attention outline) until the list re-renders. Decision needed with the owner (see `.claude/agent.md`, open items).
 
 ### v3 build (2026-10-25 to 2026-10-26)
 

@@ -464,7 +464,9 @@ Slice 7 (FR-PLAN-22). The palette is the brush. Section title "Activities" (sect
 - Add: "+ Add activity" (`.chip-add`) reveals `.pal-add`: name, short code, category, colour, primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Opening from Goals (`add=1&category=`) opens it with that category preselected (FR-GOALS-20).
 - Empty list: "No activities yet. Add one to plan when it happens." (`.pal-empty`).
 
-### 4.18 Journal (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`)
+### 4.18 Journal (`app/components/home/JournalCard.vue`)
+
+Superseded in part by section 12: no key message, no readings, no experiment label.
 
 Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every period. It is marked as an experiment in the UI and may be removed after the test.
 
@@ -644,3 +646,12 @@ These are facts about the code as it is today. They are not requirements for new
 - Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.
 - Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `screens/planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`.
 - Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `main.css` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
+
+## 12. UX polish batch (feat/ux-polish)
+
+- **Attention token.** `--attention` is the outline of a category under or over its time target: `#a33a3a` on light and `#ee9a9a` on dark (6.9:1 and 9:1 on the surfaces). It is a 2px outline set inside the box (the grid frame clips outside outlines). The legend swatch uses the same token, plus a neutral 1px swatch for on track or no target.
+- **Comparison bars.** Needed and Allocated share one scale in the category detail; Needed is `--ink-4`, Allocated `--accent`. The verdict colours: Missing `--warn`, over `--accent`, On track `--ok`, No time target `--ink-3`. The verdict is text, so colour is never the only signal.
+- **Hour timeline.** 24 colour-only segments under the Today title, 10px tall. Axis labels 9h, 12h, 18h and 22h sit at their hour on a 24-hour scale, 12px, with a 4px tick above each. Labels are HTML, not SVG, so they keep the 12px minimum.
+- **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The categories list uses a 6px share bar under the name row. The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
+- **Copy rules.** No intro paragraphs, subtitles or instructional sentences under titles, section titles or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints can live in `title` tooltips or `aria-label`s, not in visible text.
+- **Removed.** `.page-lede`, `.section-lede`, `.detail-lede`, `.browse-note`, `.wk-pop-hint`, the Visualization classes (`.viz-*`, `.metric*`, `.goal-*`) and the journal experiment classes.

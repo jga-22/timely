@@ -345,6 +345,26 @@ New in v3:
 
 ---
 
+### 9.11 UX polish batch (branch `feat/ux-polish`, status in the last column)
+
+This batch changes the requirements below. Where a row names an earlier requirement, the earlier one is superseded for the part named.
+
+| ID | Requirement | Status and evidence |
+| --- | --- | --- |
+| FR-HOME-P1 | Home is Today only: the title and date, no Day, Week or Month selector, no week or month projection (supersedes FR-HOME-2 to 10 for the period parts). | Done: `HomeView.vue`, `utils/home.ts`; browser check at 1280 and 400 px. |
+| FR-HOME-P2 | The hour timeline sits under the title: 24 colour-only segments, axis labels 9h, 12h, 18h and 22h on a 24-hour scale. | Done: axis positions 37.5%, 50%, 75%, 91.7%. |
+| FR-HOME-P3 | Journal (FR-HOME-11 to 13) keeps one note per day with view, Edit, Done and autosave; the key message (FR-HOME-12), the readings placeholder and the experiment label are removed. | Done: `JournalCard.vue`; `utils/journal.ts` removed. |
+| FR-GOALS-P1 | Needed against allocated time per category, shown only at category detail: two bars on one scale in hours a week (Needed: the habits' time; Allocated: scheduled hours of the category's activities in the active template) and one verdict: Missing, over, On track or No time target yet. Tolerance: the larger of 30 minutes and 10% of the need (supersedes the goals-vs-planned display of FR-GOALS-16 and the Visualization section). | Done: `alignmentStatus`, `categoryAlignments`, `habitAlignment` in `utils/planner.ts`; over, On track and none checked in the browser on the seed. The under state was checked with a test state in the scratch browser. |
+| FR-GOALS-P2 | Habit rows show the linked activity's hours against the need, or "Not linked". | Done: `HabitList.vue`. |
+| FR-GOALS-P3 | A category under or over its time target has an `--attention` outline on its list row and its map cell, with the gap as text on the row (not colour only). A one-line legend sits above the list. | Done: `HaradaView.vue`, `main.css` (token in both themes). Partial: after a reload with a saved state that differs from the seed, the class may stay stale until re-render (see `.claude/agent.md`, open items). |
+| FR-PLAN-P1 | An activity has one primary category (`categoryId`, colour, listing, Insights totals) and optional `alsoCategoryIds` (hours also count in those categories' comparison). The Planner add and edit forms offer "Also counts toward". Storage version 8, no migration. | Done: `types/planner.ts`, `isPlannerState`, store actions, `AlsoCategories.vue`; checked in the browser (Reading counts toward Spiritual). |
+| FR-INS-1 | Insights (replaces 9.8 Visualization): one planned-hours bar chart stacked by category, granularity Year, Quarter, Month or Week, range one year or several (the shared year plus the projection horizon). Below it the categories with hours or weeks (168 h = 1 week) and their share of the total, which adds up to 100. Read-only. Removed: goals vs planned, key insights and horizon text. | Done: `insights/InsightsView.vue`, `utils/insights.ts`. |
+| FR-INS-2 | Each ISO week counts once and belongs to the year, quarter and month of its Thursday; each activity counts once, in its primary category. | Done: throwaway `tsx` checks in UTC, Europe/Paris and America/New_York (totals equal across granularities, 53-week 2026, shares sum to 100). |
+| FR-INS-3 | The tab is "Insights" (`?tab=insights`); an old `?tab=visualization` falls back to Home. | Done: `useNav.ts`, `pages/index.vue`. |
+| FR-UX-P1 | Copy rule: no intro paragraphs, subtitles or instructional sentences under titles, sections or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints may live in `title` tooltips. | Done: copy sweep on Home, Goals, Planner and Insights. |
+
+Derived values: 168 hours is one week. The Goals tolerance is the larger of 30 minutes and 10% of the need.
+
 ## 10. Non-functional requirements
 
 | Area | Requirement | Status |
@@ -812,6 +832,14 @@ v2 gaps and where they went: weekday view (Later); week status UI (Q5); grid key
 - Goals (UX, 2026-10-26): the category list is the primary view at every size; the Harada matrix is shown only from 1100 px. An open category closes with Close (Back to categories on phones) or Escape, which clears the selection and returns to the list.
 - Colours (UX, 2026-10-26): one planned-time palette. Empty hours and weeks use the page surface with a visible hairline in both themes; planned fills reach 3:1 on the surface (shaded when needed); the current week is an accent outline. Details in the design spec, section 5.
 - Visualization (UX, 2026-10-26): the year recap comes first (two headline numbers and the category bar), then Goals vs. planned, then Key insights (horizon, projection, week and month chart). Read-only.
+
+### 23.1a Decided in the UX polish batch
+
+- Home shows today only; the week and month views are not kept anywhere (owner, batch brief).
+- Allocated time in the comparison counts every activity of the category, primary or also-counted, not only the ones a habit links to. A habit's link affects only its own row.
+- "Weeks" in Insights means hours divided by 168.
+- Insights percentages count planned hours by primary category, so each activity is counted once.
+- The Planner title is "Planner" (the sentence heading was removed with the copy sweep).
 
 ### 23.2 Assumptions (made for this draft; confirm or correct)
 
