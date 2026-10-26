@@ -11,7 +11,7 @@ create table if not exists public.planner_state (
 
 alter table public.planner_state enable row level security;
 
--- Own rows only. Signed-in users (anonymous or email) have the authenticated role.
+-- Own rows only. Signed-in users have the authenticated role.
 create policy "planner_state_select_own" on public.planner_state
   for select to authenticated using (user_id = auth.uid());
 

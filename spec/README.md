@@ -56,7 +56,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Storage adapter (2026-10-27, branch `feat/storage-adapter`)
 
-- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD is not yet updated for it; the email login is a separate step.
+- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD has FR-APP-9 (storage modes) and FR-APP-10 (email sign-in in Supabase mode). Browser checks used a fake Supabase server; a real project run is still open.
 
 ### UX polish (2026-10-26, branch `feat/ux-polish`, on PR #10)
 
