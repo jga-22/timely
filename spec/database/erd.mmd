@@ -1,0 +1,107 @@
+%% Timely ERD (Mermaid). Source of truth for the same model: erd.drawio and data-model.md.
+%% Renders on GitHub. Composite keys are shown as PK on each part; user_id is on every table.
+erDiagram
+  auth_users {
+    uuid id PK
+  }
+  ambitions {
+    uuid user_id PK, FK
+    text statement
+    integer horizon_years
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  categories {
+    uuid user_id PK, FK
+    text id PK
+    text name
+    text color
+    integer sort_order UK
+    text goal_5y
+    text target_1y
+    boolean target_tbd
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  habits {
+    uuid user_id PK, FK
+    text id PK
+    text category_id FK
+    text activity_id FK
+    text name
+    integer frequency_count
+    habit_period frequency_period
+    integer minutes_per_occurrence
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  activities {
+    uuid user_id PK, FK
+    text id PK
+    text category_id FK
+    text name
+    text short_code UK
+    text color
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  activity_extra_categories {
+    uuid user_id PK, FK
+    text activity_id PK, FK
+    text category_id PK, FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  templates {
+    uuid user_id PK, FK
+    text id PK
+    text name
+    text description
+    smallint granularity_minutes
+    text color
+    integer sort_order
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  template_slots {
+    uuid user_id PK, FK
+    text template_id PK, FK
+    smallint day PK
+    smallint hour PK
+    text activity_id FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  applied_weeks {
+    uuid user_id PK, FK
+    integer iso_year PK
+    integer iso_week PK
+    date start_date UK
+    text template_id FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  settings {
+    uuid user_id PK, FK
+    text active_template_id FK
+    integer projection_years
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  journal_entries {
+    uuid user_id PK, FK
+    date entry_date PK
+    text body
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  categories ||--o{ activities : "1 : 0..* (category_id)"
+  categories ||--o{ activity_extra_categories : "1 : 0..* (category_id)"
+  categories ||--o{ habits : "1 : 0..* (category_id)"
+  activities ||--o{ activity_extra_categories : "1 : 0..* (activity_id)"
+  activities |o--o{ habits : "0..1 : 0..* (activity_id)"
+  activities ||--o{ template_slots : "1 : 0..* (activity_id)"
+  templates ||--o{ template_slots : "1 : 0..* (template_id)"
+  templates ||--o{ applied_weeks : "1 : 0..* (template_id)"
+  templates |o--o{ settings : "0..1 : 0..* (active_template_id)"
+  auth_users ||--o{ ambitions : "user_id on every table (not drawn per table)"
