@@ -278,7 +278,7 @@ Paint tools (`.paint-tools`, Planner year section): same chip style, with a `.do
 ### 4.6 Colour popover (`.color-pop`)
 
 - Absolute, top at `calc(100% + 8px)`, width 232px, grid of 8 columns with 6px gaps, padding 12px, `--bg` background, 1px `--rule` border, radius 6px, `--shadow`, z-index 20.
-- Swatches: 20x20 circles from `DESIGN_COLORS`. Active swatch uses `box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent)`.
+- Swatches: 20px circles from `DESIGN_COLORS` inside 24x24 buttons (2px transparent padding, so the hit area is 24px; slice 5). The popover is 248px wide, 8 columns, 4px gap. Active swatch uses `box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent)`.
 - Inline variant (`.color-pop-inline`) is static, no shadow, full width. Used in the new-category form.
 - Closes on outside click (the view and popover handlers stop propagation).
 
@@ -372,7 +372,7 @@ Page: "Where your time goes". Toolbar, then sections in this order: the year met
 
 Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PLAN-1). Placed between the Activities section (4.17) and the Year section. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
 
-- Section: title "Schedule". Lede: "Painting hours for **{activity}** in **{template}**." with an activity selected, or "Overview of **{template}**, read-only. Every activity in its colour; free hours stay empty." without one. A 30-minute template gets a notice instead of the grid.
+- Section: title "Schedule". Lede: "Painting hours for **{activity}** in **{template}**." in edit mode; "Hours of **{activity}** in **{template}** are highlighted; other activities are muted. Read-only." in view mode; "Overview of **{template}**, read-only. Every activity in its colour; free hours stay empty." with no activity selected. Painting needs edit mode (`edit=1`), so the grid is read-only everywhere else. A 30-minute template gets a notice instead of the grid.
 - Frame (`.ag-grid`, role `grid`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 320px, inside `.ag-scroll` (contained horizontal scroll, not used at 400 px).
 - Columns: 40px hour label column, then seven equal day columns. Header row (`.ag-head`, `--bg-2`, bottom rule): day name (`.ag-day-name`, 13px 600) and planned hours of that day (`.ag-day-hours`, 12px `--ink-3`, "20 h").
 - Rows: 24 hours, 24px tall. Each cell is one hour and is a 24px target. Hour labels (`.ag-hour`, 12px `--ink-3`, right aligned, `--bg-2`) name every row.
@@ -384,11 +384,12 @@ Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PL
   - range preview (`.is-range`): `--bg-4` fill and a 2px inset `--accent` ring.
   - pending (`.is-pending`): a 2px inset `--warn` ring until Reassign or Cancel.
   - focus (`:focus-visible`): 2px `--accent` outline, `outline-offset: -2px`, z-index 1.
-- Helper line (`.ag-helper`, 13px `--ink-3`) under the grid. Editable: "Start on an hour that is already {activity} to clear the range, or on any other hour to add it. Release to apply." Overview: "Select an activity to edit its hours." No activity yet: "Add an activity above to plan its hours."
+- Helper line (`.ag-helper`, 13px `--ink-3`) under the grid. Edit mode: "Start on an hour that is already {activity} to clear the range, or on any other hour to add it. Release to apply." View mode (activity selected, FR-PLAN-17): "Edit this activity to change when it happens." followed by an "Edit hours" button (`.ag-helper-action`, `.btn-sm .btn-outline`) that enters edit mode. Overview (no activity selected): "Select an activity to see its hours here." No activity yet: "Add an activity above to plan its hours."
 - Shortcut hint (`.ag-hint`, 12px `--ink-3`), one line below the helper: "Arrows move. Shift with arrows selects a range. Space or Enter paints. Escape cancels."
 - Reassign confirmation (`.ag-confirm`, above the grid): `--bg-2` panel, 1px `--rule` border, radius 6px. Text "Reassign 1 h from Sleep and 1 h from Deep Work to Training?" (the hours per activity, in reading order), then "Reassign" (`.btn-sm.btn-primary`) and "Cancel" (`.btn-sm`). Focus moves to the panel; Escape cancels; focus returns to the cell. Nothing changes until Reassign.
 - Painting (mouse, pen and touch use pointer events; `touch-action: none` on the editable grid so a drag does not scroll the page): press on a cell, drag across days and hours, release to apply. The first cell sets the mode: starting on an hour the activity already holds clears the range (only its own hours are removed); starting on any other hour adds it. Adding over hours held by other activities asks first (see above). A tap is a one-cell range.
 - Keyboard (FR-PLAN-19): one tab stop (roving `tabindex`); arrows move; Shift with arrows extends a range; Space or Enter paints the range or the focused hour; Escape cancels the confirmation or the range; Home and End move to the same hour on Monday and Sunday; PageUp and PageDown move to 12AM and 11PM of the same day. Cell names: "Tuesday 9AM, Deep Work" or "Tuesday 9AM, free".
+- View mode (activity selected, not editing): read-only; painting does nothing. A click, or Enter or Space, on a coloured hour selects that activity (URL `item`); the selected activity stays selected and read-only.
 - Overview (no activity selected, FR-PLAN-20): read-only; painting does nothing. A click, or Enter or Space, on a coloured hour selects its activity (URL `item`).
 - The grid writes through `setActivitySlots` (store) and the pure helpers in `app/utils/planner.ts` (`rectangleCells`, `paintModeFor`, `rangeConflicts`, `applyActivityCells`).
 - Removed in slice 2b: the drag-select grid, the day clear buttons, block hover delete, resize handles and confirm, the selection action bar, the activity menu, the week totals row and their CSS.
@@ -431,7 +432,7 @@ Placed between the template bar and the activity grid (section 4.12). Section ti
 - View mode (`dl.act-facts`, 120px label column, 13px): short code; category (link to Goals); colour (palette name, or "Custom (#hex)"); hours ("N h a week in {template}", then the quiet line "Also N h in {other}"); habits (names of the linked habits, or "None linked yet." and "Link habits in Goals"). No inputs.
 - Edit mode (`.act-edit`, `.form-stack`): name, short code (max 3, `.timely-input`), category (`.timely-select`) and colour (inline palette, the active swatch ringed). Changes apply at once (FR-UX-6). A clash or an empty name shows a `.field-error` line and is not applied; leaving the field restores the last accepted value and keeps the message until the next valid entry. Escape closes the delete confirmation first, otherwise leaves edit mode.
 - Delete (`.act-delete`, below a 1px rule): "Delete activity" (`.btn-sm.btn-danger`) opens `.act-confirm` (`--bg-2` panel, 1px `--rule` border, radius 6px). It states the impact in one sentence ("Clears 29 h in 3 templates and unlinks 1 habit." or "Nothing is scheduled or linked to it."), then "Delete" (`.btn-sm.btn-danger`) and "Cancel" (`.btn-sm`). Focus opens on Cancel; Escape cancels; nothing changes before Delete. No `confirm()`.
-- Swatches are 20px, as in the category popover (see section 6 on touch targets).
+- Swatches are 20px circles in 24px buttons, as in the category popover (see section 6 on touch targets).
 
 ## 5. Colour handling for categories and activities
 
@@ -462,7 +463,7 @@ Placed between the template bar and the activity grid (section 4.12). Section ti
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
 | Names for icon controls | Pass | Theme toggle, colour swatches, move and delete buttons all have `aria-label`; activity grid cells are named by day, hour and activity. |
 | Minimum text size 12px | Pass | Smallest text is 12px. The block delete glyph was 11px and is now 12px. |
-| Touch target | Partial | Colour swatches are 20px (target guidance: 24px). Resize confirm buttons are 24px. Block delete is 24px (hidden on touch). Day clear buttons are 20px. Category arrows 28px wide, 26px high. Topbar tabs are 44px on phones. |
+| Touch target | Partial | Colour swatches are 24px hit areas with 20px visible dots (slice 5). Resize confirm buttons are 24px. Block delete is 24px (hidden on touch). Day clear buttons are 20px. Category arrows 28px wide, 26px high. Topbar tabs are 44px on phones. |
 | Reduced motion | Not handled | No `prefers-reduced-motion` rule. Transitions are 0.1 to 0.18s and small. |
 | Live regions | Not used | Save and error messages are not announced. |
 | Language | Pass | `<html lang="en">`, set in `nuxt.config.ts`. |
@@ -545,7 +546,7 @@ These are facts about the code as it is today. They are not requirements for new
 4. Fixed in slice 3: the Goals habit fields are native `.timely-*` controls.
 5. There is no inline error style for forms. Failed actions have no visible feedback.
 6. Template delete uses the native `confirm()`.
-7. Colour swatches are 20px and day clear buttons are 20px, below the 24px touch-target guidance.
+7. Day clear buttons are 20px, below the 24px touch-target guidance. (Colour swatches were 20px until slice 5; now 24px hit areas.)
 8. No `prefers-reduced-motion` handling.
 9. Theme is light by default and does not follow the OS setting.
 10. `DESIGN_COLORS` comment is stale (says "editorial muted palette used by the design system"). The `fg` field is unused.

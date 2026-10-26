@@ -227,7 +227,7 @@ function submitAdd() {
               type="button"
               class="harada-cell"
               :class="{ 'is-active': shown?.id === cell.id }"
-              :aria-pressed="shown?.id === cell.id"
+              :aria-pressed="selected?.id === cell.id"
               :data-map-position="position"
               @click="openCategory(cell.id)"
               @keydown="onMapKeydown($event, position)"
@@ -265,7 +265,7 @@ function submitAdd() {
               type="button"
               class="cat-row"
               :data-category-id="category.id"
-              :aria-current="shown?.id === category.id ? 'true' : undefined"
+              :aria-current="selected?.id === category.id ? 'true' : undefined"
               @click="openCategory(category.id)"
             >
               <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />

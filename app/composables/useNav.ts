@@ -4,7 +4,8 @@
  * tab   home | goals | planner | visualization. Missing or unknown (including the removed configuration) falls back to home.
  * item  id of the selected category, activity or habit. A screen ignores an id it does not know.
  * edit  "1" puts the selected item in edit mode.
- * Switching tab drops item and edit. Use `go` for a history entry (Back works) and `link` for NuxtLink.
+ * add   "1" opens the Planner's new-activity form; category preselects its category (FR-GOALS-20). An unknown category falls back to the first.
+ * Switching tab drops item, edit, add and category. Use `go` for a history entry (Back works) and `link` for NuxtLink.
  * Within a screen, `setSelection` changes item and edit and keeps the tab.
  */
 export const TABS = [
@@ -19,6 +20,8 @@ export type TabId = (typeof TABS)[number]['id']
 export interface NavTarget {
   item?: string
   edit?: boolean
+  add?: boolean
+  category?: string
 }
 
 const TAB_IDS: string[] = TABS.map(tab => tab.id)
@@ -28,7 +31,9 @@ const toLocation = (tab: TabId, target: NavTarget = {}) => ({
   query: {
     tab,
     ...(target.item ? { item: target.item } : {}),
-    ...(target.edit ? { edit: '1' } : {})
+    ...(target.edit ? { edit: '1' } : {}),
+    ...(target.add ? { add: '1' } : {}),
+    ...(target.add && target.category ? { category: target.category } : {})
   }
 })
 
@@ -42,6 +47,8 @@ export const useNav = () => {
   })
   const item = computed(() => (typeof route.query.item === 'string' && route.query.item ? route.query.item : null))
   const edit = computed(() => route.query.edit === '1')
+  const add = computed(() => route.query.add === '1')
+  const category = computed(() => (typeof route.query.category === 'string' && route.query.category ? route.query.category : null))
 
   /** Route to a screen, optionally with an item selected and in edit mode (for Edit links, FR-UX-4) */
   const link = (to: TabId, target?: NavTarget) => toLocation(to, target)
@@ -55,5 +62,5 @@ export const useNav = () => {
     return replace ? router.replace(location) : router.push(location)
   }
 
-  return { tab, item, edit, link, go, setSelection }
+  return { tab, item, edit, add, category, link, go, setSelection }
 }

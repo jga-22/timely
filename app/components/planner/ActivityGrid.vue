@@ -18,8 +18,8 @@ import type { Activity } from '~/types/planner'
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-const props = defineProps<{ activity: Activity | null }>()
-const emit = defineEmits<{ select: [activityId: string] }>()
+const props = defineProps<{ activity: Activity | null; editing: boolean }>()
+const emit = defineEmits<{ select: [activityId: string]; edit: [] }>()
 
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
@@ -27,8 +27,8 @@ const { activeTemplate } = storeToRefs(planner)
 const activityMap = computed(() => new Map(planner.activities.map(activity => [activity.id, activity])))
 const templateName = computed(() => activeTemplate.value?.name ?? 'no template')
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
-// Painting needs a selected activity; with none the grid is the read-only overview of the template
-const editable = computed(() => !!props.activity && hourly.value)
+// Painting needs the selected activity in edit mode (FR-PLAN-17, PRD 11.6); otherwise the grid is read-only
+const editable = computed(() => props.editing && !!props.activity && hourly.value)
 const slots = computed(() => activeTemplate.value?.slots ?? [])
 
 const hoursPerDay = computed(() =>
@@ -53,7 +53,7 @@ const setCursor = (cell: GridCell) => {
 
 // Each activity starts from its first hour, so the keyboard lands on something meaningful
 watch(
-  () => [props.activity?.id ?? null, activeTemplate.value?.id ?? null] as const,
+  () => [props.activity?.id ?? null, props.editing, activeTemplate.value?.id ?? null] as const,
   ([activityId]) => {
     range.value = null
     dragging.value = false
@@ -69,7 +69,7 @@ watch(
 interface CellView extends GridCell {
   index: number
   holder: Activity | undefined
-  /** own: the selected activity (or any holder in the overview); other: another activity while painting; free */
+  /** own: the selected activity (or any holder in the overview); other: another activity while one is selected; free */
   tone: 'own' | 'other' | 'free'
   label: string
 }
@@ -80,7 +80,7 @@ const rows = computed(() =>
       const index = day * 24 + hour
       const holderId = slots.value[index]
       const holder = holderId ? activityMap.value.get(holderId) : undefined
-      const tone = !holder ? 'free' : editable.value && holder.id !== props.activity?.id ? 'other' : 'own'
+      const tone = !holder ? 'free' : props.activity && holder.id !== props.activity.id ? 'other' : 'own'
 
       return {
         day,
@@ -112,7 +112,8 @@ const confirmText = computed(() => {
 
 const helperText = computed(() => {
   if (!planner.activities.length) return 'Add an activity above to plan its hours.'
-  if (!props.activity) return 'Select an activity to edit its hours.'
+  if (!props.activity) return 'Select an activity to see its hours here.'
+  if (!editable.value) return 'Edit this activity to change when it happens.'
 
   return `Start on an hour that is already ${props.activity.name} to clear the range, or on any other hour to add it. Release to apply.`
 })
@@ -179,7 +180,7 @@ const onPointerDown = (event: PointerEvent) => {
   setCursor(cell)
   focusCell(cell)
 
-  // Overview: a click selects the activity (see onCellClick)
+  // Not editing: a click selects the activity in that hour (see onCellClick)
   if (!editable.value) return
 
   pending.value = null
@@ -286,7 +287,8 @@ const onKeydown = (event: KeyboardEvent) => {
     <h2 id="schedule-title" class="section-title">Schedule</h2>
     <p class="section-lede">
       <template v-if="!hourly">This template uses 30-minute slots, which this grid does not edit. Choose an hourly template above.</template>
-      <template v-else-if="activity">Painting hours for <strong>{{ activity.name }}</strong> in <strong>{{ templateName }}</strong>.</template>
+      <template v-else-if="editable">Painting hours for <strong>{{ activity!.name }}</strong> in <strong>{{ templateName }}</strong>.</template>
+      <template v-else-if="activity">Hours of <strong>{{ activity.name }}</strong> in <strong>{{ templateName }}</strong> are highlighted; other activities are muted. Read-only.</template>
       <template v-else>Overview of <strong>{{ templateName }}</strong>, read-only. Every activity in its colour; free hours stay empty.</template>
     </p>
 
@@ -357,7 +359,16 @@ const onKeydown = (event: KeyboardEvent) => {
         </div>
       </div>
 
-      <p class="ag-helper">{{ helperText }}</p>
+      <p class="ag-helper">
+        {{ helperText }}
+        <button
+          v-if="activity && !editable"
+          type="button"
+          class="btn btn-sm btn-outline ag-helper-action"
+          :aria-label="`Edit hours of ${activity.name}`"
+          @click="emit('edit')"
+        >Edit hours</button>
+      </p>
       <p class="ag-hint">{{ hintText }}</p>
     </template>
   </section>

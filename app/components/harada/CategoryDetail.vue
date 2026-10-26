@@ -236,6 +236,9 @@ function confirmRemove() {
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
+        <p class="detail-action">
+          <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
+        </p>
       </section>
     </template>
 
@@ -316,6 +319,9 @@ function confirmRemove() {
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
+        <p class="detail-action">
+          <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
+        </p>
       </section>
 
       <section class="detail-block detail-manage">

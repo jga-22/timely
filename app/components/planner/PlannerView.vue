@@ -13,7 +13,7 @@ import type { Activity } from '~/types/planner'
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
 const { year, weeks, currentWeekIndex } = usePlannerYear()
-const { item, edit, link, setSelection } = useNav()
+const { item, edit, add, category, link, setSelection } = useNav()
 const { categoryMap } = usePlannerMaps()
 
 // ── Template switcher ──
@@ -264,10 +264,14 @@ watch(() => addDraft.categoryId, (categoryId) => {
   addDraft.color = categoryMap.value.get(categoryId)?.color ?? DESIGN_COLORS[0]!.bg
 })
 
-function openAdd() {
+// categoryId preselects a category (FR-GOALS-20); an unknown or missing id falls back to the first category
+function openAdd(categoryId?: string | null) {
+  const presetId = orderedCategories.value.find(cat => cat.id === categoryId)?.id ?? orderedCategories.value[0]?.id ?? ''
+
   addDraft.name = ''
   addDraft.shortCode = ''
-  addDraft.categoryId = orderedCategories.value[0]?.id ?? ''
+  addDraft.categoryId = presetId
+  addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
   addErrors.value = {}
   addOpen.value = true
   nextTick(() => addNameInput.value?.focus())
@@ -275,8 +279,14 @@ function openAdd() {
 
 function closeAdd() {
   addOpen.value = false
+  // A form opened from Goals carries ?add=1; closing drops it so a reload does not reopen the form
+  if (add.value) setSelection({ item: item.value ?? undefined, edit: edit.value }, true)
   nextTick(() => addTrigger.value?.focus())
 }
+
+watch(add, (open) => {
+  if (open) openAdd(category.value)
+}, { immediate: true })
 
 function submitAdd() {
   const errors = validateActivityFields(planner.$state, {
@@ -300,7 +310,7 @@ function submitAdd() {
     <header class="page-head">
       <h1 class="page-title">Design your ideal week, hour by hour.</h1>
       <p class="page-lede">
-        Pick an activity, then paint the hours it takes across the week.
+        Pick an activity to see its hours in the grid. Edit it to paint them across the week.
         With no activity selected, the grid shows the whole template.
       </p>
       <p class="page-meta">{{ totalPlanned }} of 168 hours planned this week</p>
@@ -484,7 +494,7 @@ function submitAdd() {
               <button class="btn" @click="closeAdd">Cancel</button>
             </div>
           </div>
-          <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd">+ Add activity</button>
+          <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd()">+ Add activity</button>
         </div>
 
         <div class="act-detail" @keydown="onDetailKeydown">
@@ -624,7 +634,7 @@ function submitAdd() {
     <!-- 24x7 activity grid: paints the selected activity, or shows the template overview -->
     <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
     <ClientOnly>
-      <PlannerActivityGrid :activity="selectedActivity" @select="selectActivity" />
+      <PlannerActivityGrid :activity="selectedActivity" :editing="editing" @select="selectActivity" @edit="startEdit" />
     </ClientOnly>
 
     <!-- Year painter -->
