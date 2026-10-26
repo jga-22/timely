@@ -2,11 +2,11 @@
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { isoWeekOf, mondayOf } from '~/utils/dates'
-import { countLabel, formatHour } from '~/utils/planner'
+import { formatHour } from '~/utils/planner'
 import {
   HOME_PERIODS,
-  belowTargetCategories,
   dayBlocks,
+  dayHours,
   formatDayLabel,
   formatMonthLabel,
   formatWeekRange,
@@ -42,7 +42,6 @@ onUnmounted(() => window.clearInterval(clock))
 
 // Date-dependent output is null until mounted, so the first server and client passes agree (FR-DATE-6)
 const NOUN: Record<HomePeriod, string> = { day: 'today', week: 'this week', month: 'this month' }
-const SPAN: Record<HomePeriod, string> = { day: 'the day', week: 'the week', month: 'the month' }
 const LIST_TITLE: Record<HomePeriod, string> = { day: 'Today', week: 'This week', month: 'This month' }
 
 const weekNumber = computed(() => (today.value ? isoWeekOf(today.value).week : null))
@@ -89,44 +88,57 @@ const dayRows = computed(() => {
 
 const templateNameToday = computed(() => templates.value[0]?.template.name ?? planner.activeTemplate?.name ?? '')
 
-// Time per category: one stacked bar and a legend, Unplanned as the last segment (FR-HOME-6)
-const soft = (color: string) => `color-mix(in srgb, ${color} 80%, var(--bg))`
+const formatHours = (hours: number) => hours.toLocaleString('en-US')
 
-const barSegments = computed(() => {
-  if (!breakdown.value) return []
+// Timeline below the list: the 24 hours of the day in order, or one proportional segment per activity (Week and Month).
+// Each segment carries its hours through flex-grow; unplanned time is an empty segment (no colour)
+interface TimelineSegment {
+  key: string
+  hours: number
+  color: string
+  title: string
+}
 
-  const segments = breakdown.value.categories.map(row => ({
-    key: row.category.id,
-    label: row.category.name,
-    color: soft(row.category.color ?? '#d6d3d1'),
-    categoryId: row.category.id,
+const timeline = computed<TimelineSegment[]>(() => {
+  if (!today.value || !breakdown.value) return []
+
+  if (period.value === 'day') {
+    return dayHours(planner.$state, today.value).map((activityId, hour) => {
+      const name = activityId ? planner.activities.find(item => item.id === activityId)?.name ?? '' : ''
+
+      return {
+        key: `h${hour}`,
+        hours: 1,
+        color: activityId ? getActivityColor(activityId) : '',
+        title: `${formatHour(hour)}, ${name || 'unplanned'}`
+      }
+    })
+  }
+
+  const segments: TimelineSegment[] = breakdown.value.activities.map(row => ({
+    key: row.activity.id,
     hours: row.hours,
-    share: row.share
+    color: getActivityColor(row.activity.id),
+    title: `${row.activity.name}, ${formatHours(row.hours)} h, ${row.share}%`
   }))
 
   if (breakdown.value.unplannedHours > 0) {
+    const unplannedShare = breakdown.value.activities.length
+      ? 100 - breakdown.value.activities.reduce((sum, row) => sum + row.share, 0)
+      : 100
+
     segments.push({
       key: 'unplanned',
-      label: 'Unplanned',
-      color: '',
-      categoryId: '',
       hours: breakdown.value.unplannedHours,
-      share: breakdown.value.unplannedShare
+      color: '',
+      title: `Unplanned, ${formatHours(breakdown.value.unplannedHours)} h, ${unplannedShare}%`
     })
   }
 
   return segments
 })
 
-const barLabel = computed(() =>
-  barSegments.value.length
-    ? `Time per category ${NOUN[period.value]}: ${barSegments.value.map(segment => `${segment.label} ${segment.hours} hours, ${segment.share}%`).join('; ')}.`
-    : ''
-)
-
-const belowTarget = computed(() => belowTargetCategories(planner.$state))
-
-const formatHours = (hours: number) => hours.toLocaleString('en-US')
+const timelineLabel = computed(() => `Hours ${NOUN[period.value]} by activity`)
 
 const onPeriodKey = (event: KeyboardEvent) => {
   const index = HOME_PERIODS.findIndex(option => option.id === period.value)
@@ -174,62 +186,7 @@ const onPeriodKey = (event: KeyboardEvent) => {
     </div>
 
     <template v-if="breakdown">
-      <!-- Totals (FR-HOME-7) -->
-      <section class="section">
-        <div class="metrics">
-          <div class="metric">
-            <div class="metric-value">{{ formatHours(breakdown.plannedHours) }}<span class="unit">h</span></div>
-            <div class="metric-label">Planned {{ NOUN[period] }}</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value">{{ formatHours(breakdown.unplannedHours) }}<span class="unit">h</span></div>
-            <div class="metric-label">Unplanned {{ NOUN[period] }}</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value">{{ formatHours(breakdown.periodHours) }}<span class="unit">h</span></div>
-            <div class="metric-label">Hours in {{ SPAN[period] }}</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Time per category (FR-HOME-6) -->
-      <section class="section">
-        <div class="section-head">
-          <h2 class="section-title">Time per category</h2>
-          <p class="section-lede">Planned hours {{ NOUN[period] }} by category. Unplanned time is the last segment.</p>
-        </div>
-
-        <div class="home-bar" role="img" :aria-label="barLabel">
-          <span
-            v-for="segment in barSegments"
-            :key="segment.key"
-            class="home-bar-seg"
-            :style="{
-              width: `${(segment.hours / breakdown.periodHours) * 100}%`,
-              background: segment.color || 'var(--bg-3)'
-            }"
-          />
-        </div>
-
-        <ul class="home-legend">
-          <li v-for="segment in barSegments" :key="segment.key" class="total-row">
-            <span
-              class="dot"
-              :style="{ background: segment.color || 'var(--bg-3)' }"
-            />
-            <NuxtLink
-              v-if="segment.categoryId"
-              class="name"
-              :to="link('goals', { item: segment.categoryId })"
-            >{{ segment.label }}</NuxtLink>
-            <span v-else class="name">{{ segment.label }}</span>
-            <span class="hrs">{{ formatHours(segment.hours) }} h</span>
-            <span class="pct">{{ segment.share }}%</span>
-          </li>
-        </ul>
-      </section>
-
-      <!-- Activities: blocks for today, ranked list for the week and month (FR-HOME-4, 5, 8, 10) -->
+      <!-- Activities of the period: blocks for today, ranked list for the week and month (FR-HOME-4, 5, 8, 10) -->
       <section class="section">
         <div class="section-head">
           <h2 class="section-title">{{ LIST_TITLE[period] }}</h2>
@@ -295,16 +252,21 @@ const onPeriodKey = (event: KeyboardEvent) => {
             Nothing planned {{ NOUN[period] }}. <NuxtLink :to="link('planner')">Plan your time in Planner</NuxtLink>.
           </p>
         </template>
-
-        <!-- Goals signal (FR-HOME-9): one line, hidden when no category is below its habit target -->
-        <p v-if="belowTarget.length" class="home-signal">
-          {{ countLabel(belowTarget.length, 'category', 'categories') }}
-          {{ belowTarget.length === 1 ? 'is' : 'are' }} below their habit target:
-          <template v-for="(category, index) in belowTarget" :key="category.id">
-            <NuxtLink :to="link('goals', { item: category.id })">{{ category.name }}</NuxtLink>{{ index < belowTarget.length - 1 ? ', ' : '.' }}
-          </template>
-        </p>
       </section>
+
+      <!-- Timeline directly below the list: coloured segments only, the text is in each segment's title and aria-label -->
+      <div v-if="timeline.length" class="home-timeline" role="group" :aria-label="timelineLabel">
+        <span
+          v-for="segment in timeline"
+          :key="segment.key"
+          class="home-timeline-seg"
+          :class="{ 'is-unplanned': !segment.color }"
+          :style="{ flexGrow: segment.hours, background: segment.color || undefined }"
+          role="img"
+          :title="segment.title"
+          :aria-label="segment.title"
+        />
+      </div>
     </template>
 
     <!-- Journal experiment (FR-HOME-11 to 13): last on the page, shows today whatever the period -->
