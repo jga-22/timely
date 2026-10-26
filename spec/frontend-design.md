@@ -68,6 +68,8 @@ Contrast ratios were computed with the WCAG 2.x formula from the hex values in `
 | `--ink-4` | `#9aa1b1` | `#5d6780` | Decoration only, never text: untargeted goal fill, scrollbar hover | 2.59 / 3.20 on bg (non-text, below 3:1) |
 | `--rule` | `#e2e6ee` | `#28324a` | Hairline frames and dividers: week and Harada frames, popovers and menus, the remove-and-move panel. Not for control boundaries | 1.25 / 1.42 on bg. Decorative by design, so below 3:1 |
 | `--control-border` | `#737e95` | `#78859e` | Boundary of interactive controls only: inputs, selects, textareas, outline buttons, Vuetify outlined fields, colour swatch and dot rings, the erase swatch | Light: 4.08 on bg, 3.87 on bg-2, 3.66 on bg-3, 3.26 on bg-4. Dark: 4.87, 4.59, 4.13, 3.44. At least 3:1 on every surface a control sits on |
+| `--cell-empty` | `#ffffff` | `#0f1624` | Empty hour, empty week, empty bar: the page surface. Planned fills and the empty outline are in section 5 | Equals `--bg` |
+| `--cell-line` | `#7d879b` | `#67738f` | Outline of empty cells and unplanned time | 3.61 / 3.81 on `--cell-empty` |
 | `--rule-2` | `#eef1f6` | `#1d2639` | Hairlines: topbar bottom, section tops, row dividers, hour grid lines | Decorative |
 | `--accent` | `#1b4b8f` | `#86aee8` | Primary button fill, active tab underline, focus outline, cell numbers, links ("+ New template"), current-week ring, goal fill, selection border | 8.57 / 7.96 on bg |
 | `--accent-deep` | `#12335f` | `#b5cdf1` | Primary button hover, centre cell label on dark | 12.62 / 11.17 for on-accent text on hover |
@@ -357,9 +359,9 @@ Page: "Where your time goes". Toolbar, then sections in this order: the year met
 - "Week by week" disclosure (open): toolbar (lede left; segmented control right), focus strip of chips (All plus each category), SVG chart in `.chart-scroll`, and a legend (`.chart-legend`).
 - Segmented control (`.segmented`): track `--bg-3`, padding 2px, radius 6px. Buttons 28px high, 13px `--ink-3`; selected has `--bg` background, `--ink`, 600.
 - Chart: viewBox matches width. Weekly: 52 bars, 12px wide with 4px gaps, left axis 44px, plot height 180px, bottom 28px for labels. Monthly: 12 bars, 28px wide with 10px gaps, value = average hours per week within the month. Y ticks at 0, 42, 84, 126, 168 h (168 = hours in a week). Tick labels 12px `--ink-3`, tabular. Grid lines `--rule-2`.
-- Segments: category colour softened with `color-mix(in srgb, <colour> 80%, var(--bg))`, stacked by hours (largest at bottom). Corner radius 1px (weekly) or 2px (monthly).
+- Segments: the planned fill of the category colour (section 5.2, full strength), stacked by hours (largest at bottom). Corner radius 1px (weekly) or 2px (monthly).
 - Focus: a chip selects one category; the other segments drop to opacity 0.12.
-- Empty week: full-height `--bg-3` bar (`.chart-empty`).
+- Empty week: full-height bar in `--cell-empty` with a `--cell-line` outline (`.chart-empty`).
 - Current-week marker: a 3px accent bar 5px above the current bar (monthly: current month).
 - Legend: dot, name, `N h/wk` (average per week of the selected year).
 - Unassigned weeks have no applied template. They use the active template and draw at 45% opacity; a note under the legend names that template (FR-VIZ-3).
@@ -373,7 +375,7 @@ Restored on 2026-10-26 to the original interaction (FR-PLAN-23); it replaces the
 - Frame (`.wk`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 540px, inside `.wk-scroll`. The frame scrolls sideways on phones; the page never does.
 - Columns: a 52px hour gutter (`.wk-hours`, `--bg-2`, 12px labels every three hours), then seven day columns (`.wk-day`). The header (`.wk-head`, `--bg-2`) has the day name (13px 600), the planned hours of the day (12px `--ink-3`) and a 24px clear-day button (`.wk-clear-day`) labelled "Clear Monday" and so on.
 - Slots (`.wk-slot`): 28px per hour, a hairline above each three-hour line, `--bg-3` on hover. Each slot is one focus stop (`role="button"`, roving `tabindex`), named "Monday 9AM, Deep Work" or "Monday 9AM, free".
-- Blocks (`.wk-block`): a run of one activity's hours, absolute over the slots, filled with the activity colour. The text colour is the swatch's `fg` from `DESIGN_COLORS`. A 1px inset hairline keeps dark colours visible in dark mode. The name is 13px 600 and the time range 12px. The 24px delete (`.wk-block-del`, shown on hover or keyboard focus, hidden on touch) clears the block.
+- Blocks (`.wk-block`): a run of one activity's hours, absolute over the slots, filled with the activity colour. The text colour is `inkOn(fill)` (section 5.2). A 1px inset hairline keeps dark colours visible in dark mode. The name is 13px 600 and the time range 12px. The 24px delete (`.wk-block-del`, shown on hover or keyboard focus, hidden on touch) clears the block.
 - Selection (`.wk-sel`): `--accent` at 16% with a 1px `--accent` inset frame and the duration in a small label. It ignores the pointer except in edit mode.
 - Interaction (the original model, restored):
   - Drag down one day column from one hour to another: the run is selected. Release opens the action bar. A drag does not leave its column.
@@ -413,7 +415,7 @@ Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted 
 ### 4.14 Charts and legends (summary)
 
 - Charts are hand-written inline SVG. No charting library is used. Chart.js is not a dependency (the PRD named it).
-- Colour: category colour, softened (see section 5). Labels: 12px `--ink-3`.
+- Colour: the planned fill of the category colour (section 5). Labels: 12px `--ink-3`.
 - Every chart has a text legend or a table beside it. Colour is never the only carrier of meaning.
 
 ### 4.15 Floating menus
@@ -474,19 +476,44 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - Date output renders after mount (FR-DATE-6). Changing the day while editing saves the note under the date it was started on and leaves edit mode.
 - Phones: the same stack in one column; the card needs no layout change at 400 px.
 
-## 5. Colour handling for categories and activities
+## 5. Colour handling: one palette for planned time
 
-- **Palette.** `DESIGN_COLORS` in `app/utils/planner.ts` holds 16 swatches: terracotta, ochre, sage, teal, plum, slate, rose, moss, navy, cream, brick, pine, dusk, stone, coral, ink. These are data, offered for categories, activities and templates. The first one (`#d97757`, terracotta) is the default for a new category. This is a category colour. It is **not** the UI accent, which is blue. The comment above the array still says "Editorial muted palette used by the design system"; that comment predates the blue palette and is stale. The `fg` field in each entry is not used by the UI.
-- **Seed colours.** Seeded categories and activities use their own muted hex values (for example `#7a9471` for Physical, `#3c4b63` for Deep Work). They are not guaranteed to be in `DESIGN_COLORS`.
-- **Softening rule.** Colour is never used at full strength for large areas:
-  - Activity grid cells: the selected activity (or any holder in the overview) 20% colour over the page (30% on hover); other activities 10%. Text is `--ink`, or `--ink-2` for other activities.
-  - Year cell fill: 16%.
-  - New-category preview: 14%.
-  - Chart segments: 80% colour over the page. The 80% rule applies to every segment, so the legend and the focus strip are the way to read them.
-- **Contrast of block text** (computed over the 16-swatch palette, worst case): `--ink` on the 20% tint is 10.77:1 light and 9.81:1 dark; on the 30% hover tint, 8.68 and 7.51. `--ink-2` (block meta) on the 20% tint is 6.40 light and 7.21 dark; on the 30% tint, 5.16 and 5.52. All pass 4.5:1.
-- **Chart segments** at 80% colour are 1.57:1 light and 1.20:1 dark against the page. That is below the 3:1 for non-text graphics (see gaps).
-- **Dots** are solid colour with a 1px inset ring of `--control-border`, so pale swatches stay visible on white and dark swatches stay visible on the dark chips. Measured ring contrast: 3.26:1 minimum light and 3.44:1 minimum dark, on every surface a dot sits on.
-- Hard-coded fallbacks (`#ccc`, `#888`, `#999`, `#5d6b7a`) are used only when a colour is missing. Do not add new hard-coded colours.
+One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Visualization bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.
+
+### 5.1 Semantic tokens (planned time)
+
+Defined in `main.css` (`--cell-empty`, `--cell-line`) and computed in `app/utils/palette.ts` (planned fills). The surface is the page, so the empty surface is `--bg` in both themes.
+
+| Semantic state | Token or rule | Light | Dark | Use | Contrast (light / dark) |
+| --- | --- | --- | --- | --- | --- |
+| Empty (unplanned hour, empty week, empty bar) | `--cell-empty` | `#ffffff` | `#0f1624` | Home timeline, year cells, week grid background, Visualization empty bars | Equals the page surface |
+| Empty outline | `--cell-line` | `#7d879b` | `#67738f` | 1px inset hairline around every empty cell, unplanned segment and empty bar | 3.61 / 3.81 on `--cell-empty` (non-text, 3:1 met) |
+| Planned | `fillFor(colour, dark)` (served as `--c`) | the colour as given when it reaches 3:1; otherwise shaded toward black | as given, or lightened toward white | Planned hour, week cell, Home segment, Visualization segment, week block, template paint dot | At least 3.02 light (cream shaded to `#a19375`) and 3.00 dark (dusk); see 5.2 |
+| Text on a planned fill (`--c-ink`) | `inkOn(fill)`: white or `#0f1624`, whichever contrasts more | `#ffffff` or `#0f1624` | same rule | Year cell numbers, week block names and times | At least 4.33 (teal, both themes); all others 5.4 or more |
+| Current | `--accent` | `#1b4b8f` | `#86aee8` | Year cell: 2px outline outside the cell, bold number. Visualization: 3px marker above the current bar. Home: "Now" tag | 8.57 / 7.96 on the surface |
+| Selected | `--accent` range (week grid) and `--bg-3` hover (year cells) | range: `--accent` at 16% with a 1px accent frame; hover: `#eef3fa` | range: `--accent` at 16%; hover: `#1a2539` | Week grid drag range and action bar; year cell hover | Accent 8.57 / 7.96 on the surface |
+
+The year grid has no selected week (it has hover, and the readout under it). Choosing a week is a paint action, so "selected" maps to the hover state there.
+
+### 5.2 The planned fill rule
+
+`fillFor(colour, dark)` in `app/utils/palette.ts`:
+
+- A category, activity or template colour is shown as given when it reaches **3:1** against the theme surface (WCAG 1.4.11, non-text).
+- Otherwise it is shaded toward black (light) or lightened toward white (dark), in 2% steps, until it reaches 3:1. The hue stays; only the lightness moves.
+- The same function serves every planned fill, so a template paint dot and its year cells match exactly.
+
+Measured over the 16 palette swatches (`DESIGN_COLORS`), the fills that change are: light, ochre (`#c19a3e` to `#b28e39`), cream (`#d4c19a` to `#a19375`), coral (`#e09070` to `#ca8265`), terracotta (kept, 3.12), stone (kept, 3.07); dark, navy (`#3c4b63` to `#576479`) and pine (`#2d5a3f` to `#466e56`). Every fill then has at least 3:1 on its surface. Others are unchanged.
+
+Text on a planned fill: the lowest contrast is teal at 4.33:1 (both themes), just below the 4.5:1 for normal text. Block names are 13px 600 on that fill; this is recorded as a known limit (section 10).
+
+### 5.3 Other colour rules
+
+- **Swatches** (`DESIGN_COLORS`, 16 entries, `{ id, bg }`). They are data, offered for categories, activities and templates. The first (`#d97757`, terracotta) is the default for a new category. This is a category colour. It is **not** the UI accent, which is blue. The comment above the array still says "Editorial muted palette used by the design system"; that comment predates the blue palette and is stale.
+- **Seed colours.** Seeded categories and activities use their own muted hex values (for example `#7a9471` for Physical, `#3c4b63` for Deep Work). They are not guaranteed to be in `DESIGN_COLORS`. The rule in 5.2 applies to them too.
+- **Dots** that identify a category or activity in a list are solid colour with a 1px inset ring of `--control-border`, so pale swatches stay visible on white and dark swatches stay visible on the dark chips. Measured ring contrast: 3.26:1 minimum light and 3.44:1 minimum dark. Template paint dots use the planned fill from 5.2, not the raw swatch.
+- **No softening.** Chart segments, year cells, Home segments and week blocks are full fill (no `color-mix` tint).
+- Hard-coded fallbacks (`#ccc`, `#888`, `#999`, `#5d6b7a`, `#d6d3d1`) are used only when a colour is missing. Do not add new hard-coded colours.
 
 ---
 
@@ -495,7 +522,7 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 | Check | Status | Notes |
 | --- | --- | --- |
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
-| Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
+| Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Pass for planned fills and empty-cell outlines (section 5). | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
 | Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Visualization, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
@@ -581,7 +608,7 @@ Reference screenshots for this spec live in `spec/screens/`. Replace them when t
 These are facts about the code as it is today. They are not requirements for new work. Fix them when touching the affected area.
 
 1. The year grid cannot be operated from the keyboard, and it cannot be painted by touch. (The week grid is keyboard operable: one focus stop, arrows, Shift for a run, Enter, Escape.)
-2. Chart segments (80% colour, 1.2 to 1.6:1 against the page) are below 3:1 for non-text UI. The legend and the focus strip identify them. Not fixed: a gap or outline between segments would not change a segment's contrast against the page.
+2. Resolved: planned fills (chart segments included) reach 3:1 on their surface through `fillFor` (section 5.2). The legend and the focus strip still identify them.
 3. `role="tab"` buttons have no `aria-controls` and there is no `tabpanel`.
 4. There is no inline error style for forms. Failed actions have no visible feedback.
 5. Home's period selector is session state (Nuxt `useState`): it survives a tab switch, resets on reload and is not in the URL.
@@ -589,7 +616,7 @@ These are facts about the code as it is today. They are not requirements for new
 7. Habit rows have no Edit button in view mode; habits are edited in the category's edit mode (FR-GOALS-18, Partial).
 8. No `prefers-reduced-motion` handling.
 9. Theme is light by default and does not follow the OS setting.
-10. `DESIGN_COLORS` has an `fg` field that nothing reads. The palette itself is in use.
+10. Resolved: `DESIGN_COLORS` no longer has an `fg` field; text on a planned fill is `inkOn` (section 5.2). Known limit: teal (`#4a8683`) reaches only 4.33:1 with its text, below 4.5:1 for 13px text, in both themes.
 11. The tokens in `vuetify.config.ts` are duplicated by hand from `main.css`. Only the `VApp` root uses them; no Vuetify component is rendered.
 12. The 12px chart text is hard-coded rather than a token.
 13. Disabled buttons keep the 0.45 opacity rule, so "Add category" and "Add activity" are 2.44 to 3.05:1. Disabled controls are exempt; the dark one is faint but readable.

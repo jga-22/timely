@@ -14,6 +14,9 @@
   --rule:        #e2e6ee;
   --rule-2:      #eef1f6;
   --control-border: #737e95;   /* boundary of inputs, outline buttons and swatch rings: 3:1 or more on every surface */
+  /* Semantic planned-time tokens (spec/frontend-design.md, section 5): empty surface and its outline */
+  --cell-empty:  #ffffff;      /* unplanned hour, week with no template: the surface */
+  --cell-line:   #7d879b;      /* outline of empty cells and unplanned time: 3.6:1 on --cell-empty */
   --accent:      #1b4b8f;
   --accent-deep: #12335f;
   --accent-soft: #dce7f5;
@@ -56,6 +59,8 @@ html[data-theme="dark"] {
   --rule:        #28324a;
   --rule-2:      #1d2639;
   --control-border: #78859e;
+  --cell-empty:  #0f1624;
+  --cell-line:   #67738f;      /* 3.8:1 on --cell-empty */
   --accent:      #86aee8;
   --accent-deep: #b5cdf1;
   --accent-soft: #223156;
@@ -528,8 +533,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .paint-tools .field-label { margin-right: var(--space-2); font-weight: 400; color: var(--ink-3); }
 .dot-erase {
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--control-border);
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
 }
 
 .year-grid-scroll {
@@ -537,7 +542,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-/* Quiet cells: hairline outline when open, a light tint of the template colour when painted */
+/* Year cells use the same tokens as the week grid and Home: empty = --cell-empty with a --cell-line hairline;
+   planned = the template fill (--c, from utils/palette.ts) with its text colour (--c-ink) */
 .week-cell {
   position: relative;
   display: flex;
@@ -545,8 +551,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
   justify-content: center;
   height: 32px;
   border-radius: 3px;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--rule);
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
   font-size: var(--fs-xs);
   line-height: 1;
   color: var(--ink-3);
@@ -555,14 +561,15 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .week-cell:hover { background: var(--bg-3); color: var(--ink); }
 .week-cell.is-filled {
-  background: color-mix(in srgb, var(--c) 16%, var(--bg));
+  background: var(--c);
   box-shadow: none;
-  color: var(--ink-2);
+  color: var(--c-ink);
 }
-/* Current week: accent number and a hairline ring, no heavy frame */
+/* Current week: a 2px accent outline drawn outside the cell, on empty and planned cells alike */
 .week-cell.is-current {
-  box-shadow: inset 0 0 0 1px var(--accent);
-  color: var(--accent);
+  z-index: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
   font-weight: 600;
 }
 .week-readout {
@@ -1164,7 +1171,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .chart-svg { display: block; overflow: visible; }
 .chart-grid { stroke: var(--rule-2); stroke-width: 1; }
 .chart-text { font-size: 12px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
-.chart-empty { fill: var(--bg-3); }
+.chart-empty { fill: var(--cell-empty); stroke: var(--cell-line); stroke-width: 1; }
 .chart-marker { fill: var(--accent); }
 
 .chart-legend {
@@ -1378,8 +1385,8 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   min-width: 0;
 }
 .home-timeline-seg.is-unplanned {
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--control-border);
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
 }
 .home-rows {
   margin: 0;

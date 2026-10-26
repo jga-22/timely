@@ -163,7 +163,7 @@ const goalNotes = (row: CategoryAlignment) => {
 }
 
 // Softened category colour keeps the chart calm
-const soft = (color: string) => `color-mix(in srgb, ${color} 80%, var(--bg))`
+const { fill } = usePlannerFill()
 
 // ── SVG constants ──
 const CHART_H = 180
@@ -394,7 +394,7 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
                         :key="seg.catId"
                         :x="seg.x" :y="seg.y"
                         :width="seg.w" :height="Math.max(seg.h, 0)"
-                        :style="{ fill: soft(seg.color) }"
+                        :style="{ fill: fill(seg.color) }"
                         :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
                         rx="2"
                       />
@@ -430,7 +430,7 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
                         :key="seg.catId"
                         :x="seg.x" :y="seg.y"
                         :width="seg.w" :height="Math.max(seg.h, 0)"
-                        :style="{ fill: soft(seg.color) }"
+                        :style="{ fill: fill(seg.color) }"
                         :opacity="weekSegmentOpacity(week.assigned, seg.catId)"
                         rx="1"
                       />

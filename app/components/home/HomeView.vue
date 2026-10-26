@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
+import { usePlannerFill } from '~/composables/usePlannerFill'
 import { isoWeekOf, mondayOf } from '~/utils/dates'
 import { formatHour } from '~/utils/planner'
 import {
@@ -21,6 +22,7 @@ const planner = usePlannerStore()
 const { today } = usePlannerYear()
 const { link } = useNav()
 const { categoryMap, getActivityColor } = usePlannerMaps()
+const { fill } = usePlannerFill()
 
 // Kept in app state, not the URL: the choice survives a tab switch within the session (FR-HOME-2), default Day
 const period = useState<HomePeriod>('home-period', () => 'day')
@@ -109,7 +111,7 @@ const timeline = computed<TimelineSegment[]>(() => {
       return {
         key: `h${hour}`,
         hours: 1,
-        color: activityId ? getActivityColor(activityId) : '',
+        color: activityId ? fill(getActivityColor(activityId)) : '',
         title: `${formatHour(hour)}, ${name || 'unplanned'}`
       }
     })
@@ -118,7 +120,7 @@ const timeline = computed<TimelineSegment[]>(() => {
   const segments: TimelineSegment[] = breakdown.value.activities.map(row => ({
     key: row.activity.id,
     hours: row.hours,
-    color: getActivityColor(row.activity.id),
+    color: fill(getActivityColor(row.activity.id)),
     title: `${row.activity.name}, ${formatHours(row.hours)} h, ${row.share}%`
   }))
 

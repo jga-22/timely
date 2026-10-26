@@ -2,12 +2,14 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
+import { usePlannerFill } from '~/composables/usePlannerFill'
 import {
   DESIGN_COLORS,
   aggregateTemplate,
   validateActivityFields,
   type ActivityFieldErrors
 } from '~/utils/planner'
+import { inkOn } from '~/utils/palette'
 import type { Activity } from '~/types/planner'
 
 const planner = usePlannerStore()
@@ -15,6 +17,7 @@ const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
 const { year, weeks, currentWeekIndex } = usePlannerYear()
 const { item, edit, add, category, setSelection } = useNav()
 const { categoryMap } = usePlannerMaps()
+const { fill } = usePlannerFill()
 
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
@@ -24,7 +27,8 @@ const newTemplateName = ref('')
 const paintTool = ref(templates.value[0]?.id ?? '')
 
 // ── Computed ──
-const templateColor = (t: typeof templates.value[0]) => t.color ?? '#5d6b7a'
+// The paint colour of a template: the same fill on the year grid, in the paint tools and in the switcher
+const templateFill = (t: typeof templates.value[0]) => fill(t.color ?? '#5d6b7a')
 
 // ── Year painter ──
 const isYearPainting = ref(false)
@@ -68,7 +72,10 @@ function paintWeek(wi: number) {
 // Background colour for a year cell: the template painted on that week
 const cellStyle = (startDate: string) => {
   const tpl = templateById.value.get(appliedByDate.value.get(startDate) ?? '')
-  return tpl ? { '--c': templateColor(tpl) } : undefined
+  if (!tpl) return undefined
+
+  const color = templateFill(tpl)
+  return { '--c': color, '--c-ink': inkOn(color) }
 }
 
 // ── Template management ──
@@ -335,7 +342,7 @@ function submitAdd() {
         >
           <span
             class="dot dot-action"
-            :style="{ background: templateColor(t) }"
+            :style="{ background: templateFill(t) }"
             title="Change colour"
             @click.stop="colorPickerFor = colorPickerFor === t.id ? null : t.id"
           />
@@ -616,7 +623,7 @@ function submitAdd() {
               :data-active="paintTool === t.id"
               @click="paintTool = t.id"
             >
-              <span class="dot" :style="{ background: templateColor(t) }" />
+              <span class="dot" :style="{ background: templateFill(t) }" />
               {{ t.name }}
             </button>
             <button class="chip" :data-active="paintTool === 'erase'" @click="paintTool = 'erase'">

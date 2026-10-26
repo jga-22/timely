@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
+import { usePlannerFill } from '~/composables/usePlannerFill'
+import { inkOn } from '~/utils/palette'
 import {
   DAYS,
-  DESIGN_COLORS,
   aggregateTemplate,
   formatHour,
   isHourlyTemplate,
@@ -70,8 +71,8 @@ const blockAt = (cell: Cell): Range | null => {
   return block ? { day: cell.day, start: block.start, end: block.end } : null
 }
 const singleCell = (cell: Cell): Range => ({ day: cell.day, start: cell.hour, end: cell.hour + 1 })
-const blockColor = (block: TimeBlock) => activityMap.value.get(block.activityId)?.color ?? '#999999'
-const textOn = (color: string) => DESIGN_COLORS.find(item => item.bg.toLowerCase() === color.toLowerCase())?.fg ?? '#ffffff'
+const { fill } = usePlannerFill()
+const blockColor = (block: TimeBlock) => fill(activityMap.value.get(block.activityId)?.color ?? '#999999')
 const isCursor = (day: number, hour: number) => cursor.value.day === day && cursor.value.hour === hour
 const setCursor = (cell: Cell) => {
   cursor.value = { day: cell.day, hour: cell.hour }
@@ -434,7 +435,7 @@ onBeforeUnmount(() => {
                   top: `${block.start * HOUR_PX}px`,
                   height: `${(block.end - block.start) * HOUR_PX - 2}px`,
                   background: blockColor(block),
-                  color: textOn(blockColor(block)),
+                  color: inkOn(blockColor(block)),
                 }"
               >
                 <span class="wk-block-name">{{ activityMap.get(block.activityId)?.name }}</span>

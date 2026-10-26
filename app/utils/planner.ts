@@ -4,23 +4,23 @@ import { isoWeekOf, isoWeekStarts, localDateKey, mondayOf } from '~/utils/dates'
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 /** Editorial muted palette used by the design system */
-export const DESIGN_COLORS: Array<{ id: string; bg: string; fg: string }> = [
-  { id: 'terracotta', bg: '#d97757', fg: '#ffffff' },
-  { id: 'ochre',      bg: '#c19a3e', fg: '#ffffff' },
-  { id: 'sage',       bg: '#7a9471', fg: '#ffffff' },
-  { id: 'teal',       bg: '#4a8683', fg: '#ffffff' },
-  { id: 'plum',       bg: '#8a5a7a', fg: '#ffffff' },
-  { id: 'slate',      bg: '#5d6b7a', fg: '#ffffff' },
-  { id: 'rose',       bg: '#c4767f', fg: '#ffffff' },
-  { id: 'moss',       bg: '#5c7248', fg: '#ffffff' },
-  { id: 'navy',       bg: '#3c4b63', fg: '#ffffff' },
-  { id: 'cream',      bg: '#d4c19a', fg: '#3a3429' },
-  { id: 'brick',      bg: '#a04e3e', fg: '#ffffff' },
-  { id: 'pine',       bg: '#2d5a3f', fg: '#ffffff' },
-  { id: 'dusk',       bg: '#6e5c7c', fg: '#ffffff' },
-  { id: 'stone',      bg: '#9a9288', fg: '#ffffff' },
-  { id: 'coral',      bg: '#e09070', fg: '#ffffff' },
-  { id: 'ink',        bg: '#2a2a2a', fg: '#faf9f6' },
+export const DESIGN_COLORS: Array<{ id: string; bg: string }> = [
+  { id: 'terracotta', bg: '#d97757' },
+  { id: 'ochre',      bg: '#c19a3e' },
+  { id: 'sage',       bg: '#7a9471' },
+  { id: 'teal',       bg: '#4a8683' },
+  { id: 'plum',       bg: '#8a5a7a' },
+  { id: 'slate',      bg: '#5d6b7a' },
+  { id: 'rose',       bg: '#c4767f' },
+  { id: 'moss',       bg: '#5c7248' },
+  { id: 'navy',       bg: '#3c4b63' },
+  { id: 'cream',      bg: '#d4c19a' },
+  { id: 'brick',      bg: '#a04e3e' },
+  { id: 'pine',       bg: '#2d5a3f' },
+  { id: 'dusk',       bg: '#6e5c7c' },
+  { id: 'stone',      bg: '#9a9288' },
+  { id: 'coral',      bg: '#e09070' },
+  { id: 'ink',        bg: '#2a2a2a' },
 ]
 
 export interface TimeBlock {
