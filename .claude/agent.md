@@ -53,6 +53,7 @@ Shell and shared code:
 - `spec/weekly_planner_prd_and_design_doc.md`: the PRD (v3, requirement IDs and acceptance criteria, with each requirement's status and evidence). `spec/build-plan.md`: slice-by-slice build plan and status log.
 - `spec/screens/`: reference screenshots from the production build, named in the README.
 - `spec/references/grille-harada-meilleure-version.html`: the original Harada prototype; origin of the palette and the Goals layout.
+- `spec/database/`: draft design for a PostgreSQL or Supabase store (data model, `schema.sql`, ERD, effort evaluation). Not built; the storage decision is pending with the owner.
 
 ## Model and decisions
 
@@ -102,3 +103,4 @@ Shell and shared code:
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.
+- **Database storage evaluation pending owner decision:** the app stays on localStorage until the owner picks Supabase or plain PostgreSQL and the hosting; decisions and effort in `spec/database/effort-evaluation.md` (section 8).
