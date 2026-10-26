@@ -118,17 +118,16 @@ function confirmDeleteActiveTemplate() {
   deletingTemplate.value = false
 }
 
-// ── Brush palette: activities and Erase ──
+// ── Activities: the list under the week, its detail and the edit form ──
 const orderedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 const selectedActivity = computed(() => planner.activities.find(activity => activity.id === item.value) ?? null)
-const erasing = ref(false)
 const editing = computed(() => !!selectedActivity.value && edit.value)
 
 const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
 const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
 const categoryName = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'No category'
 
-// Hours per week in the template being edited (the palette reads this)
+// Hours per week in the template being edited (the activity list reads this)
 const activeHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
 const linkedHabits = computed(() => planner.habits.filter(habit => habit.activityId === selectedActivity.value?.id))
 
@@ -153,13 +152,7 @@ const deleteImpact = computed(() => {
 
 // Selection and edit mode live in the URL: a selection is a history entry, Done replaces it (FR-UX-5)
 function selectActivity(activityId: string) {
-  erasing.value = false
   setSelection({ item: activityId })
-}
-
-function selectErase() {
-  erasing.value = true
-  setSelection({})
 }
 
 function startEdit() {
@@ -174,7 +167,7 @@ function finishEdit() {
   if (!selectedActivity.value) return
 
   // Focus waits for the route to update, so the Edit button is rendered again
-  setSelection({ item: selectedActivity.value.id }, true).then(() => nextTick(() => document.querySelector<HTMLButtonElement>('.pal-edit-btn')?.focus()))
+  setSelection({ item: selectedActivity.value.id }, true).then(() => nextTick(() => document.querySelector<HTMLButtonElement>('.act-edit-btn')?.focus()))
 }
 
 // Edit drafts: edits apply at once (FR-UX-6); a rejected entry keeps its message until the next valid one
@@ -315,7 +308,7 @@ function submitAdd() {
     <!-- Page header: title and one hint line -->
     <header class="page-head">
       <h1 class="page-title">Design your ideal week, hour by hour.</h1>
-      <p class="page-lede">Pick an activity or Erase, then paint its hours on the week.</p>
+      <p class="page-lede">Drag across hours to select a range, or tap a block to change it. Use the handles to resize, then choose an activity.</p>
     </header>
 
     <!-- Template switcher -->
@@ -401,212 +394,202 @@ function submitAdd() {
       </div>
     </div>
 
-    <!-- Week grid and brush palette: side by side on desktop, the palette above the grid on phones -->
-    <div class="pl-main">
-      <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
-      <ClientOnly>
-        <PlannerActivityGrid :activity="selectedActivity" :erasing="erasing" @select="selectActivity" />
-      </ClientOnly>
+    <!-- Week grid: the original range-select grid, with its action bar and menu teleported to the body -->
+    <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
+    <ClientOnly>
+      <PlannerActivityGrid />
+    </ClientOnly>
 
-      <aside class="pal" aria-labelledby="activities-title">
-        <div class="pal-head">
-          <h2 id="activities-title" class="section-title">Activities</h2>
-          <p class="pal-meta">Hours a week in {{ activeTemplate?.name ?? 'no template' }}</p>
+    <!-- Activities: a compact list under the week; select one to see it, edit it or add one -->
+    <section class="section acts" aria-labelledby="activities-title">
+      <div class="acts-head">
+        <h2 id="activities-title" class="section-title">Activities</h2>
+        <p class="section-lede">Hours a week in {{ activeTemplate?.name ?? 'no template' }}</p>
+      </div>
+
+      <ul class="act-list">
+        <li v-for="activity in planner.activities" :key="activity.id">
+          <button
+            type="button"
+            class="chip"
+            :data-active="selectedActivity?.id === activity.id"
+            :aria-pressed="selectedActivity?.id === activity.id"
+            @click="selectActivity(activity.id)"
+          >
+            <span class="dot" :style="{ background: activity.color }" />
+            <span class="t-name">{{ activity.name }}</span>
+            <span class="pill-count">{{ hoursText(activeHours.get(activity.id) ?? 0) }}h</span>
+          </button>
+        </li>
+      </ul>
+
+      <p v-if="!planner.activities.length" class="acts-empty">No activities yet. Add one to plan when it happens.</p>
+
+      <div v-if="selectedActivity && !editing" class="act-detail">
+        <span class="dot dot-lg" :style="{ background: selectedActivity.color }" />
+        <div class="act-detail-main">
+          <span class="act-detail-name">{{ selectedActivity.name }}</span>
+          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }} · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn-xs btn-outline act-edit-btn"
+          :aria-label="`Edit ${selectedActivity.name}`"
+          @click="startEdit"
+        >Edit</button>
+      </div>
+
+      <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
+      <div v-if="editing && selectedActivity" class="act-panel" @keydown="onEditKeydown">
+        <div class="act-panel-head">
+          <h3 class="act-panel-title">Edit {{ selectedActivity.name }}</h3>
+          <button type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
         </div>
 
-        <ul class="pal-list">
-          <li v-for="activity in planner.activities" :key="activity.id" class="pal-item">
-            <div class="pal-row" :data-active="selectedActivity?.id === activity.id">
-              <button
-                type="button"
-                class="pal-select"
-                :aria-pressed="selectedActivity?.id === activity.id"
-                @click="selectActivity(activity.id)"
-              >
-                <span class="dot dot-lg" :style="{ background: activity.color }" />
-                <span class="pal-main">
-                  <span class="pal-name">{{ activity.name }}</span>
-                  <span class="pal-sub">{{ activity.shortCode }} · {{ categoryName(activity.categoryId) }}</span>
-                </span>
-                <span class="pal-hours">{{ hoursText(activeHours.get(activity.id) ?? 0) }}<span class="unit">h/wk</span></span>
-              </button>
-              <button
-                v-if="selectedActivity?.id === activity.id && !editing"
-                type="button"
-                class="btn btn-xs btn-outline pal-edit-btn"
-                :aria-label="`Edit ${activity.name}`"
-                @click="startEdit"
-              >Edit</button>
-            </div>
-          </li>
-
-          <li class="pal-item">
-            <div class="pal-row" :data-active="erasing">
-              <button type="button" class="pal-select" :aria-pressed="erasing" @click="selectErase">
-                <span class="dot dot-erase dot-lg" />
-                <span class="pal-main">
-                  <span class="pal-name">Erase</span>
-                  <span class="pal-sub">Clears any hours it paints over</span>
-                </span>
-              </button>
-            </div>
-          </li>
-        </ul>
-
-        <p v-if="!planner.activities.length" class="pal-empty">No activities yet. Add one to plan when it happens.</p>
-
-        <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
-        <div v-if="editing && selectedActivity" class="pal-editor" @keydown="onEditKeydown">
-          <div class="pal-editor-head">
-            <h3 class="pal-editor-title">Edit {{ selectedActivity.name }}</h3>
-            <button type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
+        <div class="form-stack">
+          <div class="field">
+            <label class="field-label" for="act-edit-name">Name</label>
+            <input
+              id="act-edit-name"
+              class="timely-input"
+              :value="nameDraft"
+              :aria-invalid="!!editErrors.name"
+              aria-describedby="act-edit-name-error"
+              @input="onNameInput"
+              @blur="onNameBlur"
+            />
+            <p v-if="editErrors.name" id="act-edit-name-error" class="field-error">{{ editErrors.name }}</p>
           </div>
 
-          <div class="form-stack">
+          <div class="form-row">
             <div class="field">
-              <label class="field-label" for="act-edit-name">Name</label>
+              <label class="field-label" for="act-edit-code">Short code</label>
               <input
-                id="act-edit-name"
+                id="act-edit-code"
                 class="timely-input"
-                :value="nameDraft"
-                :aria-invalid="!!editErrors.name"
-                aria-describedby="act-edit-name-error"
-                @input="onNameInput"
-                @blur="onNameBlur"
+                :value="codeDraft"
+                maxlength="3"
+                :aria-invalid="!!editErrors.shortCode"
+                aria-describedby="act-edit-code-error"
+                @input="onCodeInput"
+                @blur="onCodeBlur"
               />
-              <p v-if="editErrors.name" id="act-edit-name-error" class="field-error">{{ editErrors.name }}</p>
+              <p v-if="editErrors.shortCode" id="act-edit-code-error" class="field-error">{{ editErrors.shortCode }}</p>
             </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label class="field-label" for="act-edit-code">Short code</label>
-                <input
-                  id="act-edit-code"
-                  class="timely-input"
-                  :value="codeDraft"
-                  maxlength="3"
-                  :aria-invalid="!!editErrors.shortCode"
-                  aria-describedby="act-edit-code-error"
-                  @input="onCodeInput"
-                  @blur="onCodeBlur"
-                />
-                <p v-if="editErrors.shortCode" id="act-edit-code-error" class="field-error">{{ editErrors.shortCode }}</p>
-              </div>
-              <div class="field">
-                <label class="field-label" for="act-edit-cat">Category</label>
-                <select
-                  id="act-edit-cat"
-                  class="timely-select"
-                  :value="selectedActivity.categoryId"
-                  @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
-                >
-                  <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
-                <p v-if="editErrors.categoryId" class="field-error">{{ editErrors.categoryId }}</p>
-              </div>
-            </div>
-
             <div class="field">
-              <span class="field-label">Colour</span>
-              <div class="color-pop color-pop-inline">
-                <button
-                  v-for="dc in DESIGN_COLORS"
-                  :key="dc.id"
-                  type="button"
-                  :style="{ background: dc.bg }"
-                  :data-active="selectedActivity.color === dc.bg"
-                  :aria-label="`Colour ${dc.id}`"
-                  @click="applyField({ color: dc.bg })"
-                />
-              </div>
+              <label class="field-label" for="act-edit-cat">Category</label>
+              <select
+                id="act-edit-cat"
+                class="timely-select"
+                :value="selectedActivity.categoryId"
+                @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
+              >
+                <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
+              <p v-if="editErrors.categoryId" class="field-error">{{ editErrors.categoryId }}</p>
             </div>
           </div>
 
-          <div class="act-delete">
-            <button
-              v-if="!confirmingDelete"
-              ref="deleteTrigger"
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="askDelete"
-            >Delete activity</button>
-            <div v-else class="act-confirm" role="group" aria-label="Confirm delete">
-              <p class="act-confirm-text">{{ deleteImpact }}</p>
-              <div class="act-actions">
-                <button type="button" class="btn btn-sm btn-danger" @click="confirmDelete">Delete</button>
-                <button ref="cancelDeleteButton" type="button" class="btn btn-sm" @click="cancelDelete">Cancel</button>
-              </div>
+          <div class="field">
+            <span class="field-label">Colour</span>
+            <div class="color-pop color-pop-inline">
+              <button
+                v-for="dc in DESIGN_COLORS"
+                :key="dc.id"
+                type="button"
+                :style="{ background: dc.bg }"
+                :data-active="selectedActivity.color === dc.bg"
+                :aria-label="`Colour ${dc.id}`"
+                @click="applyField({ color: dc.bg })"
+              />
             </div>
           </div>
         </div>
 
-        <!-- New activity: a quiet link reveals the form -->
-        <div v-if="addOpen" class="pal-add">
-          <div class="form-stack">
+        <div class="act-delete">
+          <button
+            v-if="!confirmingDelete"
+            ref="deleteTrigger"
+            type="button"
+            class="btn btn-sm btn-danger"
+            @click="askDelete"
+          >Delete activity</button>
+          <div v-else class="act-confirm" role="group" aria-label="Confirm delete">
+            <p class="act-confirm-text">{{ deleteImpact }}</p>
+            <div class="act-actions">
+              <button type="button" class="btn btn-sm btn-danger" @click="confirmDelete">Delete</button>
+              <button ref="cancelDeleteButton" type="button" class="btn btn-sm" @click="cancelDelete">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New activity: a quiet link reveals the form -->
+      <div v-if="addOpen" class="act-panel">
+        <div class="form-stack">
+          <div class="field">
+            <label class="field-label" for="add-act-name">Name</label>
+            <input
+              id="add-act-name"
+              ref="addNameInput"
+              v-model="addDraft.name"
+              class="timely-input"
+              placeholder="e.g. Meditation"
+              :aria-invalid="!!addErrors.name"
+              aria-describedby="add-act-name-error"
+              @keydown.enter.prevent="submitAdd"
+              @keydown.escape="closeAdd"
+            />
+            <p v-if="addErrors.name" id="add-act-name-error" class="field-error">{{ addErrors.name }}</p>
+          </div>
+
+          <div class="form-row">
             <div class="field">
-              <label class="field-label" for="add-act-name">Name</label>
+              <label class="field-label" for="add-act-code">Short code</label>
               <input
-                id="add-act-name"
-                ref="addNameInput"
-                v-model="addDraft.name"
+                id="add-act-code"
+                v-model="addDraft.shortCode"
                 class="timely-input"
-                placeholder="e.g. Meditation"
-                :aria-invalid="!!addErrors.name"
-                aria-describedby="add-act-name-error"
+                placeholder="MED"
+                maxlength="3"
+                :aria-invalid="!!addErrors.shortCode"
+                aria-describedby="add-act-code-error"
                 @keydown.enter.prevent="submitAdd"
                 @keydown.escape="closeAdd"
               />
-              <p v-if="addErrors.name" id="add-act-name-error" class="field-error">{{ addErrors.name }}</p>
+              <p v-if="addErrors.shortCode" id="add-act-code-error" class="field-error">{{ addErrors.shortCode }}</p>
             </div>
-
-            <div class="form-row">
-              <div class="field">
-                <label class="field-label" for="add-act-code">Short code</label>
-                <input
-                  id="add-act-code"
-                  v-model="addDraft.shortCode"
-                  class="timely-input"
-                  placeholder="MED"
-                  maxlength="3"
-                  :aria-invalid="!!addErrors.shortCode"
-                  aria-describedby="add-act-code-error"
-                  @keydown.enter.prevent="submitAdd"
-                  @keydown.escape="closeAdd"
-                />
-                <p v-if="addErrors.shortCode" id="add-act-code-error" class="field-error">{{ addErrors.shortCode }}</p>
-              </div>
-              <div class="field">
-                <label class="field-label" for="add-act-cat">Category</label>
-                <select id="add-act-cat" v-model="addDraft.categoryId" class="timely-select">
-                  <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
-              </div>
-            </div>
-
             <div class="field">
-              <span class="field-label">Colour</span>
-              <div class="color-pop color-pop-inline">
-                <button
-                  v-for="dc in DESIGN_COLORS"
-                  :key="dc.id"
-                  type="button"
-                  :style="{ background: dc.bg }"
-                  :data-active="addDraft.color === dc.bg"
-                  :aria-label="`Colour ${dc.id}`"
-                  @click="addDraft.color = dc.bg"
-                />
-              </div>
+              <label class="field-label" for="add-act-cat">Category</label>
+              <select id="add-act-cat" v-model="addDraft.categoryId" class="timely-select">
+                <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
             </div>
           </div>
 
-          <div class="act-actions">
-            <button class="btn btn-sm btn-primary" :disabled="!addDraft.name.trim() || !addDraft.shortCode.trim()" @click="submitAdd">Add activity</button>
-            <button class="btn btn-sm" @click="closeAdd">Cancel</button>
+          <div class="field">
+            <span class="field-label">Colour</span>
+            <div class="color-pop color-pop-inline">
+              <button
+                v-for="dc in DESIGN_COLORS"
+                :key="dc.id"
+                type="button"
+                :style="{ background: dc.bg }"
+                :data-active="addDraft.color === dc.bg"
+                :aria-label="`Colour ${dc.id}`"
+                @click="addDraft.color = dc.bg"
+              />
+            </div>
           </div>
         </div>
-        <button v-else ref="addTrigger" type="button" class="chip-add pal-add-trigger" @click="openAdd()">+ Add activity</button>
-      </aside>
-    </div>
+
+        <div class="act-actions">
+          <button class="btn btn-sm btn-primary" :disabled="!addDraft.name.trim() || !addDraft.shortCode.trim()" @click="submitAdd">Add activity</button>
+          <button class="btn btn-sm" @click="closeAdd">Cancel</button>
+        </div>
+      </div>
+      <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd()">+ Add activity</button>
+    </section>
 
     <!-- Year painter: full width, collapsible; open by default on desktop -->
     <section class="section year-section" aria-labelledby="year-title">

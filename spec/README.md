@@ -13,7 +13,7 @@ This folder holds the product and design specification for Timely. The code is t
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 
-Screenshots in `screens/` (from the production build after slice 6; fresh seeded state, 25 October 2026):
+Screenshots in `screens/` (Planner files regenerated on 26 October 2026 from the production build of `fix/restore-original-week-grid`, clean seed; the other files from the production build after slice 6, fresh seeded state, 25 October 2026):
 
 | File | Size | Notes |
 | --- | --- | --- |
@@ -30,14 +30,14 @@ Screenshots in `screens/` (from the production build after slice 6; fresh seeded
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the list and map |
 | `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to list |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page: the week grid with the Activities palette beside it, and the year grid at full width |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, the same layout |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: palette chips above the week grid, year closed |
+| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: the week grid (range select, original interaction), the Activities chips under it, and the year grid at full width |
+| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page, clean seed, the same layout |
+| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px, clean seed: the week grid scrolls sideways inside its frame, Activities chips wrap under it, year closed |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light |
 | `visualization-desktop-dark.png` | 1280 px wide | Visualization, dark |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light, full page |
 
-Desktop captures are 900 px high and phone captures 900 px high as well; the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
+Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
 
 ## How the spec is used
 
@@ -57,6 +57,8 @@ The journal experiment on Home (FR-HOME-11 to 13, slice 6) is built and marked a
 ## 2. Changelog
 
 ### v3 build (2026-10-25 to 2026-10-26)
+
+- Planner week grid restored to the original range-select interaction on `fix/restore-original-week-grid` (FR-PLAN-23, 24). It supersedes the slice 7 brush palette (FR-PLAN-17 to 20 and 22); Activities is a compact list under the week; storage is unchanged. Planner screenshots regenerated from a clean seed.
 
 - Slices 0 to 6 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The week grid paints at once with the brush (FR-PLAN-17, slice 7); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
 - The old week grid, Insights, Configuration and the legend view are removed; their code and wording are gone from `app/` and this spec, except where the PRD keeps the history (superseded rows, the mapping in PRD 11.8).
