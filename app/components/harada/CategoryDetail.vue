@@ -46,8 +46,10 @@ const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
 
 // Unlink a secondary category from an activity; the primary category is changed in Planner only. Inline confirmation first
 const unlinkId = ref<string | null>(null)
-const isSecondary = (activity: { categoryId: string; alsoCategoryIds?: string[] }) =>
-  activity.categoryId !== props.categoryId && !!activity.alsoCategoryIds?.includes(props.categoryId)
+// Only a secondary link that no habit of this category also holds can be removed here: a habit link keeps the hours counted
+const linkedByHabit = (activityId: string) => planner.habits.some(habit => habit.categoryId === props.categoryId && habit.activityId === activityId)
+const isSecondary = (activity: { id: string; categoryId: string; alsoCategoryIds?: string[] }) =>
+  activity.categoryId !== props.categoryId && !!activity.alsoCategoryIds?.includes(props.categoryId) && !linkedByHabit(activity.id)
 const confirmUnlink = (activityId: string) => {
   planner.removeAlsoCategory(activityId, props.categoryId)
   unlinkId.value = null
