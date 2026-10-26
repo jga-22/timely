@@ -158,6 +158,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
+.topbar-spacer { flex: 1; }
 
 .tab {
   position: relative;

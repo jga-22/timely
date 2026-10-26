@@ -45,7 +45,7 @@ const toggleDark = () => {
       <header class="topbar">
         <div class="brand">timely</div>
 
-        <nav class="tabs" role="tablist" aria-label="Sections">
+        <nav v-if="auth.status === 'off' || auth.status === 'signed-in'" class="tabs" role="tablist" aria-label="Sections">
           <button
             v-for="entry in TABS"
             :key="entry.id"
@@ -58,6 +58,7 @@ const toggleDark = () => {
             {{ entry.label }}
           </button>
         </nav>
+        <div v-else class="topbar-spacer" aria-hidden="true" />
 
         <span
           v-if="auth.status === 'signed-in'"
