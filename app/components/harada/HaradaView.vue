@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, categoryAlignments } from '~/utils/planner'
+import { DESIGN_COLORS, categoryAlignments, hoursLabel } from '~/utils/planner'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
 const MAP_SIZE = 8
@@ -38,9 +38,18 @@ const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value =
 const alignments = computed(() => categoryAlignments(planner.$state))
 
 // Quiet flag in the list: the habits ask for more time than their linked activities hold
-const isBelowTarget = (categoryId: string) => {
-  const coverage = alignments.value.get(categoryId)?.coverage ?? null
-  return coverage !== null && coverage < 1
+// Under or over the time target: the list row and the map cell get the attention border (FR-GOALS-23)
+const needsAttention = (categoryId: string) => {
+  const status = alignments.value.get(categoryId)?.status
+  return status === 'under' || status === 'over'
+}
+
+// Text beside the list row, so the state is not colour only
+const attentionLabel = (categoryId: string): string | null => {
+  const row = alignments.value.get(categoryId)
+  if (row?.status === 'under') return `Missing ${hoursLabel(-row.gapMinutes)}/wk`
+  if (row?.status === 'over') return `${hoursLabel(row.gapMinutes)}/wk over`
+  return null
 }
 
 // Short line under each name in the list: the 1-year target, or that it is still to be defined
@@ -235,7 +244,7 @@ function submitAdd() {
               v-else-if="cell"
               type="button"
               class="harada-cell"
-              :class="{ 'is-active': selected?.id === cell.id }"
+              :class="{ 'is-active': selected?.id === cell.id, 'needs-attention': needsAttention(cell.id) }"
               :aria-pressed="selected?.id === cell.id"
               :data-map-position="position"
               @click="openCategory(cell.id)"
@@ -267,12 +276,17 @@ function submitAdd() {
           <h2 class="section-title">Categories</h2>
           <p class="section-lede">Select one to see its goals, habits and planned time.</p>
         </div>
+        <ul class="goals-legend" aria-label="Legend">
+          <li><span class="legend-swatch is-attention" aria-hidden="true" />Needs attention: under or over its time target</li>
+          <li><span class="legend-swatch" aria-hidden="true" />On track or no target</li>
+        </ul>
 
         <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
           <li v-for="category in sortedCategories" :key="category.id">
             <button
               type="button"
               class="cat-row"
+              :class="{ 'needs-attention': needsAttention(category.id) }"
               :data-category-id="category.id"
               :aria-current="selected?.id === category.id ? 'true' : undefined"
               @click="openCategory(category.id)"
@@ -282,7 +296,7 @@ function submitAdd() {
                 <span class="cat-row-name">{{ category.name }}</span>
                 <span class="cat-meta" :class="{ 'is-warn': targetLine(category).warn }">{{ targetLine(category).text }}</span>
               </span>
-              <span v-if="isBelowTarget(category.id)" class="cat-flag">Below target</span>
+              <span v-if="attentionLabel(category.id)" class="cat-flag">{{ attentionLabel(category.id) }}</span>
             </button>
           </li>
         </ul>
@@ -564,6 +578,43 @@ button.harada-cell:focus-visible {
 .cat-flag {
   flex: none;
   white-space: nowrap;
+}
+
+/* Attention: an outline in --attention, inside the box so the grid frame does not clip it */
+.cat-row.needs-attention,
+.harada-cell.needs-attention {
+  outline: 2px solid var(--attention);
+  outline-offset: -2px;
+}
+
+.goals-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.goals-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--cell-line);
+  border-radius: 3px;
+}
+
+.legend-swatch.is-attention {
+  border: 2px solid var(--attention);
 }
 
 /* On the tinted selected row, secondary text uses --ink-2 (contrast on bg-4) */

@@ -495,48 +495,68 @@ export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryI
   return (aggregateTemplateByCategory(template, state).get(categoryId) ?? 0) * 60
 }
 
+/** Slack before a category counts as under or over its time target: the larger of 30 minutes and 10% of the need */
+const ALIGNMENT_TOLERANCE_MINUTES = 30
+const ALIGNMENT_TOLERANCE_SHARE = 0.1
+
+/** under: allocated time is short of the need; over: it is beyond the need; none: the habits give no time to compare */
+export type AlignmentStatus = 'under' | 'over' | 'ok' | 'none'
+
 export interface CategoryAlignment {
-  /** Scheduled minutes per week of the activities linked from this category's habits */
-  habitMinutesPerWeek: number
-  /** Minutes per week the habits ask for */
-  targetMinutesPerWeek: number
-  /** Scheduled minutes per week across every activity in the category */
-  totalMinutesPerWeek: number
-  unlinkedHabits: number
-  coverage: number | null
+  /** Minutes a week the habits of the category ask for (habits with a time per occurrence) */
+  neededMinutes: number
+  /** Minutes a week scheduled in the active template through the activities of the category */
+  allocatedMinutes: number
+  /** Allocated minus needed: negative when time is missing */
+  gapMinutes: number
+  status: AlignmentStatus
 }
 
-/** Each activity counts once: the first category by order whose habits link it keeps it */
+export const alignmentStatus = (neededMinutes: number, allocatedMinutes: number): AlignmentStatus => {
+  if (neededMinutes <= 0) return 'none'
+
+  const tolerance = Math.max(ALIGNMENT_TOLERANCE_MINUTES, neededMinutes * ALIGNMENT_TOLERANCE_SHARE)
+  const gap = allocatedMinutes - neededMinutes
+
+  if (gap < -tolerance) return 'under'
+  if (gap > tolerance) return 'over'
+  return 'ok'
+}
+
+/** Needed against allocated time per category, in minutes a week (FR-GOALS-16). Every category has an entry */
 export const categoryAlignments = (state: PlannerState): Map<string, CategoryAlignment> => {
-  const claimed = new Set<string>()
   const alignments = new Map<string, CategoryAlignment>()
 
-  for (const category of [...state.categories].sort((a, b) => a.order - b.order)) {
-    const habits = state.habits.filter(habit => habit.categoryId === category.id)
-    const activityIds = [...new Set(habits.flatMap(habit => (habit.activityId ? [habit.activityId] : [])))]
-      .filter(activityId => !claimed.has(activityId))
-    activityIds.forEach(activityId => claimed.add(activityId))
-
-    const habitMinutesPerWeek = activityIds.reduce(
-      (total, activityId) => total + scheduledWeeklyMinutesForActivity(state, activityId),
-      0
-    )
-    const targetMinutesPerWeek = habits.reduce(
-      (total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0),
-      0
-    )
+  for (const category of state.categories) {
+    const neededMinutes = state.habits
+      .filter(habit => habit.categoryId === category.id)
+      .reduce((total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0), 0)
+    const allocatedMinutes = scheduledWeeklyMinutesForCategory(state, category.id)
 
     alignments.set(category.id, {
-      habitMinutesPerWeek,
-      targetMinutesPerWeek,
-      totalMinutesPerWeek: scheduledWeeklyMinutesForCategory(state, category.id),
-      unlinkedHabits: habits.filter(habit => !habit.activityId).length,
-      coverage: targetMinutesPerWeek > 0 ? habitMinutesPerWeek / targetMinutesPerWeek : null
+      neededMinutes,
+      allocatedMinutes,
+      gapMinutes: allocatedMinutes - neededMinutes,
+      status: alignmentStatus(neededMinutes, allocatedMinutes)
     })
   }
 
   return alignments
 }
+
+/** Hours for display: one decimal at most, no trailing zero (2.5 h, 3 h) */
+export const hoursLabel = (minutes: number): string => `${Math.round((minutes / 60) * 10) / 10} h`
+
+/** One habit's own comparison: its need and, when it is linked, the minutes a week of its activity (null when not linked) */
+export interface HabitAlignment {
+  neededMinutes: number
+  allocatedMinutes: number | null
+}
+
+export const habitAlignment = (state: PlannerState, habit: Habit): HabitAlignment => ({
+  neededMinutes: habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0,
+  allocatedMinutes: habit.activityId ? scheduledWeeklyMinutesForActivity(state, habit.activityId) : null
+})
 
 /* ── Activity grid (FR-PLAN-17 to 19): hourly cells of one template ── */
 

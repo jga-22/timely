@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Activity, Habit, HabitPeriod } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
+import { habitAlignment, hoursLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 
@@ -22,12 +23,17 @@ const categoryName = (categoryId: string) => planner.categories.find(category =>
 const linkedActivity = (habit: Habit): Activity | undefined =>
   habit.activityId ? planner.activities.find(activity => activity.id === habit.activityId) : undefined
 
-// The activity's category follows its name only when it differs from the habit's own (FR-GOALS-22)
+// The activity's category follows its name only when it differs from the habit's own (FR-GOALS-22).
+// Linked habits add the hours a week of the activity against the habit's need (FR-GOALS-16)
 const linkedLabel = (habit: Habit) => {
   const activity = linkedActivity(habit)
-  if (!activity) return 'Not linked to an activity'
+  if (!activity) return 'Not linked'
 
-  return activity.categoryId === habit.categoryId ? activity.name : `${activity.name} (${categoryName(activity.categoryId)})`
+  const name = activity.categoryId === habit.categoryId ? activity.name : `${activity.name} (${categoryName(activity.categoryId)})`
+  const { neededMinutes, allocatedMinutes } = habitAlignment(planner.$state, habit)
+  const allocated = hoursLabel(allocatedMinutes ?? 0)
+
+  return neededMinutes ? `${name}, ${allocated} of ${hoursLabel(neededMinutes)} a week` : `${name}, ${allocated} a week`
 }
 
 // Activity picker: the habit's own category first, then the others in order, each as a group

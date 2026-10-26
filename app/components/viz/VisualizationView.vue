@@ -4,9 +4,7 @@ import type { Category } from '~/types/planner'
 import {
   aggregateTemplateByCategory,
   effectiveTemplate,
-  projectionInsight,
-  categoryAlignments,
-  type CategoryAlignment
+  projectionInsight
 } from '~/utils/planner'
 import { monthOf } from '~/utils/dates'
 import { usePlannerStore } from '~/stores/planner'
@@ -128,44 +126,6 @@ const projectionSummaries = computed(() =>
 )
 
 const topProjection = computed(() => projectionSummaries.value[0] ?? null)
-
-// ── Goals vs. planned time (active template, FR-GOALS-16 values) ──
-const goalAlignment = computed(() => {
-  const alignments = categoryAlignments(planner.$state)
-  return [...planner.categories]
-    .sort((a, b) => a.order - b.order)
-    .map(category => ({ category, ...alignments.get(category.id)! }))
-})
-
-const goalScale = computed(() =>
-  Math.max(1, ...goalAlignment.value.flatMap(row => [row.habitMinutesPerWeek, row.targetMinutesPerWeek]))
-)
-
-const goalBarWidth = (minutes: number) => `${Math.min((minutes / goalScale.value) * 100, 100)}%`
-
-const formatGoalHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`
-
-const goalFigures = (row: CategoryAlignment) => {
-  if (row.targetMinutesPerWeek > 0) return `${formatGoalHours(row.habitMinutesPerWeek)} / ${formatGoalHours(row.targetMinutesPerWeek)}`
-  if (row.habitMinutesPerWeek > 0) return `${formatGoalHours(row.habitMinutesPerWeek)} scheduled`
-  return '—'
-}
-
-const goalLabel = (row: CategoryAlignment) =>
-  row.targetMinutesPerWeek > 0
-    ? `${formatGoalHours(row.habitMinutesPerWeek)} scheduled through habits, ${formatGoalHours(row.targetMinutesPerWeek)} target`
-    : `${formatGoalHours(row.habitMinutesPerWeek)} scheduled through habits, no target yet`
-
-// One calm line per row, only for what is missing
-const goalNotes = (row: CategoryAlignment) => {
-  const notes: string[] = []
-  if (row.targetMinutesPerWeek === 0) notes.push('No target yet')
-  if (row.habitMinutesPerWeek === 0) notes.push('No time planned')
-  if (row.targetMinutesPerWeek > 0 && row.unlinkedHabits) {
-    notes.push(`${row.unlinkedHabits} ${row.unlinkedHabits === 1 ? 'habit' : 'habits'} not linked to an activity`)
-  }
-  return notes
-}
 
 // Softened category colour keeps the chart calm
 const { fill } = usePlannerFill()
@@ -293,46 +253,6 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
       <p v-else-if="year !== null" class="section-lede">
         Nothing planned yet. <NuxtLink :to="link('planner')">Plan your week in Planner</NuxtLink>.
       </p>
-    </section>
-
-    <!-- Goals vs. planned time, all categories -->
-    <section v-if="goalAlignment.length" class="section">
-      <div class="section-head">
-        <h2 class="section-title">Goals vs. planned time</h2>
-        <p class="section-lede">
-          Hours scheduled per week through each category's habits, against what those habits ask for, in the active template.
-          The tick marks the target; the quiet line is everything scheduled in the category.
-        </p>
-      </div>
-
-      <div class="goal-list">
-        <div v-for="row in goalAlignment" :key="row.category.id" class="goal-row">
-          <NuxtLink class="goal-name" :to="link('goals', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
-
-          <div
-            class="goal-track"
-            :class="{ 'is-untargeted': row.targetMinutesPerWeek === 0 }"
-            role="img"
-            :aria-label="goalLabel(row)"
-          >
-            <span class="goal-fill" :style="{ width: goalBarWidth(row.habitMinutesPerWeek) }" />
-            <span
-              v-if="row.targetMinutesPerWeek > 0"
-              class="goal-target"
-              :style="{ left: goalBarWidth(row.targetMinutesPerWeek) }"
-            />
-          </div>
-
-          <div class="goal-figures">
-            {{ goalFigures(row) }}
-            <span v-if="row.totalMinutesPerWeek" class="goal-total">{{ formatGoalHours(row.totalMinutesPerWeek) }} scheduled in total</span>
-          </div>
-
-          <div v-if="goalNotes(row).length" class="goal-flags">
-            <span v-for="note in goalNotes(row)" :key="note">{{ note }}</span>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- Key insights: the projection over the horizon, then the week and month pattern (read-only) -->

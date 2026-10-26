@@ -24,6 +24,7 @@
   --warn:        #8a5a12;
   --ok:          #2d6a4f;
   --danger:      #a33a3a;
+  --attention:   #a33a3a;      /* border of a category under or over its time target: 6.9:1 on --bg */
   --danger-tint: #fbefef;
   --shadow:      0 8px 24px rgba(18, 51, 95, 0.12);   /* floating menus only */
 
@@ -68,6 +69,7 @@ html[data-theme="dark"] {
   --warn:        #e8bd7a;
   --ok:          #7fc4a0;
   --danger:      #ee9a9a;
+  --attention:   #ee9a9a;      /* 9:1 on the dark surface */
   --danger-tint: #3a2226;
   --shadow:      0 8px 24px rgba(0, 0, 0, 0.45);
 }
@@ -1256,70 +1258,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   color: var(--ink-2);
 }
 
-/* ── Goals vs planned time ── */
-.goal-list { display: flex; flex-direction: column; }
-.goal-row {
-  display: grid;
-  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-1) var(--space-5);
-  padding: var(--space-3) 0;
-  border-top: 1px solid var(--rule-2);
-}
-.goal-row:first-child { border-top: none; }
-.goal-name {
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-}
-a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
-.goal-track {
-  position: relative;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--bg-3);
-}
-.goal-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  border-radius: 3px;
-  background: var(--accent);
-}
-.goal-track.is-untargeted .goal-fill { background: var(--ink-4); }
-.goal-target {
-  position: absolute;
-  top: -4px;
-  bottom: -4px;
-  width: 2px;
-  margin-left: -1px;
-  border-radius: 1px;
-  background: var(--ink-2);
-}
-.goal-figures {
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
-  white-space: nowrap;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.goal-flags {
-  grid-column: 2 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-.goal-flags span + span::before { content: "\00b7"; margin: 0 6px; }
-.goal-total {
-  display: block;
-  margin-top: 2px;
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-
 /* ── Panels and metrics shared by views ── */
 .empty-state {
   display: flex;
@@ -1366,9 +1304,6 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 
   .metrics { grid-template-columns: minmax(0, 1fr); }
   .metrics.is-two { grid-template-columns: minmax(0, 1fr); }
-  .goal-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .goal-track { grid-column: 1 / -1; grid-row: 2; }
-  .goal-flags { grid-column: 1 / -1; }
 
   .form-row,
   .form-row-3 { grid-template-columns: minmax(0, 1fr); }
