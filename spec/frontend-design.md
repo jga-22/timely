@@ -657,3 +657,13 @@ These are facts about the code as it is today. They are not requirements for new
 - **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The categories list uses a 6px share bar under the name row. The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
 - **Copy rules.** No intro paragraphs, subtitles or instructional sentences under titles, section titles or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints can live in `title` tooltips or `aria-label`s, not in visible text.
 - **Removed.** `.page-lede`, `.section-lede`, `.detail-lede`, `.browse-note`, `.wk-pop-hint`, the Visualization classes (`.viz-*`, `.metric*`, `.goal-*`) and the journal experiment classes.
+
+### 12.1 Edit control (batch 3)
+
+- `app/components/EditButton.vue` is the only Edit control: a 16px pencil (stroke `currentColor`, width 2) in a 28px square, `--ink-3` at rest, `--accent` on hover and while expanded, on a `--bg-3` tint. It has the item's name in `aria-label` and `title`, `aria-expanded` when it opens something, and the 2px `--accent` focus ring. With `to` it is a router link; without, a button. It exposes `focus()` for focus return.
+- Text buttons remain for Done, Write today's note and the confirmations.
+
+### 12.2 Available-time line (batch 3)
+
+- The capacity line of Insights is a 2px `--attention` bar per period at its available hours (`.insights-cap`), and its label (`.insights-cap-label`, 12px, weight 600) sits at the right end, on the surface colour so it stays legible over a bar. The same token as the attention outline: a red line here means the available-time marker, not an error.
+- The unit selector is a `.segmented` group (Hours, Days, Weeks) next to the granularity group.

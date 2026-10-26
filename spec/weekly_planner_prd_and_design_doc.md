@@ -367,6 +367,19 @@ This batch changes the requirements below. Where a row names an earlier requirem
 
 Derived values: 168 hours is one week. The Goals tolerance is the larger of 30 minutes and 10% of the need.
 
+### 9.12 Edit controls, unlink and available time (feat/ux-polish, batch 3)
+
+| ID | Requirement | Status and evidence |
+| --- | --- | --- |
+| FR-UX-P2 | One Edit control everywhere an item is edited: a pencil icon (`EditButton.vue`), at least 24px hit area (28px), the item's name in its aria-label and title, a visible focus ring, muted ink with a tint on hover. Used for the ambition, categories, activities (Goals and Planner), Home activity links, the journal note, the range edit and the active template. Done and Write stay text. | Done: `EditButton.vue`, `.edit-btn` in `main.css`; keyboard Enter opens a habit in the browser check. |
+| FR-GOALS-18 | Each habit row has its own pencil: name, times, period, minutes each, linked activity (None first), Unlink activity, Remove with confirmation, Done. Independent of the category's edit mode; Add habit stays in category edit mode. Resolves the FR-GOALS-18 partial. | Done: `HabitList.vue`; minutes saved and the row text updated in the browser check. |
+| FR-UX-2 | Template edit: the active template has a pencil that opens rename, colour (all colours) and delete. Double-click rename and the chip-dot colour stay. Resolves the FR-UX-2 partial. | Done: `PlannerView.vue`, store `renameTemplate`. |
+| FR-GOALS-P5 | Unlink: an activity that counts toward a category only through "also counts toward" has Unlink with inline confirmation (not offered while a habit of the category still links it). A habit's linked activity can be cleared (Unlink activity, or None). The primary category is changed only in the Planner activity form; it cannot be unlinked. Comparison, outlines and Insights update at once. | Done: store `removeAlsoCategory`; throwaway tsx checks in UTC, Europe/Paris and America/New_York; browser check (secondary and habit unlinks change the verdict to Missing). |
+| FR-INS-4 | Available time: each bar has a red 2px line at the hours available in its period, labelled at the right end ("Available 168 h"). Available time is the days of the bar's ISO weeks times 24, so a month is 4 or 5 weeks (672 to 840 h). The axis always includes the line, and the tooltip reads "planned X, free Y". | Done: `utils/insights.ts` (`capacity`, `free`, `chartScale`); tsx checks; visible in all four granularities in the browser check. |
+| FR-INS-5 | One unit selector for Insights: Hours, Days (hours / 24) or Weeks (hours / 168). It drives the axis, the cap label, the bar tooltips and the categories list. Replaces the list toggle; percentages do not change. | Done: `InsightsView.vue`; checked in all three units. |
+
+Deviation: available time counts the days of whole ISO weeks, not calendar days, because the planned hours of a bar are its ISO weeks. A calendar month would not match them and the free time would be wrong.
+
 ## 10. Non-functional requirements
 
 | Area | Requirement | Status |
@@ -844,6 +857,9 @@ v2 gaps and where they went: weekday view (Later); week status UI (Q5); grid key
 - "Weeks" in Insights means hours divided by 168.
 - Insights percentages count planned hours by primary category, so each activity is counted once.
 - The Planner title is "Planner" (the sentence heading was removed with the copy sweep).
+- Allocated time counts the activities linked from the category's habits and the activities that list it as secondary, each once (owner decision, batch 2). Sleep under Physical does not count unless a habit links it.
+- An activity can be unlinked from a category only as a secondary link; the primary category is changed, not removed (owner decision, batch 3).
+- Insights shows available time per bar in a unit chosen by one selector (Hours, Days, Weeks), with the free time in each tooltip (owner decision, batch 3).
 
 ### 23.2 Assumptions (made for this draft; confirm or correct)
 
