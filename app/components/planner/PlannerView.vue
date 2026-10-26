@@ -522,6 +522,7 @@ function submitAdd() {
               <select
                 id="act-edit-cat"
                 class="timely-select"
+                title="The primary category is changed here; it cannot be unlinked"
                 :value="selectedActivity.categoryId"
                 @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
               >

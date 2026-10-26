@@ -164,6 +164,7 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
         </div>
         <div v-else class="form-actions">
           <button type="button" class="btn btn-sm btn-danger" @click="confirmRemoveId = habit.id">Remove habit</button>
+          <button v-if="habit.activityId" type="button" class="btn btn-sm" @click="planner.setHabitActivity(habit.id, null)">Unlink activity</button>
           <button type="button" class="btn btn-sm btn-primary" @click="toggleOpen(habit.id)">Done</button>
         </div>
       </div>

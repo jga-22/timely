@@ -44,6 +44,15 @@ onMounted(() => {
 const alignments = computed(() => categoryAlignments(planner.$state))
 const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
 
+// Unlink a secondary category from an activity; the primary category is changed in Planner only. Inline confirmation first
+const unlinkId = ref<string | null>(null)
+const isSecondary = (activity: { categoryId: string; alsoCategoryIds?: string[] }) =>
+  activity.categoryId !== props.categoryId && !!activity.alsoCategoryIds?.includes(props.categoryId)
+const confirmUnlink = (activityId: string) => {
+  planner.removeAlsoCategory(activityId, props.categoryId)
+  unlinkId.value = null
+}
+
 const scaleMinutes = computed(() => Math.max(60, alignment.value?.neededMinutes ?? 0, alignment.value?.allocatedMinutes ?? 0))
 const barWidth = (minutes: number) => `${Math.min((minutes / scaleMinutes.value) * 100, 100)}%`
 
@@ -212,6 +221,19 @@ function confirmRemove() {
               <span class="row-name">{{ activity.name }}</span>
               <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
+            <template v-if="isSecondary(activity)">
+              <span v-if="unlinkId === activity.id" class="row-confirm">
+                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
+                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
+              </span>
+              <button
+                v-else
+                type="button"
+                class="btn btn-xs btn-outline"
+                :aria-label="`Unlink ${activity.name} from ${category.name}`"
+                @click="unlinkId = activity.id"
+              >Unlink</button>
+            </template>
             <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
@@ -295,6 +317,19 @@ function confirmRemove() {
               <span class="row-name">{{ activity.name }}</span>
               <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
+            <template v-if="isSecondary(activity)">
+              <span v-if="unlinkId === activity.id" class="row-confirm">
+                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
+                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
+              </span>
+              <button
+                v-else
+                type="button"
+                class="btn btn-xs btn-outline"
+                :aria-label="`Unlink ${activity.name} from ${category.name}`"
+                @click="unlinkId = activity.id"
+              >Unlink</button>
+            </template>
             <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>

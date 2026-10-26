@@ -94,6 +94,17 @@ export const usePlannerStore = defineStore('planner', {
 
       if (template && trimmed) template.name = trimmed
     },
+    /** Removes a secondary category from an activity: its hours stop counting there. The primary category is not touched */
+    removeAlsoCategory(activityId: string, categoryId: string): boolean {
+      const activity = this.activities.find(item => item.id === activityId)
+
+      if (!activity?.alsoCategoryIds?.includes(categoryId)) {
+        return false
+      }
+
+      activity.alsoCategoryIds = activity.alsoCategoryIds.filter(id => id !== categoryId)
+      return true
+    },
     setTemplateColor(templateId: string, color: string) {
       const template = getTemplateById(this.$state, templateId)
       if (template) template.color = color
