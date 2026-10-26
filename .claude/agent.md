@@ -84,7 +84,7 @@ Shell and shared code:
 
 ## Current state
 
-- Branch `feat/ux-polish`, stacked on `feat/ux-improvements` (PR #10, open, unmerged). PRs #7 to #9 are merged into `main`. Nothing pushed.
+- All earlier PRs (#7 to #11) are merged into `main`. Branch `fix/insights-environment-and-category-back` (from `main`): the Goals detail back control sits above the title (Close removed), and the Insights Environment hours were checked (planned Errands hours, not a bug). Nothing pushed.
 - The Planner week is the original range-select grid again (FR-PLAN-23, 24). It replaces the week-first brush palette of slice 7; FR-PLAN-17 to 20 and 22 are Superseded. Storage version is unchanged (7).
 - Batch 3 (one commit per item, `feat/ux-polish`): one pencil Edit control; habit rows edit in place; template edit panel; unlink of secondary categories and habit links; Insights available-time line and one unit selector; docs and screenshots regenerated from a clean seed. Resolved: the FR-UX-2 and FR-GOALS-18 partials, the stale outline after reload (mount gating), the Sleep question (owner: allocated rule).
 - UX polish batch (one commit per item): Home is Today only; Goals needed-vs-allocated comparison, attention outlines and legend; multi-category activities (storage 8); Visualization renamed Insights; copy sweep; docs and clean-seed screenshots.
