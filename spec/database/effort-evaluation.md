@@ -6,6 +6,7 @@ Status: **estimate, not a commitment**. Written 26 October 2026 for the owner's 
 
 - **Effort:** about **23 to 46 focused days** for everything in the table (roughly 5 to 9 calendar weeks solo). The first usable multi-device version (phases 0 to 2) is about **13 to 24 days**.
 - **Recommendation:** Supabase (hosted for deployment, the local Docker stack for development), with supabase-js in the browser under RLS. Keep the Pinia store as the API and put the database behind a thin repository layer. Plain PostgreSQL with Drizzle and Nuxt server routes is a credible alternative (section 5); it costs more work in auth and in server code.
+- **Decision (27 October 2026):** the owner chose **Supabase only**; plain PostgreSQL is out of scope. A first version is already built as a snapshot (one JSON row per user, `snapshot.sql`) behind a small storage adapter with email magic-link sign-in; the normalised `schema.sql` remains the later path. The day estimates above describe the full normalised, multi-device version done by hand; with Claude Code the code is far quicker, and the time that remains is testing against a real Supabase project, auth setup, conflicts between devices and deployment.
 - **Start with a spike** (phase 0, 1 to 2 days) before committing: it tests the schema, the seed and the round-trip time from the browser.
 
 ## 2. Work packages
