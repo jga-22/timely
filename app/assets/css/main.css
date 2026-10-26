@@ -1190,6 +1190,25 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .legend-item .hours { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 .year-totals { display: flex; flex-direction: column; max-width: 560px; }
+/* Year recap: one stacked bar of the year's planned hours by category (flex-grow = hours), legend rows below */
+.year-bar {
+  display: flex;
+  height: 12px;
+  margin-top: var(--space-5);
+  overflow: hidden;
+  border-radius: 3px;
+}
+.year-bar-seg {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.metrics.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.insight-line {
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
 .total-row {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr) auto auto;
@@ -1346,6 +1365,7 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   .pill-input { height: 40px; }
 
   .metrics { grid-template-columns: minmax(0, 1fr); }
+  .metrics.is-two { grid-template-columns: minmax(0, 1fr); }
   .goal-row { grid-template-columns: minmax(0, 1fr) auto; }
   .goal-track { grid-column: 1 / -1; grid-row: 2; }
   .goal-flags { grid-column: 1 / -1; }
