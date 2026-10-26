@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
 import type { PlannerState } from '~/types/planner'
 import { isPlannerState } from '~/utils/planner'
+import { getSupabaseClient } from '~/utils/supabase'
 import type { PlannerStorage, StorageStatusHandler } from '~/utils/storage/types'
 
 /** Trailing debounce for saves; the whole state is written each time, so only the latest matters */
@@ -8,37 +8,15 @@ const SAVE_DELAY_MS = 600
 
 /**
  * Supabase adapter: one row per user in public.planner_state (spec/database/snapshot.sql).
- * Uses the existing session, or signs in anonymously (interim; anonymous sign-ins must be enabled in the project).
- * If the load fails, nothing is written, so the remote row is never overwritten by the seed.
+ * The caller passes the signed-in user id. If the load fails, nothing is written, so the remote row is never overwritten by the seed.
  */
-export const createSupabaseStorage = (url: string, anonKey: string, onStatus: StorageStatusHandler): PlannerStorage => {
-  const supabase = createClient(url, anonKey)
+export const createSupabaseStorage = (url: string, anonKey: string, userId: string, onStatus: StorageStatusHandler): PlannerStorage => {
+  const supabase = getSupabaseClient(url, anonKey)
 
-  let userId: string | null = null
   let loadFailed = false
   let timer: ReturnType<typeof setTimeout> | undefined
   let pending: PlannerState | null = null
   let queue: Promise<void> = Promise.resolve()
-
-  const ensureUserId = async (): Promise<string> => {
-    if (userId) return userId
-
-    const { data: sessionData } = await supabase.auth.getSession()
-
-    if (sessionData.session) {
-      userId = sessionData.session.user.id
-      return userId
-    }
-
-    const { data, error } = await supabase.auth.signInAnonymously()
-
-    if (error || !data.user) {
-      throw error ?? new Error('Anonymous sign-in returned no user.')
-    }
-
-    userId = data.user.id
-    return userId
-  }
 
   const write = async (state: PlannerState) => {
     onStatus('saving')
@@ -47,7 +25,7 @@ export const createSupabaseStorage = (url: string, anonKey: string, onStatus: St
       const { error } = await supabase
         .from('planner_state')
         .upsert({
-          user_id: await ensureUserId(),
+          user_id: userId,
           version: state.version,
           state,
           updated_at: new Date().toISOString()
@@ -92,7 +70,7 @@ export const createSupabaseStorage = (url: string, anonKey: string, onStatus: St
         const { data, error } = await supabase
           .from('planner_state')
           .select('state')
-          .eq('user_id', await ensureUserId())
+          .eq('user_id', userId)
           .maybeSingle()
 
         if (error) throw error

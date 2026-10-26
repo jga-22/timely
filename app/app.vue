@@ -7,6 +7,13 @@ const dark = useState('dark', () => false)
 const theme = useTheme()
 const { today } = usePlannerYear()
 const { status: storageStatus } = useStorageStatus()
+const { state: auth, signOut } = useAuth()
+const accountOpen = ref(false)
+
+const onSignOut = async () => {
+  accountOpen.value = false
+  await signOut()
+}
 
 const storageLabels = { loading: 'Loading', saving: 'Saving', saved: 'Saved', error: 'Not saved' }
 
@@ -53,7 +60,7 @@ const toggleDark = () => {
         </nav>
 
         <span
-          v-if="storageStatus.state !== 'local'"
+          v-if="auth.status === 'signed-in'"
           class="storage-status"
           :data-state="storageStatus.state"
           role="status"
@@ -62,6 +69,23 @@ const toggleDark = () => {
           <span class="storage-status-dot" aria-hidden="true" />
           {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
         </span>
+
+        <div v-if="auth.status === 'signed-in'" class="account">
+          <button
+            type="button"
+            class="account-button"
+            aria-haspopup="true"
+            :aria-expanded="accountOpen"
+            @click="accountOpen = !accountOpen"
+            @keydown.esc="accountOpen = false"
+          >
+            Account
+          </button>
+          <div v-if="accountOpen" class="account-menu">
+            <p class="account-email">{{ auth.user?.email }}</p>
+            <button type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
+          </div>
+        </div>
 
         <button
           class="theme-toggle"
@@ -82,7 +106,8 @@ const toggleDark = () => {
         </button>
       </header>
 
-      <NuxtPage />
+      <AuthLoginGate v-if="auth.status === 'signed-out'" />
+      <NuxtPage v-else-if="auth.status !== 'loading'" />
     </div>
     <NuxtRouteAnnouncer />
   </VApp>

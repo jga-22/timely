@@ -214,6 +214,60 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .storage-status[data-state="error"] { color: var(--danger); }
 .storage-status[data-state="error"] .storage-status-dot { background: var(--danger); }
 
+/* Supabase mode: account menu next to the save status */
+.account { position: relative; flex: none; }
+.account-button {
+  height: 32px;
+  padding: 0 var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  border-radius: var(--radius);
+}
+.account-button:hover,
+.account-button[aria-expanded="true"] { background: var(--bg-3); color: var(--ink); }
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  padding: var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.account-email { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* Sign-in gate (Supabase mode, signed out): one centred card, no helper prose */
+.login-gate {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 64px);
+  padding: var(--space-5) var(--space-4);
+}
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 380px;
+  margin: 0;
+  padding: var(--space-6);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.login-title { margin: 0; font-size: var(--fs-lg); font-weight: 600; color: var(--ink); }
+.login-sent { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
+.login-action { align-self: flex-start; }
+.login-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
 .theme-toggle {
   display: inline-grid;
   place-items: center;
