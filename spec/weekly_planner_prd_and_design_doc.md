@@ -24,7 +24,7 @@ Timely is a local-first personal web app that connects **why** you spend your ti
 - **The why (Goals).** One five-year ambition and up to eight life areas (categories). Each category holds a five-year goal, a measurable one-year target and measurable habits.
 - **The time (Planner).** Activities belong to categories. A weekly template of 168 hour slots says when each activity happens. Several templates (normal week, deep-work week, vacation) are applied to the weeks of the year.
 - **The day (Home).** What today, this week or this month looks like in projected hours, per activity and per category.
-- **The picture (Visualization).** Read-only charts: the year week by week, projections over years, goals against planned time.
+- **The picture (Insights).** Read-only charts: the year week by week, projections over years, goals against planned time.
 
 Value proposition: *see at a glance whether the week you actually plan gives your goals the time they need, and what that week adds up to over years.*
 
@@ -66,7 +66,7 @@ Calendars and task managers focus on day-to-day execution. Goal frameworks focus
 - Open on an overview of the day: projected activities and time per category (Home).
 - Capture one ambition, up to eight categories with goals and targets, and measurable habits; manage categories (Goals).
 - Manage activities and say when they happen in the week; keep several templates and apply them to the year (Planner).
-- Show year totals, projections and goals against planned time, read-only (Visualization).
+- Show year totals, projections and goals against planned time, read-only (Insights).
 - Work without a server-side data store, with no setup and no account.
 
 ### Non-goals
@@ -123,15 +123,15 @@ The v2 principle "Goals before time; the app opens on Goals" is replaced: the ap
 | US-2 | As a user, I give each category a five-year goal and a measurable one-year target, and flag targets still to be defined. | Done; re-housed in v3 |
 | US-3 | As a user, I list habits per category with a frequency (per day, week or month) and minutes per occurrence. | Done; re-housed in v3 |
 | US-4 | As a user, I link a habit to an activity so its time can be measured against my week. | Done |
-| US-5 | As a user, I see per category how much habit time my week schedules against what the habits ask for. | Done; moves to Goals detail and Visualization |
+| US-5 | As a user, I see per category how much habit time my week schedules against what the habits ask for. | Done; moves to Goals detail and Insights |
 | US-6 | As a user, I select hours in the week and assign them to an activity. | Done (activity grid, slice 2b; painting in edit mode, slice 5) |
 | US-7 | As a user, I change or remove an activity's hours. | Done (activity grid, slice 2b) |
 | US-8 | As a user, I apply one activity to the same hours across several days at once. | Planned (v3): rectangle paint in the activity grid |
 | US-9 | As a user, I keep several templates and switch, rename, recolour, create and delete them. | Done (no duplicate) |
 | US-10 | As a user, I assign templates to the weeks of the year by painting a year grid. | Done (2026 only, mouse only); year handling Planned (v3) |
 | US-11 | As a user, I mark a week as vacation or off, or override slots for one week. | Dropped (Q5) |
-| US-12 | As a user, I see hours and percentages per category. | Done (Insights); moves to Home and Visualization |
-| US-13 | As a user, I see the year week by week (or month by month), stacked by category. | Done; moves to Visualization |
+| US-12 | As a user, I see hours and percentages per category. | Done (Insights); moves to Home and Insights |
+| US-13 | As a user, I see the year week by week (or month by month), stacked by category. | Done; moves to Insights |
 | US-14 | As a user, I see a projection over 1, 3, 5 or 10 years. | Partial; full list Planned (v3) |
 | US-15 | As a user, I see my week broken down by weekday and category. | Not built (Later) |
 | US-16 | As a user, I compare two templates side by side. | Not built (Later) |
@@ -152,7 +152,7 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
-| FR-UX-1 | **See only once.** Each fact has one primary place (matrix in 11.3). Other screens show only derived summaries or links, never an editing control for it. | Done | *Evidence (slice 5):* Home has the period selector and links only; Goals edits categories, habits and the ambition; Planner edits activities and templates; Visualization has view settings only (year, view, category focus, horizon). The slice 5 walk of all four tabs found no second editor. |
+| FR-UX-1 | **See only once.** Each fact has one primary place (matrix in 11.3). Other screens show only derived summaries or links, never an editing control for it. | Done | *Evidence (slice 5):* Home has the period selector and links only; Goals edits categories, habits and the ambition; Planner edits activities and templates; Insights has view settings only (year, view, category focus, horizon). The slice 5 walk of all four tabs found no second editor. |
 | FR-UX-2 | **View and edit modes.** Ambition, category, habit, activity and template are read-only by default. One Edit button per item switches it to edit mode; Done returns to view mode. | Partial | *Evidence (slice 5):* Activities, categories and the ambition have an Edit button named "Edit {name}" (the ambition: "Edit ambition"); Done returns focus to Edit; at most one item is in edit mode per screen (browser run). **Partial because** templates have no Edit button (renamed by double-click, recoloured from the chip dot, deleted inline) and habit rows are edited inside the category's edit mode (FR-GOALS-18). |
 | FR-UX-3 | **Progressive disclosure.** Each screen follows overview, list, select, detail view, edit mode. List rows show at most name, colour and two short facts. | Partial | *Evidence (slice 5):* Lists show no form fields, selecting a row shows its detail, and one detail is open at a time. **Partial because** Planner activity rows show code, category and hours (three facts; the rule allows name, colour and two short facts). |
 | FR-UX-4 | **Edit from elsewhere.** An Edit button on a screen that does not own the item navigates to the owning screen with the item selected and in edit mode. | Done | *Evidence (slice 5):* Home's Edit on Reading opens Planner with Reading in edit mode and painting enabled; Back returns to Home with the same period (Week, kept in Nuxt state across tabs). Browser run: X1 to X3. |
@@ -161,12 +161,12 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 | FR-UX-7 | **Inline confirmation** for destructive actions (delete activity, remove category, delete template, remove habit), stating the impact. No `confirm()`. | Done | *Evidence (slice 5):* No `confirm()` in the code. Delete activity states the impact ("Clears N h in N templates and unlinks N habits") with Delete and Cancel; delete template, remove category and remove habit confirm inline with a second button. Nothing changes before that button. |
 | FR-UX-8 | **Phone master-detail.** At 768 px and below, list and detail stack: selecting a row shows the detail full width with "Back to list". | Done | *Evidence (slice 5):* At 400 px Planner and Goals show the list, then the selected detail full width with "Back to list"; no page overflow on any tab in light and dark (browser run: X4 to X7 and the 400 px tab runs). Goals keeps the list position for Back to list (code path, HaradaView). *Changed 2026-10-26, UX slice 8:* the phone button reads "Back to categories"; desktop has a Close button; Escape closes the open category. |
 
-### 9.2 Dates and years (new; dependency for Home and Visualization)
+### 9.2 Dates and years (new; dependency for Home and Insights)
 
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
 | FR-DATE-1 | "Today" comes from the device's local date. Weeks start on Monday and use ISO week numbers. | Done | With the clock at 2026-10-25 (a Sunday), the current week is week 43, starting 2026-10-19; the year grid and charts mark it. *Evidence:* `localDateKey` in `app/utils/dates.ts`, set on mount in `app/app.vue`. Node cases (ISO weeks, Monday, DST, time zones) and a browser run at 2026-10-25 show week 43 marked. |
-| FR-DATE-2 | **Effective template of a date:** the template of the applied week whose `startDate` is that date's Monday; if that week is unassigned, the active template (decided, Q2). One shared function serves Home, Visualization and projections. | Done | Unit test: an assigned week returns its template; an unassigned week returns the active template; a deleted template is never returned. *Evidence:* `effectiveTemplate` in `app/utils/planner.ts`, used by Insights bars and `yearlyProjectionHours`. Node cases: assigned, unassigned, deleted, year boundary. |
+| FR-DATE-2 | **Effective template of a date:** the template of the applied week whose `startDate` is that date's Monday; if that week is unassigned, the active template (decided, Q2). One shared function serves Home, Insights and projections. | Done | Unit test: an assigned week returns its template; an unassigned week returns the active template; a deleted template is never returned. *Evidence:* `effectiveTemplate` in `app/utils/planner.ts`, used by Insights bars and `yearlyProjectionHours`. Node cases: assigned, unassigned, deleted, year boundary. |
 | FR-DATE-3 | Year handling: the year grid and charts show every ISO week of a selected year (52 or 53), default the current ISO year, with previous and next controls. | Done | 2026 shows 53 weeks, the last starting 2026-12-28; 2027 shows 52 weeks, the first starting 2027-01-04. *Evidence:* Year switcher on the Planner year grid; `isoWeekStarts` gives 53 weeks for 2026 (last 2026-12-28) and 52 for 2027 (first 2027-01-04). Browser run: 2025, 2027 and boundary clocks. |
 | FR-DATE-4 | Remove the hard-coded `WEEK_DATES_2026` and `CURRENT_WEEK_INDEX`; the seed assigns weeks of the current year. | Done | No literal 2026 remains in `app/` outside comments; a fresh seed in 2027 assigns 2027 weeks. *Evidence:* `WEEK_DATES_2026` and `CURRENT_WEEK_INDEX` removed; `createInitialState(year)` seeds the current ISO year. Seed checked for 2026 and 2027 in node. |
 | FR-DATE-5 | Remove `ensureDefaultWeek`, which writes today's UTC date (not a Monday) as `startDate` under a fixed id when the active template has no applied week. | Done | Creating a template and reloading adds no applied week. *Evidence:* `ensureDefaultWeek` removed from the store and the persistence plugin; a reload keeps the applied-week count (browser run). |
@@ -177,7 +177,7 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
 | FR-HOME-1 | Home is the first tab and the default screen. It is read-only, except the journal card (FR-HOME-11), which is the primary place of journal entries. | Done | Browser (slice 6): a fresh load opens Home; the only inputs are the period selector and the journal note. *Evidence (slice 4):* Browser run on the production build: a fresh load opens Home (tab 01 selected, Day shown). The only control is the period selector; Edit and category links navigate. The journal card (FR-HOME-11) is slice 6. |
-| FR-HOME-2 | Period selector Day, Week, Month (segmented control), default Day. Periods are today, the current ISO week and the current calendar month. | Done | Switching updates list, bar and totals at once; the choice survives a tab switch within the session. *Evidence (slice 4):* Period in `useState` (`home-period`), default Day, session only. Browser: ArrowRight, End and wrap-around move selection and focus; Week survives Planner and Visualization tab switches; a reload returns to Day. |
+| FR-HOME-2 | Period selector Day, Week, Month (segmented control), default Day. Periods are today, the current ISO week and the current calendar month. | Done | Switching updates list, bar and totals at once; the choice survives a tab switch within the session. *Evidence (slice 4):* Period in `useState` (`home-period`), default Day, session only. Browser: ArrowRight, End and wrap-around move selection and focus; Week survives Planner and Insights tab switches; a reload returns to Day. |
 | FR-HOME-3 | Header line: date, ISO week number and the effective template(s) of the period (Month lists each template with its number of days). | Done | Day: "Sunday 25 October 2026 · Week 43 · Standard Week". Month: "October 2026 · Standard Week 24 d, Deep Work Week 7 d". *Evidence (slice 4):* Header line in the browser: "Sunday 25 October 2026 · Week 43 · Standard Week", "19 to 25 October 2026 · Week 43 · Standard Week", "October 2026 · Standard Week 31 d", "Friday 1 January 2027 · Week 53 · Standard Week". The mixed-template list (`periodTemplates`) passes node checks; no mixed month was screenshotted. |
 | FR-HOME-4 | Day: today's blocks in time order. Each row: time range, activity name, category (dot and name), duration. Contiguous hours of one activity form one block (`slotsToBlocks`). The block containing the current hour is marked "Now". | Done | On a Standard-Week Monday the seed lists Sleep, Training, Deep Work and so on in order; durations sum to the day's planned hours. *Evidence (slice 4):* Sunday 25 October 2026 lists six blocks in time order (12AM to 8AM Sleep, 9AM to 11AM Reading, and so on); the node check matches every weekday against the template grid under UTC, Paris and New York. The block containing 10AM carries "Now" (one only). |
 | FR-HOME-5 | Week and Month: activities with projected hours for the period, sorted by hours, each with its category and percent of the period. | Done | The Week rows sum to the planned hours of the week's effective template. *Evidence (slice 4):* Week rows sum to 137 h, the Standard Week hours, sorted by hours; Month rows sum to the 606 planned hours of October 2026 (browser B3, B10). |
@@ -224,7 +224,7 @@ New in v3:
 | FR-GOALS-13 | Vision section at the start of Goals: ambition statement and horizon in view mode; Edit switches to an `AutoTextarea`. This is the only place the ambition is edited **(decided)**. | Done | Editing here updates the grid centre and the Home key message at once; the grid centre has no input. *Evidence (slice 3):* Vision section in `HaradaView.vue`: view mode, Edit with an AutoTextarea that applies at once, Done returns focus to Edit; the map centre updates; the text persists after reload (browser run). |
 | FR-GOALS-14 | Harada map: read-only 3x3 with the ambition in the centre (derived from the vision section) and the first eight categories around it. A cell shows only order, name, colour and the "To define" flag. Clicking a cell selects that category in the list and opens its detail. | Changed | No inputs and no counts or hours in cells; selection is shared with the list (one selected category). *Evidence (slice 3):* Map cells show order, name, colour and To define only; click, Enter and Space select the category, shared with the list through `item`; arrow keys move focus. *Changed 2026-10-26, UX slice 8:* the Harada map is shown only from 1100 px and hidden (display none) below it; the category list is the primary view at every size. |
 | FR-GOALS-15 | Category list (layout of the old Configuration list): order number, colour swatch, name, short counts ("2 activities · 8 habits") and a quiet "Below target" flag. Selecting a row opens its detail. | Changed | Rows have no inputs; the selected row has `aria-current`; on desktop the first category is selected on arrival. *Evidence (slice 3):* List rows show name, colour, counts and the Below target flag; the selected row has aria-current; desktop opens the first category. The order number is not shown in the list (the map carries it), following the decision that list rows show name, colour and counts; owner to confirm. *Evidence (slice 5):* `aria-current` follows the URL selection only: on a phone with nothing selected no row is marked, and on desktop the first row is shown without `aria-current`. *Changed 2026-10-26, UX slice 8:* the list shows each name with its 1-year target line (or "Target to define") and the Below target flag, not counts. On desktop, Close returns to a placeholder beside the list instead of the first category. |
-| FR-GOALS-16 | Category detail, view mode: name and colour, 5-year goal, 1-year target, goals vs. planned (bar, target tick, figures, quiet total, flags; same computation as FR-INS-1, labelled with the template used), habits (read-only rows), activities of the category (name, h/wk in the active template, Edit to Planner). | Done | Values match the v2 Insights row for the same category. *Evidence (slice 3):* Detail view: 5-year goal, 1-year target with To define, goals vs. planned bar and figures from `categoryAlignments` (the Visualization computation), habits and activities (Edit to Planner). |
+| FR-GOALS-16 | Category detail, view mode: name and colour, 5-year goal, 1-year target, goals vs. planned (bar, target tick, figures, quiet total, flags; same computation as FR-INS-1, labelled with the template used), habits (read-only rows), activities of the category (name, h/wk in the active template, Edit to Planner). | Done | Values match the v2 Insights row for the same category. *Evidence (slice 3):* Detail view: 5-year goal, 1-year target with To define, goals vs. planned bar and figures from `categoryAlignments` (the Insights computation), habits and activities (Edit to Planner). |
 | FR-GOALS-17 | Category edit mode: name, colour (palette), 5-year goal, 1-year target, "to be defined", move up and down, Remove (inline move-to flow when it has activities or habits). | Done | Same rules as FR-CFG-2 to 4; removal with content requires a target category. *Evidence (slice 3):* Edit mode: name, colour, goal, target, To define, move up and down, Remove with an inline move-to flow when content exists (no window.confirm). |
 | FR-GOALS-18 | Habit rows: view shows name, frequency ("3 a week, 60 min"), linked activity (link to Planner) or "Not linked"; Edit opens an inline form (name, count, period, minutes, activity, Remove). One habit in edit at a time; "Add habit" adds a row in edit mode. | Partial | Replaces the "Details" toggle; Tab reaches every Edit. *Evidence (slice 3):* Habit rows are read-only in view mode; one habit form opens at a time in category edit mode, with Add habit and inline Remove. Deviation: Edit is not on the rows in view mode (habit editing lives in category edit mode, as the build plan says). |
 | FR-GOALS-19 | "Add category" at the foot of the list (name, palette colour); the new category opens selected in edit mode. | Done | An empty name is refused with an inline message. *Evidence (slice 3):* Add category under the list with name and palette colour; an empty name is refused inline; the new category opens selected in edit mode. |
@@ -291,7 +291,9 @@ New in v3:
 | FR-YEAR-5 | Week status, per-slot overrides and notes. | Dropped (Q5) | Removed from the model: `status`, `overrides`, `notes` and `excludedWeekStatuses`. |
 | FR-YEAR-6 | Years other than 2026. | Superseded | By FR-DATE-3. |
 
-### 9.8 Visualization (new; replaces Insights)
+### 9.8 Insights (formerly Visualization)
+
+Superseded in part by 9.11. The rows below describe the former Visualization screen as first specified: the goals-vs-planned block, the key insights and the projection text were removed in the UX polish batch, and the screen is now FR-INS-1 to FR-INS-3 in 9.11.
 
 Insights requirements and their fate (full mapping in 11.8):
 
@@ -340,7 +342,7 @@ New in v3:
 | FR-APP-4 | Discard a saved state with another version or a broken shape. | Done | `isPlannerState`. Slice 6: `journal` must be an object whose values are strings; version 6 saves are discarded (node check: a version 6 state is rejected, no migration). |
 | FR-APP-5 | Export JSON, import a backup, reset all data. | Not built | Next. With Configuration gone, it goes in a small "Data" menu in the topbar (A7). |
 | FR-APP-6 | Clean console on load. | Done | Dev-server probe (fresh load, reloads after edits and an invalid tab): no console warnings or hydration messages. Production console clean at 1280 and 400 px. *Evidence (slice 1).* |
-| FR-APP-7 | Four tabs in order Home, Goals, Planner, Visualization, numbered 01 to 04; Home default **(decided)**. | Done | Tabs fit at 400 px without scrolling; `app/app.vue` has no Insights or Configuration entry. *Evidence (slice 1):* Home, Goals, Planner and Visualization are numbered 01 to 04 with Home default (browser run). Configuration is a transitional fifth tab. At 400 px the five tabs scroll inside `.tabs` (42 px overflow) until slice 3 removes Configuration. *Evidence (slice 3):* Four tabs in order Home, Goals, Planner, Visualization, numbered 01 to 04; Configuration removed; `?tab=configuration` falls back to Home. |
+| FR-APP-7 | Four tabs in order Home, Goals, Planner, Insights, numbered 01 to 04; Home default **(decided)**. | Done | Tabs fit at 400 px without scrolling; `app/app.vue` has no Insights or Configuration entry. *Evidence (slice 1):* Home, Goals, Planner and Insights are numbered 01 to 04 with Home default (browser run). Configuration is a transitional fifth tab. At 400 px the five tabs scroll inside `.tabs` (42 px overflow) until slice 3 removes Configuration. *Evidence (slice 3):* Four tabs in order Home, Goals, Planner, Insights, numbered 01 to 04; Configuration removed; `?tab=configuration` falls back to Home. |
 | FR-APP-8 | Remove the Insights and Configuration views and code only they use. | Done | `InsightsView.vue` and `LegendView.vue` are gone or reduced to reused parts; build and typecheck clean. *Evidence (slice 1):* `InsightsView.vue` removed; the projection horizon moved from `LegendView.vue` to Visualization. `LegendView.vue` stays until slice 3. *Evidence (slice 3):* `LegendView.vue` and its CSS removed in slice 3; no Configuration code is left. |
 
 ---
@@ -389,7 +391,7 @@ Sticky topbar: `timely`, four numbered tabs, a "Data" menu (once FR-APP-5 is bui
 1. **Home**: today, this week, this month; a small journal card (experiment).
 2. **Goals**: why. Vision, Harada map, categories, goals, habits.
 3. **Planner**: when. Activities, their hours, templates, the year.
-4. **Visualization**: the picture. Read-only charts.
+4. **Insights**: the picture. Read-only charts.
 
 Tab, selection and edit mode live in the route query (FR-UX-5), so Edit links and the browser Back button work.
 
@@ -397,7 +399,7 @@ Tab, selection and edit mode live in the route query (FR-UX-5), so Edit links an
 
 Default: **inline edit mode on the owning screen.** The detail pane of the selected item swaps its read-only content for a form in place; the Edit button becomes Done. Habits inside a category detail, the vision statement and the journal note edit inline the same way, one item at a time.
 
-From a screen that does not own the item (Home, Visualization, or a cross-link such as a habit's linked activity), Edit **navigates** to the owning screen with the item selected and in edit mode (FR-UX-4).
+From a screen that does not own the item (Home, Insights, or a cross-link such as a habit's linked activity), Edit **navigates** to the owning screen with the item selected and in edit mode (FR-UX-4).
 
 Why: one editor per object keeps "see only once" true; the style has no dialog component and avoids modal focus traps; a pane beside the list keeps context on desktop and becomes a stacked page on phones; it reuses today's controls (`AutoTextarea`, `.timely-input`, palette popover). No drawers or dialogs.
 
@@ -415,14 +417,14 @@ Rules: edits apply at once (FR-UX-6); Done or Escape leaves edit mode; selecting
 | Habits (name, frequency, minutes, link) | Goals detail, habit rows | Planner activity detail: names of linked habits, linking to Goals |
 | Activity name, code, category, colour | Planner activity detail | Home rows, Goals detail activity list, chart legends; with Edit or link to Planner |
 | Schedule (which hours) | Planner activity grid (active template) | Home Day blocks; Planner template overview |
-| Templates and week assignment | Planner template bar and year grid | Home header (template names); Visualization lighter bars for unassigned weeks |
+| Templates and week assignment | Planner template bar and year grid | Home header (template names); Insights lighter bars for unassigned weeks |
 | Projected hours for a day, week, month | Home | none |
 | Hours per week per activity | Planner activity list | Goals detail activity list |
-| Year totals, projections over years | Visualization | none |
-| Goals vs. planned (coverage, flags) | Goals category detail | Visualization overview (all categories); Home one-line signal; "Below target" in the Goals list |
+| Year totals, projections over years | Insights | none |
+| Goals vs. planned (coverage, flags) | Goals category detail | Insights overview (all categories); Home one-line signal; "Below target" in the Goals list |
 | Journal note of a day | Home journal card | none |
 
-Two different questions, never mixed: Home and Visualization count an activity in **its own category** (`categoryId`); goals vs. planned counts it for **the first category by order whose habits link it** (section 17).
+Two different questions, never mixed: Home and Insights count an activity in **its own category** (`categoryId`); goals vs. planned counts it for **the first category by order whose habits link it** (section 17).
 
 ### 11.4 Home
 
@@ -513,7 +515,9 @@ Activities  (o Deep Work 40h) (o Training 5h) ... [+ Add activity]
 - Empty state: "No activities yet. Add one to plan when it happens." with the add form.
 - 400 px: the week grid is a frame of at least 540 px that scrolls sideways inside its own container, so the page never does; Activities chips wrap; the year grid keeps its own scroll container.
 
-### 11.7 Visualization
+### 11.7 Insights (formerly Visualization)
+
+Superseded in part by 9.11 (FR-INS-1 to FR-INS-3). The goals-vs-planned overview and key insights described here are removed; the planned-hours chart and category shares replace them.
 
 Purpose: the picture, read-only.
 
@@ -536,19 +540,19 @@ Projection over 5 years
 
 | Old element | New location |
 | --- | --- |
-| Insights: goals-vs-planned rows (bar, tick, figures, total) | Goals category detail (primary); Visualization overview; Home one-line signal |
+| Insights: goals-vs-planned rows (bar, tick, figures, total) | Goals category detail (primary); Insights overview; Home one-line signal |
 | Insights: flags "No target yet", "No time planned", "n habits not linked" | Goals detail; "Below target" in the Goals list |
 | Insights metric: allocated hours per week (active template) | Planner template chip and overview ("n of 168") |
-| Insights metric: top projected activity | Visualization metrics, plus the full projection list (FR-VIZ-5) |
+| Insights metric: top projected activity | Insights metrics, plus the full projection list (FR-VIZ-5) |
 | Insights metric: unassigned hours per week | Home "unplanned" total for the selected period |
-| Insights metric: daily average of the leading category | Visualization metrics (selected year) |
+| Insights metric: daily average of the leading category | Insights metrics (selected year) |
 | Insights: "n of 52 weeks assigned" | Planner year grid only |
-| Insights: week-by-week chart, Monthly/Weekly, focus chips, legend | Visualization (FR-VIZ-3) |
-| Insights: breakdown by category (active template) | Home bar and legend (period); Visualization year by category |
+| Insights: week-by-week chart, Monthly/Weekly, focus chips, legend | Insights (FR-VIZ-3) |
+| Insights: breakdown by category (active template) | Home bar and legend (period); Insights year by category |
 | Configuration: category list, add, rename, recolour, reorder, remove | Goals list and category edit mode |
-| Configuration: category h/wk and h/yr | Goals detail (h/wk); Visualization year by category (h/yr) |
+| Configuration: category h/wk and h/yr | Goals detail (h/wk); Insights year by category (h/yr) |
 | Configuration: activity list, add, delete | Planner activity list and edit mode |
-| Configuration: projection horizon | Visualization projection |
+| Configuration: projection horizon | Insights projection |
 | Configuration: "only eight in Goals" note | Goals list (FR-GOALS-21) |
 | Goals: ambition box above the grid | Goals vision section |
 | Goals: tabbed category panel | Goals category detail |
@@ -600,7 +604,7 @@ PlannerState (localStorage key "timely-planner-state")
 
 Separate key: "timely.dark"
 Route query (not stored): tab, category | activity, edit
-View state (not stored): Home period, Visualization year and chart mode
+View state (not stored): Home period, Insights year and chart mode
 Derived, never stored: today, effective templates, totals, alignments, projections, key message
 ```
 
@@ -643,13 +647,13 @@ Seed (`createInitialState`): ambition; 8 categories (Physical, Spiritual, Relati
 Stack unchanged: Nuxt 4 (SSR, Nitro), Vue 3, TypeScript, Pinia (one store), Vuetify for a few controls, hand-written CSS tokens, inline SVG charts.
 
 ```text
-app/app.vue                              shell, topbar, tabs (Home, Goals, Planner, Visualization)
+app/app.vue                              shell, topbar, tabs (Home, Goals, Planner, Insights)
 app/pages/index.vue                      reads tab and selection from the route query
 app/components/home/HomeView.vue         new; JournalCard.vue (experiment)
 app/components/harada/                   GoalsView (vision, map, list, detail), HabitList (view/edit rows)
 app/components/planner/PlannerView.vue   template bar, activity list and detail, year grid
 app/components/planner/ActivityGrid.vue  new 24x7 grid (overview, view, edit, keyboard)
-app/components/viz/VisualizationView.vue charts moved from InsightsView
+app/components/insights/InsightsView.vue charts moved from InsightsView
 app/utils/dates.ts                       new: ISO weeks, weeks of a year, Monday of a date, local date key
 app/utils/planner.ts                     seed, validation, effective template, period and year totals
 ```
