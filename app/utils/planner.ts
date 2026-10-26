@@ -1,4 +1,5 @@
-import type { Activity, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
+import type { Activity, AppliedWeek, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
+import { isoWeekOf, isoWeekStarts, localDateKey, mondayOf } from '~/utils/dates'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -21,18 +22,6 @@ export const DESIGN_COLORS: Array<{ id: string; bg: string; fg: string }> = [
   { id: 'coral',      bg: '#e09070', fg: '#ffffff' },
   { id: 'ink',        bg: '#2a2a2a', fg: '#faf9f6' },
 ]
-
-/** 52 ISO week Monday start-dates for 2026 (week 1 = Dec 29 2025) */
-export const WEEK_DATES_2026: string[] = (() => {
-  const start = new Date(Date.UTC(2025, 11, 29))
-  return Array.from({ length: 52 }, (_, i) => {
-    const d = new Date(start)
-    d.setUTCDate(start.getUTCDate() + i * 7)
-    return d.toISOString().slice(0, 10)
-  })
-})()
-
-export const CURRENT_WEEK_INDEX = 15 // Week 16 (0-indexed 15) = Apr 13 2026
 
 export interface TimeBlock {
   start: number
@@ -61,6 +50,9 @@ export const formatHour = (h: number): string => {
   if (h < 12) return `${h}AM`
   return `${h - 12}PM`
 }
+
+/** "1 habit", "2 habits" */
+export const countLabel = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
 
 export const projectionInsight = (hours: number): string => {
   if (hours > 8000) return 'Mastery-level repetition.'
@@ -152,36 +144,30 @@ const createVacationTemplate = (): WeekTemplate => {
   return { id: 'vacation-week', name: 'Vacation', granularityMinutes, color: '#c19a3e', slots }
 }
 
-// Seed 52 applied weeks for 2026 (similar to the design's year assignment)
-const createSeedAppliedWeeks = () => {
-  const assignment = new Array(52).fill('standard-week')
+/** Applied weeks of a year: the same pattern on every ISO week (52 or 53), so the seed is deterministic for a year */
+const createSeedAppliedWeeks = (year: number): AppliedWeek[] => {
+  const starts = isoWeekStarts(year)
+  const assignment: Array<string | null> = starts.map(() => 'standard-week')
   ;[5, 6, 7, 14, 15, 24, 25, 26, 37, 38, 46, 47].forEach(i => { assignment[i] = 'deep-work-week' })
   ;[12, 30, 31, 51].forEach(i => { assignment[i] = 'vacation-week' })
   ;[9, 19, 40].forEach(i => { assignment[i] = null })
 
-  const start = new Date(Date.UTC(2025, 11, 29))
-  return assignment
-    .map((templateId, i) => {
-      if (!templateId) return null
-      const d = new Date(start)
-      d.setUTCDate(start.getUTCDate() + i * 7)
-      const startDate = d.toISOString().slice(0, 10)
-      return { id: `seed-${i}`, startDate, templateId, status: 'normal' as const }
-    })
-    .filter(Boolean) as import('~/types/planner').AppliedWeek[]
+  return assignment.flatMap((templateId, i) =>
+    templateId ? [{ id: `seed-${i}`, startDate: starts[i]!, templateId }] : []
+  )
 }
 
 /** Bump when the persisted shape changes; while in development, a mismatch resets saves to the default seed */
-export const PLANNER_STATE_VERSION = 5
+export const PLANNER_STATE_VERSION = 7
 
 const HARADA_AMBITION_ID = 'ambition-harada'
 const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
 
 type HaradaHabitSeed = [string, number, HabitPeriod, string?, number?]
 
-/** Life categories around the ambition, in grid order: [id, name, colour, hint, goal5y, target1y, targetTbd, habits] */
-const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
-  ['physique', 'Physical', '#7a9471', 'Sport · nutrition · routine',
+/** Life categories around the ambition, in grid order: [id, name, colour, goal5y, target1y, targetTbd, habits] */
+const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
+  ['physique', 'Physical', '#7a9471',
     'Optimal fitness, stable energy, zero sleep debt.',
     'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
       ['Regular exercise (frequency and type to set)', 3, 'week', 'training', 60],
@@ -193,7 +179,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Daily hydration', 1, 'day'],
       ['Stretching and mobility', 3, 'week']
     ]],
-  ['spirituelle', 'Spiritual', '#6e5c7c', 'Meditation · faith / journal',
+  ['spirituelle', 'Spiritual', '#6e5c7c',
     'Inner clarity, calm in the face of professional pressure.',
     'To define — e.g. 10 minutes of daily meditation kept, weekly journaling kept up.', true, [
       ['Regular meditation', 1, 'day'],
@@ -205,7 +191,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Retreat or extended time once a year', 1, 'month'],
       ['Align actions with values', 1, 'week']
     ]],
-  ['relationnelle', 'Relational & emotional', '#c4767f', 'Family · managing emotions',
+  ['relationnelle', 'Relational & emotional', '#c4767f',
     'To be recognised by my family as a present, reliable father, husband, son and brother.',
     'Weekly ritual with my wife and a monthly one-on-one ritual with each child, kept at 90% over the year.', false, [
       ['Time dedicated to my wife (couple ritual)', 1, 'week', 'family', 90],
@@ -217,7 +203,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Recognise, express and regulate my emotions', 1, 'day'],
       ['Resolve tensions quickly, let nothing linger', 1, 'day']
     ]],
-  ['economique', 'Economic', '#c19a3e', 'Tracking · plan',
+  ['economique', 'Economic', '#c19a3e',
     'Financial independence, target net worth.',
     'To define — e.g. target savings rate reached, exact amount invested over the year.', true, [
       ['Monthly budget tracking', 1, 'month'],
@@ -229,7 +215,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Reduce spending not aligned with my values', 1, 'week'],
       ['Continuing education in personal finance', 1, 'month']
     ]],
-  ['cognitive', 'Cognitive', '#4a8683', 'AI · personal project',
+  ['cognitive', 'Cognitive', '#4a8683',
     'Stay at the leading edge of AI and enterprise architecture, able to lead a project of my own.',
     'AI / enterprise architecture certification obtained and a personal project launched — personal dev app or enterprise architecture app (to be decided).', false, [
       ['Active watch on AI / enterprise architecture', 3, 'week'],
@@ -241,7 +227,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Learn a new domain each year', 1, 'month'],
       ['Regularly challenge what I know', 1, 'month']
     ]],
-  ['sociale', 'Social', '#e09070', 'Community · helping others',
+  ['sociale', 'Social', '#e09070',
     'An active role in a professional or entrepreneurial community.',
     'To define — e.g. join an active community, start a mentoring relationship over the year.', true, [
       ['Active participation in one or more communities', 1, 'week'],
@@ -253,7 +239,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Maintain the existing network', 1, 'week'],
       ['New qualified connections each quarter', 1, 'month']
     ]],
-  ['professionnelle', 'Professional', '#3c4b63', 'Networking · leadership · CDO/CIO',
+  ['professionnelle', 'Professional', '#3c4b63',
     'Land a CDO or CIO role within five years.',
     'Take on an expanded role (e.g. Lead Enterprise Architect) covering IT and data, with 3 strategic initiatives delivered and visible to the executive committee.', false, [
       ['Targeted networking with IT / data leaders', 1, 'week'],
@@ -266,7 +252,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Publish professional articles to build my personal brand', 1, 'month'],
       ['Plan the week around professional priorities', 1, 'week', 'planning', 60]
     ]],
-  ['environnement', 'Environment', '#5c7248', 'Sustainability · pace of life',
+  ['environnement', 'Environment', '#5c7248',
     'A sustainable lifestyle, consistent with my values.',
     'To define — e.g. fixed Sunday ritual kept all year, footprint reduced in one identified area.', true, [
       ['Reduce my daily footprint', 1, 'day'],
@@ -280,16 +266,11 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
     ]]
 ]
 
-/** Short line under each seeded grid cell, keyed by category id */
-export const HARADA_HINTS: Record<string, string> = Object.fromEntries(
-  HARADA_CATEGORIES.map(([id, , , hint]) => [id, hint])
-)
-
 /** Seed Harada grid: one 5-year ambition, eight life categories and their daily/weekly/monthly habits */
 export const createHaradaSeed = (): Pick<PlannerState, 'ambition' | 'categories' | 'habits'> => {
   const habits: Habit[] = []
 
-  const categories: Category[] = HARADA_CATEGORIES.map(([id, name, color, , goal5y, target1y, targetTbd, items], index) => {
+  const categories: Category[] = HARADA_CATEGORIES.map(([id, name, color, goal5y, target1y, targetTbd, items], index) => {
     items.forEach(([habitName, count, period, activityId, minutesPerOccurrence], habitIndex) => {
       habits.push({
         id: `${id}-${habitIndex + 1}`,
@@ -330,7 +311,12 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   const templates = state.templates as Array<Partial<WeekTemplate> | null>
 
   if (!categories.every(category => typeof category?.id === 'string' && typeof category.name === 'string')) return false
+  // The journal is a map of date keys to note text; anything else is a broken state
+  const journal = state.journal as Record<string, unknown> | null | undefined
+  if (!journal || typeof journal !== 'object' || Array.isArray(journal)) return false
+  if (!Object.values(journal).every(text => typeof text === 'string')) return false
   if (!templates.every(template => Array.isArray(template?.slots))) return false
+  if (!(state.appliedWeeks as Array<Partial<AppliedWeek> | null>).every(week => typeof week?.startDate === 'string' && typeof week.templateId === 'string')) return false
 
   const categoryIds = new Set(categories.map(category => category!.id))
   const linksToCategory = (item: { categoryId?: string } | null) =>
@@ -339,15 +325,16 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   return activities.every(linksToCategory) && habits.every(linksToCategory)
 }
 
-export const createInitialState = (): PlannerState => ({
+/** Seed for a year; the default is the ISO year of today. The store serialises this seed, so server and client share it */
+export const createInitialState = (year: number = isoWeekOf(localDateKey()).year): PlannerState => ({
   version: PLANNER_STATE_VERSION,
+  journal: {},
   ...createHaradaSeed(),
   settings: {
     timeGranularity: 60,
     activeTemplateId: 'standard-week',
     projectionDefaults: {
-      years: 5,
-      excludedWeekStatuses: ['vacation', 'off']
+      years: 5
     }
   },
   activities: [
@@ -362,7 +349,7 @@ export const createInitialState = (): PlannerState => ({
     { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
   ],
   templates: [createSeedTemplate(), createDeepWorkTemplate(), createVacationTemplate()],
-  appliedWeeks: createSeedAppliedWeeks()
+  appliedWeeks: createSeedAppliedWeeks(year)
 })
 
 export const getTemplateById = (state: PlannerState, templateId: string) =>
@@ -371,8 +358,52 @@ export const getTemplateById = (state: PlannerState, templateId: string) =>
 export const getActiveTemplate = (state: PlannerState) =>
   state.templates.find(template => template.id === state.settings.activeTemplateId) ?? state.templates[0]
 
+/**
+ * Template that governs the week starting on the Monday of the given date (FR-DATE-2): the applied week's
+ * template, else the active template. A deleted template is never returned; the active template takes its place.
+ */
+export const effectiveTemplate = (state: PlannerState, date: string): WeekTemplate | undefined => {
+  const applied = state.appliedWeeks.find(week => week.startDate === mondayOf(date))
+  return (applied && getTemplateById(state, applied.templateId)) || getActiveTemplate(state)
+}
+
 export const getActivityMap = (activities: Activity[]) =>
   new Map(activities.map(activity => [activity.id, activity]))
+
+export type ActivityFieldErrors = Partial<Record<'name' | 'shortCode' | 'categoryId', string>>
+
+/** Short codes are 1 to 3 letters, stored upper-cased and unique across activities (FR-PLAN-16) */
+export const SHORT_CODE_PATTERN = /^[A-Za-z]{1,3}$/
+
+/** Checks only the fields given; `ignoreId` is the activity being edited, so it does not clash with itself */
+export const validateActivityFields = (
+  state: PlannerState,
+  fields: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId'>>,
+  ignoreId?: string
+): ActivityFieldErrors => {
+  const errors: ActivityFieldErrors = {}
+
+  if (fields.name !== undefined && !fields.name.trim()) {
+    errors.name = 'Name can\'t be empty'
+  }
+
+  if (fields.shortCode !== undefined) {
+    const code = fields.shortCode.trim().toUpperCase()
+    const clash = state.activities.find(activity => activity.id !== ignoreId && activity.shortCode === code)
+
+    if (!SHORT_CODE_PATTERN.test(code)) {
+      errors.shortCode = 'Use 1 to 3 letters'
+    } else if (clash) {
+      errors.shortCode = `${code} is already used by ${clash.name}`
+    }
+  }
+
+  if (fields.categoryId !== undefined && !state.categories.some(category => category.id === fields.categoryId)) {
+    errors.categoryId = 'Choose a category'
+  }
+
+  return errors
+}
 
 export const aggregateTemplate = (template: WeekTemplate, activities: Activity[]) => {
   const totals = new Map<string, number>()
@@ -411,6 +442,25 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   }
 
   return categoryTotals
+}
+
+/** Scheduled hours per activity across the ISO weeks of a year, each week under its effective template (FR-DATE-2) */
+export const yearlyActivityHours = (state: PlannerState, year: number): Map<string, number> => {
+  const totals = new Map<string, number>()
+
+  for (const weekStart of isoWeekStarts(year)) {
+    const template = effectiveTemplate(state, weekStart)
+
+    if (!template) {
+      continue
+    }
+
+    for (const [activityId, hours] of aggregateTemplate(template, state.activities)) {
+      totals.set(activityId, (totals.get(activityId) ?? 0) + hours)
+    }
+  }
+
+  return totals
 }
 
 /** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */
@@ -486,4 +536,81 @@ export const categoryAlignments = (state: PlannerState): Map<string, CategoryAli
   }
 
   return alignments
+}
+
+/* ── Activity grid (FR-PLAN-17 to 19): hourly cells of one template ── */
+
+export const HOURS_PER_DAY = 24
+
+/** A cell of the 7 x 24 grid: day 0 is Monday, hour 0 is 12AM. Slot index is day * 24 + hour */
+export interface GridCell {
+  day: number
+  hour: number
+}
+
+/** Hours held by other activities inside a painted range; one hour is one cell in an hourly template */
+export interface HourConflict {
+  activityId: string
+  hours: number
+}
+
+/** `add` gives the cells to the activity; `clear` takes the activity's own hours out of them */
+export type PaintMode = 'add' | 'clear'
+
+export const isHourlyTemplate = (template: WeekTemplate | undefined) => template?.granularityMinutes === 60
+
+export const cellIndex = ({ day, hour }: GridCell) => day * HOURS_PER_DAY + hour
+
+export const cellAtIndex = (index: number): GridCell => ({
+  day: Math.floor(index / HOURS_PER_DAY),
+  hour: index % HOURS_PER_DAY
+})
+
+/** Slot indexes of the rectangle between two cells, both corners included (several days x several hours) */
+export const rectangleCells = (from: GridCell, to: GridCell): number[] => {
+  const cells: number[] = []
+
+  for (let day = Math.min(from.day, to.day); day <= Math.max(from.day, to.day); day += 1) {
+    for (let hour = Math.min(from.hour, to.hour); hour <= Math.max(from.hour, to.hour); hour += 1) {
+      cells.push(day * HOURS_PER_DAY + hour)
+    }
+  }
+
+  return cells
+}
+
+/** Starting on an hour the activity already holds clears the range; starting on any other hour adds it */
+export const paintModeFor = (slots: string[], index: number, activityId: string): PaintMode =>
+  slots[index] === activityId ? 'clear' : 'add'
+
+/** Hours inside the cells that another activity holds, per activity, in reading order of first appearance */
+export const rangeConflicts = (slots: string[], cells: number[], activityId: string): HourConflict[] => {
+  const hours = new Map<string, number>()
+
+  for (const index of cells) {
+    const holder = slots[index]
+
+    if (holder && holder !== activityId) {
+      hours.set(holder, (hours.get(holder) ?? 0) + 1)
+    }
+  }
+
+  return [...hours].map(([id, count]) => ({ activityId: id, hours: count }))
+}
+
+/** New slot array with the cells added to, or cleared from, one activity. Out-of-range indexes are ignored; length never changes */
+export const applyActivityCells = (slots: string[], cells: number[], activityId: string, mode: PaintMode): string[] => {
+  const next = [...slots]
+
+  for (const index of cells) {
+    if (index < 0 || index >= next.length) continue
+
+    if (mode === 'add') {
+      next[index] = activityId
+    } else if (next[index] === activityId) {
+      next[index] = ''
+    }
+  }
+
+  return next
 }

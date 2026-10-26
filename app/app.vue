@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { useTheme } from 'vuetify'
+import { localDateKey } from '~/utils/dates'
 
-type TabId = 'planner' | 'insights' | 'goals' | 'config'
-
-const activeTab = useState<TabId>('activeTab', () => 'goals')
+const { tab, go } = useNav()
 const dark = useState('dark', () => false)
 const theme = useTheme()
-
-const TABS = [
-  { id: 'goals'    as TabId, num: '01', label: 'Goals' },
-  { id: 'planner'  as TabId, num: '02', label: 'Planner' },
-  { id: 'insights' as TabId, num: '03', label: 'Insights' },
-  { id: 'config'   as TabId, num: '04', label: 'Configuration' },
-]
+const { today } = usePlannerYear()
 
 // Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
 watch(dark, (v) => {
@@ -25,6 +18,8 @@ watch(dark, (v) => {
 onMounted(() => {
   const saved = localStorage.getItem('timely.dark')
   if (saved !== null) dark.value = saved === 'true'
+  // Date-dependent views read this only after mount, so server and client render the same first pass
+  today.value = localDateKey()
 })
 
 const toggleDark = () => {
@@ -42,15 +37,15 @@ const toggleDark = () => {
 
         <nav class="tabs" role="tablist" aria-label="Sections">
           <button
-            v-for="tab in TABS"
-            :key="tab.id"
+            v-for="entry in TABS"
+            :key="entry.id"
             role="tab"
             class="tab"
-            :aria-selected="activeTab === tab.id"
-            @click="activeTab = tab.id"
+            :aria-selected="tab === entry.id"
+            @click="go(entry.id)"
           >
-            <span class="tab-num" aria-hidden="true">{{ tab.num }}</span>
-            {{ tab.label }}
+            <span v-if="entry.num" class="tab-num" aria-hidden="true">{{ entry.num }}</span>
+            {{ entry.label }}
           </button>
         </nav>
 

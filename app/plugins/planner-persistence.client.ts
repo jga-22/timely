@@ -7,14 +7,13 @@ export default defineNuxtPlugin(() => {
   const adapter = createPlannerLocalStorageAdapter()
 
   planner.hydrate(adapter.load())
-  planner.ensureDefaultWeek()
   planner.ensureActiveTemplate()
   // Store the restored or default state at once, so a discarded save is overwritten
   adapter.save(planner.$state)
 
-  const { categories, activities, templates, appliedWeeks, settings, ambition, habits } = storeToRefs(planner)
+  const { categories, activities, templates, appliedWeeks, settings, ambition, habits, journal } = storeToRefs(planner)
 
-  watch([categories, activities, templates, appliedWeeks, settings, ambition, habits], () => {
+  watch([categories, activities, templates, appliedWeeks, settings, ambition, habits, journal], () => {
     adapter.save(planner.$state)
   }, { deep: true })
 })

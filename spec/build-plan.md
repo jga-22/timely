@@ -1,0 +1,125 @@
+# Build plan: new structure (Home · Goals · Planner · Visualization)
+
+Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (v3). Source of truth for how it looks: `spec/frontend-design.md`. This file says in which order, with which checks, and who does what. Update the status column as slices ship.
+
+## Rules for every slice
+
+- **Branch:** `feat/home-and-new-structure` (from `feat/harada-goals`). One slice at a time, one commit per slice (more if a slice is large and splits cleanly). Never push; the owner decides.
+- **Executor:** a `doer` agent per slice, given the slice section below plus the PRD requirement IDs. The lead session reviews screenshots and the report before the next slice starts.
+- **Order is sequential.** Slices share the store, `app/utils/planner.ts`, `main.css`, the shell and the page switch, so parallel branches would conflict. Do not start a slice before the previous one is committed and reviewed.
+- **Storage:** no migrations. Bump `PLANNER_STATE_VERSION` whenever the stored shape changes (the stored state resets to the seed). Keep the seed a good test dataset.
+- **Definition of done (every slice):**
+  - `npx nuxi typecheck` exits 0 and `npm run build` is clean (see `.claude/agent.md` for the vue-tsc note).
+  - The acceptance criteria of every requirement in the slice pass, checked in the browser (not only by reading code). Date and computation logic is checked with a throwaway node script against fixture dates; report the cases.
+  - Production build screenshots with headless Edge + `puppeteer-core` (installed in the session scratchpad, never in the repo): every screen the slice touches at 1280 and 400 px, light and dark. No horizontal overflow, no console errors or warnings (including hydration), focus visible on every new control, text contrast >= 4.5:1 and control borders >= 3:1 using the tokens in `frontend-design.md`.
+  - UI follows `frontend-design.md` (one font, tokens only, no uppercase micro-labels, nothing under 12px, sentence case) and the FR-UX rules (see only once, view then edit, progressive disclosure).
+  - No dead code left behind by the slice; no new dependencies without asking the owner.
+  - The slice's doc updates are done (below).
+- **Known hydration warning (owner decision, 2026-10-26):** "Hydration completed but contains mismatches" appears when the saved state differs from the seed (server renders the seed, the client restores storage). The owner chose NOT to switch to client-only rendering (`ssr: false`) because a backend and database may come later; it stays a documented known issue until then. It is excluded from the "no console warnings" check: report it separately, never try to fix it inside a slice, and do not add new `<ClientOnly>` wrappers unless a screen is visibly wrong without one. When a backend arrives, load data on the server and the mismatch disappears.
+- **Docs per slice:** update the PRD statuses of the requirements shipped (Planned to Done, Superseded to removed), `spec/frontend-design.md` where components or screens changed (catalogue 4.x, layout 3.x), refresh the affected `spec/screens/` images, and the status table here and the "Current state" section of `.claude/agent.md`.
+- **Report format from the doer:** files changed, requirement IDs done or partial (with evidence), deviations and why, verification results, screenshot paths, anything unverified, `git status --short`, commit hash.
+
+## Slices
+
+| # | Slice | PRD requirements | Size | Depends on | Status |
+| --- | --- | --- | --- | --- | --- |
+| 0 | Date foundation | FR-DATE-1 to 6 | M | none | Done (commit "feat: date foundation (real today, ISO weeks, year switcher, effective template)"); FR-DATE-6 partial until Home |
+| 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Done (one commit; see status log); FR-UX-5 and FR-VIZ-5/6 partial |
+| 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Done (2a and 2b). FR-PLAN-17 partial until the edit-mode question is decided |
+| 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Done (one commit; see status log). FR-GOALS-20 not built; FR-GOALS-15 and 18 Partial |
+| 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Done (one commit; see status log). FR-HOME-1 and 10 Partial; FR-HOME-11 to 13 are slice 6; FR-HOME-14 not built |
+| 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |
+| 6 | Journal experiment | FR-HOME-11 to 13 | S | 4 | Done (one commit; see status log). FR-HOME-11 to 13 Done as an experiment |
+
+### Slice 0: date foundation
+
+Goal: Home and Visualization can know what "today", "this week" and "the year" are. Fixes the defects the new screens depend on.
+
+- Real date logic: today, ISO weeks (a year can have 53), any year, a year switcher on the year grid; remove `WEEK_DATES_2026` and the hard-coded `CURRENT_WEEK_INDEX`.
+- One shared function for the effective template of a date: the applied week's template, otherwise the active template (PRD FR-DATE-2).
+- Seed the applied weeks for the current year, not a fixed 2026.
+- Remove `ensureDefaultWeek` (it writes today's date as a week start under a fixed id on every load).
+- Projections use the effective template per week (PRD section 17); remove the always-zero "excluded weeks" notion.
+- Remove week status, overrides, notes and `excludedWeekStatuses` from the model (decided: Q5); the unused Configuration note goes with them.
+- Client-only rendering for any date-dependent content (no hydration mismatch).
+- Bump `PLANNER_STATE_VERSION`.
+- Verify with a node script: ISO week boundaries (including the 53-week year and dates near New Year), effective template cases, projection totals.
+
+### Slice 1: shell, URL state, Visualization
+
+- Tabs become Home, Goals, Planner, Visualization; Home is the default. Tab, selected item and edit mode live in the route query (FR-UX); an Edit link can open an item on another screen.
+- Home and Goals can start as thin placeholders that keep working until their slices ship; Configuration stays reachable until slice 3 removes it; Insights is replaced by Visualization in this slice.
+- Visualization (read-only): year metrics with a projection horizon, the week-by-week and monthly stacked chart from effective templates (unassigned weeks drawn lighter), the category breakdown, the goals-vs-planned overview if it fits. The old Insights element mapping is PRD section 11.8.
+
+### Slice 2: Planner
+
+- Activity list, selection, detail view with an Edit mode (name, short code, category, colour), add and delete with inline confirmation (no `confirm()`).
+- The 24x7 activity grid edits the active template: paint across days and hours, release to apply; a taken hour is reassigned only after explicit acceptance; no overlaps; an activity counted once; keyboard operable.
+- With no activity selected, the grid shows the whole template read-only.
+- Template switcher and the year grid stay in the Planner (placement per the PRD); template delete with inline confirmation.
+- Activity colour becomes independent after creation; recolouring a category no longer overwrites activity colours (assumption A6).
+- Activities leave the Configuration tab. The old drag-select grid is retired in slice 5; until then keep it reachable only if needed to avoid a broken screen.
+
+### Slice 3: Goals
+
+- Vision section first (edit the ambition; auto-growing textarea), then the read-only Harada map (ambition in the centre, eight cells showing only order, name, colour and the "To define" flag; selecting a cell selects the category), then the category list (colour, name, counts) with a detail panel in view mode and an Edit mode.
+- Detail: activities (read-only rows with Edit links to the Planner), habits (view rows, Edit mode with frequency, minutes, activity link; the habit's own category first, show the linked activity's category), 1-year target, 5-year goal, and the goals-vs-planned bar as the primary signal.
+- Category management (add, rename, recolour, reorder, remove with move-and-remove) lives here. Remove the Configuration tab.
+
+- Done in slice 3: vision section, read-only Harada map, category list with detail (view and edit), habit rows, add and remove categories, reorder; Configuration tab removed. Deviations (see PRD evidence): FR-GOALS-20 not built; the list shows no order number; habit Edit is in category edit mode only. Store fix: `moveCategory` renumbered after sorting, so reorder never worked before.
+
+### Slice 4: Home
+
+- Day, Week, Month selector (current periods only, assumption Q4). Day: today's blocks in time order with projected time, activity, category and an Edit link. Week and Month: activities sorted by hours.
+- Time-per-category bar for the selected period, totals, one-line "below habit target" signal.
+- Month uses the calendar-day rule (assumption A1). Client-only rendering for date content.
+
+- Done in slice 4 (one commit): period selector (Day, Week, Month; current periods only), Day blocks in time order with a Now mark, Week and Month rows sorted by hours with category and share, totals, time per category (stacked bar and legend, Unplanned last), the one-line below-target signal, empty states, client-only date output. Pure logic in `app/utils/home.ts` (`dayBlocks`, `periodBreakdown`, `periodTemplates`, `belowTargetCategories`, `largestRemainderShares`), checked in node under UTC, Europe/Paris and America/New_York. Storage version unchanged (6).
+- Deviations (explicit): (1) Unplanned is also a legend row, so every bar segment has a text label and the legend adds up to 100 with Unplanned; (2) the period choice is session state (Nuxt `useState`), not a URL parameter, so FR-UX-5 stays limited to tab, item and edit; (3) the spec does not define arrow keys: the selector is buttons with `aria-pressed` (like the Visualization segmented control), where Left, Right, Up and Down move the selection and focus with wrap-around, and Home and End go to the first and last; (4) week and month activity shares are a percent of the period, rounded with the largest remainder together with Unplanned; (5) the below-target line shows in every period, since it is a weekly rate; (6) Edit controls are links styled as small outline buttons; (7) the Now mark refreshes once a minute; (8) templates stay hourly (24 slots a day), as before.
+- Not verified: the "No activities yet." state (coded, not run in the browser); a reload with saved state (where the known hydration message would appear) was not captured; no mixed-template month was screenshotted.
+
+### Slice 5: cleanup (done)
+
+- Done in three commits: the fix, the Home style change, and the cleanup with the docs audit and screenshots. Changes: the activity grid paints only in edit mode (FR-PLAN-17, PRD 11.6), with view mode highlighting the selected activity and an "Edit hours" action; "+ Add activity" in Goals opens the Planner form with the category preselected (FR-GOALS-20); aria-pressed and aria-current follow the URL selection; colour swatches have 24px hit areas; Home Now row aligned and the legend in two columns; dead code removed (week grid leftovers, the Vuetify overrides for components that are not rendered, an unused getter and helper, unused CSS classes); the PRD statuses, `frontend-design.md`, this spec and `.claude/agent.md` audited against the code; screenshots regenerated from the final build (21 files).
+- Left for the owner: the unused `timeGranularity` field (changing the stored shape needs a version bump), the packages `@mdi/font`, `vuetify` and `vue-router` (possibly unused, not removed), and the Partial items FR-UX-2, FR-UX-3, FR-GOALS-15 and FR-GOALS-18.
+- Already done in slice 2b: the old drag-select week grid, its action bar, resize handles, activity menu, week totals, their CSS and the `applyTimeRange` and `clearTimeRange` store actions. Still to do: remove stale docs; update `frontend-design.md` catalogue, breakpoints and screenshots (add Home and Visualization shots).
+
+### Slice 6: journal experiment (low priority)
+
+- A small Journal card on Home: one plain-text note per local date saved in the state (bump the version), a key message derived from the ambition and a different category's 1-year target each day, and a readings placeholder. No habit check-ins, no AI, no dictation. Mark it as an experiment in the UI copy and the PRD.
+
+- Done in slice 6 (one commit). `journal` is a map from local date key to note text in the state (version 7); `isPlannerState` checks it; a blank note removes its key (`setJournalEntry`). Pure key message in `app/utils/journal.ts` (`keyMessage`, `dayOfYearIndex`). `app/components/home/JournalCard.vue` is the last block on Home. FR-HOME-11 to 13 Done (experiment); FR-HOME-1 Done.
+- Deviations: view mode and Edit with Done, as the PRD says, with autosave while editing (the brief asked for saving as you type); no "Recent notes" list (not in the PRD, so not built); the key message uses the 5-year goal when a 1-year target is missing or "To define" (the brief; the PRD names only the 1-year target); the card's heading is "Readings" with the brief's placeholder line, not "Readings to review" and "Coming later"; the journal is a map, not a list of entries (PRD section 14 updated).
+- Found in verification: `<JournalCard />` did not resolve, because Nuxt names components by folder (`HomeJournalCard`). Typecheck passed; the browser run caught it. Fixed before the commit.
+- Verified: `npx nuxi typecheck` exit 0; `npm run build` clean (three Vuetify CSS warnings as before, not from this slice). Node script (38 checks, UTC, Europe/Paris, America/New_York): key-message determinism and rotation, fallbacks, `setJournalEntry` semantics on the real store, `isPlannerState` for journal shapes, version 6 rejected. Browser (production build, headless Edge, clock 25 and 26 Oct 2026 and 1 Jan 2027, 56 checks): note typed by keyboard with Saved, reload keeps it, next day empty card with yesterday kept, clearing removes the key, key message cycles and links to Goals, long note with no inner scrollbar, card in Day, Week and Month, keyboard flow, focus ring, no horizontal overflow at 400 and 1280 in light and dark, no console errors other than hydration; 0 hydration messages in that run.
+- Not verified: the Recent-notes question (not built); the key message in the Goals detail after an ambition edit (it is computed from the store, so expected to update); a 53-week year (no journal logic depends on it).
+
+## Risks and notes
+
+- The Planner slice is the largest and riskiest (new grid component, reassign flow, keyboard support). If it overruns, split it: (2a) activity list, detail and edit; (2b) the 24x7 grid.
+- No test runner exists. Date logic is the riskiest pure code; if the owner approves a dev dependency, add Vitest in slice 0 and turn the node scripts into tests.
+- Each slice must leave the app fully working. Placeholders are allowed; broken screens are not.
+
+## Status log
+
+| Date | Event |
+| --- | --- |
+| 2026-10-25 | Plan written from PRD v3. |
+| 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |
+| 2026-10-25 | Slice 1 done in one commit: Home (placeholder, default), Goals, Planner, Visualization and transitional Configuration; URL state in `useNav`; Insights replaced by Visualization; horizon moved to Visualization. FR-VIZ-1 to 4 Done; FR-VIZ-5 and 6, FR-UX-5, FR-APP-7 and 8 Partial. FR-DATE-6 and FR-APP-6 Done. |
+| 2026-10-26 | Slice 2b done in one commit: 24x7 activity grid (hourly; pointer and keyboard painting; inline reassign confirmation; template overview; touch), old week grid retired (Q1). FR-PLAN-13, 15, 16, 18, 19, 20 Done; FR-PLAN-17 Partial (painting while an activity is selected, not only in edit mode: owner to confirm); FR-TPL-5 Done. The activity grid is client-only (`ClientOnly`) because server HTML kept seed cells after hydration. |
+| 2026-10-26 | Slice 4 done in one commit: Home with Day, Week and Month (session period selector with keyboard), Day blocks with Now, Week and Month rows, totals, time per category bar and legend, below-target line, empty states; client-only dates. FR-HOME-2 to 9 Done; FR-HOME-1 and FR-HOME-10 Partial; FR-HOME-11 to 13 are slice 6; FR-DATE-6 Done. Storage version unchanged (6). |
+| 2026-10-26 | Slice 3 done in one commit: Goals vision (AutoTextarea, Done), read-only Harada map (order, name, colour, To define; keyboard), category list (counts, Below target, Add category) and detail (view with goals vs. planned, habits, activities; edit with fields, habit rows, move and remove). Configuration tab and `LegendView.vue` removed; four tabs. FR-GOALS-13, 14, 16, 17, 19, 21, 22 Done; FR-GOALS-15, 18 Partial; FR-GOALS-20 not built. FR-UX-5, FR-APP-7, FR-APP-8, FR-VIZ-6 Done. Reorder fixed in the store. Storage version unchanged (6). |
+| 2026-10-26 | Slice 5 done in three commits (cleanup and docs; see the slice section). FR-PLAN-17 Done (painting in edit mode only, PRD 11.6); FR-GOALS-20 Done; FR-UX-1, 4, 6, 7, 8 Done; FR-UX-2, 3 Partial (templates have no Edit button; list rows show three facts). Dead code removed (utils, store getter, CSS). PRD, design spec, README and agent context audited; screenshots regenerated. Storage version unchanged (6). Not pushed. |
+| 2026-10-26 | Slice 6 done in one commit: Journal experiment on Home (note per local date, autosave, key message from the ambition and a rotating category target, readings placeholder). FR-HOME-11 to 13 Done as an experiment; FR-HOME-1 Done. Storage version 7. Not pushed. |
+| 2026-10-26 | Slice 7 (Planner week-first redesign, one commit): the week grid is first, with an Activities palette beside it (chips above it on phones) that is the brush (activity or Erase); painting is direct, with no edit mode gate, and painting over other hours shows a replaced-hours notice with one-step Undo (owner decision, PRD 23.1); the activity editor moves to an inline panel from the selected palette row; lighter grid (no cell borders, code on the first hour of each block); year grid full width and collapsible, 13 week columns with a quarter label per row. FR-PLAN-16 to 20 updated, FR-PLAN-18 Done as a notice (confirmation removed), FR-PLAN-22 added and Done. Browser checks: `planner-check.cjs` (28 checks, headless Edge, 1280 and 400 px, light and dark). Storage version unchanged (7). Not pushed. |
+
+## Remaining and later ideas
+
+- **Owner decisions:** the unused `timeGranularity` setting (a version bump would reset saved data); packages to drop after checking (`@mdi/font`, `vuetify`, `vue-router`); the Partial rows FR-UX-2, FR-UX-3, FR-GOALS-15, FR-GOALS-18, FR-HOME-10, FR-YEAR-3, FR-VIZ-5; whether the journal experiment stays after the test (the PRD says it may be removed).
+- **Order number in list rows:** decide whether the category list shows the order number (slice 3 chose none).
+- **Template edit affordance:** templates have no Edit button (FR-UX-2, FR-UX-3); PRD 21 lists a template Edit button and duplicate (FR-TPL-6).
+- **Journal ideas (not built):** dictation, talking with an AI, habit check-ins (FR-HOME-14), streaks, reminders, export. Recent notes on Home is not in the PRD and needs a decision first.
+- **Later ideas (PRD 21):** copy a day and clear the week (FR-PLAN-8), 30-minute slots (FR-PLAN-10), export, import and reset (FR-APP-5), annual and quarterly habit periods (FR-GOALS-11), weekday distribution and scenario comparison (FR-INS-7, 8), a full projection list (FR-VIZ-5).
+- **Packaging and runtime:** Node update to the latest 24.x LTS (the owner runs v24.12.0); optionally `.nvmrc` and `engines`.
+- **Hydration warning (known, owner decision 2026-10-26):** "Hydration completed but contains mismatches" appears when the saved state differs from the seed. Decide on a client-only wrapper, or on server data, when a backend arrives.

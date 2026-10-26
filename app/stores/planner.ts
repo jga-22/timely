@@ -1,13 +1,18 @@
 import { defineStore } from 'pinia'
-import type { Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
+import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
-  aggregateTemplate,
-  aggregateTemplateByCategory,
+  applyActivityCells,
   createEmptySlots,
   createHaradaSeed,
   createInitialState,
   getActiveTemplate,
-  getTemplateById
+  getTemplateById,
+  rangeConflicts,
+  validateActivityFields,
+  yearlyActivityHours,
+  type ActivityFieldErrors,
+  type HourConflict,
+  type PaintMode
 } from '~/utils/planner'
 
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
@@ -18,29 +23,18 @@ export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => createInitialState(),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
-    activeTemplateCategoryTotals(state) {
-      const template = getActiveTemplate(state)
-      return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
-    },
+    /** Hours per activity over the horizon: the chosen year's scheduled hours times the horizon in years (PRD 17.11) */
     yearlyProjectionHours(state) {
-      const template = getActiveTemplate(state)
+      return (year: number) => {
+        const years = state.settings.projectionDefaults.years
+        const projected = new Map<string, number>()
 
-      if (!template) {
-        return new Map<string, number>()
+        for (const [activityId, hours] of yearlyActivityHours(state, year)) {
+          projected.set(activityId, hours * years)
+        }
+
+        return projected
       }
-
-      const weeklyTotals = aggregateTemplate(template, state.activities)
-      const excludedWeeks = state.appliedWeeks.filter(week =>
-        state.settings.projectionDefaults.excludedWeekStatuses.includes(week.status as 'vacation' | 'off')
-      ).length
-      const includedWeeks = Math.max((52 * state.settings.projectionDefaults.years) - excludedWeeks, 0)
-      const projected = new Map<string, number>()
-
-      for (const [activityId, hours] of weeklyTotals) {
-        projected.set(activityId, hours * includedWeeks)
-      }
-
-      return projected
     }
   },
   actions: {
@@ -49,21 +43,6 @@ export const usePlannerStore = defineStore('planner', {
         this.$patch(state)
         this.ensureActiveTemplate()
       }
-    },
-    ensureDefaultWeek() {
-      const template = this.activeTemplate
-
-      if (!template || this.appliedWeeks.some(week => week.templateId === template.id)) {
-        return
-      }
-
-      this.appliedWeeks.unshift({
-        id: 'seed-week',
-        startDate: new Date().toISOString().slice(0, 10),
-        templateId: template.id,
-        status: 'normal',
-        notes: 'Seeded automatically after template creation.'
-      })
     },
     ensureActiveTemplate() {
       const template = this.activeTemplate
@@ -134,43 +113,68 @@ export const usePlannerStore = defineStore('planner', {
 
       template.name = name.trim() || template.name
     },
-    applyTimeRange(activityId: string, dayIndexes: number[], startHour: number, endHour: number) {
-      const template = this.activeTemplate
+    /**
+     * Paints one activity's hours in one hourly template (FR-PLAN-17, 18). `add` takes hours held by other
+     * activities only when `reassign` is true; otherwise nothing changes and the conflicts are returned for confirmation.
+     * Returns [] when the change was applied.
+     */
+    setActivitySlots(templateId: string, activityId: string, cells: number[], mode: PaintMode, reassign = false): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
 
-      if (!template || startHour < 0 || endHour > 24 || startHour >= endHour) {
-        return
+      if (!template || template.granularityMinutes !== 60 || !this.activities.some(activity => activity.id === activityId)) {
+        return []
       }
 
-      for (const dayIndex of dayIndexes) {
-        if (dayIndex < 0 || dayIndex > 6) {
-          continue
-        }
+      const conflicts = mode === 'add' ? rangeConflicts(template.slots, cells, activityId) : []
 
-        for (let hour = startHour; hour < endHour; hour += 1) {
-          const index = (dayIndex * 24) + hour
-          template.slots[index] = activityId
-        }
+      if (conflicts.length && !reassign) {
+        return conflicts
       }
+
+      template.slots = applyActivityCells(template.slots, cells, activityId, mode)
+      return []
     },
-    clearTimeRange(dayIndexes: number[], startHour: number, endHour: number) {
-      this.applyTimeRange('', dayIndexes, startHour, endHour)
+    /**
+     * Paints cells with one activity, replacing whatever other activities hold them (FR-PLAN-17). With a null activity the cells
+     * are erased. Returns the hours taken from each holder, for the undo notice. Nothing is checked or confirmed first.
+     */
+    paintCells(templateId: string, cells: number[], activityId: string | null): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template || template.granularityMinutes !== 60) return []
+      if (activityId && !this.activities.some(activity => activity.id === activityId)) return []
+
+      const taken = rangeConflicts(template.slots, cells, activityId ?? '')
+      template.slots = template.slots.map((holder, index) => (cells.includes(index) ? (activityId ?? '') : holder))
+      return taken
+    },
+    /** Puts back a template's slots as they were before the last paint (single-step undo) */
+    restoreSlots(templateId: string, slots: string[]) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (template && template.slots.length === slots.length) template.slots = [...slots]
     },
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
     },
-    addCategory(name: string, color: string) {
+    /** Adds a category at the end of the list. Returns its id, or null when the name is blank */
+    addCategory(name: string, color: string): string | null {
       const trimmedName = name.trim()
 
       if (!trimmedName) {
-        return
+        return null
       }
 
+      const id = `category-${Date.now()}`
+
       this.categories.push({
-        id: `category-${Date.now()}`,
+        id,
         name: trimmedName,
         color,
         order: Math.max(0, ...this.categories.map(category => category.order)) + 1
       })
+
+      return id
     },
     updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
       const category = this.categories.find(item => item.id === categoryId)
@@ -183,9 +187,13 @@ export const usePlannerStore = defineStore('planner', {
         return
       }
 
+      // A6: only activities still on the old category colour follow the change; hand-picked colours stay
+      const previous = category.color?.toLowerCase()
       category.color = color
       for (const activity of this.activities) {
-        if (activity.categoryId === categoryId) activity.color = color
+        if (activity.categoryId === categoryId && previous && activity.color.toLowerCase() === previous) {
+          activity.color = color
+        }
       }
     },
     moveCategory(categoryId: string, offset: -1 | 1) {
@@ -200,7 +208,8 @@ export const usePlannerStore = defineStore('planner', {
       const current = ordered[index]!
       ordered[index] = ordered[targetIndex]!
       ordered[targetIndex] = current
-      this.categories = numberCategories(ordered)
+      // Renumber in the swapped order; sorting by the old order numbers would undo the swap
+      this.categories = ordered.map((category, position) => ({ ...category, order: position + 1 }))
     },
     /** Removes a category; its activities and habits must first move to another category */
     removeCategory(categoryId: string, targetCategoryId?: string): boolean {
@@ -232,22 +241,49 @@ export const usePlannerStore = defineStore('planner', {
       this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
       return true
     },
-    addActivity(name: string, shortCode: string, categoryId: string) {
-      const trimmedName = name.trim()
-      const normalizedCode = shortCode.trim().slice(0, 3).toUpperCase()
-      const category = this.categories.find(item => item.id === categoryId)
+    /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
+    addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
+      const fields = { name, shortCode, categoryId }
 
-      if (!trimmedName || !normalizedCode || !category) {
-        return
+      if (Object.keys(validateActivityFields(this.$state, fields)).length) {
+        return null
       }
 
+      const category = this.categories.find(item => item.id === categoryId)
+      const id = `activity-${Date.now()}`
+
       this.activities.push({
-        id: `activity-${Date.now()}`,
-        name: trimmedName,
-        shortCode: normalizedCode,
+        id,
+        name: name.trim(),
+        shortCode: shortCode.trim().toUpperCase(),
         categoryId,
-        color: category.color ?? '#685847'
+        color: color ?? category?.color ?? '#685847'
       })
+
+      return id
+    },
+    /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
+    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
+      const activity = this.activities.find(item => item.id === activityId)
+
+      if (!activity) {
+        return {}
+      }
+
+      const errors = validateActivityFields(this.$state, changes, activityId)
+
+      if (Object.keys(errors).length) {
+        return errors
+      }
+
+      // Changing the category moves the activity's hours with it; its slots and habit links stay as they are
+      Object.assign(activity, {
+        ...changes,
+        ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
+        ...(changes.shortCode !== undefined ? { shortCode: changes.shortCode.trim().toUpperCase() } : {})
+      })
+
+      return {}
     },
     removeActivity(activityId: string) {
       const nextActivities = this.activities.filter(activity => activity.id !== activityId)
@@ -276,9 +312,7 @@ export const usePlannerStore = defineStore('planner', {
         this.appliedWeeks.push({
           id: `${templateId}-${startDate}`,
           startDate,
-          templateId,
-          status: 'normal',
-          notes: 'Assigned from year painter.'
+          templateId
         })
       }
     },
@@ -293,19 +327,24 @@ export const usePlannerStore = defineStore('planner', {
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
       if (this.ambition) Object.assign(this.ambition, changes)
     },
-    addHabit(categoryId: string, name: string) {
+    /** Adds a habit to a category. Returns its id, or null when the name is blank or the category is unknown */
+    addHabit(categoryId: string, name: string): string | null {
       const trimmedName = name.trim()
 
       if (!trimmedName || !this.categories.some(category => category.id === categoryId)) {
-        return
+        return null
       }
 
+      const id = `habit-${Date.now()}`
+
       this.habits.push({
-        id: `habit-${Date.now()}`,
+        id,
         categoryId,
         name: trimmedName,
         frequency: { count: 1, period: 'week' }
       })
+
+      return id
     },
     updateHabit(habitId: string, changes: Partial<Pick<Habit, 'name' | 'minutesPerOccurrence'>>) {
       const habit = this.habits.find(item => item.id === habitId)
@@ -327,6 +366,14 @@ export const usePlannerStore = defineStore('planner', {
     },
     removeHabit(habitId: string) {
       this.habits = this.habits.filter(habit => habit.id !== habitId)
+    },
+    /** Journal experiment (FR-HOME-11): a blank note removes the entry, so the saved state stays small */
+    setJournalEntry(dateKey: string, text: string) {
+      if (text.trim()) {
+        this.journal[dateKey] = text
+      } else {
+        delete this.journal[dateKey]
+      }
     },
   }
 })

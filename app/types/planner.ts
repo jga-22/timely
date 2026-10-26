@@ -1,5 +1,3 @@
-export type WeekStatus = 'normal' | 'vacation' | 'off' | 'custom'
-
 /** A life area that is at once a planner category, a Harada grid cell and a goal holder */
 export interface Category {
   id: string
@@ -33,14 +31,10 @@ export interface AppliedWeek {
   id: string
   startDate: string
   templateId: string
-  status: WeekStatus
-  overrides?: Record<string, string>
-  notes?: string
 }
 
 export interface ProjectionSettings {
   years: number
-  excludedWeekStatuses: Array<'vacation' | 'off'>
 }
 
 export interface PlannerSettings {
@@ -77,4 +71,6 @@ export interface PlannerState {
   appliedWeeks: AppliedWeek[]
   ambition: Ambition | null
   habits: Habit[]
+  /** Journal experiment (FR-HOME-11): one plain-text note per local date key (YYYY-MM-DD); empty notes are removed */
+  journal: Record<string, string>
 }

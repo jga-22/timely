@@ -1,160 +1,192 @@
 <script setup lang="ts">
-import type { HabitPeriod } from '~/types/planner'
+import type { Activity, Habit, HabitPeriod } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { habitWeeklyOccurrences, scheduledWeeklyMinutesForActivity } from '~/utils/planner'
 
-const props = defineProps<{ categoryId: string }>()
+const props = defineProps<{ categoryId: string; editing: boolean }>()
 
 const planner = usePlannerStore()
+const { link } = useNav()
 
-const newHabitName = ref('')
-// Only one habit shows its details at a time, keeping the list calm
-const openHabitId = ref<string | null>(null)
-
+const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 const habits = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId))
 
-const PERIOD_ITEMS: Array<{ title: string; value: HabitPeriod }> = [
-  { title: 'per day', value: 'day' },
-  { title: 'per week', value: 'week' },
-  { title: 'per month', value: 'month' }
-]
+const PERIOD_LABELS: Record<HabitPeriod, string> = { day: 'a day', week: 'a week', month: 'a month' }
 
-const activityItems = computed(() =>
-  planner.activities.map(activity => ({ title: activity.name, value: activity.id }))
+const frequencyText = (habit: Habit) => {
+  const base = `${habit.frequency.count} ${PERIOD_LABELS[habit.frequency.period]}`
+  return habit.minutesPerOccurrence ? `${base}, ${habit.minutesPerOccurrence} min` : base
+}
+
+const categoryName = (categoryId: string) => planner.categories.find(category => category.id === categoryId)?.name ?? 'No category'
+
+const linkedActivity = (habit: Habit): Activity | undefined =>
+  habit.activityId ? planner.activities.find(activity => activity.id === habit.activityId) : undefined
+
+// The activity's category follows its name only when it differs from the habit's own (FR-GOALS-22)
+const linkedLabel = (habit: Habit) => {
+  const activity = linkedActivity(habit)
+  if (!activity) return 'Not linked to an activity'
+
+  return activity.categoryId === habit.categoryId ? activity.name : `${activity.name} (${categoryName(activity.categoryId)})`
+}
+
+// Activity picker: the habit's own category first, then the others in order, each as a group
+const activityGroups = (habit: Habit) => [
+  ...sortedCategories.value.filter(category => category.id === habit.categoryId),
+  ...sortedCategories.value.filter(category => category.id !== habit.categoryId)
+]
+  .map(category => ({ category, activities: planner.activities.filter(activity => activity.categoryId === category.id) }))
+  .filter(group => group.activities.length)
+
+// Edit mode: one habit's form is open at a time; Remove asks first
+const openId = ref<string | null>(null)
+const confirmRemoveId = ref<string | null>(null)
+
+watch(
+  () => [props.categoryId, props.editing] as const,
+  () => {
+    openId.value = null
+    confirmRemoveId.value = null
+  }
 )
 
-const weeklyRate = (habit: (typeof habits.value)[number]) =>
-  Math.round(habitWeeklyOccurrences(habit) * 10) / 10
-
-const scheduledLabel = (activityId?: string) => {
-  if (!activityId) return null
-
-  const hours = scheduledWeeklyMinutesForActivity(planner.$state, activityId) / 60
-
-  return `${Math.round(hours * 10) / 10} h a week scheduled`
+function toggleOpen(habitId: string) {
+  confirmRemoveId.value = null
+  openId.value = openId.value === habitId ? null : habitId
 }
 
-const toggleDetails = (habitId: string) => {
-  openHabitId.value = openHabitId.value === habitId ? null : habitId
+// A new habit gets a placeholder name and opens its form, so it can be renamed at once
+function addHabit() {
+  const id = planner.addHabit(props.categoryId, 'New habit')
+  if (!id) return
+
+  confirmRemoveId.value = null
+  openId.value = id
 }
 
-const removeHabit = (habitId: string) => {
-  if (openHabitId.value === habitId) openHabitId.value = null
+function removeHabit(habitId: string) {
+  if (openId.value === habitId) openId.value = null
+  confirmRemoveId.value = null
   planner.removeHabit(habitId)
 }
 
-const addHabit = () => {
-  planner.addHabit(props.categoryId, newHabitName.value)
-  newHabitName.value = ''
-}
+const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, Number(value) || 0))
 </script>
 
 <template>
   <div class="habit-list">
-    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this category.</p>
+    <!-- View mode: read-only rows -->
+    <template v-if="!editing">
+      <ul v-if="habits.length" class="habit-rows">
+        <li v-for="habit in habits" :key="habit.id" class="habit-row">
+          <span class="habit-name">{{ habit.name }}</span>
+          <span class="habit-meta">{{ frequencyText(habit) }}</span>
+          <span v-if="linkedActivity(habit)" class="habit-link">
+            Linked to <NuxtLink :to="link('planner', { item: habit.activityId })">{{ linkedLabel(habit) }}</NuxtLink>
+          </span>
+          <span v-else class="habit-unlinked">Not linked to an activity</span>
+        </li>
+      </ul>
+      <p v-else class="habit-empty">No daily habits yet for this category.</p>
+    </template>
 
-    <div v-for="habit in habits" :key="habit.id" class="habit-row" :class="{ 'is-open': openHabitId === habit.id }">
-      <div class="habit-main">
-        <AutoTextarea
-          :model-value="habit.name"
-          aria-label="Habit name"
-          class="habit-name"
-          @update:model-value="planner.updateHabit(habit.id, { name: $event })"
-        />
+    <!-- Edit mode: a row per habit; its form opens inline -->
+    <template v-else>
+      <p v-if="!habits.length" class="habit-empty">No daily habits yet for this category.</p>
 
-        <button
-          type="button"
-          class="habit-toggle"
-          :aria-expanded="openHabitId === habit.id"
-          @click="toggleDetails(habit.id)"
-        >
-          {{ openHabitId === habit.id ? 'Done' : 'Details' }}
-        </button>
+      <div v-for="habit in habits" :key="habit.id" class="habit-edit" :class="{ 'is-open': openId === habit.id }">
+        <div class="habit-summary">
+          <div class="habit-summary-text">
+            <span class="habit-name">{{ habit.name }}</span>
+            <span class="habit-meta">{{ frequencyText(habit) }}</span>
+            <span class="habit-meta" :class="{ 'is-warn': !linkedActivity(habit) }">{{ linkedLabel(habit) }}</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm"
+            :aria-expanded="openId === habit.id"
+            :aria-label="openId === habit.id ? `Done with ${habit.name}` : `Edit ${habit.name}`"
+            @click="toggleOpen(habit.id)"
+          >{{ openId === habit.id ? 'Done' : 'Edit' }}</button>
+        </div>
+
+        <div v-if="openId === habit.id" class="habit-form form-stack">
+          <AutoTextarea
+            :model-value="habit.name"
+            label="Habit name"
+            @update:model-value="planner.updateHabit(habit.id, { name: $event })"
+          />
+
+          <div class="form-row-3">
+            <div class="field">
+              <label class="field-label" :for="`habit-count-${habit.id}`">Times</label>
+              <input
+                :id="`habit-count-${habit.id}`"
+                class="timely-input"
+                type="number"
+                min="0"
+                :value="habit.frequency.count"
+                @input="planner.setHabitFrequency(habit.id, Number(($event.target as HTMLInputElement).value) || 0, habit.frequency.period)"
+              />
+            </div>
+
+            <div class="field">
+              <label class="field-label" :for="`habit-period-${habit.id}`">Period</label>
+              <select
+                :id="`habit-period-${habit.id}`"
+                class="timely-select"
+                :value="habit.frequency.period"
+                @change="planner.setHabitFrequency(habit.id, habit.frequency.count, ($event.target as HTMLSelectElement).value as HabitPeriod)"
+              >
+                <option value="day">per day</option>
+                <option value="week">per week</option>
+                <option value="month">per month</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field-label" :for="`habit-minutes-${habit.id}`">Minutes each</label>
+              <input
+                :id="`habit-minutes-${habit.id}`"
+                class="timely-input"
+                type="number"
+                min="0"
+                :value="habit.minutesPerOccurrence ?? ''"
+                @input="planner.updateHabit(habit.id, { minutesPerOccurrence: minutesFrom(($event.target as HTMLInputElement).value) })"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`habit-activity-${habit.id}`">Linked activity</label>
+            <select
+              :id="`habit-activity-${habit.id}`"
+              class="timely-select"
+              :value="habit.activityId ?? ''"
+              @change="planner.setHabitActivity(habit.id, ($event.target as HTMLSelectElement).value || null)"
+            >
+              <option value="">Not linked</option>
+              <optgroup v-for="group in activityGroups(habit)" :key="group.category.id" :label="group.category.name">
+                <option v-for="activity in group.activities" :key="activity.id" :value="activity.id">{{ activity.name }}</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div v-if="confirmRemoveId === habit.id" class="inline-confirm" role="group" aria-label="Confirm remove habit">
+            <p class="inline-confirm-text">Remove {{ habit.name }}? This cannot be undone.</p>
+            <div class="form-actions">
+              <button type="button" class="btn btn-sm btn-danger" @click="removeHabit(habit.id)">Remove</button>
+              <button type="button" class="btn btn-sm" @click="confirmRemoveId = null">Cancel</button>
+            </div>
+          </div>
+          <div v-else class="form-actions">
+            <button type="button" class="btn btn-sm btn-danger" @click="confirmRemoveId = habit.id">Remove habit</button>
+          </div>
+        </div>
       </div>
 
-      <div class="habit-meta">
-        <span>About {{ weeklyRate(habit) }} a week</span>
-        <span v-if="scheduledLabel(habit.activityId)">{{ scheduledLabel(habit.activityId) }}</span>
-        <span v-else class="habit-unlinked">Not linked to an activity</span>
-      </div>
-
-      <div v-if="openHabitId === habit.id" class="habit-controls">
-        <v-text-field
-          :model-value="habit.frequency.count"
-          aria-label="Frequency count"
-          type="number"
-          min="0"
-          label="Count"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="habit-count"
-          @update:model-value="planner.setHabitFrequency(habit.id, Number($event), habit.frequency.period)"
-        />
-        <v-select
-          :model-value="habit.frequency.period"
-          :items="PERIOD_ITEMS"
-          aria-label="Frequency period"
-          label="Period"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="habit-period"
-          @update:model-value="planner.setHabitFrequency(habit.id, habit.frequency.count, $event)"
-        />
-        <v-text-field
-          :model-value="habit.minutesPerOccurrence ?? ''"
-          aria-label="Minutes per occurrence"
-          type="number"
-          min="0"
-          label="Minutes each"
-          suffix="min"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="habit-minutes"
-          @update:model-value="planner.updateHabit(habit.id, { minutesPerOccurrence: $event === '' ? undefined : Number($event) })"
-        />
-        <v-select
-          :model-value="habit.activityId ?? null"
-          :items="activityItems"
-          aria-label="Linked activity"
-          label="Linked activity"
-          placeholder="Link activity"
-          clearable
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="habit-activity"
-          @update:model-value="planner.setHabitActivity(habit.id, $event)"
-        />
-        <v-btn
-          variant="text"
-          color="error"
-          size="small"
-          prepend-icon="mdi-delete-outline"
-          class="habit-remove"
-          @click="removeHabit(habit.id)"
-        >
-          Remove
-        </v-btn>
-      </div>
-    </div>
-
-    <form class="habit-add" @submit.prevent="addHabit">
-      <v-text-field
-        v-model="newHabitName"
-        placeholder="New daily habit"
-        aria-label="New daily habit"
-        density="compact"
-        variant="outlined"
-        hide-details
-        class="habit-add-input"
-      />
-      <v-btn type="submit" color="primary" variant="flat" prepend-icon="mdi-plus" :disabled="!newHabitName.trim()">
-        Add habit
-      </v-btn>
-    </form>
+      <button type="button" class="chip-add habit-add" @click="addHabit">+ Add habit</button>
+    </template>
   </div>
 </template>
 
@@ -165,78 +197,72 @@ const addHabit = () => {
 }
 
 .habit-empty {
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
 }
 
-.habit-row {
+.habit-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit-row,
+.habit-edit {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) 0;
+  gap: 2px;
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--rule-2);
 }
 
-.habit-main {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
 .habit-name {
-  flex: 1;
-  min-width: 0;
-}
-
-.habit-toggle {
-  flex: none;
-  margin-top: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: 500;
-  color: var(--accent);
+  overflow-wrap: anywhere;
 }
-.habit-toggle:hover { background: var(--bg-3); }
 
 .habit-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--space-3);
   font-size: var(--fs-sm);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
-.habit-meta span + span::before {
-  content: "·";
-  margin-right: var(--space-3);
-}
 
+.habit-meta.is-warn,
 .habit-unlinked {
   color: var(--warn);
 }
 
-.habit-controls {
+.habit-link {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.habit-summary {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+.habit-summary-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.habit-edit.is-open {
+  padding-bottom: var(--space-4);
+}
+
+.habit-form {
   margin-top: var(--space-3);
 }
 
-.habit-count { max-width: 96px; }
-.habit-period { min-width: 140px; flex: 0 1 140px; }
-.habit-minutes { max-width: 140px; }
-.habit-activity { min-width: 180px; flex: 1 1 180px; }
-
 .habit-add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-5);
-}
-
-.habit-add-input {
-  flex: 1 1 220px;
+  align-self: flex-start;
+  margin-top: var(--space-3);
 }
 </style>

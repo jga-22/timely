@@ -2,191 +2,374 @@
 import { storeToRefs } from 'pinia'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { HARADA_HINTS, categoryAlignments } from '~/utils/planner'
+import { DESIGN_COLORS, categoryAlignments, countLabel } from '~/utils/planner'
 
-/** The Harada grid has eight outer cells around the ambition */
-const GRID_SIZE = 8
-const DEFAULT_CATEGORY_ID = 'professionnelle'
-
-const TAB_ITEMS = [
-  { value: 'goal', label: '5-year goal' },
-  { value: 'habits', label: 'Daily habits' },
-  { value: 'target', label: '1-year target' }
-]
+/** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
+const MAP_SIZE = 8
+/** Map positions run in reading order, three to a row; the ambition sits in the centre (position 4) */
+const MAP_COLUMNS = 3
+const MAP_CENTRE = 4
 
 const planner = usePlannerStore()
 const { ambition, categories } = storeToRefs(planner)
-
-const selectedId = ref<string | null>(null)
-const activeTab = ref('goal')
+const { item, edit, setSelection } = useNav()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
 
-// The first eight categories fill the grid; missing ones stay as empty placeholders
-const gridSlots = computed<Array<Category | null>>(() =>
-  Array.from({ length: GRID_SIZE }, (_, index) => sortedCategories.value[index] ?? null)
-)
+// Eight outer slots around the centre; a missing category leaves an empty placeholder
+const mapCells = computed<Array<Category | 'centre' | null>>(() => {
+  const slots = Array.from({ length: MAP_SIZE }, (_, index) => sortedCategories.value[index] ?? null)
+  return [...slots.slice(0, MAP_CENTRE), 'centre', ...slots.slice(MAP_CENTRE)]
+})
 
-// Same 3x3 layout as the prototype: four categories, the ambition, four categories
-const gridCells = computed<Array<Category | 'centre' | null>>(() => [
-  ...gridSlots.value.slice(0, 4),
-  'centre',
-  ...gridSlots.value.slice(4)
-])
+const isMapCategory = (position: number) => {
+  const cell = mapCells.value[position]
+  return typeof cell === 'object' && cell !== null
+}
 
-const selected = computed<Category | null>(() =>
-  gridSlots.value.find(category => category?.id === selectedId.value)
-    ?? gridSlots.value.find(category => category?.id === DEFAULT_CATEGORY_ID)
-    ?? gridSlots.value[0]
-    ?? null
-)
+// The category named in the URL; an id that does not exist selects nothing (FR-UX-5)
+const selected = computed<Category | null>(() => sortedCategories.value.find(category => category.id === item.value) ?? null)
+// Desktop shows the first category until another is chosen (FR-GOALS-15); phones show the list until one is selected
+const shown = computed<Category | null>(() => selected.value ?? sortedCategories.value[0] ?? null)
+const editing = computed(() => !!selected.value && edit.value)
+
+const horizonYears = computed(() => ambition.value?.horizonYears ?? 5)
+const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value === 1 ? 'year' : 'years'}`)
 
 const alignments = computed(() => categoryAlignments(planner.$state))
 
-const alignment = computed(() =>
-  selected.value ? alignments.value.get(selected.value.id) ?? null : null
-)
-
-const selectCategory = (categoryId: string) => {
-  selectedId.value = categoryId
-  activeTab.value = 'goal'
+// Quiet flag in the list: the habits ask for more time than their linked activities hold
+const isBelowTarget = (categoryId: string) => {
+  const coverage = alignments.value.get(categoryId)?.coverage ?? null
+  return coverage !== null && coverage < 1
 }
 
-const formatHours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10} h`
+const countsText = (categoryId: string) => {
+  const activityCount = planner.activities.filter(activity => activity.categoryId === categoryId).length
+  const habitCount = planner.habits.filter(habit => habit.categoryId === categoryId).length
+
+  return `${countLabel(activityCount, 'activity', 'activities')} · ${countLabel(habitCount, 'habit', 'habits')}`
+}
+
+// ── Vision: the only place the ambition is edited (FR-GOALS-13). Edit mode is local: one field, one edit at a time
+const visionEditing = ref(false)
+const visionEditButton = ref<HTMLButtonElement | null>(null)
+
+function startVisionEdit() {
+  // A category edit ends first, so only one item is in edit mode
+  if (editing.value && selected.value) setSelection({ item: selected.value.id }, true)
+  visionEditing.value = true
+}
+
+function finishVisionEdit() {
+  visionEditing.value = false
+  nextTick(() => visionEditButton.value?.focus())
+}
+
+function onVisionKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !visionEditing.value) return
+
+  event.stopPropagation()
+  finishVisionEdit()
+}
+
+watch(edit, (value) => {
+  if (value) visionEditing.value = false
+})
+
+watch(item, () => {
+  visionEditing.value = false
+})
+
+// ── Selection: the map and the list share one selected category (FR-GOALS-14, FR-GOALS-15)
+const listEl = ref<HTMLUListElement | null>(null)
+let listScroll = 0
+let lastOpened: string | null = null
+
+// Selecting keeps the list position, so Back to list returns to it (FR-UX-8)
+function openCategory(categoryId: string) {
+  lastOpened = categoryId
+  listScroll = window.scrollY
+  setSelection({ item: categoryId })
+}
+
+// The list is laid out after the route changes, so the scroll waits for the next frame
+function backToList() {
+  setSelection({}).then(() => nextTick(() => requestAnimationFrame(() => {
+    window.scrollTo({ top: listScroll })
+    document.querySelector<HTMLElement>(`[data-category-id="${lastOpened}"]`)?.focus({ preventScroll: true })
+  })))
+}
+
+// Arrow keys move between map cells; Enter and Space (native buttons) select
+function onMapKeydown(event: KeyboardEvent, position: number) {
+  const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -MAP_COLUMNS, ArrowDown: MAP_COLUMNS }
+  const direction = steps[event.key]
+  if (direction === undefined) return
+
+  event.preventDefault()
+
+  const row = (value: number) => Math.floor(value / MAP_COLUMNS)
+  const sideways = Math.abs(direction) === 1
+
+  // Skips the centre and empty placeholders; a sideways move stays on its row
+  for (let next = position + direction; next >= 0 && next < mapCells.value.length; next += direction) {
+    if (sideways && row(next) !== row(position)) return
+
+    if (isMapCategory(next)) {
+      document.querySelector<HTMLElement>(`[data-map-position="${next}"]`)?.focus()
+      return
+    }
+  }
+}
+
+function onListKeydown(event: KeyboardEvent) {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+
+  const rows = [...(listEl.value?.querySelectorAll<HTMLButtonElement>('.cat-row') ?? [])]
+  const index = rows.indexOf(event.target as HTMLButtonElement)
+  if (index === -1) return
+
+  event.preventDefault()
+  rows[event.key === 'ArrowDown' ? index + 1 : index - 1]?.focus()
+}
+
+// ── Add category: progressive disclosure under the list (FR-GOALS-19)
+const addOpen = ref(false)
+const addName = ref('')
+const addColor = ref(DESIGN_COLORS[0]!.bg)
+const addError = ref('')
+const addTrigger = ref<HTMLButtonElement | null>(null)
+const addNameInput = ref<HTMLInputElement | null>(null)
+
+function openAdd() {
+  addName.value = ''
+  addColor.value = DESIGN_COLORS[0]!.bg
+  addError.value = ''
+  addOpen.value = true
+  nextTick(() => addNameInput.value?.focus())
+}
+
+function closeAdd() {
+  addOpen.value = false
+  nextTick(() => addTrigger.value?.focus())
+}
+
+// The new category opens selected in edit mode, with its name field focused
+function submitAdd() {
+  if (!addName.value.trim()) {
+    addError.value = 'Name can\'t be empty'
+    return
+  }
+
+  const id = planner.addCategory(addName.value, addColor.value)
+  if (!id) return
+
+  addOpen.value = false
+  setSelection({ item: id, edit: true }).then(() => nextTick(() => document.getElementById('cat-edit-name')?.focus()))
+}
 </script>
 
 <template>
-  <div class="view harada-view">
+  <div class="view harada-view" :data-selected="selected ? 'true' : 'false'">
     <header class="page-head">
       <h1 class="page-title">The best version of me</h1>
       <p class="page-lede">
-        One five-year ambition, surrounded by eight life categories. Select a cell, then a tab to edit its goal,
-        its daily habits or its measurable one-year target. Categories are set up in Configuration.
+        Why the plan exists: one five-year ambition and the eight life areas that serve it. Select an area to see its goals,
+        habits and planned time.
       </p>
     </header>
 
-    <div v-if="!categories.length" class="empty-state">
-      <p>No goals yet. Start from the starter grid and adapt it.</p>
-      <v-btn color="primary" variant="flat" prepend-icon="mdi-sprout-outline" @click="planner.seedHaradaGoals()">
-        Load starter grid
-      </v-btn>
-    </div>
+    <div class="goals-top">
+      <!-- Vision: view mode by default; Edit applies at once, Done leaves -->
+      <section v-if="ambition" class="vision" @keydown="onVisionKeydown">
+        <div class="vision-head">
+          <h2 class="section-title">Vision, {{ horizonText }}</h2>
+          <button
+            v-if="!visionEditing"
+            ref="visionEditButton"
+            type="button"
+            class="btn btn-sm btn-outline"
+            aria-label="Edit ambition"
+            @click="startVisionEdit"
+          >Edit</button>
+          <button v-else type="button" class="btn btn-sm btn-primary" @click="finishVisionEdit">Done</button>
+        </div>
 
-    <template v-else>
-      <div v-if="ambition" class="ambition-edit">
+        <p v-if="!visionEditing" class="vision-statement" :class="{ 'is-empty': !ambition.statement }">
+          {{ ambition.statement || 'No ambition written yet.' }}
+        </p>
         <AutoTextarea
+          v-else
           :model-value="ambition.statement"
-          label="5-year ambition"
-          class="ambition-input"
+          label="Ambition statement"
+          class="vision-input"
           @update:model-value="planner.updateAmbition({ statement: $event })"
         />
-      </div>
+      </section>
 
-      <div class="harada-grid">
-        <template v-for="(cell, index) in gridCells" :key="typeof cell === 'string' ? 'centre' : cell?.id ?? `empty-${index}`">
-          <div v-if="cell === 'centre'" class="harada-cell harada-centre">
-            <span class="cell-num">Ambition, {{ ambition?.horizonYears ?? 5 }} years</span>
-            <span class="cell-title">{{ ambition?.statement }}</span>
-          </div>
-
-          <button
-            v-else-if="cell"
-            type="button"
-            class="harada-cell"
-            :class="{ 'is-active': selected?.id === cell.id }"
-            :aria-pressed="selected?.id === cell.id"
-            @click="selectCategory(cell.id)"
-          >
-            <span class="cell-num">{{ String(cell.order).padStart(2, '0') }}</span>
-            <span class="cell-title">{{ cell.name }}</span>
-            <span v-if="HARADA_HINTS[cell.id]" class="cell-hint">{{ HARADA_HINTS[cell.id] }}</span>
-            <span class="cell-status">{{ cell.targetTbd ? 'To define' : '' }}</span>
-          </button>
-
-          <div v-else class="harada-cell harada-empty" aria-hidden="true" />
-        </template>
-      </div>
-
-      <section v-if="selected" class="harada-panel">
-        <div class="harada-panel-head">
-          <p class="harada-panel-kicker">Category {{ selected.order }} of {{ sortedCategories.length }}</p>
-          <h2 class="harada-panel-title">{{ selected.name }}</h2>
-
-          <v-tabs v-model="activeTab" color="primary" density="comfortable" class="harada-panel-tabs">
-            <v-tab v-for="tab in TAB_ITEMS" :key="tab.value" :value="tab.value">
-              {{ tab.label }}
-            </v-tab>
-          </v-tabs>
+      <!-- Harada map: read-only, the ambition in the centre; a cell selects its category -->
+      <section v-if="categories.length" class="section">
+        <div class="section-head">
+          <h2 class="section-title">Life areas</h2>
+          <p class="section-lede">Select an area to open it below. The map shows the first eight by order.</p>
         </div>
 
-        <v-window v-model="activeTab" class="harada-panel-body">
-          <v-window-item value="goal">
-            <AutoTextarea
-              :model-value="selected.goal5y ?? ''"
-              label="5-year goal"
-              class="goal-input"
-              @update:model-value="planner.updateCategory(selected.id, { goal5y: $event })"
-            />
-          </v-window-item>
+        <div class="harada-grid">
+          <template v-for="(cell, position) in mapCells" :key="position">
+            <div v-if="cell === 'centre'" class="harada-cell harada-centre">
+              <span class="cell-num">Ambition, {{ horizonText }}</span>
+              <span class="cell-title">{{ ambition?.statement }}</span>
+            </div>
 
-          <v-window-item value="habits">
-            <HaradaHabitList :category-id="selected.id" />
-          </v-window-item>
+            <button
+              v-else-if="cell"
+              type="button"
+              class="harada-cell"
+              :class="{ 'is-active': shown?.id === cell.id }"
+              :aria-pressed="selected?.id === cell.id"
+              :data-map-position="position"
+              @click="openCategory(cell.id)"
+              @keydown="onMapKeydown($event, position)"
+            >
+              <span class="cell-head">
+                <span class="dot dot-lg" :style="{ background: cell.color ?? '#888' }" aria-hidden="true" />
+                <span class="cell-num">{{ String(cell.order).padStart(2, '0') }}</span>
+              </span>
+              <span class="cell-title">{{ cell.name }}</span>
+              <span class="cell-status">{{ cell.targetTbd ? 'To define' : '' }}</span>
+            </button>
 
-          <v-window-item value="target">
-            <AutoTextarea
-              :model-value="selected.target1y ?? ''"
-              label="Measurable 1-year target"
-              @update:model-value="planner.updateCategory(selected.id, { target1y: $event })"
-            />
-            <v-checkbox
-              :model-value="!!selected.targetTbd"
-              label="Target still to be defined"
-              density="compact"
-              hide-details
-              class="target-tbd"
-              @update:model-value="planner.updateCategory(selected.id, { targetTbd: !!$event })"
-            />
-          </v-window-item>
-        </v-window>
-
-        <div class="harada-panel-foot">
-          <p v-if="alignment" class="alignment-line">
-            Habit time: {{ formatHours(alignment.habitMinutesPerWeek) }} scheduled per week
-            <template v-if="alignment.targetMinutesPerWeek > 0">
-              against {{ formatHours(alignment.targetMinutesPerWeek) }} asked by the habits
-            </template>
-            <template v-else>
-              · no measured habits yet
-            </template>
-            <span v-if="alignment.unlinkedHabits"> · {{ alignment.unlinkedHabits }} unlinked</span>
-          </p>
-          <p v-if="alignment && alignment.totalMinutesPerWeek" class="alignment-total">
-            {{ formatHours(alignment.totalMinutesPerWeek) }} a week across all activities in this category
-          </p>
+            <div v-else class="harada-cell harada-empty" aria-hidden="true" />
+          </template>
         </div>
       </section>
-    </template>
+    </div>
+
+    <div v-if="!categories.length" class="empty-state">
+      <p>No goals yet. Start from the starter grid and adapt it.</p>
+      <button type="button" class="btn btn-primary" @click="planner.seedHaradaGoals()">Load starter grid</button>
+    </div>
+
+    <!-- Categories: list on the left, the selected category's detail beside it (stacked on phones) -->
+    <section v-else class="section browse">
+      <div class="browse-list">
+        <div class="section-head">
+          <h2 class="section-title">Categories</h2>
+          <p class="section-lede">Select one to see its goals, habits and planned time.</p>
+        </div>
+
+        <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
+          <li v-for="category in sortedCategories" :key="category.id">
+            <button
+              type="button"
+              class="cat-row"
+              :data-category-id="category.id"
+              :aria-current="selected?.id === category.id ? 'true' : undefined"
+              @click="openCategory(category.id)"
+            >
+              <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
+              <span class="cat-main">
+                <span class="cat-row-name">{{ category.name }}</span>
+                <span class="cat-meta">{{ countsText(category.id) }}</span>
+              </span>
+              <span v-if="isBelowTarget(category.id)" class="cat-flag">Below target</span>
+            </button>
+          </li>
+        </ul>
+
+        <p v-if="sortedCategories.length > MAP_SIZE" class="browse-note">
+          Only the first {{ MAP_SIZE }} categories appear on the Harada map. The others work everywhere else.
+        </p>
+
+        <div class="add-category">
+          <button v-if="!addOpen" ref="addTrigger" type="button" class="chip-add" @click="openAdd">+ Add category</button>
+
+          <form v-else class="form-stack" @submit.prevent="submitAdd" @keydown.escape="closeAdd">
+            <div class="field">
+              <label class="field-label" for="new-category-name">Name</label>
+              <input
+                id="new-category-name"
+                ref="addNameInput"
+                v-model="addName"
+                class="timely-input"
+                placeholder="e.g. Wellness"
+                :aria-invalid="!!addError"
+                aria-describedby="new-category-error"
+                @input="addError = ''"
+              />
+              <p v-if="addError" id="new-category-error" class="field-error">{{ addError }}</p>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Colour</span>
+              <div class="color-pop color-pop-inline">
+                <button
+                  v-for="dc in DESIGN_COLORS"
+                  :key="dc.id"
+                  type="button"
+                  :style="{ background: dc.bg }"
+                  :data-active="addColor === dc.bg"
+                  :aria-label="`Colour ${dc.id}`"
+                  @click="addColor = dc.bg"
+                />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-sm btn-primary">Add category</button>
+              <button type="button" class="btn btn-sm" @click="closeAdd">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="browse-detail">
+        <HaradaCategoryDetail
+          v-if="shown"
+          :key="shown.id"
+          :category-id="shown.id"
+          :editing="editing"
+          @back="backToList"
+        />
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.harada-view {
+.vision-head {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
-.ambition-edit {
+.vision-head .section-title {
+  margin: 0;
+}
+
+.vision-statement {
+  max-width: 44em;
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.vision-statement.is-empty {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.vision-input {
   max-width: 720px;
-  margin-bottom: var(--space-6);
 }
 
-.ambition-input :deep(.auto-textarea),
-.goal-input :deep(.auto-textarea) {
-  font-size: 16px;
-}
-
-/* 3x3 grid separated by hairlines, as in the prototype */
+/* 3x3 map separated by hairlines, as in the prototype; read-only */
 .harada-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -244,6 +427,12 @@ button.harada-cell:focus-visible {
   background: var(--bg-2);
 }
 
+.cell-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .cell-num {
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -266,14 +455,7 @@ button.harada-cell:focus-visible {
   line-height: 1.45;
 }
 
-.cell-hint {
-  margin-top: calc(var(--space-1) * -1);
-  font-size: var(--fs-xs);
-  line-height: 1.35;
-  color: var(--ink-2);
-}
-
-/* Reserved on every cell so titles line up across the grid */
+/* Reserved on every cell so titles line up across the map */
 .cell-status {
   min-height: 1.25em;
   margin-top: auto;
@@ -283,68 +465,129 @@ button.harada-cell:focus-visible {
   color: var(--warn);
 }
 
-.harada-panel {
-  margin-top: var(--space-6);
+/* Categories: list and detail side by side */
+.browse {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: var(--space-7);
+  align-items: start;
 }
 
-.harada-panel-head {
-  padding-bottom: var(--space-2);
+.browse-detail {
+  min-width: 0;
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--rule-2);
 }
 
-.harada-panel-kicker {
-  margin: 0 0 var(--space-1);
-  font-size: var(--fs-sm);
+.cat-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--rule-2);
+  color: var(--ink);
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.cat-row:hover {
+  background: var(--bg-3);
+}
+
+.cat-row[aria-current="true"] {
+  background: var(--bg-4);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.cat-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+
+.cat-meta,
+.cat-flag {
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 
-.harada-panel-title {
-  margin: 0 0 var(--space-4);
-  font-size: var(--fs-lg);
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+.cat-flag {
+  flex: none;
+  white-space: nowrap;
 }
 
-.harada-panel-tabs :deep(.v-tab) {
-  min-width: 0;
-  padding: 0 var(--space-2);
-  letter-spacing: 0;
-}
-
-.harada-panel-tabs :deep(.v-tab:first-child) {
-  padding-left: 0;
-}
-
-.harada-panel-body {
-  padding: var(--space-5) 0 0;
-}
-
-.target-tbd {
-  margin-top: var(--space-2);
-}
-
-.harada-panel-foot {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--rule-2);
-}
-
-.alignment-line,
-.alignment-total {
-  margin: 0;
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.alignment-line {
+/* On the tinted selected row, secondary text uses --ink-2 (contrast on bg-4) */
+.cat-row[aria-current="true"] .cat-meta,
+.cat-row[aria-current="true"] .cat-flag {
   color: var(--ink-2);
 }
 
-.alignment-total {
+.browse-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
+}
+
+.add-category {
+  margin-top: var(--space-4);
+}
+
+.add-category .form-stack {
+  padding-top: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .browse {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .browse-detail {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  /* Phones: a selected category replaces the map and the list, with Back to list */
+  .harada-view[data-selected="true"] .goals-top,
+  .harada-view[data-selected="true"] .browse-list {
+    display: none;
+  }
+
+  .harada-view[data-selected="false"] .browse-detail {
+    display: none;
+  }
+
+  /* With nothing selected on a phone, no row or cell shows a selected tint */
+  .harada-view[data-selected="false"] .cat-row[aria-current="true"] {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .harada-view[data-selected="false"] .harada-cell.is-active {
+    background: var(--bg);
+  }
+
+  .harada-view[data-selected="false"] .harada-cell.is-active::before {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
