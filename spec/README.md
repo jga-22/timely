@@ -13,7 +13,7 @@ This folder holds the product and design specification for Timely. The code is t
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 
-Screenshots in `screens/` (from the production build after slice 5; fresh seeded state, 25 October 2026):
+Screenshots in `screens/` (from the production build after slice 6; fresh seeded state, 25 October 2026):
 
 | File | Size | Notes |
 | --- | --- | --- |
@@ -24,6 +24,7 @@ Screenshots in `screens/` (from the production build after slice 5; fresh seeded
 | `home-mobile-light.png` | 400 px wide | Home, light, Day, full page |
 | `home-week-mobile-light.png` | 400 px wide | Home, light, Week, full page |
 | `home-month-mobile-light.png` | 400 px wide | Home, light, Month, full page |
+| `home-journal-desktop-light.png` | 1280 px wide | Home, light, Day, with a long journal note (Experiment card, key message, Readings) |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, Harada map, list and the first category's detail |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
@@ -54,25 +55,25 @@ Desktop captures are 900 px high and phone captures 900 px high as well; the pho
 
 Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-Not built yet: the journal experiment on Home (FR-HOME-11 to 13, slice 6, low priority). Export, import and reset (FR-APP-5) are later. Insights and Configuration are removed.
+The journal experiment on Home (FR-HOME-11 to 13, slice 6) is built and marked as an experiment. Not built yet: export, import and reset (FR-APP-5). Insights and Configuration are removed.
 
 ## 2. Changelog
 
 ### v3 build (2026-10-25 to 2026-10-26)
 
-- Slices 0 to 5 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The activity grid paints only in edit mode (FR-PLAN-17); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
+- Slices 0 to 6 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The activity grid paints only in edit mode (FR-PLAN-17); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
 - The old week grid, Insights, Configuration and the legend view are removed; their code and wording are gone from `app/` and this spec, except where the PRD keeps the history (superseded rows, the mapping in PRD 11.8).
 
 ### v3 draft (2026-10-25)
 
 - **New navigation:** Home, Goals, Planner, Visualization; Home is the default. Insights and Configuration are removed; their content is mapped in PRD 11.8.
 - **UX rules:** see only once (one primary place per fact), see then edit (view mode with an Edit button), see only what you need (overview, list, detail, edit). Inline edit on the owning screen; Edit elsewhere navigates there.
-- **Home:** activities and time per category for Day, Week, Month; read-only with Edit links; journal card as a low-priority experiment (slice 6).
+- **Home:** activities and time per category for Day, Week, Month; read-only with Edit links; journal card as an experiment (slice 6).
 - **Goals:** vision section for the ambition, read-only Harada map, category list with detail and edit mode. Category management moves here.
 - **Planner:** activity list with detail and editing; 24x7 activity grid editing the active template, with explicit reassignment of taken hours and keyboard operation. Templates and the year grid stay.
 - **Visualization:** year metrics, week-by-week chart, year by category, the projection horizon and the goals-vs-planned overview.
 - **Dates:** real "today", ISO weeks, any year (2026 has 53 weeks), effective template per week.
-- **Data:** no change for the restructure; `journal` entries are added with the experiment.
+- **Data:** no change for the restructure; `journal` (one note per local date) added in slice 6; storage version 7.
 
 ### v2 (2026-10-25)
 

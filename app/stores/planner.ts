@@ -347,5 +347,13 @@ export const usePlannerStore = defineStore('planner', {
     removeHabit(habitId: string) {
       this.habits = this.habits.filter(habit => habit.id !== habitId)
     },
+    /** Journal experiment (FR-HOME-11): a blank note removes the entry, so the saved state stays small */
+    setJournalEntry(dateKey: string, text: string) {
+      if (text.trim()) {
+        this.journal[dateKey] = text
+      } else {
+        delete this.journal[dateKey]
+      }
+    },
   }
 })

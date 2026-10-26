@@ -29,7 +29,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 | 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Done (one commit; see status log). FR-GOALS-20 not built; FR-GOALS-15 and 18 Partial |
 | 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Done (one commit; see status log). FR-HOME-1 and 10 Partial; FR-HOME-11 to 13 are slice 6; FR-HOME-14 not built |
 | 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |
-| 6 | Journal experiment | FR-HOME journal items | S | 4 | Not started |
+| 6 | Journal experiment | FR-HOME-11 to 13 | S | 4 | Done (one commit; see status log). FR-HOME-11 to 13 Done as an experiment |
 
 ### Slice 0: date foundation
 
@@ -88,6 +88,12 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 
 - A small Journal card on Home: one plain-text note per local date saved in the state (bump the version), a key message derived from the ambition and a different category's 1-year target each day, and a readings placeholder. No habit check-ins, no AI, no dictation. Mark it as an experiment in the UI copy and the PRD.
 
+- Done in slice 6 (one commit). `journal` is a map from local date key to note text in the state (version 7); `isPlannerState` checks it; a blank note removes its key (`setJournalEntry`). Pure key message in `app/utils/journal.ts` (`keyMessage`, `dayOfYearIndex`). `app/components/home/JournalCard.vue` is the last block on Home. FR-HOME-11 to 13 Done (experiment); FR-HOME-1 Done.
+- Deviations: view mode and Edit with Done, as the PRD says, with autosave while editing (the brief asked for saving as you type); no "Recent notes" list (not in the PRD, so not built); the key message uses the 5-year goal when a 1-year target is missing or "To define" (the brief; the PRD names only the 1-year target); the card's heading is "Readings" with the brief's placeholder line, not "Readings to review" and "Coming later"; the journal is a map, not a list of entries (PRD section 14 updated).
+- Found in verification: `<JournalCard />` did not resolve, because Nuxt names components by folder (`HomeJournalCard`). Typecheck passed; the browser run caught it. Fixed before the commit.
+- Verified: `npx nuxi typecheck` exit 0; `npm run build` clean (three Vuetify CSS warnings as before, not from this slice). Node script (38 checks, UTC, Europe/Paris, America/New_York): key-message determinism and rotation, fallbacks, `setJournalEntry` semantics on the real store, `isPlannerState` for journal shapes, version 6 rejected. Browser (production build, headless Edge, clock 25 and 26 Oct 2026 and 1 Jan 2027, 56 checks): note typed by keyboard with Saved, reload keeps it, next day empty card with yesterday kept, clearing removes the key, key message cycles and links to Goals, long note with no inner scrollbar, card in Day, Week and Month, keyboard flow, focus ring, no horizontal overflow at 400 and 1280 in light and dark, no console errors other than hydration; 0 hydration messages in that run.
+- Not verified: the Recent-notes question (not built); the key message in the Goals detail after an ambition edit (it is computed from the store, so expected to update); a 53-week year (no journal logic depends on it).
+
 ## Risks and notes
 
 - The Planner slice is the largest and riskiest (new grid component, reassign flow, keyboard support). If it overruns, split it: (2a) activity list, detail and edit; (2b) the 24x7 grid.
@@ -105,10 +111,14 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 | 2026-10-26 | Slice 4 done in one commit: Home with Day, Week and Month (session period selector with keyboard), Day blocks with Now, Week and Month rows, totals, time per category bar and legend, below-target line, empty states; client-only dates. FR-HOME-2 to 9 Done; FR-HOME-1 and FR-HOME-10 Partial; FR-HOME-11 to 13 are slice 6; FR-DATE-6 Done. Storage version unchanged (6). |
 | 2026-10-26 | Slice 3 done in one commit: Goals vision (AutoTextarea, Done), read-only Harada map (order, name, colour, To define; keyboard), category list (counts, Below target, Add category) and detail (view with goals vs. planned, habits, activities; edit with fields, habit rows, move and remove). Configuration tab and `LegendView.vue` removed; four tabs. FR-GOALS-13, 14, 16, 17, 19, 21, 22 Done; FR-GOALS-15, 18 Partial; FR-GOALS-20 not built. FR-UX-5, FR-APP-7, FR-APP-8, FR-VIZ-6 Done. Reorder fixed in the store. Storage version unchanged (6). |
 | 2026-10-26 | Slice 5 done in three commits (cleanup and docs; see the slice section). FR-PLAN-17 Done (painting in edit mode only, PRD 11.6); FR-GOALS-20 Done; FR-UX-1, 4, 6, 7, 8 Done; FR-UX-2, 3 Partial (templates have no Edit button; list rows show three facts). Dead code removed (utils, store getter, CSS). PRD, design spec, README and agent context audited; screenshots regenerated. Storage version unchanged (6). Not pushed. |
+| 2026-10-26 | Slice 6 done in one commit: Journal experiment on Home (note per local date, autosave, key message from the ambition and a rotating category target, readings placeholder). FR-HOME-11 to 13 Done as an experiment; FR-HOME-1 Done. Storage version 7. Not pushed. |
 
-## Remaining
+## Remaining and later ideas
 
-- **Slice 6, journal experiment (low priority):** the Journal card on Home, FR-HOME-11 to 13 (state bump to version 7 for `journal`). Mark it as an experiment in the UI and the PRD.
-- **Owner decisions:** the unused `timeGranularity` setting (a version bump would reset saved data); packages to drop after checking (`@mdi/font`, `vuetify`, `vue-router`); the Partial rows FR-UX-2, FR-UX-3, FR-GOALS-15, FR-GOALS-18, FR-HOME-1, FR-HOME-10, FR-YEAR-3, FR-VIZ-5.
-- **Later ideas (PRD 21):** template Edit button and duplicate template (FR-TPL-6), copy a day and clear the week (FR-PLAN-8), 30-minute slots (FR-PLAN-10), export, import and reset (FR-APP-5), annual and quarterly habit periods (FR-GOALS-11), weekday distribution and scenario comparison (FR-INS-7, 8), a full projection list (FR-VIZ-5).
-- **Hydration warning:** the decision on a client-only wrapper for Goals and Home (see `.claude/agent.md`).
+- **Owner decisions:** the unused `timeGranularity` setting (a version bump would reset saved data); packages to drop after checking (`@mdi/font`, `vuetify`, `vue-router`); the Partial rows FR-UX-2, FR-UX-3, FR-GOALS-15, FR-GOALS-18, FR-HOME-10, FR-YEAR-3, FR-VIZ-5; whether the journal experiment stays after the test (the PRD says it may be removed).
+- **Order number in list rows:** decide whether the category list shows the order number (slice 3 chose none).
+- **Template edit affordance:** templates have no Edit button (FR-UX-2, FR-UX-3); PRD 21 lists a template Edit button and duplicate (FR-TPL-6).
+- **Journal ideas (not built):** dictation, talking with an AI, habit check-ins (FR-HOME-14), streaks, reminders, export. Recent notes on Home is not in the PRD and needs a decision first.
+- **Later ideas (PRD 21):** copy a day and clear the week (FR-PLAN-8), 30-minute slots (FR-PLAN-10), export, import and reset (FR-APP-5), annual and quarterly habit periods (FR-GOALS-11), weekday distribution and scenario comparison (FR-INS-7, 8), a full projection list (FR-VIZ-5).
+- **Packaging and runtime:** Node update to the latest 24.x LTS (the owner runs v24.12.0); optionally `.nvmrc` and `engines`.
+- **Hydration warning (known, owner decision 2026-10-26):** "Hydration completed but contains mismatches" appears when the saved state differs from the seed. Decide on a client-only wrapper, or on server data, when a backend arrives.

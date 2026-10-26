@@ -176,7 +176,7 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
-| FR-HOME-1 | Home is the first tab and the default screen. It is read-only, except the journal card (FR-HOME-11), which is the primary place of journal entries. | Partial | A fresh load opens Home; outside the journal card, Home has no input other than the period selector. *Evidence (slice 4):* Browser run on the production build: a fresh load opens Home (tab 01 selected, Day shown). The only control is the period selector; Edit and category links navigate. The journal card (FR-HOME-11) is slice 6. |
+| FR-HOME-1 | Home is the first tab and the default screen. It is read-only, except the journal card (FR-HOME-11), which is the primary place of journal entries. | Done | Browser (slice 6): a fresh load opens Home; the only inputs are the period selector and the journal note. *Evidence (slice 4):* Browser run on the production build: a fresh load opens Home (tab 01 selected, Day shown). The only control is the period selector; Edit and category links navigate. The journal card (FR-HOME-11) is slice 6. |
 | FR-HOME-2 | Period selector Day, Week, Month (segmented control), default Day. Periods are today, the current ISO week and the current calendar month. | Done | Switching updates list, bar and totals at once; the choice survives a tab switch within the session. *Evidence (slice 4):* Period in `useState` (`home-period`), default Day, session only. Browser: ArrowRight, End and wrap-around move selection and focus; Week survives Planner and Visualization tab switches; a reload returns to Day. |
 | FR-HOME-3 | Header line: date, ISO week number and the effective template(s) of the period (Month lists each template with its number of days). | Done | Day: "Sunday 25 October 2026 · Week 43 · Standard Week". Month: "October 2026 · Standard Week 24 d, Deep Work Week 7 d". *Evidence (slice 4):* Header line in the browser: "Sunday 25 October 2026 · Week 43 · Standard Week", "19 to 25 October 2026 · Week 43 · Standard Week", "October 2026 · Standard Week 31 d", "Friday 1 January 2027 · Week 53 · Standard Week". The mixed-template list (`periodTemplates`) passes node checks; no mixed month was screenshotted. |
 | FR-HOME-4 | Day: today's blocks in time order. Each row: time range, activity name, category (dot and name), duration. Contiguous hours of one activity form one block (`slotsToBlocks`). The block containing the current hour is marked "Now". | Done | On a Standard-Week Monday the seed lists Sleep, Training, Deep Work and so on in order; durations sum to the day's planned hours. *Evidence (slice 4):* Sunday 25 October 2026 lists six blocks in time order (12AM to 8AM Sleep, 9AM to 11AM Reading, and so on); the node check matches every weekday against the template grid under UTC, Paris and New York. The block containing 10AM carries "Now" (one only). |
@@ -191,9 +191,9 @@ Evidence names the file or function for built items. Every Planned (v3) item has
 
 | ID | Requirement | Status | AC |
 | --- | --- | --- | --- |
-| FR-HOME-11 | Journal card on Home with today's note: one free-text entry per local date, saved in the state (`journal`, section 14). View shows the text; Edit (or "Write today's note" when empty) opens an `AutoTextarea`; Done returns. | Planned (v3), experiment | Text written today is there after reload; tomorrow the card starts empty; yesterday's text is kept in storage. |
-| FR-HOME-12 | Key message: a read-only line derived from the owner's own content: the ambition statement, followed by the 1-year target of one category that rotates by day (day of year modulo the number of categories with a target). Links to Goals. | Planned (v3), experiment | The message changes category from one day to the next; no text is stored for it; editing the ambition changes it at once. |
-| FR-HOME-13 | "Readings to review": a quiet placeholder line ("Coming later") with no data and no input. | Planned (v3), experiment | Present in the card; adds nothing to the state. |
+| FR-HOME-11 | Journal card on Home with today's note: one free-text entry per local date, saved in the state (`journal`, section 14). View shows the text; Edit (or "Write today's note" when empty) opens an `AutoTextarea`; Done returns. Saves as you type (debounced 400 ms, "Saving…" then "Saved", `aria-live`). The card is last on Home and shows today in every period. | Done (experiment) | Browser, production build, clock 25 Oct 2026: a note typed with the keyboard shows "Saved" and survives a reload; the next day (26 Oct) the card is empty and the 25 Oct note stays in storage; clearing the text removes the key; Escape and Done leave edit mode with focus on Edit. Deviations: no "Recent notes" list (not in this PRD, so not built); the note is a map of date to text, not a list of entries (see section 14). |
+| FR-HOME-12 | Key message: a read-only line derived from the owner's own content: the ambition statement, followed by the 1-year target of one category that rotates by day (day of year modulo the number of categories with a target). Links to Goals. | Done (experiment) | Browser: the message changes category each day (nine consecutive days cover the eight seeded categories); 1 Jan 2027 shows a message; the category link opens Goals with that category selected; nothing is stored (no `journal` key for it). Node (UTC, Europe/Paris, America/New_York): same date gives the same message; fallbacks for no ambition, no targets and one target. Deviation: a category counts when it has a 1-year target that is not "To define"; otherwise its 5-year goal is shown (the slice brief); the 1-year target alone would skip categories still marked "To define". |
+| FR-HOME-13 | "Readings": a quiet placeholder line ("Docs and notes to revisit will live here.") with no data and no input. | Done (experiment) | Browser: present under the note on every period; adds nothing to the state. Deviation: heading "Readings" and the line of the slice brief, instead of "Readings to review" and "Coming later". |
 | FR-HOME-14 | Habit check-ins on Home are not part of the experiment. | Not built | Reopened only as an idea (section 21); the v2 "Dropped" status of completion tracking is lifted for an experiment only. |
 
 ### 9.4 Goals
@@ -334,7 +334,7 @@ New in v3:
 | FR-APP-1 | Tabs Goals, Planner, Insights, Configuration; Goals default. | Superseded | By FR-APP-7. |
 | FR-APP-2 | Light and dark themes with a topbar toggle. | Done | `localStorage["timely.dark"]`. |
 | FR-APP-3 | Persist the whole state on every change; restore on load. | Done | `planner-persistence.client.ts`. |
-| FR-APP-4 | Discard a saved state with another version or a broken shape. | Done | `isPlannerState`. v3: also accepts a missing-or-array `journal`. |
+| FR-APP-4 | Discard a saved state with another version or a broken shape. | Done | `isPlannerState`. Slice 6: `journal` must be an object whose values are strings; version 6 saves are discarded (node check: a version 6 state is rejected, no migration). |
 | FR-APP-5 | Export JSON, import a backup, reset all data. | Not built | Next. With Configuration gone, it goes in a small "Data" menu in the topbar (A7). |
 | FR-APP-6 | Clean console on load. | Done | Dev-server probe (fresh load, reloads after edits and an invalid tab): no console warnings or hydration messages. Production console clean at 1280 and 400 px. *Evidence (slice 1).* |
 | FR-APP-7 | Four tabs in order Home, Goals, Planner, Visualization, numbered 01 to 04; Home default **(decided)**. | Done | Tabs fit at 400 px without scrolling; `app/app.vue` has no Insights or Configuration entry. *Evidence (slice 1):* Home, Goals, Planner and Visualization are numbered 01 to 04 with Home default (browser run). Configuration is a transitional fifth tab. At 400 px the five tabs scroll inside `.tabs` (42 px overflow) until slice 3 removes Configuration. *Evidence (slice 3):* Four tabs in order Home, Goals, Planner, Visualization, numbered 01 to 04; Configuration removed; `?tab=configuration` falls back to Home. |
@@ -419,7 +419,7 @@ Today
 Journal (experiment)
   "Best father, husband, son and brother..." · Physical: 3 workouts a week
   Today's note: ...                                          [Edit]
-  Readings to review: coming later
+  Readings: docs and notes to revisit will live here.
 ```
 
 - View mode only, except the journal note. Edit buttons on activities navigate (11.2); category legend items link to Goals.
@@ -565,7 +565,7 @@ PlannerState (localStorage key "timely-planner-state")
 ├── activities[]               belong to a category
 ├── templates[]                168-slot weeks
 ├── appliedWeeks[]             a template assigned to an ISO week (Monday date)
-└── journal[]                  experiment: { date, text }, one per local date
+└── journal{}                  experiment: date key (YYYY-MM-DD) to note text; blank notes are removed
 
 Separate key: "timely.dark"
 Route query (not stored): tab, category | activity, edit
@@ -587,11 +587,10 @@ interface Habit { id; categoryId; name; frequency: { count; period }; activityId
 interface Ambition { id; statement; horizonYears }
 interface WeekTemplate { id; name; description?; granularityMinutes: 60 | 30; slots: string[]; color? }
 interface AppliedWeek { id; startDate /* Monday */; templateId }
-interface JournalEntry { date: string /* local YYYY-MM-DD */; text: string }   // new, experiment
 interface PlannerState { version; settings; categories; activities; templates; appliedWeeks; ambition; habits; journal }
 ```
 
-- `journal` is added with the journal slice; `isPlannerState` checks it is an array; bump the version. Habit check-ins add no data (not part of the experiment).
+- `journal: Record<string, string>` (slice 6, version 7): the key is the local date (`YYYY-MM-DD`, from `localDateKey`), the value the note as typed. `isPlannerState` checks it is an object whose values are strings; a blank note removes its key. Habit check-ins add no data (not part of the experiment).
 - `PLANNER_STATE_VERSION` is 6 (done in slice 0), so dev saves reseed with weeks of the current year.
 - Done in slice 0 (Q5): week status removed: `status`, `overrides`, `notes` and `excludedWeekStatuses` are gone; version bumped.
 
@@ -602,7 +601,7 @@ Integrity rules (store actions in `app/stores/planner.ts`):
 - Removing a template removes its applied weeks; the last template cannot be removed.
 - A slot holds at most one activity; reassigning a taken hour needs explicit acceptance (FR-PLAN-18).
 - v3 change: recolouring a category recolours only activities still using its previous colour.
-- New actions: `updateActivity`, `setActivityHours(activityId, slotIndexes, mode)` returning taken hours, `reassignHours(activityId, slotIndexes)`, `updateTemplate`, `setJournalEntry(date, text)` (an empty text removes the entry).
+- New actions: `updateActivity`, `setActivityHours(activityId, slotIndexes, mode)` returning taken hours, `reassignHours(activityId, slotIndexes)`, `updateTemplate`, `setJournalEntry(dateKey, text)` (a blank text removes the entry; slice 6).
 
 Seed (`createInitialState`): ambition; 8 categories (Physical, Spiritual, Relational & emotional, Economic, Cognitive, Social, Professional, Environment) with goals and targets, five flagged "to define"; 65 habits, 7 linked with minutes; 9 activities (none for Economic and Social); 3 templates (Standard Week 137 h active, Deep Work Week, Vacation); applied weeks today 49 of 52 in 2026, in v3 the same pattern over the current year's ISO weeks (FR-DATE-4); empty journal.
 
@@ -663,7 +662,7 @@ Source: `app/utils/planner.ts`, store getters, new `app/utils/dates.ts`.
 9. **Coverage.** `linked / target` when the target is above 0, else "No target yet". "Below target" and Home's signal mean coverage below 1.
 10. **Year figures:** for each ISO week of the selected year, the category totals of its effective template. Monthly view: average per week of the weeks starting in the month. Week status and overrides no longer exist (Q5).
 11. **Projection over N years:** per activity, the selected year's total (rule 10) x N. Replaces today's rule (active template x 52 x N, with an exclusion count that is always 0).
-12. **Key message (journal):** ambition statement plus the 1-year target of category number `dayOfYear mod k` among the k categories (by order) that have a target.
+12. **Key message (journal):** ambition statement plus one category's target: categories in order that have a 1-year target (not "To define"), else their 5-year goal; the day of the year (0 on 1 January) modulo the count k picks the category. Pure function in `app/utils/journal.ts`; nothing stored.
 
 ---
 
@@ -747,6 +746,9 @@ Implementation order (each slice ships alone, build and typecheck clean):
 | Habit check-ins on Home | Tick today's habits; reopened as an idea only if the journal experiment proves useful. |
 | Readings to review | A short list of documents or readings attached to goals. |
 | Journal by dictation | Speak the daily note instead of typing it. |
+| Journal streaks | Count days in a row with a note; reopened only if the experiment proves useful. |
+| Journal reminders | A quiet nudge to write the day's note. Needs a permission and a clock; not in the experiment. |
+| Journal export | Save the notes as a file (belongs with FR-APP-5). |
 | Journal with an AI | Talk through the day with an assistant. Not a dependency of the product. |
 
 ### Explicitly dropped
@@ -771,6 +773,7 @@ v2 gaps and where they went: weekday view (Later); week status UI (Q5); grid key
 | --- | --- |
 | 2026-04-15 | Original PRD and design document (v1 plan). |
 | 2026-10-25 | v2: rewritten to describe the built product (Goals, Planner, Insights, Configuration) with requirement IDs and statuses. |
+| 2026-10-26 | Slice 6 (journal experiment): `journal` map in the state (version 7), Journal card last on Home with the key message and a Readings placeholder. FR-HOME-11 to 13 Done as an experiment; FR-HOME-1 Done. Deviations are listed in each row. Node checks and browser checks passed (see build-plan status log). |
 | 2026-10-26 | Slice 4 (Home): period selector (Day, Week, Month), Day blocks, Week and Month activity rows, time per category, totals, goals signal, empty states. FR-HOME-1 to 10 with evidence (FR-HOME-1 and 10 Partial, 2 to 9 Done); journal items 11 to 13 stay for slice 6. |
 | 2026-10-25 | v3: structure Home, Goals, Planner, Visualization; Insights and Configuration removed; UX rules (FR-UX); dates and years (FR-DATE); Home with a journal experiment, Goals with vision, Harada map and category detail, Planner activity grid with explicit reassignment, Visualization; see-only-once matrix; Insights mapping; impact and slices; assumptions and open questions. |
 

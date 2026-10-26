@@ -29,7 +29,7 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 
 Four screens, one page component that switches on the `tab` query:
 
-- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Day, Week and Month for the period selector; totals, time per category, activity rows, the below-target line. Read-only except the period selector.
+- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Day, Week and Month for the period selector; totals, time per category, activity rows, the below-target line. Read-only except the period selector and the journal card (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`).
 - **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, Harada map, category list), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows).
 - **Planner** (`app/components/planner/`): `PlannerView.vue` (template bar, activity list and detail, add form, year grid), `ActivityGrid.vue` (the 24x7 grid; paints only in edit mode; client only).
 - **Visualization** (`app/components/viz/VisualizationView.vue`): year metrics, week-by-week and monthly chart, year by category, goals vs. planned, projection horizon.
@@ -61,7 +61,7 @@ Shell and shared code:
 - **Year:** the planner shows one ISO year, by default the current ISO year. It is set on mount, not persisted (a reload selects the current year again). Unassigned weeks use the active template everywhere (`effectiveTemplate`).
 - **Navigation order is Home, Goals, Planner, Visualization.** Home is the default tab. Templates are managed in the Planner's template switcher.
 - **URL state.** `?tab=home|goals|planner|visualization&item=<id>&edit=1`, plus `add=1&category=<id>` to open the Planner's add-activity form with a category preselected (from Goals, FR-GOALS-20). An unknown or missing tab shows Home; an unknown category falls back to the first. In code, `useNav()` gives `go(tab, target)` (pushes history), `link(tab, target)` (a NuxtLink target) and `setSelection(target)`. Nothing else is in the URL: the Home period is session state (Nuxt `useState`), the year and the Visualization view settings are in memory.
-- **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`, currently 6). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so the charts show real bars).
+- **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`, currently 7). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so the charts show real bars).
 - **UI language is English.** User-entered content can be in any language.
 - **Style:** one font (IBM Plex Sans), calm blue palette, minimalist, light and dark themes. Details in `spec/frontend-design.md`. Do not reintroduce serif or mono fonts or the old terracotta accent.
 
@@ -81,8 +81,8 @@ Shell and shared code:
 
 ## Current state
 
-- Branch `feat/home-and-new-structure`, one slice per commit, nothing pushed. Slices 0 to 5 are done (see `spec/build-plan.md`). Slice 5 (cleanup, docs audit, screenshots) added the edit-mode painting rule (FR-PLAN-17), add-activity from Goals (FR-GOALS-20), a11y hit areas, the Home alignment and legend fixes, dead-code removal and the docs and screenshot refresh.
-- Next: slice 6, the journal experiment on Home (FR-HOME-11 to 13). It is low priority and marked as an experiment.
+- Branch `feat/home-and-new-structure`, one slice per commit, nothing pushed. Slices 0 to 6 are done (see `spec/build-plan.md`). Slice 5 (cleanup, docs audit, screenshots) added the edit-mode painting rule (FR-PLAN-17), add-activity from Goals (FR-GOALS-20), a11y hit areas, the Home alignment and legend fixes, dead-code removal and the docs and screenshot refresh.
+- Slice 6 (journal experiment on Home, FR-HOME-11 to 13) is done as an experiment; storage version 7. The remaining and later ideas are at the end of `spec/build-plan.md`.
 - Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`. PR #7's title and description are outdated; the owner updates them from text we provide.
 
 ## Open items and ideas

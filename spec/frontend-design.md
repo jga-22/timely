@@ -405,7 +405,7 @@ Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PL
 
 ### 4.16 Home (`app/components/home/HomeView.vue`; pure calculations in `app/utils/home.ts`)
 
-Read-only except the period selector (FR-HOME-1). The journal card (FR-HOME-11 to 13) is slice 6 and is not here yet.
+Read-only except the period selector and the journal card (FR-HOME-1). The journal card is described in 4.18.
 
 - Page header: "Home", a one-line lede, and `p.page-meta` with the header line: date, ISO week and templates ("Sunday 25 October 2026 · Week 43 · Standard Week"; Month lists each template with its days, "October 2026 · Standard Week 31 d"). A `p.section-lede.home-note` names the active template when the current week has no template of its own. Date output is null until mounted (FR-DATE-6).
 - Period selector (`.segmented` in `.home-toolbar`, group "Period"): Day, Week, Month as buttons with `aria-pressed`. Left, Right, Up and Down move the selection and focus with wrap-around; Home and End go to the first and last. The choice is session state, so it survives a tab switch and resets on reload. Default Day.
@@ -430,6 +430,18 @@ Placed between the template bar and the activity grid (section 4.12). Section ti
 - Edit mode (`.act-edit`, `.form-stack`): name, short code (max 3, `.timely-input`), category (`.timely-select`) and colour (inline palette, the active swatch ringed). Changes apply at once (FR-UX-6). A clash or an empty name shows a `.field-error` line and is not applied; leaving the field restores the last accepted value and keeps the message until the next valid entry. Escape closes the delete confirmation first, otherwise leaves edit mode.
 - Delete (`.act-delete`, below a 1px rule): "Delete activity" (`.btn-sm.btn-danger`) opens `.act-confirm` (`--bg-2` panel, 1px `--rule` border, radius 6px). It states the impact in one sentence ("Clears 29 h in 3 templates and unlinks 1 habit." or "Nothing is scheduled or linked to it."), then "Delete" (`.btn-sm.btn-danger`) and "Cancel" (`.btn-sm`). Focus opens on Cancel; Escape cancels; nothing changes before Delete. No `confirm()`.
 - Swatches are 20px circles in 24px buttons, as in the category popover (see section 6 on touch targets).
+
+### 4.18 Journal (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`)
+
+Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every period. It is marked as an experiment in the UI and may be removed after the test.
+
+- Section `.section.journal` with the hairline rule (no box, no shadow). Title `h2` "Journal" with `.journal-tag` "Experiment" (12px, `--bg-3` background, `--ink-2` text, sentence case). Lede (13px, `--ink-3`): one note a day, kept in this browser; a concept test.
+- Key message (`.journal-key`): the ambition statement in `.journal-statement` (18px, 500, `--ink`), then `.journal-focus` (13px, `--ink-2`): the category name as a link to Goals, a colon and its target. With no ambition or no targets, a lede links to Goals instead.
+- Note, view mode (`.journal-view`): the text in `.journal-text` (15px, line breaks kept, `--ink`), or "No note for today yet.". Button `.btn.btn-sm.btn-outline`: "Edit", or "Write today's note" when empty.
+- Note, edit mode (`.journal-edit`): `AutoTextarea` with the visible label "Today's note" and the placeholder "What went well today? What mattered?". It saves 400 ms after the last key. Status `.journal-status` (13px, `--ink-3`, `aria-live="polite"`): "Saving…" while typing, then "Saved" for 2 seconds. Button `.btn.btn-sm.btn-primary`: "Done". Escape also leaves edit mode. Focus moves to the textarea on Edit and back to Edit on Done. The box grows with the text (no inner scrollbar).
+- Readings (`.journal-readings`): `h3.journal-subtitle` "Readings" (15px, 600) and a lede "Docs and notes to revisit will live here." No data, no input.
+- Date output renders after mount (FR-DATE-6). Changing the day while editing saves the note under the date it was started on and leaves edit mode.
+- Phones: the same stack in one column; the card needs no layout change at 400 px.
 
 ## 5. Colour handling for categories and activities
 

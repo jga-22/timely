@@ -158,7 +158,7 @@ const createSeedAppliedWeeks = (year: number): AppliedWeek[] => {
 }
 
 /** Bump when the persisted shape changes; while in development, a mismatch resets saves to the default seed */
-export const PLANNER_STATE_VERSION = 6
+export const PLANNER_STATE_VERSION = 7
 
 const HARADA_AMBITION_ID = 'ambition-harada'
 const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
@@ -311,6 +311,10 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   const templates = state.templates as Array<Partial<WeekTemplate> | null>
 
   if (!categories.every(category => typeof category?.id === 'string' && typeof category.name === 'string')) return false
+  // The journal is a map of date keys to note text; anything else is a broken state
+  const journal = state.journal as Record<string, unknown> | null | undefined
+  if (!journal || typeof journal !== 'object' || Array.isArray(journal)) return false
+  if (!Object.values(journal).every(text => typeof text === 'string')) return false
   if (!templates.every(template => Array.isArray(template?.slots))) return false
   if (!(state.appliedWeeks as Array<Partial<AppliedWeek> | null>).every(week => typeof week?.startDate === 'string' && typeof week.templateId === 'string')) return false
 
@@ -324,6 +328,7 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
 /** Seed for a year; the default is the ISO year of today. The store serialises this seed, so server and client share it */
 export const createInitialState = (year: number = isoWeekOf(localDateKey()).year): PlannerState => ({
   version: PLANNER_STATE_VERSION,
+  journal: {},
   ...createHaradaSeed(),
   settings: {
     timeGranularity: 60,

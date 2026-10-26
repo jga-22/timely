@@ -16,7 +16,7 @@ import {
   type HomePeriod
 } from '~/utils/home'
 
-// Read-only (FR-HOME-1). The period selector is the only control; every item has an Edit link to its owner.
+// Read-only (FR-HOME-1) except the period selector and the journal card (a separate component); every item has an Edit link to its owner.
 const planner = usePlannerStore()
 const { today } = usePlannerYear()
 const { link } = useNav()
@@ -306,5 +306,8 @@ const onPeriodKey = (event: KeyboardEvent) => {
         </p>
       </section>
     </template>
+
+    <!-- Journal experiment (FR-HOME-11 to 13): last on the page, shows today whatever the period -->
+    <HomeJournalCard />
   </div>
 </template>

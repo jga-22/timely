@@ -71,4 +71,6 @@ export interface PlannerState {
   appliedWeeks: AppliedWeek[]
   ambition: Ambition | null
   habits: Habit[]
+  /** Journal experiment (FR-HOME-11): one plain-text note per local date key (YYYY-MM-DD); empty notes are removed */
+  journal: Record<string, string>
 }

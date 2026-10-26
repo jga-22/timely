@@ -1211,6 +1211,58 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   color: var(--ink-2);
 }
 
+/* Journal experiment (FR-HOME-11 to 13) */
+.journal-tag {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: 4px;
+  background: var(--bg-3);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+.journal-key { margin-bottom: var(--space-5); }
+.journal-statement {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.journal-focus {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.journal-view,
+.journal-edit { display: grid; gap: var(--space-3); justify-items: start; }
+.journal-edit { justify-items: stretch; }
+.journal-text {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.journal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 32px;
+}
+.journal-status { font-size: var(--fs-sm); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.journal-readings { margin-top: var(--space-6); }
+.journal-subtitle {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--ink);
+}
+
 @media (max-width: 480px) {
   .home-toolbar .segmented { width: 100%; }
   .home-toolbar .segmented button { flex: 1; }
