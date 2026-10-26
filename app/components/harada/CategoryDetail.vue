@@ -171,13 +171,18 @@ function confirmRemove() {
 <template>
   <div v-if="category" class="detail" @keydown="onKeydown">
     <div class="detail-head">
-      <button type="button" class="btn btn-sm detail-back" @click="emit('back')"><span class="detail-close-text">Close</span><span class="detail-back-text">Back to categories</span></button>
-      <h3 class="detail-name">
-        <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
-        {{ category.name }}
-      </h3>
-      <EditButton v-if="!editing" ref="editButton" :label="`Edit ${category.name}`" @click="startEdit" />
-      <button v-else type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
+      <button type="button" class="btn btn-sm detail-back" @click="emit('back')">
+        <svg class="detail-back-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+        Back to categories
+      </button>
+      <div class="detail-title">
+        <h3 class="detail-name">
+          <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
+          {{ category.name }}
+        </h3>
+        <EditButton v-if="!editing" ref="editButton" :label="`Edit ${category.name}`" @click="startEdit" />
+        <button v-else type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
+      </div>
     </div>
 
     <!-- View mode: read-only; the comparison bars are the primary signal -->
@@ -385,18 +390,28 @@ function confirmRemove() {
 
 .detail-head {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* Back to categories sits on its own line above the title at every size (FR-GOALS-16, FR-UX-8) */
+.detail-back-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detail-title {
+  display: flex;
   align-items: center;
   gap: var(--space-2) var(--space-3);
-}
-
-/* Close at the end of the head on desktop; Back to categories first in the head on phones (FR-UX-8) */
-.detail-back {
-  order: 3;
-}
-
-.detail-back-text {
-  display: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .detail-name {
@@ -561,19 +576,5 @@ function confirmRemove() {
 
 .detail-remove {
   align-self: flex-start;
-}
-
-@media (max-width: 768px) {
-  .detail-back {
-    order: -1;
-  }
-
-  .detail-close-text {
-    display: none;
-  }
-
-  .detail-back-text {
-    display: inline;
-  }
 }
 </style>
