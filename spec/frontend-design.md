@@ -9,7 +9,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | Screen | Desktop 1280 | Mobile 400 |
 | --- | --- | --- |
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
-| Planner | The week grid fits at 400 px: a 40 px label column and seven day columns of about 46 px, 24 px hour rows, no scroll. The brush palette stacks above it as wrapping chips. The year grid is full width (13 week columns, 32 px cells, a quarter label per row); it keeps a 360 px minimum inside its own scroll container. Measured in the slice 7 browser run: no page overflow at 400 px. |
+| Planner | The week grid is the original range-select grid (`ActivityGrid.vue`, section 4.12): a 52 px hour gutter, seven day columns, 28 px hour rows and a frame of at least 540 px that scrolls sideways inside `.wk-scroll` on phones (the page does not). The Activities list (section 4.17) is a row of chips under the grid. The year grid is full width (13 week columns, 32 px cells, a quarter label per row) and collapsible. Measured in the 2026-10-26 run (section 11). |
 | Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
 | Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
 
@@ -19,7 +19,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 
 1. **Calm and minimal.** Few colours, one accent, lots of whitespace. The accent is reserved for the thing the user can act on or the thing that is selected.
 2. **One font family.** IBM Plex Sans only, in weights 400, 500 and 600. No serif, no monospace.
-3. **Whitespace over borders.** Sections are separated by hairline rules, not boxes. Containers with a full border are the exception (the activity grid, the Harada grid, inputs, popovers).
+3. **Whitespace over borders.** Sections are separated by hairline rules, not boxes. Containers with a full border are the exception (the week grid, the Harada grid, inputs, popovers).
 4. **Progressive disclosure.** Details that are not needed for the task sit behind a quiet "Details" toggle or a native `<details>` element (`.disclosure`). Only one habit's details are open at a time.
 5. **Sentence case everywhere.** No `text-transform`, no uppercase micro-labels. Tab labels, buttons and headings are sentence case.
 6. **Nothing under 12px.** The smallest text is 12px (`--fs-xs`). Known exceptions are listed in section 2.4 and in the gaps list.
@@ -91,7 +91,7 @@ Font: IBM Plex Sans. Weights in use: **400** (meta, units, body), **500** (label
 
 | Token | Size | Used for |
 | --- | --- | --- |
-| `--fs-xs` | 12px | Hour labels, `.tab-num`, `.ag-hour`, `.ag-day-hours`, `.ag-cell`, `.cell-num`, `.cell-status`, `.cat-meta`, `.goal-flags`, `.goal-total`, `.pill-count`, `.btn-xs`, `.ag-hint`, chart labels (hard-coded 12px, same value) |
+| `--fs-xs` | 12px | Hour labels, `.tab-num`, `.wk-hour`, `.wk-day-hours`, `.wk-block-time`, `.cell-num`, `.cell-status`, `.cat-meta`, `.goal-flags`, `.goal-total`, `.pill-count`, `.btn-xs`, `.wk-dur`, `.wk-menu-hrs`, chart labels (hard-coded 12px, same value) |
 | `--fs-sm` | 13px | Default `.btn` and `.btn-sm`, form labels, `.timely-input` and `.timely-select`, `.page-meta`, `.section-lede`, `.legend-item`, `.metric-label`, `.goal-figures`, `.habit-meta`, `.disclosure > summary`, Harada kicker and alignment lines |
 | `--fs-md` | 15px | Body, `.tab` labels, desktop `.page-lede`, `.cell-title`, `.goal-name`, `.cat-row-name`, Harada 5-year goal text |
 | `--fs-lg` | 18px | `.brand`, `.section-title`, `.page-title` on phones (≤768px) |
@@ -101,7 +101,7 @@ Hard-coded exceptions (recorded, not endorsed):
 
 - `12px`: chart text, written as a literal in `.chart-text`.
 
-Line heights: body `1.5`; `.page-lede` and `.section-lede` `1.6`; `.page-title` `1.2`; `.cell-title` `1.35` (centre cell `1.45`); `.cell-status` `1.25`; `.metric-value` `1.1`; `.ag-hint` `1.5`; auto-textarea `1.5`.
+Line heights: body `1.5`; `.page-lede` and `.section-lede` `1.6`; `.page-title` `1.2`; `.cell-title` `1.35` (centre cell `1.45`); `.cell-status` `1.25`; `.metric-value` `1.1`; `.wk-helper` `1.5`; auto-textarea `1.5`.
 
 Letter spacing: `.brand` `-0.01em`; `.page-title` `-0.015em`; `.section-title`, `.metric-value` `-0.01em`.
 
@@ -138,7 +138,7 @@ Z-order: topbar 10, colour popover 20. Activity grid cells use z-index 1 only wh
 - Global: `:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }`.
 - Text fields on focus: border becomes `--accent` and `box-shadow: var(--focus-ring)`, where `--focus-ring` is `0 0 0 3px var(--accent-soft)`. Applies to `.timely-input`, `.timely-select`, `.pill-input` (always on while renaming or adding a template) and `.auto-textarea`.
 - Harada cells (`button.harada-cell:focus-visible`): 2px `--accent` outline with `outline-offset: -2px`. The grid frame has `overflow: hidden`, so the ring is drawn inside the cell.
-- Activity grid cells (`.ag-cell:focus-visible`): 2px `--accent` outline with `outline-offset: -2px`, drawn inside the cell.
+- Week grid slots (`.wk-slot:focus-visible`): 2px `--accent` outline with `outline-offset: -2px`, drawn inside the slot.
 
 ---
 
@@ -204,7 +204,7 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | --- | --- |
 | Topbar | Two rows, 93px, sticky. Tabs fit on one line. |
 | Goals | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
-| Planner | The 24x7 activity grid (`ActivityGrid.vue`, section 4.12) has a 40px hour column, seven day columns and 24px hour rows. Painting is only in edit mode, so in view mode the grid is read-only. The grid fits 400px without scroll. The activity list and detail stack, with "Back to list". The year grid keeps its own scroll container (min width 360px). Measured in the slice 5 run (section 11). |
+| Planner | The week grid (`ActivityGrid.vue`, section 4.12) has a 52px hour column, seven day columns and 28px hour rows, always editable for an hourly template. Its frame is at least 540px and scrolls sideways inside `.wk-scroll` on phones. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |
 | Visualization | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
 | Home | The period selector is full width. Day rows put the time range on its own line above the name; Edit stays at the row end. Week and Month rows keep name, hours and share on one line. Measured at 400px: no page overflow in any period, light or dark. |
@@ -365,12 +365,35 @@ Page: "Where your time goes". Toolbar, then sections in this order: the year met
 - Unassigned weeks have no applied template. They use the active template and draw at 45% opacity; a note under the legend names that template (FR-VIZ-3).
 - Year by category (closed disclosure, FR-VIZ-4): rows (`.total-row`) with dot, name (a link to Goals), planned hours in the year and a percentage of planned hours. Percentages use largest remainder, so they add up to 100.
 
-### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.ag-*` in `main.css`)
+### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `main.css`)
+
+Restored on 2026-10-26 to the original interaction (FR-PLAN-23); it replaces the slice 7 brush grid. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
+
+- Head line (`.wk-head-line`): title "Week" (section title) and a quiet meta line "{template} · N of 168 h planned" (13px, `--ink-3`, tabular).
+- Frame (`.wk`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 540px, inside `.wk-scroll`. The frame scrolls sideways on phones; the page never does.
+- Columns: a 52px hour gutter (`.wk-hours`, `--bg-2`, 12px labels every three hours), then seven day columns (`.wk-day`). The header (`.wk-head`, `--bg-2`) has the day name (13px 600), the planned hours of the day (12px `--ink-3`) and a 24px clear-day button (`.wk-clear-day`) labelled "Clear Monday" and so on.
+- Slots (`.wk-slot`): 28px per hour, a hairline above each three-hour line, `--bg-3` on hover. Each slot is one focus stop (`role="button"`, roving `tabindex`), named "Monday 9AM, Deep Work" or "Monday 9AM, free".
+- Blocks (`.wk-block`): a run of one activity's hours, absolute over the slots, filled with the activity colour. The text colour is the swatch's `fg` from `DESIGN_COLORS`. A 1px inset hairline keeps dark colours visible in dark mode. The name is 13px 600 and the time range 12px. The 24px delete (`.wk-block-del`, shown on hover or keyboard focus, hidden on touch) clears the block.
+- Selection (`.wk-sel`): `--accent` at 16% with a 1px `--accent` inset frame and the duration in a small label. It ignores the pointer except in edit mode.
+- Interaction (the original model, restored):
+  - Drag down one day column from one hour to another: the run is selected. Release opens the action bar. A drag does not leave its column.
+  - Click or tap a painted hour: its whole block is selected and the bar opens. Click or tap an empty hour: that hour is selected.
+  - Touch only taps: a move of more than 8px is a scroll, so the page scrolls normally.
+  - Action bar (`.wk-bar`, teleported to `body`, fixed beside the release point, at the bottom on phones): the day, range and duration, a hint, then "Apply…" (or "Change…" when the run holds hours), "Edit" (disabled for an empty run), "Delete" (when the run holds hours) and "Cancel".
+  - Apply or Change opens the activity menu (`.wk-menu`): each activity with its hours a week in the template, then "Clear these hours". Choosing an activity paints the run and overwrites what was there.
+  - Edit: the run gets two handles (24px hit areas with a 28px pill), a duration label and Save (✓) and Cancel (✕) in its top-right corner. A handle moves its edge by whole hours. Save clears the original run and applies the activity to the new one; Cancel restores the run and reopens the bar.
+  - The cross in a day's header clears the whole column. A block's delete clears that block.
+  - An open bar or menu covers the page with `.wk-overlay`. Pointer down on the overlay closes it (on pointer down, not click, because the click that follows a tap would land on the overlay the tap opened). Escape closes it and cancels any edit.
+- Undo (`.wk-undo`, role `status`, 13px `--ink`): after any change that alters hours, a line under the grid names the change ("Deep Work set on Mon 9AM – 12PM.") with an Undo button. Undo restores the template's slots as they were (one step). The line disappears after 8 seconds and is dropped when the template changes.
+- Keyboard (added to the original so FR-PLAN-19 stays operable): one tab stop; arrows move; Shift with arrows selects a run in one day; Enter or Space opens the bar for the run, or for the block or hour under focus; Escape closes. Focus moves into the bar and the menu when they open and returns to the grid when they close.
+- Writes go through the store: `paintCells` for apply, clear and edit, and `restoreSlots` for undo. Blocks come from `slotsToBlocks`; hours per activity from `aggregateTemplate`.
+- A 30-minute template shows a notice in place of the grid (FR-PLAN-10, not built).
+
 
 Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
 
 - Head line (`.ag-head-line`): title "Week" (section title) and a quiet meta line "{template} · N of 168 h planned" (13px, `--ink-3`, tabular). No paragraph.
-- Frame (`.ag-grid`, role `grid`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 320px, inside `.ag-scroll`. Hour rows are hairlines (`--rule-2` top border on each row). Cells have **no borders**; columns are separated only by tint.
+- Frame (`.ag-grid`, role `grid`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 320px, inside `.wk-scroll`. Hour rows are hairlines (`--rule-2` top border on each row). Cells have **no borders**; columns are separated only by tint.
 - Columns: 40px hour label column, then seven equal day columns. Header row (`.ag-head`, `--bg-2`, bottom rule): day name (13px 600) and planned hours of that day (12px `--ink-3`).
 - Rows: 24 hours, 24px tall; each cell is a 24px target. Hour labels (`.ag-hour`, 12px `--ink-3`).
 - Cell states:
@@ -395,7 +418,7 @@ Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted 
 
 ### 4.15 Floating menus
 
-`.color-pop`: `--bg` background, 1px `--rule` border, radius 6px, `--shadow`. No floating menus remain after slice 2b; a new floating element should be fixed and teleported to `body` so the grid cannot clip it.
+`.color-pop`: `--bg` background, 1px `--rule` border, radius 6px, `--shadow`. The week grid's action bar and activity menu (`.wk-pop`, section 4.12) are fixed and teleported to `body`. A new floating element should be fixed and teleported to `body` so the grid cannot clip it.
 
 ---
 
@@ -413,7 +436,22 @@ Read-only except the period selector and the journal card (FR-HOME-1). The journ
 - Below target (`.home-signal`): one line, "2 categories are below their habit target: Physical, Cognitive.", each name linked to Goals. Hidden when none is below. It matches the Goals "Below target" flag.
 - Phones: see 3.5. Blocks wrap; Edit stays at the row end.
 
-### 4.17 Planner palette (`PlannerView.vue`, `.pal-*` in `main.css`)
+### 4.17 Activities under the week (`PlannerView.vue`, `.acts`, `.act-*` in `main.css`)
+
+Restored on 2026-10-26 (FR-PLAN-24). The Activities list is a compact section under the week, not a brush palette: there is no Erase row.
+
+- Head (`.acts-head`): section title "Activities" and a lede "Hours a week in {template}" on the right.
+- Chips (`.act-list`, each a `.chip` with `aria-pressed`): colour dot, name and hours a week (`.pill-count`). Selecting one sets `item` in the URL and shows its detail. There is no Erase chip; clearing is in the week grid.
+- Detail (`.act-detail`, `--bg-2` panel, 1px `--rule` border, radius 6px): colour dot, name, "code · category · N linked habits", and "Edit" (`.btn.btn-xs.btn-outline.act-edit-btn`, named "Edit {name}"), which sets `edit=1`.
+- Editor (`.act-panel`, Escape closes the confirmation first, otherwise leaves edit mode): title "Edit {name}" and "Done" (`.btn-sm.btn-primary`), then name, short code, category (`.timely-select`) and colour (`.color-pop-inline`). Changes apply at once (FR-UX-6); a clash or empty name shows a `.field-error`. "Delete activity" (`.act-delete`) opens the inline confirmation (`.act-confirm`) that states the impact (FR-UX-7).
+- Add: "+ Add activity" (`.chip-add.act-add-trigger`) reveals an `.act-panel` form: name, short code, category, colour, primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Opening from Goals (`add=1&category=`) opens it with that category preselected (FR-GOALS-20).
+- Empty list: "No activities yet. Add one to plan when it happens." (`.acts-empty`).
+- Phones: chips wrap; the editor and the form take the full width, and their two-column rows stack under 480px.
+
+### 4.17a Retired: brush palette (slice 7, `.pal-*`)
+
+Removed on 2026-10-26. The palette set the brush (an activity or Erase) and the grid painted at once with no edit gate. Both are superseded (FR-PLAN-17 to 20 and 22).
+
 
 Slice 7 (FR-PLAN-22). The palette is the brush. Section title "Activities" (section title style) and a meta line "Hours a week in {template}".
 
@@ -459,13 +497,13 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Visualization, the Planner activity list, detail and forms (4.17) and the activity grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Visualization, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
-| Names for icon controls | Pass | Theme toggle, colour swatches, move and delete buttons all have `aria-label`; activity grid cells are named by day, hour and activity. |
+| Names for icon controls | Pass | Theme toggle, colour swatches, move and delete buttons all have `aria-label`; week grid slots are named by day, hour and activity. |
 | Minimum text size 12px | Pass | Smallest text is 12px. The block delete glyph was 11px and is now 12px. |
-| Touch target | Partial | Colour swatches are 24px hit areas with 20px visible dots (slice 5). Resize confirm buttons are 24px. Block delete is 24px (hidden on touch). Day clear buttons are 20px. Category arrows 28px wide, 26px high. Topbar tabs are 44px on phones. |
+| Touch target | Partial | Colour swatches are 24px hit areas with 20px visible dots (slice 5). Resize confirm buttons are 24px. Block delete is 24px (hidden on touch). Day clear buttons are 24px. Category arrows 28px wide, 26px high. Topbar tabs are 44px on phones. |
 | Reduced motion | Not handled | No `prefers-reduced-motion` rule. Transitions are 0.1 to 0.18s and small. |
 | Live regions | Not used | Save and error messages are not announced. |
 | Language | Pass | `<html lang="en">`, set in `nuxt.config.ts`. |
@@ -526,7 +564,7 @@ Don't:
 4. Capture each affected tab at 1280px and at 400px, in light mode. For dark mode, set `localStorage['timely.dark'] = 'true'` before the reload and capture at least one dark screen.
 5. For every capture, check:
    - `document.documentElement.scrollWidth - document.documentElement.clientWidth` is 0 (no page-level horizontal overflow).
-   - Each scrolling container (`.year-grid-scroll`, `.chart-scroll`, `.tabs`, `.ag-scroll`) is listed on purpose. Overflow elsewhere is a bug.
+   - Each scrolling container (`.year-grid-scroll`, `.chart-scroll`, `.tabs`, `.wk-scroll`) is listed on purpose. Overflow elsewhere is a bug.
    - No `console.error` and no `pageerror` events.
    - `[data-theme]` is `dark` in dark mode and empty in light mode.
    - IBM Plex Sans is loaded in `document.fonts` (requires network access to Google Fonts).
@@ -542,7 +580,7 @@ Reference screenshots for this spec live in `spec/screens/`. Replace them when t
 
 These are facts about the code as it is today. They are not requirements for new work. Fix them when touching the affected area.
 
-1. The year grid cannot be operated from the keyboard, and it cannot be painted by touch. (The activity grid is keyboard operable since slice 2b.)
+1. The year grid cannot be operated from the keyboard, and it cannot be painted by touch. (The week grid is keyboard operable: one focus stop, arrows, Shift for a run, Enter, Escape.)
 2. Chart segments (80% colour, 1.2 to 1.6:1 against the page) are below 3:1 for non-text UI. The legend and the focus strip identify them. Not fixed: a gap or outline between segments would not change a segment's contrast against the page.
 3. `role="tab"` buttons have no `aria-controls` and there is no `tabpanel`.
 4. There is no inline error style for forms. Failed actions have no visible feedback.
@@ -577,4 +615,5 @@ These are facts about the code as it is today. They are not requirements for new
 - Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `screens/home-desktop-light.png`, `screens/visualization-desktop-light.png`, `screens/visualization-mobile-light.png`.
 - Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (a Goals script in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `screens/goals-desktop-light.png`, `screens/goals-detail-edit-desktop-light.png`, `screens/goals-mobile-light.png`.
 - Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.
+- Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `screens/planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`.
 - Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `main.css` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
