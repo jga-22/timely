@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, activityCategoryIds, aggregateTemplate, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
+import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
@@ -17,8 +17,17 @@ const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
 
 const categoryActivities = computed(() => activities.value.filter(activity => activity.categoryId === props.categoryId))
-// Every activity that counts toward this category: its own, and those it is secondary in (marked in the list)
-const countedActivities = computed(() => activities.value.filter(activity => activityCategoryIds(activity).includes(props.categoryId)))
+// Rows of the activities list: every activity of the category, plus those counted here from another category
+// (a habit link or a secondary category). Each row says whether its hours count toward the comparison, and why
+const comparedIds = computed(() => comparedActivityIds(planner.$state, props.categoryId))
+const categoryRows = computed(() => activities.value
+  .filter(activity => activity.categoryId === props.categoryId || comparedIds.value.has(activity.id))
+  .map(activity => ({
+    activity,
+    note: !comparedIds.value.has(activity.id)
+      ? 'not in comparison'
+      : activity.categoryId === props.categoryId ? '' : activity.alsoCategoryIds?.includes(props.categoryId) ? 'also counts here' : 'linked by a habit'
+  })))
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
 const activityCount = computed(() => categoryActivities.value.length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
@@ -197,11 +206,11 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="countedActivities.length" class="row-list">
-          <li v-for="activity in countedActivities" :key="activity.id" class="row-item">
+        <ul v-if="categoryRows.length" class="row-list">
+          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ activity.categoryId === category.id ? '' : ' · also counts here' }}</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
             <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
           </li>
@@ -280,11 +289,11 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="countedActivities.length" class="row-list">
-          <li v-for="activity in countedActivities" :key="activity.id" class="row-item">
+        <ul v-if="categoryRows.length" class="row-list">
+          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ activity.categoryId === category.id ? '' : ' · also counts here' }}</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
             <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
           </li>

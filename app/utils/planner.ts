@@ -162,7 +162,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean,
   ['physique', 'Physical', '#7a9471',
     'Optimal fitness, stable energy, zero sleep debt.',
     'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
-      ['Regular exercise (frequency and type to set)', 3, 'week', 'training', 60],
+      ['Regular exercise (frequency and type to set)', 6, 'week', 'training', 60],
       ['Structured eating, no improvised meals', 1, 'day'],
       ['Organised sleep and recovery', 1, 'day'],
       ['Tracking simple indicators (weight, fitness)', 1, 'week'],
@@ -242,7 +242,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean,
       ['Widen the scope: from EA to global IT/data governance', 1, 'month'],
       ['Showcase value created with quantified results', 1, 'month'],
       ['Publish professional articles to build my personal brand', 1, 'month'],
-      ['Plan the week around professional priorities', 1, 'week', 'planning', 60]
+      ['Plan the week around professional priorities', 1, 'week', 'planning', 120]
     ]],
   ['environnement', 'Environment', '#5c7248',
     'A sustainable lifestyle, consistent with my values.',
@@ -463,14 +463,29 @@ export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityI
   return (aggregateTemplate(template, state.activities).get(activityId) ?? 0) * 60
 }
 
-/** Every category an activity counts toward: its primary category first, then the secondary ones */
-export const activityCategoryIds = (activity: Activity): string[] => [activity.categoryId, ...(activity.alsoCategoryIds ?? [])]
-
 /** Secondary links kept only when they name a known category other than the primary one, each once */
 export const cleanAlsoCategoryIds = (categories: Category[], primaryId: string, ids: string[]): string[] =>
   [...new Set(ids)].filter(id => id !== primaryId && categories.some(category => category.id === id))
 
-/** Scheduled minutes per week for one category, from the active template. An activity counts in each category it belongs to */
+/**
+ * Activities whose hours count toward a category's comparison (FR-GOALS-16), each once: the activities linked from
+ * the category's habits, and the activities that list the category as secondary. Primary membership alone does not count.
+ */
+export const comparedActivityIds = (state: PlannerState, categoryId: string): Set<string> => {
+  const ids = new Set<string>()
+
+  for (const habit of state.habits) {
+    if (habit.categoryId === categoryId && habit.activityId) ids.add(habit.activityId)
+  }
+
+  for (const activity of state.activities) {
+    if (activity.alsoCategoryIds?.includes(categoryId)) ids.add(activity.id)
+  }
+
+  return ids
+}
+
+/** Scheduled minutes per week for one category, from the active template: the hours of its comparedActivityIds */
 export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
   const template = getActiveTemplate(state)
 
@@ -479,10 +494,13 @@ export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryI
   }
 
   const hours = aggregateTemplate(template, state.activities)
+  let total = 0
 
-  return state.activities
-    .filter(activity => activityCategoryIds(activity).includes(categoryId))
-    .reduce((total, activity) => total + (hours.get(activity.id) ?? 0), 0) * 60
+  for (const activityId of comparedActivityIds(state, categoryId)) {
+    total += hours.get(activityId) ?? 0
+  }
+
+  return total * 60
 }
 
 /** Slack before a category counts as under or over its time target: the larger of 30 minutes and 10% of the need */
