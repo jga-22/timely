@@ -8,7 +8,8 @@ const activeTab = useState<string>('activeTab')
 </script>
 
 <template>
-  <PlannerView      v-if="activeTab === 'planner'" />
-  <PlannerInsightsView v-else-if="activeTab === 'insights'" />
-  <PlannerLegendView   v-else />
+  <HaradaView          v-if="activeTab === 'goals'" />
+  <PlannerLegendView   v-else-if="activeTab === 'config'" />
+  <PlannerView         v-else-if="activeTab === 'planner'" />
+  <PlannerInsightsView v-else />
 </template>

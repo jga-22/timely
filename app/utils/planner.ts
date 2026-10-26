@@ -1,4 +1,4 @@
-import type { Activity, PlannerState, WeekTemplate } from '~/types/planner'
+import type { Activity, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -62,12 +62,6 @@ export const formatHour = (h: number): string => {
   return `${h - 12}PM`
 }
 
-export const PALETTE = [
-  '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80',
-  '#34d399', '#2dd4bf', '#38bdf8', '#60a5fa', '#818cf8',
-  '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185'
-]
-
 export const projectionInsight = (hours: number): string => {
   if (hours > 8000) return 'Mastery-level repetition.'
   if (hours > 4000) return 'Enough time to become highly proficient.'
@@ -75,43 +69,6 @@ export const projectionInsight = (hours: number): string => {
   if (hours > 500) return 'A habit with visible compounding.'
   return 'Small, but it still adds up.'
 }
-
-export const HOURS = Array.from({ length: 24 }, (_, hour) =>
-  `${String(hour).padStart(2, '0')}:00`
-)
-
-export const COLORS = [
-  '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80',
-  '#34d399', '#2dd4bf', '#38bdf8', '#60a5fa', '#818cf8',
-  '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185'
-]
-
-export const TOTAL_WEEK_HOURS = 168
-
-export const getMondayDate = (date: Date): string => {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  return d.toISOString().slice(0, 10)
-}
-
-export const addWeeks = (startDate: string, weeks: number): string => {
-  const d = new Date(startDate + 'T00:00:00')
-  d.setDate(d.getDate() + weeks * 7)
-  return d.toISOString().slice(0, 10)
-}
-
-export const formatWeekRange = (startDate: string): string => {
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(start)
-  end.setDate(end.getDate() + 6)
-  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${fmt(start)} – ${fmt(end)}`
-}
-
-export const generateWeekDates = (fromDate: string, count: number): string[] =>
-  Array.from({ length: count }, (_, i) => addWeeks(fromDate, i))
 
 export const slotCount = (granularityMinutes: 60 | 30) => (7 * 24 * 60) / granularityMinutes
 
@@ -214,7 +171,177 @@ const createSeedAppliedWeeks = () => {
     .filter(Boolean) as import('~/types/planner').AppliedWeek[]
 }
 
+/** Bump when the persisted shape changes; while in development, a mismatch resets saves to the default seed */
+export const PLANNER_STATE_VERSION = 5
+
+const HARADA_AMBITION_ID = 'ambition-harada'
+const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
+
+type HaradaHabitSeed = [string, number, HabitPeriod, string?, number?]
+
+/** Life categories around the ambition, in grid order: [id, name, colour, hint, goal5y, target1y, targetTbd, habits] */
+const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
+  ['physique', 'Physical', '#7a9471', 'Sport · nutrition · routine',
+    'Optimal fitness, stable energy, zero sleep debt.',
+    'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
+      ['Regular exercise (frequency and type to set)', 3, 'week', 'training', 60],
+      ['Structured eating, no improvised meals', 1, 'day'],
+      ['Organised sleep and recovery', 1, 'day'],
+      ['Tracking simple indicators (weight, fitness)', 1, 'week'],
+      ['Annual medical check-up', 1, 'month'],
+      ['Limit screens before bed', 1, 'day'],
+      ['Daily hydration', 1, 'day'],
+      ['Stretching and mobility', 3, 'week']
+    ]],
+  ['spirituelle', 'Spiritual', '#6e5c7c', 'Meditation · faith / journal',
+    'Inner clarity, calm in the face of professional pressure.',
+    'To define — e.g. 10 minutes of daily meditation kept, weekly journaling kept up.', true, [
+      ['Regular meditation', 1, 'day'],
+      ['Reflection time / journal', 3, 'week'],
+      ['Inspiring reading', 3, 'week', 'reading', 30],
+      ['Moments of screen-free silence', 1, 'day'],
+      ['Clarify personal values', 1, 'month'],
+      ['Daily gratitude', 1, 'day'],
+      ['Retreat or extended time once a year', 1, 'month'],
+      ['Align actions with values', 1, 'week']
+    ]],
+  ['relationnelle', 'Relational & emotional', '#c4767f', 'Family · managing emotions',
+    'To be recognised by my family as a present, reliable father, husband, son and brother.',
+    'Weekly ritual with my wife and a monthly one-on-one ritual with each child, kept at 90% over the year.', false, [
+      ['Time dedicated to my wife (couple ritual)', 1, 'week', 'family', 90],
+      ['Time dedicated to my children, one-on-one', 1, 'month'],
+      ['Regular calls and visits to my parents', 1, 'week'],
+      ['Active connection with my brother / sister', 1, 'week'],
+      ['Family ritual (e.g. Sunday together)', 1, 'week', 'family', 180],
+      ['Close circle of friends maintained', 1, 'month'],
+      ['Recognise, express and regulate my emotions', 1, 'day'],
+      ['Resolve tensions quickly, let nothing linger', 1, 'day']
+    ]],
+  ['economique', 'Economic', '#c19a3e', 'Tracking · plan',
+    'Financial independence, target net worth.',
+    'To define — e.g. target savings rate reached, exact amount invested over the year.', true, [
+      ['Monthly budget tracking', 1, 'month'],
+      ['Structured savings / investment plan', 1, 'month'],
+      ['Annual net-worth review', 1, 'month'],
+      ['Diversify income sources', 1, 'month'],
+      ['Family protection (insurance, provident cover)', 1, 'month'],
+      ['Quantified goals per deadline', 1, 'month'],
+      ['Reduce spending not aligned with my values', 1, 'week'],
+      ['Continuing education in personal finance', 1, 'month']
+    ]],
+  ['cognitive', 'Cognitive', '#4a8683', 'AI · personal project',
+    'Stay at the leading edge of AI and enterprise architecture, able to lead a project of my own.',
+    'AI / enterprise architecture certification obtained and a personal project launched — personal dev app or enterprise architecture app (to be decided).', false, [
+      ['Active watch on AI / enterprise architecture', 3, 'week'],
+      ['Decide, then launch the personal project (personal dev app or EA app)', 2, 'week', 'projects', 60],
+      ['Regular technical reading', 3, 'week', 'learning', 45],
+      ['Targeted certification course', 2, 'week'],
+      ['Concrete experimentation (prototypes, personal POCs)', 1, 'week'],
+      ['Share knowledge (articles, talks)', 1, 'month'],
+      ['Learn a new domain each year', 1, 'month'],
+      ['Regularly challenge what I know', 1, 'month']
+    ]],
+  ['sociale', 'Social', '#e09070', 'Community · helping others',
+    'An active role in a professional or entrepreneurial community.',
+    'To define — e.g. join an active community, start a mentoring relationship over the year.', true, [
+      ['Active participation in one or more communities', 1, 'week'],
+      ['Mentoring, helping others', 1, 'week'],
+      ['Association or entrepreneurial commitment', 1, 'month'],
+      ['Contribution to a collective or network', 1, 'month'],
+      ['Organising events or meetups', 1, 'month'],
+      ['Visibility (content, speaking)', 1, 'week'],
+      ['Maintain the existing network', 1, 'week'],
+      ['New qualified connections each quarter', 1, 'month']
+    ]],
+  ['professionnelle', 'Professional', '#3c4b63', 'Networking · leadership · CDO/CIO',
+    'Land a CDO or CIO role within five years.',
+    'Take on an expanded role (e.g. Lead Enterprise Architect) covering IT and data, with 3 strategic initiatives delivered and visible to the executive committee.', false, [
+      ['Targeted networking with IT / data leaders', 1, 'week'],
+      ['Develop an executive posture and communication', 1, 'week'],
+      ['High-impact assignments on the digital roadmap', 1, 'day'],
+      ['Executive education / strategic certification', 1, 'month'],
+      ['Identify an internal mentor or sponsor', 1, 'month'],
+      ['Widen the scope: from EA to global IT/data governance', 1, 'month'],
+      ['Showcase value created with quantified results', 1, 'month'],
+      ['Publish professional articles to build my personal brand', 1, 'month'],
+      ['Plan the week around professional priorities', 1, 'week', 'planning', 60]
+    ]],
+  ['environnement', 'Environment', '#5c7248', 'Sustainability · pace of life',
+    'A sustainable lifestyle, consistent with my values.',
+    'To define — e.g. fixed Sunday ritual kept all year, footprint reduced in one identified area.', true, [
+      ['Reduce my daily footprint', 1, 'day'],
+      ['Sunday rituals: rest, nature, family', 1, 'week'],
+      ['Aligned consumption choices', 1, 'day'],
+      ['Optimise living and working environment', 1, 'month'],
+      ['Point to define', 1, 'week'],
+      ['Raise awareness among my circle', 1, 'month'],
+      ['Simple annual review of my choices', 1, 'month'],
+      ['Consistency between professional discourse (sustainable transformation) and personal life', 1, 'month']
+    ]]
+]
+
+/** Short line under each seeded grid cell, keyed by category id */
+export const HARADA_HINTS: Record<string, string> = Object.fromEntries(
+  HARADA_CATEGORIES.map(([id, , , hint]) => [id, hint])
+)
+
+/** Seed Harada grid: one 5-year ambition, eight life categories and their daily/weekly/monthly habits */
+export const createHaradaSeed = (): Pick<PlannerState, 'ambition' | 'categories' | 'habits'> => {
+  const habits: Habit[] = []
+
+  const categories: Category[] = HARADA_CATEGORIES.map(([id, name, color, , goal5y, target1y, targetTbd, items], index) => {
+    items.forEach(([habitName, count, period, activityId, minutesPerOccurrence], habitIndex) => {
+      habits.push({
+        id: `${id}-${habitIndex + 1}`,
+        categoryId: id,
+        name: habitName,
+        frequency: { count, period },
+        ...(activityId ? { activityId } : {}),
+        ...(minutesPerOccurrence ? { minutesPerOccurrence } : {})
+      })
+    })
+
+    return { id, name, color, order: index + 1, goal5y, target1y, targetTbd }
+  })
+
+  return {
+    ambition: {
+      id: HARADA_AMBITION_ID,
+      statement: HARADA_AMBITION_STATEMENT,
+      horizonYears: 5
+    },
+    categories,
+    habits
+  }
+}
+
+/** Cheap shape check of a persisted state: anything malformed is discarded, never repaired */
+export const isPlannerState = (value: unknown): value is PlannerState => {
+  if (!value || typeof value !== 'object') return false
+
+  const state = value as Partial<Record<keyof PlannerState, unknown>>
+
+  if (state.version !== PLANNER_STATE_VERSION || !state.settings || typeof state.settings !== 'object') return false
+  if (![state.categories, state.activities, state.templates, state.appliedWeeks, state.habits].every(Array.isArray)) return false
+
+  const categories = state.categories as Array<Partial<Category> | null>
+  const activities = state.activities as Array<Partial<Activity> | null>
+  const habits = state.habits as Array<Partial<Habit> | null>
+  const templates = state.templates as Array<Partial<WeekTemplate> | null>
+
+  if (!categories.every(category => typeof category?.id === 'string' && typeof category.name === 'string')) return false
+  if (!templates.every(template => Array.isArray(template?.slots))) return false
+
+  const categoryIds = new Set(categories.map(category => category!.id))
+  const linksToCategory = (item: { categoryId?: string } | null) =>
+    typeof item?.categoryId === 'string' && categoryIds.has(item.categoryId)
+
+  return activities.every(linksToCategory) && habits.every(linksToCategory)
+}
+
 export const createInitialState = (): PlannerState => ({
+  version: PLANNER_STATE_VERSION,
+  ...createHaradaSeed(),
   settings: {
     timeGranularity: 60,
     activeTemplateId: 'standard-week',
@@ -223,24 +350,16 @@ export const createInitialState = (): PlannerState => ({
       excludedWeekStatuses: ['vacation', 'off']
     }
   },
-  categories: [
-    { id: 'work',     name: 'Work',     color: '#3c4b63' },
-    { id: 'health',   name: 'Health',   color: '#7a9471' },
-    { id: 'family',   name: 'Family',   color: '#c19a3e' },
-    { id: 'learning', name: 'Learning', color: '#8a5a7a' },
-    { id: 'projects', name: 'Projects', color: '#a04e3e' },
-    { id: 'rest',     name: 'Rest',     color: '#6e5c7c' }
-  ],
   activities: [
-    { id: 'deep-work', name: 'Deep Work',      shortCode: 'WRK', categoryId: 'work',     color: '#3c4b63' },
-    { id: 'training',  name: 'Training',        shortCode: 'TRN', categoryId: 'health',   color: '#7a9471' },
-    { id: 'family',    name: 'Family Time',     shortCode: 'FAM', categoryId: 'family',   color: '#c19a3e' },
-    { id: 'learning',  name: 'Learning',        shortCode: 'LRN', categoryId: 'learning', color: '#8a5a7a' },
-    { id: 'projects',  name: 'Projects',        shortCode: 'PRJ', categoryId: 'projects', color: '#a04e3e' },
-    { id: 'reading',   name: 'Reading',         shortCode: 'RDG', categoryId: 'learning', color: '#6e5c7c' },
-    { id: 'planning',  name: 'Weekly Planning', shortCode: 'PLN', categoryId: 'projects', color: '#c19a3e' },
-    { id: 'errands',   name: 'Errands',         shortCode: 'ERR', categoryId: 'family',   color: '#d97757' },
-    { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'rest',     color: '#6e5c7c' }
+    { id: 'deep-work', name: 'Deep Work',      shortCode: 'WRK', categoryId: 'professionnelle', color: '#3c4b63' },
+    { id: 'training',  name: 'Training',        shortCode: 'TRN', categoryId: 'physique',        color: '#7a9471' },
+    { id: 'family',    name: 'Family Time',     shortCode: 'FAM', categoryId: 'relationnelle',   color: '#c19a3e' },
+    { id: 'learning',  name: 'Learning',        shortCode: 'LRN', categoryId: 'cognitive',       color: '#8a5a7a' },
+    { id: 'projects',  name: 'Projects',        shortCode: 'PRJ', categoryId: 'cognitive',       color: '#a04e3e' },
+    { id: 'reading',   name: 'Reading',         shortCode: 'RDG', categoryId: 'cognitive',       color: '#6e5c7c' },
+    { id: 'planning',  name: 'Weekly Planning', shortCode: 'PLN', categoryId: 'professionnelle', color: '#c19a3e' },
+    { id: 'errands',   name: 'Errands',         shortCode: 'ERR', categoryId: 'environnement',   color: '#d97757' },
+    { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
   ],
   templates: [createSeedTemplate(), createDeepWorkTemplate(), createVacationTemplate()],
   appliedWeeks: createSeedAppliedWeeks()
@@ -292,4 +411,79 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   }
 
   return categoryTotals
+}
+
+/** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */
+export const habitWeeklyOccurrences = (habit: Habit): number => {
+  const { count, period } = habit.frequency
+
+  if (period === 'day') return count * 7
+  if (period === 'week') return count
+
+  return (count * 12) / 52
+}
+
+/** Scheduled minutes per week for one activity, from the active template */
+export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityId: string): number => {
+  const template = getActiveTemplate(state)
+
+  if (!template) {
+    return 0
+  }
+
+  return (aggregateTemplate(template, state.activities).get(activityId) ?? 0) * 60
+}
+
+/** Scheduled minutes per week for one category, from the active template */
+export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
+  const template = getActiveTemplate(state)
+
+  if (!template) {
+    return 0
+  }
+
+  return (aggregateTemplateByCategory(template, state).get(categoryId) ?? 0) * 60
+}
+
+export interface CategoryAlignment {
+  /** Scheduled minutes per week of the activities linked from this category's habits */
+  habitMinutesPerWeek: number
+  /** Minutes per week the habits ask for */
+  targetMinutesPerWeek: number
+  /** Scheduled minutes per week across every activity in the category */
+  totalMinutesPerWeek: number
+  unlinkedHabits: number
+  coverage: number | null
+}
+
+/** Each activity counts once: the first category by order whose habits link it keeps it */
+export const categoryAlignments = (state: PlannerState): Map<string, CategoryAlignment> => {
+  const claimed = new Set<string>()
+  const alignments = new Map<string, CategoryAlignment>()
+
+  for (const category of [...state.categories].sort((a, b) => a.order - b.order)) {
+    const habits = state.habits.filter(habit => habit.categoryId === category.id)
+    const activityIds = [...new Set(habits.flatMap(habit => (habit.activityId ? [habit.activityId] : [])))]
+      .filter(activityId => !claimed.has(activityId))
+    activityIds.forEach(activityId => claimed.add(activityId))
+
+    const habitMinutesPerWeek = activityIds.reduce(
+      (total, activityId) => total + scheduledWeeklyMinutesForActivity(state, activityId),
+      0
+    )
+    const targetMinutesPerWeek = habits.reduce(
+      (total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0),
+      0
+    )
+
+    alignments.set(category.id, {
+      habitMinutesPerWeek,
+      targetMinutesPerWeek,
+      totalMinutesPerWeek: scheduledWeeklyMinutesForCategory(state, category.id),
+      unlinkedHabits: habits.filter(habit => !habit.activityId).length,
+      coverage: targetMinutesPerWeek > 0 ? habitMinutesPerWeek / targetMinutesPerWeek : null
+    })
+  }
+
+  return alignments
 }
