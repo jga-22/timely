@@ -27,7 +27,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 | 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Done (one commit; see status log); FR-UX-5 and FR-VIZ-5/6 partial |
 | 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Done (2a and 2b). FR-PLAN-17 partial until the edit-mode question is decided |
 | 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Done (one commit; see status log). FR-GOALS-20 not built; FR-GOALS-15 and 18 Partial |
-| 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Not started |
+| 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Done (one commit; see status log). FR-HOME-1 and 10 Partial; FR-HOME-11 to 13 are slice 6; FR-HOME-14 not built |
 | 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |
 | 6 | Journal experiment | FR-HOME journal items | S | 4 | Not started |
 
@@ -74,9 +74,13 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 - Time-per-category bar for the selected period, totals, one-line "below habit target" signal.
 - Month uses the calendar-day rule (assumption A1). Client-only rendering for date content.
 
+- Done in slice 4 (one commit): period selector (Day, Week, Month; current periods only), Day blocks in time order with a Now mark, Week and Month rows sorted by hours with category and share, totals, time per category (stacked bar and legend, Unplanned last), the one-line below-target signal, empty states, client-only date output. Pure logic in `app/utils/home.ts` (`dayBlocks`, `periodBreakdown`, `periodTemplates`, `belowTargetCategories`, `largestRemainderShares`), checked in node under UTC, Europe/Paris and America/New_York. Storage version unchanged (6).
+- Deviations (explicit): (1) Unplanned is also a legend row, so every bar segment has a text label and the legend adds up to 100 with Unplanned; (2) the period choice is session state (Nuxt `useState`), not a URL parameter, so FR-UX-5 stays limited to tab, item and edit; (3) the spec does not define arrow keys: the selector is buttons with `aria-pressed` (like the Visualization segmented control), where Left, Right, Up and Down move the selection and focus with wrap-around, and Home and End go to the first and last; (4) week and month activity shares are a percent of the period, rounded with the largest remainder together with Unplanned; (5) the below-target line shows in every period, since it is a weekly rate; (6) Edit controls are links styled as small outline buttons; (7) the Now mark refreshes once a minute; (8) templates stay hourly (24 slots a day), as before.
+- Not verified: the "No activities yet." state (coded, not run in the browser); a reload with saved state (where the known hydration message would appear) was not captured; no mixed-template month was screenshotted.
+
 ### Slice 5: cleanup
 
-- Already done in slice 2b: the old drag-select week grid, its action bar, resize handles, activity menu, week totals, their CSS and the `applyTimeRange` and `clearTimeRange` store actions. Still to do: `slotsToBlocks` has no caller until Home (slice 4) uses it; remove stale docs; update `frontend-design.md` catalogue, breakpoints and screenshots (add Home and Visualization shots).
+- Already done in slice 2b: the old drag-select week grid, its action bar, resize handles, activity menu, week totals, their CSS and the `applyTimeRange` and `clearTimeRange` store actions. Still to do: remove stale docs; update `frontend-design.md` catalogue, breakpoints and screenshots (add Home and Visualization shots).
 
 ### Slice 6: journal experiment (low priority)
 
@@ -96,4 +100,5 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 | 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |
 | 2026-10-25 | Slice 1 done in one commit: Home (placeholder, default), Goals, Planner, Visualization and transitional Configuration; URL state in `useNav`; Insights replaced by Visualization; horizon moved to Visualization. FR-VIZ-1 to 4 Done; FR-VIZ-5 and 6, FR-UX-5, FR-APP-7 and 8 Partial. FR-DATE-6 and FR-APP-6 Done. |
 | 2026-10-26 | Slice 2b done in one commit: 24x7 activity grid (hourly; pointer and keyboard painting; inline reassign confirmation; template overview; touch), old week grid retired (Q1). FR-PLAN-13, 15, 16, 18, 19, 20 Done; FR-PLAN-17 Partial (painting while an activity is selected, not only in edit mode: owner to confirm); FR-TPL-5 Done. The activity grid is client-only (`ClientOnly`) because server HTML kept seed cells after hydration. |
+| 2026-10-26 | Slice 4 done in one commit: Home with Day, Week and Month (session period selector with keyboard), Day blocks with Now, Week and Month rows, totals, time per category bar and legend, below-target line, empty states; client-only dates. FR-HOME-2 to 9 Done; FR-HOME-1 and FR-HOME-10 Partial; FR-HOME-11 to 13 are slice 6; FR-DATE-6 Done. Storage version unchanged (6). |
 | 2026-10-26 | Slice 3 done in one commit: Goals vision (AutoTextarea, Done), read-only Harada map (order, name, colour, To define; keyboard), category list (counts, Below target, Add category) and detail (view with goals vs. planned, habits, activities; edit with fields, habit rows, move and remove). Configuration tab and `LegendView.vue` removed; four tabs. FR-GOALS-13, 14, 16, 17, 19, 21, 22 Done; FR-GOALS-15, 18 Partial; FR-GOALS-20 not built. FR-UX-5, FR-APP-7, FR-APP-8, FR-VIZ-6 Done. Reorder fixed in the store. Storage version unchanged (6). |

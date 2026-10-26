@@ -20,11 +20,17 @@ const utcMs = (key: string): number => {
 export const addDays = (key: string, days: number): string =>
   new Date(utcMs(key) + days * DAY_MS).toISOString().slice(0, 10)
 
-/** Monday of the ISO week that contains the date (weeks start on Monday) */
-export const mondayOf = (key: string): string => {
-  const weekday = (new Date(utcMs(key)).getUTCDay() + 6) % 7 // Monday = 0 ... Sunday = 6
-  return addDays(key, -weekday)
+/** Weekday of a date: Monday = 0 ... Sunday = 6 */
+export const weekdayOf = (key: string): number => (new Date(utcMs(key)).getUTCDay() + 6) % 7
+
+/** Number of days in the calendar month of a date key */
+export const daysInMonth = (key: string): number => {
+  const [year, month] = key.split('-').map(Number)
+  return new Date(Date.UTC(year!, month!, 0)).getUTCDate()
 }
+
+/** Monday of the ISO week that contains the date (weeks start on Monday) */
+export const mondayOf = (key: string): string => addDays(key, -weekdayOf(key))
 
 /** ISO week-year and ISO week number (1 to 53) of a date */
 export const isoWeekOf = (key: string): { year: number; week: number } => {

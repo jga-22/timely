@@ -10,7 +10,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | --- | --- | --- |
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | The activity grid fits at 400 px: a 40 px label column and seven day columns of about 46 px, 24 px hour rows, no scroll. The year grid keeps its own scroll container (min width 360 px). Activities list and detail stack (section 4.17). Measured in the browser run (slice 2b): no page overflow at 400 px. |
-| Home (placeholder) | [home-desktop-light.png](screens/home-desktop-light.png) | not captured |
+| Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
 | Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
 
 ---
@@ -192,7 +192,7 @@ The side gutter is 16px at 400px, which meets the minimum.
 | 1024px | `main.css` | `.view` padding |
 | 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Visualization defaults to monthly chart (JS, `window.innerWidth < 768`) |
 | 600px | `HaradaView.vue` (scoped) | Harada grid to two columns; centre cell first, full width |
-| 480px | `main.css` | Template delete shows only the glyph |
+| 480px | `main.css` | Template delete shows only the glyph; Home: period selector full width, Day rows put the time on its own line |
 | `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
 
 JS also reads `window.innerWidth <= 480` in `PlannerView.vue` to place menus (`openActionBarAt`, `openMenuAt`).
@@ -208,6 +208,7 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | Planner | The week grid keeps its 56px label column plus seven day columns with a 480px minimum width. It scrolls horizontally inside `.week-scroll-wrap` (measured overflow 112px). Blocks show only the activity name. Selection and activity menus dock to the bottom edge. Block hover delete is hidden. Template delete shows only the glyph. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |
 | Visualization | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
+| Home | The period selector is full width. Day rows put the time range on its own line above the name; Edit stays at the row end. Week and Month rows keep name, hours and share on one line. Measured at 400px: no page overflow in any period, light or dark. |
 
 Rule: only tables, the year grid and charts may be wider than the viewport, and each is in its own `overflow-x: auto` container. Everything else must wrap or stack.
 
@@ -404,11 +405,19 @@ Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PL
 
 ---
 
-### 4.16 Home placeholder (`app/components/home/HomeView.vue`)
+### 4.16 Home (`app/components/home/HomeView.vue`; pure calculations in `app/utils/home.ts`)
 
-- Page header: "Home", a one-line lede saying the day overview comes in a later update, and today's date as `p.page-meta`. The date is client only (null until mounted, FR-DATE-6).
-- Two quiet inline links, to Planner and Goals, built with `useNav().link`. Links use `--accent` and underline (global `a` rule in `main.css`).
-- Replaced in slice 4 by the Day, Week and Month overview (FR-HOME-1 to 10).
+Read-only except the period selector (FR-HOME-1). The journal card (FR-HOME-11 to 13) is slice 6 and is not here yet.
+
+- Page header: "Home", a one-line lede, and `p.page-meta` with the header line: date, ISO week and templates ("Sunday 25 October 2026 · Week 43 · Standard Week"; Month lists each template with its days, "October 2026 · Standard Week 31 d"). A `p.section-lede.home-note` names the active template when the current week has no template of its own. Date output is null until mounted (FR-DATE-6).
+- Period selector (`.segmented` in `.home-toolbar`, group "Period"): Day, Week, Month as buttons with `aria-pressed`. Left, Right, Up and Down move the selection and focus with wrap-around; Home and End go to the first and last. The choice is session state, so it survives a tab switch and resets on reload. Default Day.
+- Totals (`.metrics`, three metrics): planned, unplanned and hours in the period (FR-HOME-7). Values are whole hours.
+- Time per category: `.home-bar` is one 12px stacked bar (radius 3px, `--bg-3` track). Categories use the softened colour from Visualization (`color-mix` 80%); Unplanned is the last segment in `--bg-3`. The bar is `role="img"` with an aria-label that lists every segment. `.home-legend` is a list of `.total-row`s: dot, name (a link to Goals; Unplanned is plain text), hours and percent. Percents are largest remainder, so they add up to 100 with Unplanned.
+- Day list: `.home-rows` with `.home-row.is-block` rows: time range (`.home-row-time`, 12AM style), name with its colour dot (`.home-row-name`), category link (`.home-row-cat`), hours and Edit. The block that holds the current hour has `.is-now` (3px accent bar on the left) and a `.home-now` tag. Empty day: `.home-empty` with a link to Planner.
+- Week and Month list: `.home-row` rows sorted by hours, largest first: name, category link, hours, percent of the period and Edit. Empty period: `.home-empty` with a link to Planner. No activities at all: "No activities yet." with a link to Planner.
+- Edit (`.btn.btn-xs.btn-outline`, a link named "Edit {activity}") opens Planner with the activity in edit mode. Category links open Goals with the category selected.
+- Below target (`.home-signal`): one line, "2 categories are below their habit target: Physical, Cognitive.", each name linked to Goals. Hidden when none is below. It matches the Goals "Below target" flag.
+- Phones: see 3.5. Blocks wrap; Edit stays at the row end.
 
 ### 4.17 Planner activities (`app/components/planner/PlannerView.vue`, `.act-*` in `main.css`)
 
@@ -447,7 +456,7 @@ Placed between the template bar and the activity grid (section 4.12). Section ti
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Goals, Visualization, the Planner activity list, detail and forms (4.17) and the activity grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Visualization, the Planner activity list, detail and forms (4.17) and the activity grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
@@ -563,3 +572,4 @@ These are facts about the code as it is today. They are not requirements for new
 
 - Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `screens/home-desktop-light.png`, `screens/visualization-desktop-light.png`, `screens/visualization-mobile-light.png`.
 - Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (`goals-test.mjs` in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `screens/goals-desktop-light.png`, `screens/goals-detail-edit-desktop-light.png`, `screens/goals-mobile-light.png`.
+- Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (`s4-verify.mjs` and `s4-extra.mjs` in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.

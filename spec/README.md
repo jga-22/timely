@@ -13,14 +13,19 @@ This folder holds the product and design specification for Timely. The code is t
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the v2 build (list below). | Compare before and after a UI change. Replace them as the v3 screens ship. |
 
-Screenshots in `screens/` (Goals from slice 3; Planner from the v2 build; Home and Visualization from slice 1):
+Screenshots in `screens/` (Goals from slice 3; Home from slice 4; Planner from the v2 build; Visualization from slice 1):
 
 | File | Size | Notes |
 | --- | --- | --- |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, Training selected (slice 2b: activity grid with taken and free hours) |
 | `planner-activity-detail-desktop-light.png` | 1280 px wide | Viewport at 1280 px scrolled to the activities list and detail, light (slice 2b) |
-| `home-desktop-light.png` | 1280 px wide | Home placeholder, light (slice 1) |
+| `home-desktop-light.png` | 1280 px wide | Home, light, Day (slice 4) |
+| `home-week-desktop-light.png` | 1280 px wide | Home, light, Week (slice 4) |
+| `home-month-desktop-light.png` | 1280 px wide | Home, light, Month (slice 4) |
+| `home-desktop-dark.png` | 1280 px wide | Home, dark, Day (slice 4) |
+| `home-mobile-light.png` | 400 px wide | Home, light, Day, full page (slice 4) |
+| `home-week-mobile-light.png` | 400 px wide | Home, light, Week, full page (slice 4) |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light (slice 1; replaces Insights) |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light (slice 1) |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: list, with the vision and map above |
@@ -28,7 +33,7 @@ Screenshots in `screens/` (Goals from slice 3; Planner from the v2 build; Home a
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: activities, activity grid, year (slice 2b) |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page (slice 2b) |
 
-All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). For v3, add `home-*` and `visualization-*` captures at 1280 and 400 px, light and dark.
+All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). Home captures are from slice 4. Visualization captures at 1280 and 400 px, light and dark, come with slice 5.
 
 ## How the spec is used
 
@@ -41,9 +46,9 @@ All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). F
 
 ## 1. Status summary
 
-Built (v2): a local-first Nuxt 4 app with four tabs, Goals, Planner, Insights and Configuration. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
+Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization (the v3 structure; slices 0 to 4 are done, see `build-plan.md`). Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-Specified (v3, not built): four screens, **Home** (default; today, week and month in projected hours, plus a small journal experiment), **Goals** (vision, read-only Harada map, category list and detail), **Planner** (activity list and detail, 24x7 activity grid, templates, year grid) and **Visualization** (read-only charts). Insights and Configuration are removed.
+Not built yet: the journal experiment on Home (FR-HOME-11 to 13, slice 6). Slice 5 (cleanup, docs and Visualization screenshots) is open. Insights and Configuration are removed.
 
 ## 2. Changelog
 
@@ -68,6 +73,6 @@ Specified (v3, not built): four screens, **Home** (default; today, week and mont
 
 ## 3. Open items for the team
 
-- Owner decisions still open are in PRD 23.3 (unassigned weeks, basis of goals vs. planned, Home period navigation, week status, cross-category habit links). Assumptions to confirm are in 23.2.
+- Owner decisions still open are in PRD 23.3: the basis of goals vs. planned (Q3) and Home navigation beyond the current day, week and month (Q4). Assumptions to confirm are in 23.2.
 - `frontend-design.md` must be updated slice by slice as the v3 screens are built (see Contents).
 - The root `README.md` still describes an older scaffold; a rewrite is out of scope for this spec.
