@@ -2,7 +2,6 @@ import type { Activity, Category, PlannerState, WeekTemplate } from '~/types/pla
 import { addDays, daysInMonth, mondayOf, weekdayOf } from '~/utils/dates'
 import {
   HOURS_PER_DAY,
-  categoryAlignments,
   effectiveTemplate,
   getActivityMap,
   slotsToBlocks,
@@ -52,6 +51,17 @@ export const dayBlocks = (state: PlannerState, date: string): TimeBlock[] => {
   return slotsToBlocks(template.slots, weekdayOf(date)).filter(block => activities.has(block.activityId))
 }
 
+/** The 24 hours of one date in order: the activity id planned in each hour, or null when unplanned */
+export const dayHours = (state: PlannerState, date: string): Array<string | null> => {
+  const hours: Array<string | null> = Array.from({ length: HOURS_PER_DAY }, () => null)
+
+  for (const block of dayBlocks(state, date)) {
+    for (let hour = block.start; hour < block.end; hour += 1) hours[hour] = block.activityId
+  }
+
+  return hours
+}
+
 /** Scheduled hours per activity over the period: each day contributes its own blocks (calendar-day rule, PRD 17.5) */
 export const periodActivityHours = (state: PlannerState, period: HomePeriod, date: string): Map<string, number> => {
   const totals = new Map<string, number>()
@@ -99,22 +109,11 @@ export interface PeriodActivityRow {
   share: number
 }
 
-export interface PeriodCategoryRow {
-  category: Category
-  hours: number
-  share: number
-}
-
 export interface PeriodBreakdown {
   periodHours: number
-  plannedHours: number
   unplannedHours: number
-  /** Share of the period that is unplanned (largest remainder with the categories) */
-  unplannedShare: number
   /** Activities by hours, largest first (FR-HOME-5) */
   activities: PeriodActivityRow[]
-  /** Categories with planned time, by hours, largest first (FR-HOME-6). Activities count in their own category */
-  categories: PeriodCategoryRow[]
 }
 
 const byHoursThenName = <T extends { hours: number }>(nameOf: (row: T) => string) =>
@@ -135,23 +134,14 @@ export const periodBreakdown = (state: PlannerState, period: HomePeriod, date: s
     .sort(byHoursThenName(row => row.activity.name))
   const activityShares = largestRemainderShares([...activityRows.map(row => row.hours), unplannedHours])
 
-  const hoursByCategory = new Map<string, number>()
-  for (const row of activityRows) {
-    hoursByCategory.set(row.activity.categoryId, (hoursByCategory.get(row.activity.categoryId) ?? 0) + row.hours)
-  }
-
-  const categoryRows = [...hoursByCategory]
-    .map(([categoryId, hours]) => ({ category: categoryMap.get(categoryId)!, hours }))
-    .sort(byHoursThenName(row => row.category.name))
-  const categoryShares = largestRemainderShares([...categoryRows.map(row => row.hours), unplannedHours])
-
   return {
     periodHours: total,
-    plannedHours,
     unplannedHours,
-    unplannedShare: categoryShares[categoryRows.length] ?? 0,
-    activities: activityRows.map((row, index) => ({ ...row, category: categoryMap.get(row.activity.categoryId)!, share: activityShares[index]! })),
-    categories: categoryRows.map((row, index) => ({ ...row, share: categoryShares[index]! }))
+    activities: activityRows.map((row, index) => ({
+      ...row,
+      category: categoryMap.get(row.activity.categoryId)!,
+      share: activityShares[index]!
+    }))
   }
 }
 
@@ -182,18 +172,6 @@ export const periodTemplates = (state: PlannerState, period: HomePeriod, date: s
 /** True when the ISO week of the date has an applied template of its own; otherwise it uses the active one (Q2) */
 export const isWeekAssigned = (state: PlannerState, date: string): boolean =>
   state.appliedWeeks.some(week => week.startDate === mondayOf(date))
-
-/** Categories whose habit-linked scheduled time is below their habit target (same rule as the Goals flag) */
-export const belowTargetCategories = (state: PlannerState): Category[] => {
-  const alignments = categoryAlignments(state)
-
-  return [...state.categories]
-    .sort((a, b) => a.order - b.order)
-    .filter(category => {
-      const coverage = alignments.get(category.id)?.coverage ?? null
-      return coverage !== null && coverage < 1
-    })
-}
 
 /** "Sunday 25 October 2026" */
 export const formatDayLabel = (key: string): string => {

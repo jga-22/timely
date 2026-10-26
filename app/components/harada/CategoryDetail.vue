@@ -171,7 +171,7 @@ function confirmRemove() {
 <template>
   <div v-if="category" class="detail" @keydown="onKeydown">
     <div class="detail-head">
-      <button type="button" class="btn btn-sm detail-back" @click="emit('back')">Back to list</button>
+      <button type="button" class="btn btn-sm detail-back" @click="emit('back')"><span class="detail-close-text">Close</span><span class="detail-back-text">Back to categories</span></button>
       <h3 class="detail-name">
         <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
         {{ category.name }}
@@ -373,7 +373,12 @@ function confirmRemove() {
   gap: var(--space-2) var(--space-3);
 }
 
+/* Close at the end of the head on desktop; Back to categories first in the head on phones (FR-UX-8) */
 .detail-back {
+  order: 3;
+}
+
+.detail-back-text {
   display: none;
 }
 
@@ -520,7 +525,15 @@ function confirmRemove() {
 
 @media (max-width: 768px) {
   .detail-back {
-    display: inline-flex;
+    order: -1;
+  }
+
+  .detail-close-text {
+    display: none;
+  }
+
+  .detail-back-text {
+    display: inline;
   }
 }
 </style>

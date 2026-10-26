@@ -29,10 +29,10 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 
 Four screens, one page component that switches on the `tab` query:
 
-- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Day, Week and Month for the period selector; totals, time per category, activity rows, the below-target line. Read-only except the period selector and the journal card (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`).
-- **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, Harada map, category list), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows).
+- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Day, Week and Month for the period selector; activity rows, then a timeline of the same hours (no totals, no category bar). Read-only except the period selector and the journal card (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`).
+- **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, category list, the Harada map from 1100px only), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows).
 - **Planner** (`app/components/planner/`): `PlannerView.vue` (template bar, the week grid, the Activities list with detail and the add form, the year grid), `ActivityGrid.vue` (the week grid: range select, action bar, activity menu, edit handles, undo; client only).
-- **Visualization** (`app/components/viz/VisualizationView.vue`): year metrics, week-by-week and monthly chart, year by category, goals vs. planned, projection horizon.
+- **Visualization** (`app/components/viz/VisualizationView.vue`): the year recap (two headline numbers and the category bar), goals vs. planned, then key insights (horizon, weekly and monthly chart).
 
 Shell and shared code:
 
@@ -41,6 +41,7 @@ Shell and shared code:
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea. `app/components/YearNav.vue`: shared year switcher.
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
+- `app/utils/palette.ts` and `app/composables/usePlannerFill.ts`: the one planned-fill rule (3:1 on the surface), used by the year grid, week grid, Home and Visualization. Colour semantics: `spec/frontend-design.md` section 5.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
 - `spec/`: specifications (below). `design/` is an old gitignored design export with the previous look; do not use it.
 
@@ -81,8 +82,9 @@ Shell and shared code:
 
 ## Current state
 
-- Branch `fix/restore-original-week-grid`, cut from `origin/main` (fbdc1a6). PRs #7 (`feat/harada-goals`) and #8 (`feat/home-and-new-structure`) are merged into `main`. Nothing pushed from this branch.
+- Branch `feat/ux-improvements`, cut from `fix/restore-original-week-grid`. PRs #7 and #8 are merged into `main`; PR #9 (`fix/restore-original-week-grid`) is open and unmerged. Nothing pushed from this branch.
 - The Planner week is the original range-select grid again (FR-PLAN-23, 24). It replaces the week-first brush palette of slice 7; FR-PLAN-17 to 20 and 22 are Superseded. Storage version is unchanged (7).
+- UX improvements (one commit per item): Home order and timeline, Goals list-first with Close and Escape and the matrix from 1100px, one planned-time palette, Visualization recap first. Specs updated (PRD 23.1, design spec section 5). Storage unchanged (7).
 - A local `main` can lag `origin/main` (it did at beb6f93, before PR #7). Branch from `origin/main`.
 - Slice 6 (journal experiment on Home, FR-HOME-11 to 13) is done as an experiment. Slice 7 is this week-grid fix. The remaining and later ideas are at the end of `spec/build-plan.md`.
 

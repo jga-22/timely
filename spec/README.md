@@ -17,7 +17,7 @@ Screenshots in `screens/` (Planner files regenerated on 26 October 2026 from the
 
 | File | Size | Notes |
 | --- | --- | --- |
-| `home-desktop-light.png` | 1280 px wide | Home, light, Day: totals, time per category with legend in two columns, the day blocks with Now |
+| `home-desktop-light.png` | 1280 px wide | Home, light, Day: the day blocks with Now, then the 24-hour timeline, then the journal |
 | `home-week-desktop-light.png` | 1280 px wide | Home, light, Week: activities by hours |
 | `home-month-desktop-light.png` | 1280 px wide | Home, light, Month: each template and its days in the header line |
 | `home-desktop-dark.png` | 1280 px wide | Home, dark, Day |
@@ -28,14 +28,15 @@ Screenshots in `screens/` (Planner files regenerated on 26 October 2026 from the
 | `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, Harada map, list and the first category's detail |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the list and map |
-| `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to list |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the category list (no matrix below 1100 px) |
+| `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to categories |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: the week grid (range select, original interaction), the Activities chips under it, and the year grid at full width |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page, clean seed, the same layout |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px, clean seed: the week grid scrolls sideways inside its frame, Activities chips wrap under it, year closed |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light |
 | `visualization-desktop-dark.png` | 1280 px wide | Visualization, dark |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light, full page |
+| `planner-year-desktop-light.png` | 1280 px wide | Planner, light, the year grid only: empty weeks white with a hairline, planned weeks in their template colour, week 44 (current) with the accent outline |
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
 
@@ -58,6 +59,7 @@ The journal experiment on Home (FR-HOME-11 to 13, slice 6) is built and marked a
 
 ### v3 build (2026-10-25 to 2026-10-26)
 
+- UX improvements on `feat/ux-improvements` (one commit per item): Home shows the activities, then the hour timeline, then the journal (totals and category bar removed); Goals is list-first with Close and Escape, and the Harada matrix only from 1100 px; one planned-time palette (empty and planned fills, 3:1 rule, `utils/palette.ts`, design spec section 5); Visualization opens with the year recap, then Goals vs. planned, then Key insights. PRD statuses and 23.1 updated. Screenshots regenerated from a clean seed.
 - Planner week grid restored to the original range-select interaction on `fix/restore-original-week-grid` (FR-PLAN-23, 24). It supersedes the slice 7 brush palette (FR-PLAN-17 to 20 and 22); Activities is a compact list under the week; storage is unchanged. Planner screenshots regenerated from a clean seed.
 
 - Slices 0 to 6 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The week grid paints at once with the brush (FR-PLAN-17, slice 7); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).

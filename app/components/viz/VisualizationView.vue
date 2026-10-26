@@ -79,6 +79,11 @@ const monthBars = computed(() => {
   })
 })
 
+// Screen reader summary of the year's distribution bar
+const yearBarLabel = computed(() => yearCategoryRows.value.length
+  ? `Planned hours in ${year.value ?? ''}: ${yearCategoryRows.value.map((item, i) => `${item.category.name} ${Math.round(item.hours)} hours, ${yearShares.value[i]}%`).join('; ')}.`
+  : '')
+
 // ── Year by category: planned hours of the selected year, each week under its effective template ──
 const yearCategoryRows = computed(() => {
   const totals = new Map<string, number>()
@@ -163,7 +168,7 @@ const goalNotes = (row: CategoryAlignment) => {
 }
 
 // Softened category colour keeps the chart calm
-const soft = (color: string) => `color-mix(in srgb, ${color} 80%, var(--bg))`
+const { fill } = usePlannerFill()
 
 // ── SVG constants ──
 const CHART_H = 180
@@ -233,30 +238,21 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
   <div class="view">
     <header class="page-head">
       <h1 class="page-title">Where your time goes</h1>
-      <p class="page-lede">The planned year, the week-by-week picture and what the plan projects. Read-only: change the plan in Planner and the goals in Goals.</p>
+      <p class="page-lede">Where the planned year goes, how it compares with your goals, then the insights behind it. Read-only: change the plan in Planner and the goals in Goals.</p>
     </header>
 
     <div class="viz-toolbar">
       <YearNav />
-      <div class="field viz-horizon">
-        <label class="field-label" for="projection-horizon">Horizon</label>
-        <select id="projection-horizon" v-model.number="horizon" class="timely-select">
-          <option :value="1">1 year</option>
-          <option :value="3">3 years</option>
-          <option :value="5">5 years</option>
-          <option :value="10">10 years</option>
-        </select>
-      </div>
     </div>
 
-    <!-- The year: metrics -->
+    <!-- The year at a glance: two headline numbers, then where the year's planned time goes (visual first) -->
     <section class="section">
       <div class="section-head">
         <h2 class="section-title">The year</h2>
         <p v-if="year !== null" class="section-lede">{{ year }}, each week under the template that governs it.</p>
       </div>
 
-      <div class="metrics">
+      <div class="metrics is-two">
         <div class="metric">
           <div class="metric-value">{{ plannedHours.toLocaleString('en-US', { maximumFractionDigits: 1 }) }}<span class="unit">h</span></div>
           <div class="metric-label">
@@ -271,19 +267,32 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
             Daily average in {{ topCategory?.category.name ?? '—' }}, the leading category.
           </div>
         </div>
-        <div class="metric">
-          <div class="metric-value">
-            {{ topProjection ? Math.round(topProjection.hours).toLocaleString('en-US') : '—' }}<span class="unit">h</span>
-          </div>
-          <div class="metric-label">
-            <template v-if="topProjection">
-              Projected over {{ horizon }} {{ horizon === 1 ? 'year' : 'years' }} in <strong>{{ topProjection.activity.name }}</strong>.
-              {{ projectionInsight(topProjection.hours) }}
-            </template>
-            <template v-else>No projection yet.</template>
+      </div>
+
+      <template v-if="yearCategoryRows.length">
+        <div class="year-bar" role="img" :aria-label="yearBarLabel">
+          <span
+            v-for="(item, i) in yearCategoryRows"
+            :key="item.category.id"
+            class="year-bar-seg"
+            aria-hidden="true"
+            :style="{ flexGrow: item.hours, background: fill(item.category.color ?? '#ccc') }"
+            :title="`${item.category.name}, ${Math.round(item.hours).toLocaleString('en-US')} h, ${yearShares[i]}%`"
+          />
+        </div>
+
+        <div class="year-totals">
+          <div v-for="(item, i) in yearCategoryRows" :key="item.category.id" class="total-row">
+            <span class="dot" :style="{ background: item.category.color }" />
+            <NuxtLink class="name" :to="link('goals', { item: item.category.id })">{{ item.category.name }}</NuxtLink>
+            <span class="hrs">{{ Math.round(item.hours).toLocaleString('en-US') }}h</span>
+            <span class="pct">{{ yearShares[i] }}%</span>
           </div>
         </div>
-      </div>
+      </template>
+      <p v-else-if="year !== null" class="section-lede">
+        Nothing planned yet. <NuxtLink :to="link('planner')">Plan your week in Planner</NuxtLink>.
+      </p>
     </section>
 
     <!-- Goals vs. planned time, all categories -->
@@ -326,8 +335,31 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
       </div>
     </section>
 
-    <!-- Week by week -->
+    <!-- Key insights: the projection over the horizon, then the week and month pattern (read-only) -->
     <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">Key insights</h2>
+        <p class="section-lede">What the plan projects, and how the year's hours fall across the weeks and months.</p>
+      </div>
+
+      <div class="viz-toolbar">
+        <div class="field viz-horizon">
+          <label class="field-label" for="projection-horizon">Horizon</label>
+          <select id="projection-horizon" v-model.number="horizon" class="timely-select">
+            <option :value="1">1 year</option>
+            <option :value="3">3 years</option>
+            <option :value="5">5 years</option>
+            <option :value="10">10 years</option>
+          </select>
+        </div>
+      </div>
+
+      <p v-if="topProjection" class="insight-line">
+        Projected over {{ horizon }} {{ horizon === 1 ? 'year' : 'years' }} in <strong>{{ topProjection.activity.name }}</strong>:
+        {{ Math.round(topProjection.hours).toLocaleString('en-US') }} h. {{ projectionInsight(topProjection.hours) }}
+      </p>
+      <p v-else class="insight-line">No projection yet.</p>
+
       <details class="disclosure" open>
         <summary>Week by week</summary>
         <div class="disclosure-body">
@@ -394,7 +426,7 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
                         :key="seg.catId"
                         :x="seg.x" :y="seg.y"
                         :width="seg.w" :height="Math.max(seg.h, 0)"
-                        :style="{ fill: soft(seg.color) }"
+                        :style="{ fill: fill(seg.color) }"
                         :opacity="focusCat === null || focusCat === seg.catId ? 1 : 0.12"
                         rx="2"
                       />
@@ -430,7 +462,7 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
                         :key="seg.catId"
                         :x="seg.x" :y="seg.y"
                         :width="seg.w" :height="Math.max(seg.h, 0)"
-                        :style="{ fill: soft(seg.color) }"
+                        :style="{ fill: fill(seg.color) }"
                         :opacity="weekSegmentOpacity(week.assigned, seg.catId)"
                         rx="1"
                       />
@@ -476,21 +508,5 @@ const currentMonth = computed(() => (currentWeekIndex.value >= 0 ? monthOf(weeks
       </details>
     </section>
 
-    <!-- Year by category -->
-    <section v-if="yearCategoryRows.length" class="section">
-      <details class="disclosure">
-        <summary>Year by category</summary>
-        <div class="disclosure-body">
-          <div class="year-totals">
-            <div v-for="(item, i) in yearCategoryRows" :key="item.category.id" class="total-row">
-              <span class="dot" :style="{ background: item.category.color }" />
-              <NuxtLink class="name" :to="link('goals', { item: item.category.id })">{{ item.category.name }}</NuxtLink>
-              <span class="hrs">{{ Math.round(item.hours).toLocaleString('en-US') }}h</span>
-              <span class="pct">{{ yearShares[i] }}%</span>
-            </div>
-          </div>
-        </div>
-      </details>
-    </section>
   </div>
 </template>
