@@ -134,6 +134,26 @@ export const usePlannerStore = defineStore('planner', {
       template.slots = applyActivityCells(template.slots, cells, activityId, mode)
       return []
     },
+    /**
+     * Paints cells with one activity, replacing whatever other activities hold them (FR-PLAN-17). With a null activity the cells
+     * are erased. Returns the hours taken from each holder, for the undo notice. Nothing is checked or confirmed first.
+     */
+    paintCells(templateId: string, cells: number[], activityId: string | null): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template || template.granularityMinutes !== 60) return []
+      if (activityId && !this.activities.some(activity => activity.id === activityId)) return []
+
+      const taken = rangeConflicts(template.slots, cells, activityId ?? '')
+      template.slots = template.slots.map((holder, index) => (cells.includes(index) ? (activityId ?? '') : holder))
+      return taken
+    },
+    /** Puts back a template's slots as they were before the last paint (single-step undo) */
+    restoreSlots(templateId: string, slots: string[]) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (template && template.slots.length === slots.length) template.slots = [...slots]
+    },
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
     },

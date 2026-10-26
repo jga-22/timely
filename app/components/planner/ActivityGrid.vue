@@ -7,7 +7,6 @@ import {
   cellIndex,
   formatHour,
   isHourlyTemplate,
-  paintModeFor,
   rectangleCells,
   type GridCell,
   type HourConflict
@@ -17,9 +16,12 @@ import type { Activity } from '~/types/planner'
 /** Hour rows of the grid, 12AM to 11PM */
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+/** The undo notice stays for this long (ms) */
+const NOTICE_MS = 8000
 
-const props = defineProps<{ activity: Activity | null; editing: boolean }>()
-const emit = defineEmits<{ select: [activityId: string]; edit: [] }>()
+// The brush is the selected activity (paints it) or Erase (clears hours). With neither, the grid is an overview
+const props = defineProps<{ activity: Activity | null; erasing: boolean }>()
+const emit = defineEmits<{ select: [activityId: string] }>()
 
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
@@ -27,9 +29,9 @@ const { activeTemplate } = storeToRefs(planner)
 const activityMap = computed(() => new Map(planner.activities.map(activity => [activity.id, activity])))
 const templateName = computed(() => activeTemplate.value?.name ?? 'no template')
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
-// Painting needs the selected activity in edit mode (FR-PLAN-17, PRD 11.6); otherwise the grid is read-only
-const editable = computed(() => props.editing && !!props.activity && hourly.value)
+const painting = computed(() => hourly.value && (!!props.activity || props.erasing))
 const slots = computed(() => activeTemplate.value?.slots ?? [])
+const plannedHours = computed(() => slots.value.filter(Boolean).length)
 
 const hoursPerDay = computed(() =>
   DAYS.map((_, day) => slots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length)
@@ -39,11 +41,12 @@ const hoursPerDay = computed(() =>
 const cursor = ref<GridCell>({ day: 0, hour: 8 })
 const range = ref<{ from: GridCell; to: GridCell } | null>(null)
 const dragging = ref(false)
-// A range that takes hours from other activities waits here for Reassign or Cancel
-const pending = ref<{ cells: number[]; conflicts: HourConflict[]; returnTo: GridCell } | null>(null)
+
+// Single-step undo of the last paint that replaced other hours or erased some (auto-dismissed)
+const notice = ref<{ text: string; templateId: string; slots: string[] } | null>(null)
+let noticeTimer: ReturnType<typeof setTimeout> | undefined
 
 const gridEl = ref<HTMLElement | null>(null)
-const confirmEl = ref<HTMLElement | null>(null)
 
 const sameCell = (a: GridCell, b: GridCell) => a.day === b.day && a.hour === b.hour
 const isCursor = (cell: GridCell) => sameCell(cell, cursor.value)
@@ -53,11 +56,10 @@ const setCursor = (cell: GridCell) => {
 
 // Each activity starts from its first hour, so the keyboard lands on something meaningful
 watch(
-  () => [props.activity?.id ?? null, props.editing, activeTemplate.value?.id ?? null] as const,
+  () => [props.activity?.id ?? null, props.erasing, activeTemplate.value?.id ?? null] as const,
   ([activityId]) => {
     range.value = null
     dragging.value = false
-    pending.value = null
 
     if (activityId) {
       const first = slots.value.indexOf(activityId)
@@ -69,8 +71,10 @@ watch(
 interface CellView extends GridCell {
   index: number
   holder: Activity | undefined
-  /** own: the selected activity (or any holder in the overview); other: another activity while one is selected; free */
+  /** own: the selected activity (or any holder in the overview or Erase); other: another activity while one is selected; free */
   tone: 'own' | 'other' | 'free'
+  /** The short code is printed only on the first hour of a block */
+  code: string
   label: string
 }
 
@@ -81,6 +85,7 @@ const rows = computed(() =>
       const holderId = slots.value[index]
       const holder = holderId ? activityMap.value.get(holderId) : undefined
       const tone = !holder ? 'free' : props.activity && holder.id !== props.activity.id ? 'other' : 'own'
+      const startsBlock = hour === 0 || slots.value[index - 1] !== holderId
 
       return {
         day,
@@ -88,6 +93,7 @@ const rows = computed(() =>
         index,
         holder,
         tone,
+        code: holder && startsBlock ? holder.shortCode : '',
         label: `${DAY_NAMES[day]} ${formatHour(hour)}, ${holder?.name ?? 'free'}`
       }
     })
@@ -95,30 +101,20 @@ const rows = computed(() =>
 )
 
 const rangeIndexes = computed(() => new Set(range.value ? rectangleCells(range.value.from, range.value.to) : []))
-const pendingIndexes = computed(() => new Set(pending.value?.cells ?? []))
 
 const joinNames = (parts: string[]) =>
   parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 
-const confirmText = computed(() => {
-  if (!pending.value || !props.activity) return ''
-
-  const parts = pending.value.conflicts.map(conflict =>
-    `${conflict.hours} h from ${activityMap.value.get(conflict.activityId)?.name ?? 'another activity'}`
-  )
-
-  return `Reassign ${joinNames(parts)} to ${props.activity.name}?`
-})
-
 const helperText = computed(() => {
-  if (!planner.activities.length) return 'Add an activity above to plan its hours.'
-  if (!props.activity) return 'Select an activity to see its hours here.'
-  if (!editable.value) return 'Edit this activity to change when it happens.'
+  if (!hourly.value) return ''
+  if (props.erasing) return 'Erasing. Drag across hours, or press Space, to clear them.'
+  if (props.activity) return `Painting ${props.activity.name}. Drag across hours to fill them; hours of other activities are replaced.`
+  if (!planner.activities.length) return 'Add an activity to start painting its hours.'
 
-  return `Start on an hour that is already ${props.activity.name} to clear the range, or on any other hour to add it. Release to apply.`
+  return 'Select an activity or Erase, then paint hours on the week. A click on a coloured hour selects its activity.'
 })
 
-const hintText = computed(() => editable.value
+const hintText = computed(() => painting.value
   ? 'Arrows move. Shift with arrows selects a range. Space or Enter paints. Escape cancels.'
   : 'Arrows move. Space or Enter selects the activity in that hour.'
 )
@@ -132,46 +128,52 @@ const focusCell = (cell: GridCell) => {
   nextTick(() => gridEl.value?.querySelector<HTMLElement>(`[data-day="${cell.day}"][data-hour="${cell.hour}"]`)?.focus())
 }
 
-/** Applies a range to the selected activity. Clearing never touches other activities; adding asks first when it takes their hours */
+const dismissNotice = () => {
+  notice.value = null
+  clearTimeout(noticeTimer)
+}
+
+const showNotice = (value: { text: string; templateId: string; slots: string[] }) => {
+  notice.value = value
+  clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(dismissNotice, NOTICE_MS)
+}
+
+/** Paints the range with the brush (replacing other activities' hours) or erases it. One gesture is one undo step */
 const paint = (from: GridCell, to: GridCell) => {
   const template = activeTemplate.value
+  if (!template || !painting.value) return
+
   const activity = props.activity
+  const before = [...template.slots]
+  const taken: HourConflict[] = planner.paintCells(template.id, rectangleCells(from, to), activity ? activity.id : null)
+  const after = activeTemplate.value?.slots ?? []
 
-  if (!template || !activity) return
+  if (!after.some((holder, index) => holder !== before[index])) return
 
-  const cells = rectangleCells(from, to)
+  const hours = taken.reduce((sum, entry) => sum + entry.hours, 0)
 
-  if (paintModeFor(template.slots, cellIndex(from), activity.id) === 'clear') {
-    planner.setActivitySlots(template.id, activity.id, cells, 'clear')
-    return
-  }
-
-  const conflicts = planner.setActivitySlots(template.id, activity.id, cells, 'add')
-
-  if (conflicts.length) {
-    pending.value = { cells, conflicts, returnTo: to }
-    nextTick(() => confirmEl.value?.focus())
+  if (activity && taken.length) {
+    const names = taken.map(entry => `${entry.hours} h of ${activityMap.value.get(entry.activityId)?.name ?? 'another activity'}`)
+    showNotice({ text: `Replaced ${joinNames(names)}.`, templateId: template.id, slots: before })
+  } else if (!activity && hours) {
+    showNotice({ text: `Erased ${hours} h.`, templateId: template.id, slots: before })
+  } else {
+    dismissNotice()
   }
 }
 
-const resolvePending = (reassign: boolean) => {
-  const current = pending.value
-  const activity = props.activity
-  const template = activeTemplate.value
+const undo = () => {
+  const current = notice.value
+  if (!current) return
 
-  pending.value = null
-
-  if (current && reassign && activity && template) {
-    planner.setActivitySlots(template.id, activity.id, current.cells, 'add', true)
-  }
-
-  if (current) focusCell(current.returnTo)
+  planner.restoreSlots(current.templateId, current.slots)
+  dismissNotice()
 }
 
-const reassignPending = () => resolvePending(true)
-const cancelPending = () => resolvePending(false)
+onBeforeUnmount(() => clearTimeout(noticeTimer))
 
-// Pointer: press on a cell, drag across days and hours, release to apply. Touch uses the same path (touch-action: none)
+// Pointer: press on a cell, drag across days and hours, release to paint. Touch uses the same path (touch-action: none)
 const onPointerDown = (event: PointerEvent) => {
   const cell = cellFrom(event.target)
 
@@ -180,10 +182,9 @@ const onPointerDown = (event: PointerEvent) => {
   setCursor(cell)
   focusCell(cell)
 
-  // Not editing: a click selects the activity in that hour (see onCellClick)
-  if (!editable.value) return
+  // Nothing to paint with: a click selects the activity in that hour (see onCellClick)
+  if (!painting.value) return
 
-  pending.value = null
   range.value = { from: cell, to: cell }
   dragging.value = true
   gridEl.value?.setPointerCapture(event.pointerId)
@@ -202,28 +203,23 @@ const onPointerMove = (event: PointerEvent) => {
   focusCell(cell)
 }
 
-const endGesture = () => {
-  const current = range.value
-
-  dragging.value = false
-  range.value = null
-  return current
-}
-
 const onPointerUp = () => {
   if (!dragging.value) return
 
-  const current = endGesture()
+  const current = range.value
+  dragging.value = false
+  range.value = null
 
   if (current) paint(current.from, current.to)
 }
 
 const onPointerCancel = () => {
-  endGesture()
+  dragging.value = false
+  range.value = null
 }
 
 const onCellClick = (cell: CellView) => {
-  if (!editable.value && cell.holder) emit('select', cell.holder.id)
+  if (!painting.value && cell.holder) emit('select', cell.holder.id)
 }
 
 // Keyboard: Home and End jump to the first and last day of the row; PageUp and PageDown to the first and last hour of the column
@@ -245,10 +241,7 @@ const onKeydown = (event: KeyboardEvent) => {
   const cell = cursor.value
 
   if (event.key === 'Escape') {
-    if (pending.value) {
-      event.preventDefault()
-      cancelPending()
-    } else if (range.value) {
+    if (range.value) {
       event.preventDefault()
       range.value = null
     }
@@ -258,7 +251,7 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.key === ' ' || event.key === 'Enter') {
     event.preventDefault()
 
-    if (!editable.value) {
+    if (!painting.value) {
       const holderId = slots.value[cellIndex(cell)]
       if (holderId) emit('select', holderId)
       return
@@ -276,47 +269,30 @@ const onKeydown = (event: KeyboardEvent) => {
 
   event.preventDefault()
 
-  range.value = event.shiftKey && editable.value ? { from: range.value?.from ?? cell, to: next } : null
+  range.value = event.shiftKey && painting.value ? { from: range.value?.from ?? cell, to: next } : null
   setCursor(next)
   focusCell(next)
 }
 </script>
 
 <template>
-  <section class="section" aria-labelledby="schedule-title">
-    <h2 id="schedule-title" class="section-title">Schedule</h2>
-    <p class="section-lede">
-      <template v-if="!hourly">This template uses 30-minute slots, which this grid does not edit. Choose an hourly template above.</template>
-      <template v-else-if="editable">Painting hours for <strong>{{ activity!.name }}</strong> in <strong>{{ templateName }}</strong>.</template>
-      <template v-else-if="activity">Hours of <strong>{{ activity.name }}</strong> in <strong>{{ templateName }}</strong> are highlighted; other activities are muted. Read-only.</template>
-      <template v-else>Overview of <strong>{{ templateName }}</strong>, read-only. Every activity in its colour; free hours stay empty.</template>
-    </p>
+  <section class="section ag-section" aria-labelledby="schedule-title">
+    <div class="ag-head-line">
+      <h2 id="schedule-title" class="section-title">Week</h2>
+      <p class="ag-meta">{{ templateName }} · {{ plannedHours }} of 168 h planned</p>
+    </div>
 
-    <template v-if="hourly">
-      <div
-        v-if="pending"
-        ref="confirmEl"
-        class="ag-confirm"
-        role="group"
-        aria-labelledby="ag-confirm-text"
-        tabindex="-1"
-        @keydown.escape.stop.prevent="cancelPending"
-      >
-        <p id="ag-confirm-text" class="ag-confirm-text">{{ confirmText }}</p>
-        <div class="act-actions">
-          <button type="button" class="btn btn-sm btn-primary" @click="reassignPending">Reassign</button>
-          <button type="button" class="btn btn-sm" @click="cancelPending">Cancel</button>
-        </div>
-      </div>
+    <p v-if="!hourly" class="ag-helper">This template uses 30-minute slots, which this grid does not edit. Choose an hourly template above.</p>
 
+    <template v-else>
       <div class="ag-scroll">
         <div
           ref="gridEl"
           class="ag-grid"
           role="grid"
           :aria-label="`Hours of ${templateName}`"
-          :aria-readonly="editable ? undefined : 'true'"
-          :data-editable="editable ? 'true' : 'false'"
+          :aria-readonly="painting ? undefined : 'true'"
+          :data-painting="painting ? 'true' : 'false'"
           @keydown="onKeydown"
           @pointerdown="onPointerDown"
           @pointermove="onPointerMove"
@@ -344,7 +320,7 @@ const onKeydown = (event: KeyboardEvent) => {
               :key="cell.index"
               role="gridcell"
               class="ag-cell"
-              :class="{ 'is-range': rangeIndexes.has(cell.index), 'is-pending': pendingIndexes.has(cell.index) }"
+              :class="{ 'is-range': rangeIndexes.has(cell.index) }"
               :data-day="cell.day"
               :data-hour="cell.hour"
               :data-tone="cell.tone"
@@ -354,21 +330,16 @@ const onKeydown = (event: KeyboardEvent) => {
               :title="cell.label"
               @focus="setCursor(cell)"
               @click="onCellClick(cell)"
-            >{{ cell.holder?.shortCode }}</div>
+            >{{ cell.code }}</div>
           </div>
         </div>
       </div>
 
-      <p class="ag-helper">
-        {{ helperText }}
-        <button
-          v-if="activity && !editable"
-          type="button"
-          class="btn btn-sm btn-outline ag-helper-action"
-          :aria-label="`Edit hours of ${activity.name}`"
-          @click="emit('edit')"
-        >Edit hours</button>
+      <p v-if="notice" class="ag-notice" role="status">
+        <span>{{ notice.text }}</span>
+        <button type="button" class="btn btn-xs btn-outline" @click="undo">Undo</button>
       </p>
+      <p v-else class="ag-helper">{{ helperText }}</p>
       <p class="ag-hint">{{ hintText }}</p>
     </template>
   </section>

@@ -9,7 +9,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | Screen | Desktop 1280 | Mobile 400 |
 | --- | --- | --- |
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
-| Planner | The activity grid fits at 400 px: a 40 px label column and seven day columns of about 46 px, 24 px hour rows, no scroll. The year grid keeps its own scroll container (min width 360 px). Activities list and detail stack (section 4.17). Measured in the browser run (slice 2b): no page overflow at 400 px. |
+| Planner | The week grid fits at 400 px: a 40 px label column and seven day columns of about 46 px, 24 px hour rows, no scroll. The brush palette stacks above it as wrapping chips. The year grid is full width (13 week columns, 32 px cells, a quarter label per row); it keeps a 360 px minimum inside its own scroll container. Measured in the slice 7 browser run: no page overflow at 400 px. |
 | Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
 | Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
 
@@ -365,31 +365,27 @@ Page: "Where your time goes". Toolbar, then sections in this order: the year met
 - Unassigned weeks have no applied template. They use the active template and draw at 45% opacity; a note under the legend names that template (FR-VIZ-3).
 - Year by category (closed disclosure, FR-VIZ-4): rows (`.total-row`) with dot, name (a link to Goals), planned hours in the year and a percentage of planned hours. Percentages use largest remainder, so they add up to 100.
 
-### 4.12 Activity grid (`app/components/planner/ActivityGrid.vue`, styles `.ag-*` in `main.css`)
+### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.ag-*` in `main.css`)
 
-Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PLAN-1). Placed between the Activities section (4.17) and the Year section. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
+Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
 
-- Section: title "Schedule". Lede: "Painting hours for **{activity}** in **{template}**." in edit mode; "Hours of **{activity}** in **{template}** are highlighted; other activities are muted. Read-only." in view mode; "Overview of **{template}**, read-only. Every activity in its colour; free hours stay empty." with no activity selected. Painting needs edit mode (`edit=1`), so the grid is read-only everywhere else. A 30-minute template gets a notice instead of the grid.
-- Frame (`.ag-grid`, role `grid`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 320px, inside `.ag-scroll` (contained horizontal scroll, not used at 400 px).
-- Columns: 40px hour label column, then seven equal day columns. Header row (`.ag-head`, `--bg-2`, bottom rule): day name (`.ag-day-name`, 13px 600) and planned hours of that day (`.ag-day-hours`, 12px `--ink-3`, "20 h").
-- Rows: 24 hours, 24px tall. Each cell is one hour and is a 24px target. Hour labels (`.ag-hour`, 12px `--ink-3`, right aligned, `--bg-2`) name every row.
+- Head line (`.ag-head-line`): title "Week" (section title) and a quiet meta line "{template} · N of 168 h planned" (13px, `--ink-3`, tabular). No paragraph.
+- Frame (`.ag-grid`, role `grid`): 1px `--rule` border, radius 6px, hidden overflow, `--bg`, minimum width 320px, inside `.ag-scroll`. Hour rows are hairlines (`--rule-2` top border on each row). Cells have **no borders**; columns are separated only by tint.
+- Columns: 40px hour label column, then seven equal day columns. Header row (`.ag-head`, `--bg-2`, bottom rule): day name (13px 600) and planned hours of that day (12px `--ink-3`).
+- Rows: 24 hours, 24px tall; each cell is a 24px target. Hour labels (`.ag-hour`, 12px `--ink-3`).
 - Cell states:
-  - free: `--bg`, empty.
-  - own (`data-tone="own"`): the selected activity, or any holder in the overview: `color-mix(in srgb, var(--c) 20%, var(--bg))`, short code 12px 500 `--ink`. Hover 30%.
-  - other (`data-tone="other"`): another activity while an activity is selected: 10% tint, short code 12px 400 `--ink-2`. Hover 20%.
-  - hover on a free cell (editable): `--bg-3`.
-  - range preview (`.is-range`): `--bg-4` fill and a 2px inset `--accent` ring.
-  - pending (`.is-pending`): a 2px inset `--warn` ring until Reassign or Cancel.
+  - free: `--bg`, empty; hover while painting `--bg-3`.
+  - own (`data-tone="own"`): the brush activity, or any holder in the overview or Erase: `color-mix(in srgb, var(--c) 20%, var(--bg))`, hover 30%.
+  - other (`data-tone="other"`): another activity while one is selected: 10% tint, quieter ink (`--ink-2`, weight 400), hover 20%.
+  - The short code (12px 500, `--ink`) is printed only on the first hour of each consecutive block, so a block reads as one label. Every cell keeps its full name in `aria-label`.
+  - range preview (`.is-range`): `--bg-4` and a 2px inset `--accent` ring.
   - focus (`:focus-visible`): 2px `--accent` outline, `outline-offset: -2px`, z-index 1.
-- Helper line (`.ag-helper`, 13px `--ink-3`) under the grid. Edit mode: "Start on an hour that is already {activity} to clear the range, or on any other hour to add it. Release to apply." View mode (activity selected, FR-PLAN-17): "Edit this activity to change when it happens." followed by an "Edit hours" button (`.ag-helper-action`, `.btn-sm .btn-outline`) that enters edit mode. Overview (no activity selected): "Select an activity to see its hours here." No activity yet: "Add an activity above to plan its hours."
-- Shortcut hint (`.ag-hint`, 12px `--ink-3`), one line below the helper: "Arrows move. Shift with arrows selects a range. Space or Enter paints. Escape cancels."
-- Reassign confirmation (`.ag-confirm`, above the grid): `--bg-2` panel, 1px `--rule` border, radius 6px. Text "Reassign 1 h from Sleep and 1 h from Deep Work to Training?" (the hours per activity, in reading order), then "Reassign" (`.btn-sm.btn-primary`) and "Cancel" (`.btn-sm`). Focus moves to the panel; Escape cancels; focus returns to the cell. Nothing changes until Reassign.
-- Painting (mouse, pen and touch use pointer events; `touch-action: none` on the editable grid so a drag does not scroll the page): press on a cell, drag across days and hours, release to apply. The first cell sets the mode: starting on an hour the activity already holds clears the range (only its own hours are removed); starting on any other hour adds it. Adding over hours held by other activities asks first (see above). A tap is a one-cell range.
-- Keyboard (FR-PLAN-19): one tab stop (roving `tabindex`); arrows move; Shift with arrows extends a range; Space or Enter paints the range or the focused hour; Escape cancels the confirmation or the range; Home and End move to the same hour on Monday and Sunday; PageUp and PageDown move to 12AM and 11PM of the same day. Cell names: "Tuesday 9AM, Deep Work" or "Tuesday 9AM, free".
-- View mode (activity selected, not editing): read-only; painting does nothing. A click, or Enter or Space, on a coloured hour selects that activity (URL `item`); the selected activity stays selected and read-only.
-- Overview (no activity selected, FR-PLAN-20): read-only; painting does nothing. A click, or Enter or Space, on a coloured hour selects its activity (URL `item`).
-- The grid writes through `setActivitySlots` (store) and the pure helpers in `app/utils/planner.ts` (`rectangleCells`, `paintModeFor`, `rangeConflicts`, `applyActivityCells`).
-- Removed in slice 2b: the drag-select grid, the day clear buttons, block hover delete, resize handles and confirm, the selection action bar, the activity menu, the week totals row and their CSS.
+- Helper line (`.ag-helper`, 13px `--ink-3`) under the grid, depending on the brush: "Painting {activity}. Drag across hours to fill them; hours of other activities are replaced.", "Erasing. Drag across hours, or press Space, to clear them.", "Select an activity or Erase, then paint hours on the week. A click on a coloured hour selects its activity.", or "Add an activity to start painting its hours."
+- Undo notice (`.ag-notice`, role `status`, 13px `--ink`): replaces the helper line for 8 seconds after a paint that replaced hours ("Replaced 2 h of Deep Work and 1 h of Training.") or erased some ("Erased 3 h."). "Undo" (`.btn.btn-xs.btn-outline`) restores the template's slots as they were before that paint (single step). A paint into free hours shows no notice.
+- Shortcut hint (`.ag-hint`, 12px `--ink-3`): "Arrows move. Shift with arrows selects a range. Space or Enter paints. Escape cancels." With no brush: "Arrows move. Space or Enter selects the activity in that hour."
+- Painting (mouse, pen and touch use pointer events; `touch-action: none` while painting): press on a cell, drag across days and hours, release to paint. One gesture is one undo step. With no brush, a click on a coloured hour selects its activity.
+- Keyboard (FR-PLAN-19): one tab stop (roving `tabindex`); arrows move; Shift with arrows extends a range; Space or Enter paints the range or the focused hour; Escape drops the range. Home and End move across days; PageUp and PageDown across hours. Cell names: "Tuesday 9AM, Deep Work" or "Tuesday 9AM, free".
+- The grid writes through `paintCells` (store) and `restoreSlots` (undo), with `rectangleCells` and `rangeConflicts` from `app/utils/planner.ts`.
 
 ### 4.14 Charts and legends (summary)
 
@@ -417,19 +413,16 @@ Read-only except the period selector and the journal card (FR-HOME-1). The journ
 - Below target (`.home-signal`): one line, "2 categories are below their habit target: Physical, Cognitive.", each name linked to Goals. Hidden when none is below. It matches the Goals "Below target" flag.
 - Phones: see 3.5. Blocks wrap; Edit stays at the row end.
 
-### 4.17 Planner activities (`app/components/planner/PlannerView.vue`, `.act-*` in `main.css`)
+### 4.17 Planner palette (`PlannerView.vue`, `.pal-*` in `main.css`)
 
-Placed between the template bar and the activity grid (section 4.12). Section title "Activities"; lede "Hours are for {template}, the template being edited. Select an activity to see its detail."
+Slice 7 (FR-PLAN-22). The palette is the brush. Section title "Activities" (section title style) and a meta line "Hours a week in {template}".
 
-- Layout (`.act-layout`): two columns of `minmax(0, 1fr)`, gap 48px. The list is on the left; the detail is on the right, with a 1px `--rule-2` left rule and 32px padding. At 768px and below it is one column, driven by `data-selected`: with an activity selected only the detail shows, with "Back to list" (`.act-back`, phones only); with none only the list shows.
-- Rows (`.act-row`, a button with `aria-pressed`): 44px minimum height, grid `16px | 1fr | auto`, 1px `--rule-2` bottom rule. Hover `--bg-3`. Selected `--bg-4` with a 3px `--accent` inset bar. Name 15px 500; meta 12px `--ink-3` ("CODE · category"); hours 13px `--ink-2`, tabular, "h/wk".
-- Empty list: "No activities yet. Add one to plan when it happens." (`.act-empty`).
-- Add (`.chip-add` text link "+ Add activity", `.act-add-trigger`) reveals `.act-add`: name, short code and category (a two-column row), colour (`.color-pop-inline`), primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Errors (`.field-error`, 13px `--danger`, `aria-invalid`) show after submit. Adding selects the new activity.
-- Detail head (`.act-detail-head`): "Back to list" (phones), colour dot and name (`h3.act-detail-name`, 18px 600), and "Edit" (`.btn-sm.btn-outline`, named "Edit {name}"). In edit mode "Done" (`.btn-sm.btn-primary`) replaces it; Done returns focus to Edit.
-- View mode (`dl.act-facts`, 120px label column, 13px): short code; category (link to Goals); colour (palette name, or "Custom (#hex)"); hours ("N h a week in {template}", then the quiet line "Also N h in {other}"); habits (names of the linked habits, or "None linked yet." and "Link habits in Goals"). No inputs.
-- Edit mode (`.act-edit`, `.form-stack`): name, short code (max 3, `.timely-input`), category (`.timely-select`) and colour (inline palette, the active swatch ringed). Changes apply at once (FR-UX-6). A clash or an empty name shows a `.field-error` line and is not applied; leaving the field restores the last accepted value and keeps the message until the next valid entry. Escape closes the delete confirmation first, otherwise leaves edit mode.
-- Delete (`.act-delete`, below a 1px rule): "Delete activity" (`.btn-sm.btn-danger`) opens `.act-confirm` (`--bg-2` panel, 1px `--rule` border, radius 6px). It states the impact in one sentence ("Clears 29 h in 3 templates and unlinks 1 habit." or "Nothing is scheduled or linked to it."), then "Delete" (`.btn-sm.btn-danger`) and "Cancel" (`.btn-sm`). Focus opens on Cancel; Escape cancels; nothing changes before Delete. No `confirm()`.
-- Swatches are 20px circles in 24px buttons, as in the category popover (see section 6 on touch targets).
+- Desktop (900px and wider): a 280px column to the right of the week grid. Phones (899px and below): the palette comes first, above the grid, as wrapping chips (`.pal-list` row wrap; `.pal-sub` hidden).
+- Rows (`.pal-row` containing a `.pal-select` button with `aria-pressed`): 44px minimum height on desktop, grid `16px | name and sub | hours`, hairline bottom rule. Hover `--bg-3`. Selected `--bg-4` with a 3px `--accent` inset bar. Name 15px 500; sub 12px `--ink-3` ("CODE · category"; `--ink-2` on the selected tint); hours 13px `--ink-2`, tabular, "h/wk".
+- Erase: the last row, with the erase swatch (`.dot-erase`) and the sub line "Clears any hours it paints over". Selecting it clears the activity selection (URL `item` removed) and makes the brush erase.
+- Edit: the selected row shows a small "Edit" button (`.btn.btn-xs.btn-outline.pal-edit-btn`, named "Edit {name}"). It opens the inline editor below the list (`.pal-editor`, `--bg-2` panel, 1px `--rule` border, radius 6px): title "Edit {name}" and "Done" (`.btn-sm.btn-primary`), then name, short code, category (`.timely-select`) and colour (`.color-pop-inline`). Changes apply at once (FR-UX-6); a clash or empty name shows a `.field-error`. "Delete activity" (`.act-delete`) opens the inline confirmation (`.act-confirm`) that states the impact. Escape closes the confirmation first, otherwise leaves edit mode (`edit=1` removed).
+- Add: "+ Add activity" (`.chip-add`) reveals `.pal-add`: name, short code, category, colour, primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Opening from Goals (`add=1&category=`) opens it with that category preselected (FR-GOALS-20).
+- Empty list: "No activities yet. Add one to plan when it happens." (`.pal-empty`).
 
 ### 4.18 Journal (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`)
 

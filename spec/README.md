@@ -30,12 +30,9 @@ Screenshots in `screens/` (from the production build after slice 6; fresh seeded
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the list and map |
 | `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to list |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page with no activity selected: the template overview in the grid |
-| `planner-view-desktop-light.png` | 1280 px wide | Planner, light, Reading selected in view mode: its hours highlighted, others muted, read-only |
-| `planner-edit-desktop-light.png` | 1280 px wide | Planner, light, Reading in edit mode: the grid paints the selected activity |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, edit mode with the grid |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px with no activity selected |
-| `planner-edit-mobile-light.png` | 400 px wide | Planner, light, edit mode at 400 px |
+| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page: the week grid with the Activities palette beside it, and the year grid at full width |
+| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, the same layout |
+| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: palette chips above the week grid, year closed |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light |
 | `visualization-desktop-dark.png` | 1280 px wide | Visualization, dark |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light, full page |
@@ -61,7 +58,7 @@ The journal experiment on Home (FR-HOME-11 to 13, slice 6) is built and marked a
 
 ### v3 build (2026-10-25 to 2026-10-26)
 
-- Slices 0 to 6 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The activity grid paints only in edit mode (FR-PLAN-17); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
+- Slices 0 to 6 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The week grid paints at once with the brush (FR-PLAN-17, slice 7); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
 - The old week grid, Insights, Configuration and the legend view are removed; their code and wording are gone from `app/` and this spec, except where the PRD keeps the history (superseded rows, the mapping in PRD 11.8).
 
 ### v3 draft (2026-10-25)
