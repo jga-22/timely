@@ -341,6 +341,8 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Ord
 
 Superseded in part by section 12. This section describes the former Visualization screen: the goals-vs-planned block and the key-insights text are removed, and the charts are one planned-hours chart with granularity and range.
 
+Counting (PRD 23.1): only weeks assigned on the year grid count planned hours; unassigned weeks count zero. With no assigned week in the range, the view shows the empty state: heading "No weeks assigned yet", one line of explanation, and a `.btn-outline` link "Assign weeks in Planner" to the Planner year grid.
+
 Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
 Page: "Where your time goes". Year control only, then sections in this order: The year (two headline numbers and the category bar with its rows), goals vs. planned overview, Key insights (horizon, the top projection line, then the week by week chart).

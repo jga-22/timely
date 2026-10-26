@@ -1,6 +1,6 @@
 import type { PlannerState } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
+import { aggregateTemplateByCategory, getTemplateById } from '~/utils/planner'
 
 /**
  * Insights calculations (PRD section 17, Insights): planned hours of the chosen years, grouped by year, quarter,
@@ -8,7 +8,8 @@ import { aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
  * state, so they run in node.
  *
  * Each ISO week counts once and belongs to the year, quarter and month of its Thursday (ISO convention), so the
- * totals agree whatever the granularity. Each activity counts once: in its primary category (PRD FR-PLAN-20).
+ * Each activity counts once: in its primary category (PRD FR-PLAN-20). Only weeks assigned on the year grid count planned
+ * hours; an unassigned week counts as zero (owner decision, PRD 23.1), but its available time still counts.
  * A bar is a whole number of ISO weeks, so its available time is its days times 24 (the days of those weeks):
  * a calendar month would not match the hours planned in its weeks, and the free time would be wrong.
  */
@@ -73,12 +74,23 @@ export interface InsightsBar {
 export const rangeYears = (startYear: number, count: number): number[] =>
   Array.from({ length: count }, (_, index) => startYear + index)
 
-/** Planned hours of one ISO week by category, from its effective template (primary categories only) */
+/** The template assigned to a week on the year grid; an unassigned week (or one whose template was deleted) has none */
+const assignedTemplate = (state: PlannerState, monday: string) => {
+  const applied = state.appliedWeeks.find(week => week.startDate === monday)
+
+  return applied ? getTemplateById(state, applied.templateId) : undefined
+}
+
+/** Planned hours of one ISO week by category, from its assigned template (primary categories only); unassigned weeks plan nothing */
 export const weekCategoryHours = (state: PlannerState, monday: string): Map<string, number> => {
-  const template = effectiveTemplate(state, monday)
+  const template = assignedTemplate(state, monday)
 
   return template ? aggregateTemplateByCategory(template, state) : new Map()
 }
+
+/** ISO weeks of the years that are assigned on the year grid: the only weeks that count planned hours in Insights */
+export const assignedWeekCount = (state: PlannerState, years: number[]): number =>
+  years.reduce((count, year) => count + isoWeekStarts(year).filter(monday => assignedTemplate(state, monday)).length, 0)
 
 /** The bar a week falls into: decided by its Thursday, so each week is counted once */
 const periodOfWeek = (monday: string, granularity: InsightsGranularity): { key: string; label: string; year: number; week: number } => {

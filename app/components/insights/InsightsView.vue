@@ -8,6 +8,7 @@ import {
   categoryShares,
   chartScale,
   formatInUnit,
+  assignedWeekCount,
   insightsBars,
   rangeYears,
   type InsightsBar,
@@ -38,6 +39,9 @@ const rangeLabel = computed(() => (years.value.length > 1 ? `${years.value[0]} t
 
 const bars = computed(() => (years.value.length ? insightsBars(planner.$state, granularity.value, years.value) : []))
 const shares = computed(() => categoryShares(bars.value))
+
+// Only assigned weeks plan hours (owner decision, PRD 23.1): with none in the range, the view shows the empty state
+const assignedWeeks = computed(() => (years.value.length ? assignedWeekCount(planner.$state, years.value) : 0))
 
 // The axis top covers the largest planned or available value, so the capacity line is always on the chart
 const scale = computed(() => chartScale(bars.value))
@@ -124,7 +128,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         </div>
       </div>
 
-      <section class="section">
+      <section v-if="assignedWeeks" class="section">
         <div class="section-head">
           <h2 class="section-title">Planned time</h2>
         </div>
@@ -161,7 +165,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         </div>
       </section>
 
-      <section class="section">
+      <section v-if="assignedWeeks" class="section">
         <div class="section-head">
           <h2 class="section-title">Categories</h2>
         </div>
@@ -179,9 +183,15 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </span>
           </li>
         </ul>
-        <p v-else class="insights-empty">
-          Nothing planned in {{ rangeLabel }}. <NuxtLink :to="link('planner')">Plan your time in Planner</NuxtLink>.
-        </p>
+        <p v-else class="insights-empty">Nothing planned in {{ rangeLabel }}.</p>
+      </section>
+
+      <section v-else class="section insights-empty-state">
+        <div class="section-head">
+          <h2 class="section-title">No weeks assigned yet</h2>
+        </div>
+        <p class="insights-empty">Insights counts only the weeks assigned on the Planner year grid. {{ rangeLabel }} has none.</p>
+        <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Assign weeks in Planner</NuxtLink>
       </section>
     </template>
   </div>
