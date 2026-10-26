@@ -1,43 +1,49 @@
 # Timely specification
 
-This folder holds the product and design specification for Timely. The code is the source of truth for what is built. These documents explain intent, describe the current product, specify the next structure (v3) and list open work.
+This folder holds the product and design specification for Timely. The code is the source of truth for what is built. These documents explain intent, describe the current product and list open work.
 
 ## Contents
 
 | Path | What it is | How to use it |
 | --- | --- | --- |
 | `README.md` | This index, plus a short changelog. | Start here. |
-| `weekly_planner_prd_and_design_doc.md` | The product requirements and design document, **v3 draft**: the built product plus the new four-screen structure (Home, Goals, Planner, Visualization). Requirements have IDs and a status (Done, Partial, Not built, Planned (v3), Superseded, Dropped); every Planned (v3) item has acceptance criteria. Includes the UX rules, the see-only-once matrix, the old-Insights mapping, the implementation slices, assumptions and open questions. | Read before changing behaviour. Update statuses and the backlog when a feature ships or a decision changes. |
-| `frontend-design.md` | The current visual style, derived from the code: tokens, layout, breakpoints, component catalogue, accessibility, voice, do and don't, verification, known gaps. | Read before any UI change. **Its component catalogue (sections 4.9 to 4.13), breakpoints (3.4), phone behaviour (3.5) and screenshot table describe the v2 screens; update them as each v3 screen ships** (Home, Goals list and detail, activity grid, Visualization; remove Insights and Configuration entries). |
-| `build-plan.md` | Slice-by-slice plan to build the v3 structure: rules every slice follows, definition of done, slice scopes, status. | Read before starting or reviewing a slice; update the status table as slices ship. |
+| `weekly_planner_prd_and_design_doc.md` | The product requirements and design document (v3): the four-screen product (Home, Goals, Planner, Visualization). Requirements have IDs and a status (Done, Partial, Not built, Planned (v3), Superseded, Dropped) with evidence for each Done or Partial item. Includes the UX rules, the see-only-once matrix, the old-Insights mapping, the implementation slices, assumptions and open questions. | Read before changing behaviour. Update statuses and the backlog when a feature ships or a decision changes. |
+| `frontend-design.md` | The current visual style, derived from the code: tokens, layout, breakpoints, component catalogue (sections 4.9 to 4.17 cover the current screens), accessibility, voice, do and don't, verification, known gaps. | Read before any UI change. Update it with the code in the same change. |
+| `build-plan.md` | Slice-by-slice plan to build the v3 structure: rules every slice follows, definition of done, slice scopes, status log and what remains. | Read before starting or reviewing a slice; update the status log as slices ship. |
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
-| `screens/` | Reference screenshots of the v2 build (list below). | Compare before and after a UI change. Replace them as the v3 screens ship. |
+| `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 
-Screenshots in `screens/` (Goals from slice 3; Home from slice 4; Planner from the v2 build; Visualization from slice 1):
+Screenshots in `screens/` (from the production build after slice 5; fresh seeded state, 25 October 2026):
 
 | File | Size | Notes |
 | --- | --- | --- |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, Training selected (slice 2b: activity grid with taken and free hours) |
-| `planner-activity-detail-desktop-light.png` | 1280 px wide | Viewport at 1280 px scrolled to the activities list and detail, light (slice 2b) |
-| `home-desktop-light.png` | 1280 px wide | Home, light, Day (slice 4) |
-| `home-week-desktop-light.png` | 1280 px wide | Home, light, Week (slice 4) |
-| `home-month-desktop-light.png` | 1280 px wide | Home, light, Month (slice 4) |
-| `home-desktop-dark.png` | 1280 px wide | Home, dark, Day (slice 4) |
-| `home-mobile-light.png` | 400 px wide | Home, light, Day, full page (slice 4) |
-| `home-week-mobile-light.png` | 400 px wide | Home, light, Week, full page (slice 4) |
-| `visualization-desktop-light.png` | 1280 px wide | Visualization, light (slice 1; replaces Insights) |
-| `visualization-mobile-light.png` | 400 px wide | Visualization, light (slice 1) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: list, with the vision and map above |
-| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode with long text grown (slice 3) |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: activities, activity grid, year (slice 2b) |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page (slice 2b) |
+| `home-desktop-light.png` | 1280 px wide | Home, light, Day: totals, time per category with legend in two columns, the day blocks with Now |
+| `home-week-desktop-light.png` | 1280 px wide | Home, light, Week: activities by hours |
+| `home-month-desktop-light.png` | 1280 px wide | Home, light, Month: each template and its days in the header line |
+| `home-desktop-dark.png` | 1280 px wide | Home, dark, Day |
+| `home-mobile-light.png` | 400 px wide | Home, light, Day, full page |
+| `home-week-mobile-light.png` | 400 px wide | Home, light, Week, full page |
+| `home-month-mobile-light.png` | 400 px wide | Home, light, Month, full page |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, Harada map, list and the first category's detail |
+| `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
+| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: nothing selected, the list and map |
+| `goals-detail-mobile-light.png` | 400 px wide | Goals, light: a category selected, detail full width with Back to list |
+| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page with no activity selected: the template overview in the grid |
+| `planner-view-desktop-light.png` | 1280 px wide | Planner, light, Reading selected in view mode: its hours highlighted, others muted, read-only |
+| `planner-edit-desktop-light.png` | 1280 px wide | Planner, light, Reading in edit mode: the grid paints the selected activity |
+| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, edit mode with the grid |
+| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px with no activity selected |
+| `planner-edit-mobile-light.png` | 400 px wide | Planner, light, edit mode at 400 px |
+| `visualization-desktop-light.png` | 1280 px wide | Visualization, light |
+| `visualization-desktop-dark.png` | 1280 px wide | Visualization, dark |
+| `visualization-mobile-light.png` | 400 px wide | Visualization, light, full page |
 
-All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). Home captures are from slice 4. Visualization captures at 1280 and 400 px, light and dark, come with slice 5.
+Desktop captures are 900 px high and phone captures 900 px high as well; the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
 
 ## How the spec is used
 
-- Product questions: read the PRD. Section 9 lists every requirement with its status; section 20 gives the impact on the build and the slice order; section 21 is the backlog; section 23 lists decisions, assumptions and open questions.
+- Product questions: read the PRD. Section 9 lists every requirement with its status and evidence; section 20 gives the impact on the build and the slice order; section 21 is the backlog; section 23 lists decisions, assumptions and open questions.
 - UI work: read `frontend-design.md` sections 1, 8 and 9 first, then PRD section 11 (UX concept and edit pattern). Use the tokens; do not add colours or fonts.
 - Data changes: the data model is in `app/types/planner.ts` (summarised in PRD section 14). Bump `PLANNER_STATE_VERSION` in `app/utils/planner.ts` when the saved shape changes. In development a mismatch resets saves to the seed.
 - Keep `spec/` out of the Nuxt build. It is plain Markdown and HTML.
@@ -46,22 +52,27 @@ All screenshots are viewport-sized (900 px high on desktop, 860 px on phones). H
 
 ## 1. Status summary
 
-Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization (the v3 structure; slices 0 to 4 are done, see `build-plan.md`). Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
+Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-Not built yet: the journal experiment on Home (FR-HOME-11 to 13, slice 6). Slice 5 (cleanup, docs and Visualization screenshots) is open. Insights and Configuration are removed.
+Not built yet: the journal experiment on Home (FR-HOME-11 to 13, slice 6, low priority). Export, import and reset (FR-APP-5) are later. Insights and Configuration are removed.
 
 ## 2. Changelog
+
+### v3 build (2026-10-25 to 2026-10-26)
+
+- Slices 0 to 5 are done (`build-plan.md`): date foundation, shell and Visualization, Planner activities, the 24x7 activity grid, Goals, Home, cleanup and this audit. The activity grid paints only in edit mode (FR-PLAN-17); Goals can open the Planner's add form with a category preselected (FR-GOALS-20).
+- The old week grid, Insights, Configuration and the legend view are removed; their code and wording are gone from `app/` and this spec, except where the PRD keeps the history (superseded rows, the mapping in PRD 11.8).
 
 ### v3 draft (2026-10-25)
 
 - **New navigation:** Home, Goals, Planner, Visualization; Home is the default. Insights and Configuration are removed; their content is mapped in PRD 11.8.
 - **UX rules:** see only once (one primary place per fact), see then edit (view mode with an Edit button), see only what you need (overview, list, detail, edit). Inline edit on the owning screen; Edit elsewhere navigates there.
-- **Home:** projected activities and time per category for Day, Week, Month; read-only with Edit links; journal card as a low-priority experiment (one note per day, a key message derived from the ambition and targets, a readings placeholder).
-- **Goals:** vision section for the ambition, read-only Harada map, category list with detail (goals, target, habits, activities, goals vs. planned) and edit mode. Category management moves here.
-- **Planner:** activity list with detail and editing (name, code, category, colour); 24x7 activity grid editing the active template, with explicit reassignment of taken hours and keyboard operation. Templates and the year grid stay.
-- **Visualization:** year metrics, week-by-week chart, year by category, full projection list with the horizon setting, goals-vs-planned overview.
-- **Dates:** real "today", ISO weeks, any year (2026 has 53 weeks), effective template per week; hard-coded 2026 and week 16 to be removed.
-- **Data:** no change for the restructure; `journal` entries added with the experiment.
+- **Home:** activities and time per category for Day, Week, Month; read-only with Edit links; journal card as a low-priority experiment (slice 6).
+- **Goals:** vision section for the ambition, read-only Harada map, category list with detail and edit mode. Category management moves here.
+- **Planner:** activity list with detail and editing; 24x7 activity grid editing the active template, with explicit reassignment of taken hours and keyboard operation. Templates and the year grid stay.
+- **Visualization:** year metrics, week-by-week chart, year by category, the projection horizon and the goals-vs-planned overview.
+- **Dates:** real "today", ISO weeks, any year (2026 has 53 weeks), effective template per week.
+- **Data:** no change for the restructure; `journal` entries are added with the experiment.
 
 ### v2 (2026-10-25)
 
@@ -74,5 +85,6 @@ Not built yet: the journal experiment on Home (FR-HOME-11 to 13, slice 6). Slice
 ## 3. Open items for the team
 
 - Owner decisions still open are in PRD 23.3: the basis of goals vs. planned (Q3) and Home navigation beyond the current day, week and month (Q4). Assumptions to confirm are in 23.2.
-- `frontend-design.md` must be updated slice by slice as the v3 screens are built (see Contents).
+- Decisions and checks from slice 5 that need the owner: the unused `timeGranularity` field (stored shape), the possibly unused packages (`@mdi/font`, `vuetify`, `vue-router`), and the Partial items FR-UX-2, FR-UX-3, FR-GOALS-15 and FR-GOALS-18. Details are in `build-plan.md` and `.claude/agent.md`.
+- `frontend-design.md` must be updated with each UI change (see Contents).
 - The root `README.md` still describes an older scaffold; a rewrite is out of scope for this spec.

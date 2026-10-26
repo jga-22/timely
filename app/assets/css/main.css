@@ -99,28 +99,15 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 .muted { color: var(--ink-3); }
 
-/* ── Vuetify neutralisation: same family, no uppercase buttons or tabs ── */
+/* ── Vuetify neutralisation: the VApp root (app.vue) takes the same family and colours. No Vuetify components are rendered ── */
 .v-application {
   background: transparent !important;
   font-family: var(--font-ui) !important;
   color: var(--ink) !important;
 }
 .v-application__wrap { min-height: unset !important; }
-.v-application .v-btn,
-.v-application .v-tab,
-.v-application .v-field,
-.v-application .v-label,
-.v-application .v-select__selection-text,
-.v-application .v-list-item-title,
 .v-application input,
 .v-application textarea { font-family: inherit !important; }
-.v-application .v-btn,
-.v-application .v-tab { text-transform: none !important; letter-spacing: normal !important; }
-.v-application .v-btn { border-radius: var(--radius); }
-/* Outlined Vuetify fields (Goals habits) use the control boundary, and full-strength labels */
-.v-application .v-field--variant-outlined .v-field__outline { --v-field-border-opacity: 1; color: var(--control-border); }
-.v-application .v-field--variant-outlined.v-field--focused .v-field__outline { color: var(--accent); }
-.v-application .v-label { opacity: 1; color: var(--ink-2); }
 
 /* ── App shell and topbar ── */
 .app {
@@ -320,7 +307,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .btn-danger:hover { background: var(--danger-tint); color: var(--danger); }
 .btn-sm { height: 32px; padding: 0 var(--space-3); }
 .btn-xs { height: 26px; padding: 0 var(--space-2); font-size: var(--fs-xs); }
-.btn-block { width: 100%; }
 
 /* ── Form fields ── */
 .field {
@@ -384,8 +370,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border-color: var(--accent);
   color: var(--ink);
 }
-.chip .t-name,
-.chip .chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip .pill-count { font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
 .chip-add {

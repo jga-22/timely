@@ -52,9 +52,5 @@ export const isoWeekStarts = (year: number): string[] => {
   return Array.from({ length: isoWeeksInYear(year) }, (_, index) => addDays(firstMonday, index * 7))
 }
 
-/** Index of the week containing the date within a year's ISO weeks, or -1 when that week is not in the year */
-export const weekIndexInYear = (key: string, year: number): number =>
-  isoWeekStarts(year).indexOf(mondayOf(key))
-
 /** Zero-based month of a date key */
 export const monthOf = (key: string): number => Number(key.slice(5, 7)) - 1

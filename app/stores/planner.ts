@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
-  aggregateTemplateByCategory,
   applyActivityCells,
   createEmptySlots,
   createHaradaSeed,
@@ -24,10 +23,6 @@ export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => createInitialState(),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
-    activeTemplateCategoryTotals(state) {
-      const template = getActiveTemplate(state)
-      return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
-    },
     /** Hours per activity over the horizon: the chosen year's scheduled hours times the horizon in years (PRD 17.11) */
     yearlyProjectionHours(state) {
       return (year: number) => {
