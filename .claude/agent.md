@@ -53,6 +53,7 @@ Shell and shared code:
 - `spec/weekly_planner_prd_and_design_doc.md`: the PRD (v3, requirement IDs and acceptance criteria, with each requirement's status and evidence). `spec/build-plan.md`: slice-by-slice build plan and status log.
 - `spec/screens/`: reference screenshots from the production build, named in the README.
 - `spec/references/grille-harada-meilleure-version.html`: the original Harada prototype; origin of the palette and the Goals layout.
+- `spec/database/`: Supabase storage. `snapshot.sql` (the table the app uses today) plus the later normalised design (data model, `schema.sql`, ERD, effort evaluation).
 
 ## Model and decisions
 
@@ -104,3 +105,4 @@ Shell and shared code:
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.
+- **Storage decided: Supabase only** (27 October 2026). The app stays on localStorage unless configured; remaining decisions (hosting, offline level, ids, import) are in `spec/database/effort-evaluation.md` (section 8). Next ideas: Google sign-in button, normalised schema, server-side data loading to remove the hydration warning.
