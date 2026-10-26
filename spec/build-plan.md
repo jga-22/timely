@@ -15,6 +15,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
   - UI follows `frontend-design.md` (one font, tokens only, no uppercase micro-labels, nothing under 12px, sentence case) and the FR-UX rules (see only once, view then edit, progressive disclosure).
   - No dead code left behind by the slice; no new dependencies without asking the owner.
   - The slice's doc updates are done (below).
+- **Known hydration warning (owner decision, 2026-10-26):** "Hydration completed but contains mismatches" appears when the saved state differs from the seed (server renders the seed, the client restores storage). The owner chose NOT to switch to client-only rendering (`ssr: false`) because a backend and database may come later; it stays a documented known issue until then. It is excluded from the "no console warnings" check: report it separately, never try to fix it inside a slice, and do not add new `<ClientOnly>` wrappers unless a screen is visibly wrong without one. When a backend arrives, load data on the server and the mismatch disappears.
 - **Docs per slice:** update the PRD statuses of the requirements shipped (Planned to Done, Superseded to removed), `spec/frontend-design.md` where components or screens changed (catalogue 4.x, layout 3.x), refresh the affected `spec/screens/` images, and the status table here and the "Current state" section of `.claude/agent.md`.
 - **Report format from the doer:** files changed, requirement IDs done or partial (with evidence), deviations and why, verification results, screenshot paths, anything unverified, `git status --short`, commit hash.
 
@@ -25,7 +26,7 @@ Source of truth for what to build: `spec/weekly_planner_prd_and_design_doc.md` (
 | 0 | Date foundation | FR-DATE-1 to 6 | M | none | Done (commit "feat: date foundation (real today, ISO weeks, year switcher, effective template)"); FR-DATE-6 partial until Home |
 | 1 | New shell, URL state, Visualization | FR-UX (routing), FR-VIZ-* | M | 0 | Done (one commit; see status log); FR-UX-5 and FR-VIZ-5/6 partial |
 | 2 | Planner: activities and the 24x7 grid | FR-PLAN-13 to 21 | L | 1 | Done (2a and 2b). FR-PLAN-17 partial until the edit-mode question is decided |
-| 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Not started |
+| 3 | Goals: vision, Harada map, category detail | FR-GOALS-13 to 22 | M-L | 1 (2 for activity links) | Done (one commit; see status log). FR-GOALS-20 not built; FR-GOALS-15 and 18 Partial |
 | 4 | Home: Day, Week, Month | FR-HOME-1 to 14 | M | 0, 2, 3 | Not started |
 | 5 | Cleanup, docs, screenshots | v3 "Impact on existing build" | S | 0 to 4 | Not started |
 | 6 | Journal experiment | FR-HOME journal items | S | 4 | Not started |
@@ -65,6 +66,8 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 - Detail: activities (read-only rows with Edit links to the Planner), habits (view rows, Edit mode with frequency, minutes, activity link; the habit's own category first, show the linked activity's category), 1-year target, 5-year goal, and the goals-vs-planned bar as the primary signal.
 - Category management (add, rename, recolour, reorder, remove with move-and-remove) lives here. Remove the Configuration tab.
 
+- Done in slice 3: vision section, read-only Harada map, category list with detail (view and edit), habit rows, add and remove categories, reorder; Configuration tab removed. Deviations (see PRD evidence): FR-GOALS-20 not built; the list shows no order number; habit Edit is in category edit mode only. Store fix: `moveCategory` renumbered after sorting, so reorder never worked before.
+
 ### Slice 4: Home
 
 - Day, Week, Month selector (current periods only, assumption Q4). Day: today's blocks in time order with projected time, activity, category and an Edit link. Week and Month: activities sorted by hours.
@@ -93,3 +96,4 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 | 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |
 | 2026-10-25 | Slice 1 done in one commit: Home (placeholder, default), Goals, Planner, Visualization and transitional Configuration; URL state in `useNav`; Insights replaced by Visualization; horizon moved to Visualization. FR-VIZ-1 to 4 Done; FR-VIZ-5 and 6, FR-UX-5, FR-APP-7 and 8 Partial. FR-DATE-6 and FR-APP-6 Done. |
 | 2026-10-26 | Slice 2b done in one commit: 24x7 activity grid (hourly; pointer and keyboard painting; inline reassign confirmation; template overview; touch), old week grid retired (Q1). FR-PLAN-13, 15, 16, 18, 19, 20 Done; FR-PLAN-17 Partial (painting while an activity is selected, not only in edit mode: owner to confirm); FR-TPL-5 Done. The activity grid is client-only (`ClientOnly`) because server HTML kept seed cells after hydration. |
+| 2026-10-26 | Slice 3 done in one commit: Goals vision (AutoTextarea, Done), read-only Harada map (order, name, colour, To define; keyboard), category list (counts, Below target, Add category) and detail (view with goals vs. planned, habits, activities; edit with fields, habit rows, move and remove). Configuration tab and `LegendView.vue` removed; four tabs. FR-GOALS-13, 14, 16, 17, 19, 21, 22 Done; FR-GOALS-15, 18 Partial; FR-GOALS-20 not built. FR-UX-5, FR-APP-7, FR-APP-8, FR-VIZ-6 Done. Reorder fixed in the store. Storage version unchanged (6). |

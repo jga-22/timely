@@ -8,11 +8,10 @@ Reference screenshots (current build, headless Edge, light unless noted):
 
 | Screen | Desktop 1280 | Mobile 400 |
 | --- | --- | --- |
-| Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
+| Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | The activity grid fits at 400 px: a 40 px label column and seven day columns of about 46 px, 24 px hour rows, no scroll. The year grid keeps its own scroll container (min width 360 px). Activities list and detail stack (section 4.17). Measured in the browser run (slice 2b): no page overflow at 400 px. |
 | Home (placeholder) | [home-desktop-light.png](screens/home-desktop-light.png) | not captured |
 | Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
-| Configuration | [configuration-desktop-light.png](screens/configuration-desktop-light.png) | not captured |
 
 ---
 
@@ -100,7 +99,6 @@ Font: IBM Plex Sans. Weights in use: **400** (meta, units, body), **500** (label
 
 Hard-coded exceptions (recorded, not endorsed):
 
-- `16px`: the Harada ambition and 5-year goal text (`HaradaView.vue`, `.ambition-input` and `.goal-input`).
 - `12px`: chart text, written as a literal in `.chart-text`.
 
 Line heights: body `1.5`; `.page-lede` and `.section-lede` `1.6`; `.page-title` `1.2`; `.cell-title` `1.35` (centre cell `1.45`); `.cell-status` `1.25`; `.metric-value` `1.1`; `.ag-hint` `1.5`; auto-textarea `1.5`.
@@ -148,7 +146,7 @@ Z-order: topbar 10, colour popover 20. Activity grid cells use z-index 1 only wh
 
 ### 3.1 App shell
 
-`app/app.vue` renders `VApp` > `.app` (`display: grid; grid-template-rows: auto 1fr; min-height: 100vh; overflow-x: clip`) > `header.topbar` and `<NuxtPage>`. The page component (`app/pages/index.vue`) switches on the `tab` route query, read by `useNav()` (`app/composables/useNav.ts`). An unknown or missing tab shows Home. Tab clicks push history entries, so Back and Forward work. Query parameters: `tab` (home, goals, planner, visualization, configuration), `item` (id of the selected category, activity or habit) and `edit=1` (edit mode). Edit links to another screen use `link(tab, { item, edit })` or `go(tab, { item, edit })`.
+`app/app.vue` renders `VApp` > `.app` (`display: grid; grid-template-rows: auto 1fr; min-height: 100vh; overflow-x: clip`) > `header.topbar` and `<NuxtPage>`. The page component (`app/pages/index.vue`) switches on the `tab` route query, read by `useNav()` (`app/composables/useNav.ts`). An unknown or missing tab shows Home. Tab clicks push history entries, so Back and Forward work. Query parameters: `tab` (home, goals, planner, visualization), `item` (id of the selected category, activity or habit) and `edit=1` (edit mode). Edit links to another screen use `link(tab, { item, edit })` or `go(tab, { item, edit })`.
 
 `NuxtRouteAnnouncer` is mounted. Its visually hidden span measures 199px wide and is `overflow: hidden`, so the overflow probe reports it. It is not a layout issue.
 
@@ -158,7 +156,7 @@ Desktop (above 768px):
 
 - `.topbar`: `position: sticky; top: 0; z-index: 10; height: 64px; padding: 0 40px; gap: 32px; background: var(--bg); border-bottom: 1px solid var(--rule-2)`. Measured: 64px at 1280.
 - `.brand`: "timely", lowercase, `--fs-lg` 600, `-0.01em`, `--ink`.
-- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Planner, Visualization, then Configuration (transitional, no number; slice 3 removes it).
+- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Planner, Visualization (four tabs, numbered 01 to 04; Configuration removed in slice 3).
 - `.tab`: 15px 500, `--ink-3`; hover and selected `--ink`. Height 100% of the bar. Each tab carries `.tab-num` (`01` to `04`, 12px 400, tabular, `aria-hidden`).
 - Active indicator: `.tab::after` is a 2px bar in `--accent`, `left:0; right:0; bottom:-1px`, scaled from `scaleX(0)` to `scaleX(1)` over 0.18s on `[aria-selected="true"]`.
 - `.theme-toggle`: 36x36, radius 6, icon 18px, `--ink-3`; hover `--bg-3` and `--ink`. It is the last flex item, so it sits at the right edge.
@@ -191,7 +189,7 @@ The side gutter is 16px at 400px, which meets the minimum.
 | Breakpoint | Where | Effect |
 | --- | --- | --- |
 | 1280px | `main.css` | `.view` padding |
-| 1024px | `main.css` | `.view` padding; Configuration to one column |
+| 1024px | `main.css` | `.view` padding |
 | 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Visualization defaults to monthly chart (JS, `window.innerWidth < 768`) |
 | 600px | `HaradaView.vue` (scoped) | Harada grid to two columns; centre cell first, full width |
 | 480px | `main.css` | Template delete shows only the glyph |
@@ -210,7 +208,6 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | Planner | The week grid keeps its 56px label column plus seven day columns with a 480px minimum width. It scrolls horizontally inside `.week-scroll-wrap` (measured overflow 112px). Blocks show only the activity name. Selection and activity menus dock to the bottom edge. Block hover delete is hidden. Template delete shows only the glyph. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |
 | Visualization | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
-| Configuration | Single column. Category hours hidden; move and delete controls always visible (no hover reveal). |
 
 Rule: only tables, the year grid and charts may be wider than the viewport, and each is in its own `overflow-x: auto` container. Everything else must wrap or stack.
 
@@ -252,7 +249,7 @@ Base `.btn`: inline flex, centred, gap 8px, height 36px, padding 0 16px, radius 
 | Destructive (quiet) | `.btn-danger` | `--danger` text | `--danger-tint` background | "Delete", "Delete template" |
 | Small | `.btn-sm` | 32px high, padding 0 12px | | Selection bar, new template |
 | Extra small | `.btn-xs` | 26px high, padding 0 8px, 12px text | | Category move and delete, template delete |
-| Block | `.btn-block` | width 100% | | Configuration forms |
+| Block | `.btn-block` | width 100% | | Goals and Planner forms |
 | Disabled | `:disabled` | Opacity 0.45, hover reset | | Quiet and outline lose their hover; primary keeps its accent fill at the same 0.45 opacity |
 
 Vuetify buttons (`v-btn`) are used in the Goals view only: "Load starter grid" (primary, flat, `mdi-sprout-outline`), "Add habit" (primary, flat, `mdi-plus`, disabled while empty), and "Remove" in habit details (text, error colour, small, `mdi-delete-outline`). `main.css` neutralises them: `font-family: inherit`, `text-transform: none`, `letter-spacing: normal`, radius 6px.
@@ -305,48 +302,39 @@ Habit fields are different. Inside habit details, count, period, minutes, and li
 - Focus: accent border and `--focus-ring`.
 - Auto-grow: on mount, on every `input`, on each change of `modelValue` (next tick), on window resize, once fonts are ready, and when the box's width changes (`ResizeObserver`, fitted in `requestAnimationFrame`). The height is reset to `auto`, then set to `scrollHeight` plus the border height.
 - Hidden boxes (inside a closed `<details>`, or an inactive Vuetify window) are skipped until they are visible.
-- Font size: 15px by default. Ambition and 5-year goal fields override it to 16px (`HaradaView.vue`).
+- Font size: 15px by default. Goals uses the default 15px; the old 16px override was removed in slice 3.
 
 ### 4.9 Goals (Harada), `app/components/harada/HaradaView.vue` (scoped)
 
-Page: `h1` "The best version of me", lede explaining the grid. Layout: ambition field (`.ambition-edit`, max width 720px), the 3x3 grid, then the selected category panel.
+Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Order top to bottom: vision, Harada map, then the category list with its detail (PRD 11.5).
 
-Grid (`.harada-grid`): 3 columns with `gap: 1px` on a `--rule` background, `border: 1px solid var(--rule)`, radius 6px, `overflow: hidden`. The gap is the hairline. Order is 4 categories, centre, 4 categories.
+- **Vision** (`section.vision`): `h2.section-title` "Vision, N years" (N from the stored horizon, shown, not editable) and an Edit button (`aria-label` "Edit ambition"). View mode: the statement at 18px 500, line height 1.45. Edit mode: `AutoTextarea` "Ambition statement" that applies at once; Done returns focus to Edit; Escape leaves. Vision edit mode is local to the screen (one field), not in the URL. Opening it ends a category edit, and selecting a category ends it.
+- **Map** (`.harada-grid`, read-only): 3x3 with hairline gaps. The centre (`.harada-centre`) shows "Ambition, N years" and the statement. Eight outer cells are `button.harada-cell` with a colour dot (16px), the order (`.cell-num`, "01" to "08"), the name (`.cell-title`) and "To define" (`.cell-status`, warn). Nothing else: no hints, counts or hours. A missing category leaves an empty placeholder (`.harada-empty`, `--bg-2`, `aria-hidden`). The selected cell has `--bg-4`, a 3px accent bar and `aria-pressed="true"`. Focus: the 2px inset accent ring (section 2.8). Keyboard: Tab between cells; Enter or Space selects; arrow keys move focus and skip the centre and empty slots without wrapping.
+- **Categories** (`section.section.browse`): on desktop, the list (300px) sits left and the detail right, separated by a 1px `--rule-2` rule with 32px padding. Phones stack them (section 3.5).
+  - List (`ul.cat-list`, rows `button.cat-row`, min height 44px): colour dot, name (15px 500), counts in 12px ink-3 ("2 activities · 8 habits"), and a quiet "Below target" flag when the linked hours are below the habit target (coverage under 1, the same rule as Home's signal). The selected row has `aria-current="true"`, `--bg-4` and a 3px accent bar; its secondary text uses `--ink-2` on the tint. Up and Down arrows move focus between rows.
+  - Note under the list above eight categories (13px ink-3): "Only the first 8 categories appear on the Harada map. The others work everywhere else." (FR-GOALS-21).
+  - "+ Add category" (`.chip-add`) reveals a form (progressive disclosure, FR-GOALS-19): name (`.timely-input`, "Name can't be empty" as `.field-error` when submitted blank), colour (inline palette `.color-pop-inline`), primary "Add category" and "Cancel"; Enter submits; Escape closes. The new category opens selected in edit mode with its name focused.
+- Empty state (no categories): "No goals yet. Start from the starter grid and adapt it." with "Load starter grid" (`.btn-primary`, FR-GOALS-10). The vision still shows above it.
+- Phones (768px and below): the vision and the map stack above the list. When a category is selected the vision, map and list are hidden and the detail shows full width with "Back to list" (`.detail-back`, FR-UX-8); Back restores the scroll position and focuses the row. The map is two columns at 600px and below, with the centre first and full width.
 
-Cell anatomy (`button.harada-cell`): column flex, gap 12px, min height 128px, padding 24px, background `--bg`, left-aligned.
+### 4.10 Category detail and habit rows (`CategoryDetail.vue`, `HabitList.vue`, scoped)
 
-- `.cell-num`: "01" to "08", 12px 600, `--accent`, tabular.
-- `.cell-title`: category name, 15px 600, line height 1.35.
-- `.cell-hint` (optional): 12px `--ink-2`, from the seed hint text.
-- `.cell-status`: 12px 500, `--warn`, "To define" when the category target is flagged. Its minimum height is reserved (1.25em) and it is pushed to the bottom with `margin-top: auto`, so titles line up across the grid.
+`HaradaCategoryDetail` (FR-GOALS-16 to 18; FR-GOALS-20 is not built). Keyed by the category, so its drafts reset on change.
 
-States:
-
-- Default: `--bg`.
-- Hover: `--bg-3` background. Focus-visible: 2px inset `--accent` ring (see 2.8). Focus does not change the background, so the selected tint stays.
-- Active (selected category): `--bg-4` background and a 3px `--accent` bar on the left edge (`::before`). Also `aria-pressed="true"`.
-- Empty slot (fewer than eight categories): `div.harada-empty`, `--bg-2`, `aria-hidden`.
-
-Centre cell (`.harada-centre`, a plain `div`): `--accent` background, `--on-accent` text, centred. Label "Ambition, N years" (`.cell-num`, solid `--on-accent`: 8.57:1 light and 7.96:1 dark on the accent) and the statement (15px 500, line height 1.45). The former 75% opacity measured 5.60:1 light and 4.89:1 dark; the solid token replaces it.
-
-Phones (600px and below): two columns; the centre cell is moved first (`order: -1`), spans both columns, and has `min-height: 100px`.
-
-Panel (`.harada-panel`, top margin 32px):
-
-- Head: kicker "Category N of M" (13px `--ink-3`), title `.harada-panel-title` (18px 600), then a Vuetify `v-tabs` (`density="comfortable"`, primary colour, tabs with no minimum width, 8px horizontal padding, first tab with no left padding, letter spacing 0): "5-year goal", "Daily habits", "1-year target".
-- Body: `v-window` with top padding 24px. Goal and target use `AutoTextarea`. Target has a "Target still to be defined" checkbox (`v-checkbox`, compact).
-- Foot (`.harada-panel-foot`): top margin 24px, top padding 24px, `border-top: 1px solid var(--rule-2)`. Lines: "Habit time: X h scheduled per week against Y h asked by the habits" (or "no measured habits yet"), then "Z h a week across all activities in this category". Both 13px tabular, `--ink-2` and `--ink-3`.
-
-### 4.10 Habit list (`app/components/harada/HabitList.vue`, scoped)
-
-Row (`.habit-row`): column, gap 4px, padding 16px 0, `border-bottom: 1px solid var(--rule-2)`. The list has no box.
-
-- `.habit-main`: flex row. `AutoTextarea` (`.habit-name`, fills the row, `aria-label="Habit name"`) and the "Details" toggle.
-- "Details" toggle (`.habit-toggle`): 13px 500, `--accent`, padding 4px 8px, top margin 8px, hover `--bg-3`. Text switches to "Done" while open, with `aria-expanded`.
-- `.habit-meta` (13px, `--ink-3`, `·` separators): "About N a week", then "N h a week scheduled" when linked, or "Not linked to an activity" in `--warn`.
-- Details (`.habit-controls`, open one at a time): wrapping row, gap 8px, top margin 12px. Count (max 96px), Period (`per day`, `per week`, `per month`; min 140px), Minutes each (`min` suffix, max 140px), Linked activity (clearable, min 180px, grows), and Remove (Vuetify text button, error colour).
-- Empty: `.habit-empty` "No daily habits yet for this category." (`--ink-3`).
-- Add (`.habit-add`): top margin 24px, wrap, gap 8px. A Vuetify text field ("New daily habit") grows (min 220px) and "Add habit" is a primary button, disabled when the field is blank. Submit is by Enter.
+- Head: `h3.detail-name` (dot and name, 18px 600) and Edit (`.btn-sm.btn-outline`, `aria-label` "Edit {name}") or Done (`.btn-primary`). Done returns focus to Edit. Escape closes a removal confirmation first, otherwise leaves edit mode.
+- View mode:
+  - "5-year goal" and "1-year target" (`.detail-text`, "Not written yet." in ink-3). The "To define" flag (warn) sits above the target text when the target is flagged.
+  - "Goals vs. planned" (`.detail-goal`): a caption "Hours a week in {template}, through this category's habits.", the track (`.goal-track`, `.goal-fill`, `.goal-target` tick) drawn on the largest value across all categories (the Visualization scale), figures in `.goal-figures` ("X h of Y h a week", or "X h a week scheduled" without a target), the quiet total ("Z h scheduled in total") and flags ("No target yet", "No time planned", "N habits not linked to an activity"). The same computation as Visualization (`categoryAlignments`).
+  - "Habits": read-only rows (`.habit-row`): name, "N a week, M min", then "Linked to {activity}" (a link to the activity in Planner) with the activity's category in brackets when it differs from the habit's own, or "Not linked to an activity" in warn (FR-GOALS-22). Empty: "No daily habits yet for this category."
+  - "Activities": rows with name, short code and hours a week in the active template, and an "Edit" link to the activity in Planner with edit mode (FR-UX-4). Empty: "No activities in this category yet. Add one in Planner."
+- Edit mode (edits apply at once, FR-UX-6):
+  - Name (`#cat-edit-name`, `.timely-input`); an empty name shows "Name can't be empty" and is restored on blur.
+  - Colour: inline palette (`.color-pop-inline`); recolouring changes only activities still on the old colour (A6, store rule).
+  - 5-year goal and 1-year target: `AutoTextarea`. "Target still to be defined" is a native checkbox (`.check`, accent colour) that sets `targetTbd`.
+  - Habits: one row per habit with Edit (`aria-label` "Edit {name}", `aria-expanded`) that opens its form inline; one form open at a time. The form: name (`AutoTextarea`), times (number), period (`.timely-select`), minutes each (number), linked activity (`.timely-select` with an `optgroup` per category: the habit's own category first, then the others in order, categories without activities omitted). "Remove habit" opens an inline confirmation (`.inline-confirm`) and removes nothing before "Remove". "+ Add habit" (`.chip-add`) adds "New habit" and opens its form.
+  - Activities: the read-only rows above.
+  - Move up and Move down (`.btn-sm`, disabled at the ends); Remove category (`.btn-danger`) opens an inline confirmation (`.inline-confirm`) that names the impact: "Its N activities and M habits must move to another category before X is removed." with a select of the other categories and "Move and remove"; with no content, "Remove X? It has no activities or habits." Without another category: "Add another category first, then remove X." Removal selects nothing afterwards.
+- Shared classes (`main.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
 
 ### 4.11 Visualization (`app/components/viz/VisualizationView.vue`)
 
@@ -404,25 +392,6 @@ Replaces the drag-select week grid, which was retired in slice 2b (PRD Q1, FR-PL
 - The grid writes through `setActivitySlots` (store) and the pure helpers in `app/utils/planner.ts` (`rectangleCells`, `paintModeFor`, `rangeConflicts`, `applyActivityCells`).
 - Removed in slice 2b: the drag-select grid, the day clear buttons, block hover delete, resize handles and confirm, the selection action bar, the activity menu, the week totals row and their CSS.
 
-### 4.13 Configuration (`app/components/planner/LegendView.vue`)
-
-Page: "Categories". Layout `.config-grid`: left column (`minmax(0, 1fr)`) with the lists, right column (340px) with the forms. Gap 48px. Stacks at 1024px with gap 32px.
-
-**Category rows** (`.cat-row.cat-row-category`): grid `20px | 1fr | auto | auto`, gap 16px, padding 12px 0, `border-bottom: 1px solid var(--rule-2)`.
-
-- Swatch (`.big-swatch`): 20px circle, inset 1px ring, opens the colour popover (4.6). Button with `aria-label="Change colour"`.
-- Name block (`.cat-name-wrap`): name (`.cat-row-name`, 15px 500, ellipsis) and `.cat-meta` (12px `--ink-3`): "N activities · M habits".
-- Rename: double-click the name. An underlined input (`.cat-name-input`, accent underline, no box) takes over. Enter or blur saves. Empty names are ignored.
-- Hours (`.cat-hrs`, 13px `--ink-3`, tabular): "N h/wk · M h/yr", numbers in 600 `--ink`. Hidden on phones.
-- Actions (`.cat-actions`): move up (↑), move down (↓), delete (✕), each `.btn-xs` 28px wide. Hidden until the row is hovered or a button is focused. Disabled arrows stay invisible. Always visible on phones.
-- Removal panel (`.cat-remove`): appears under the row when the category holds content. Background `--bg-2`, 1px `--rule` border, radius 6px, indented 36px. Text: "Its N activities and M habits must move to another category before X is removed." A select (`.timely-select`) of other categories, "Move and remove" (`.btn-xs.btn-primary`) and "Cancel". With no other category: "Add another category first, then remove this one." Empty categories are removed at once.
-- Note under the list when more than eight categories: "Only the first 8 categories appear in the Goals grid. The others still work in Planner and Visualization." (`.config-note`, 13px `--ink-3`).
-
-**Forms** (right column, `.form-section` separated by a rule and 32px spacing):
-
-- "New category": live preview (`.new-cat-preview`, colour at 14% tint, dot, name, 15px 500; placeholder label "New Category"), name field (placeholder "e.g. Wellness"), colour popover inline (`.color-pop-inline`), primary block button "Add category" (disabled until a name is typed). Enter in the name field submits.
-- Projection moved to Visualization (4.11).
-
 ### 4.14 Charts and legends (summary)
 
 - Charts are hand-written inline SVG. No charting library is used. Chart.js is not a dependency (the PRD named it).
@@ -478,7 +447,7 @@ Placed between the template bar and the activity grid (section 4.12). Section ti
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Fail for chart segments | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. Chart segments stay below 3:1 (open, see 10). |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Goals, Visualization, Configuration, the Planner activity list, detail and forms (4.17) and the activity grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Goals, Visualization, the Planner activity list, detail and forms (4.17) and the activity grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
@@ -564,7 +533,7 @@ These are facts about the code as it is today. They are not requirements for new
 1. The year grid cannot be operated from the keyboard, and it cannot be painted by touch. (The activity grid is keyboard operable since slice 2b.)
 2. Chart segments (80% colour, 1.2 to 1.6:1 against the page) are below 3:1 for non-text UI. The legend and the focus strip identify them. Not fixed: a gap or outline between segments would not change a segment's contrast against the page.
 3. `role="tab"` buttons have no `aria-controls` and there is no `tabpanel`.
-4. Habit fields in the Goals view are Vuetify outlined fields. Their borders and labels now match the control boundary, but their heights and radii still differ from the `.timely-*` fields.
+4. Fixed in slice 3: the Goals habit fields are native `.timely-*` controls.
 5. There is no inline error style for forms. Failed actions have no visible feedback.
 6. Template delete uses the native `confirm()`.
 7. Colour swatches are 20px and day clear buttons are 20px, below the 24px touch-target guidance.
@@ -572,7 +541,7 @@ These are facts about the code as it is today. They are not requirements for new
 9. Theme is light by default and does not follow the OS setting.
 10. `DESIGN_COLORS` comment is stale (says "editorial muted palette used by the design system"). The `fg` field is unused.
 11. The tokens in `vuetify.config.ts` are duplicated by hand from `main.css`. `--control-border` is not mirrored there; Vuetify uses it only through the overrides in `main.css`.
-12. The 16px ambition and goal text, and 12px chart text, are hard-coded rather than tokens.
+12. The 12px chart text is hard-coded rather than a token.
 13. Disabled buttons keep the 0.45 opacity rule, so "Add category" and "Add activity" are 2.44 to 3.05:1. Disabled controls are exempt; the dark one is faint but readable.
 
 ---
@@ -593,3 +562,4 @@ These are facts about the code as it is today. They are not requirements for new
 - Not verified: `prefers-color-scheme` absence beyond code reading; Vuetify's computed `on-primary`; behaviour on real touch hardware (only emulated viewports were checked).
 
 - Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `screens/home-desktop-light.png`, `screens/visualization-desktop-light.png`, `screens/visualization-mobile-light.png`.
+- Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (`goals-test.mjs` in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `screens/goals-desktop-light.png`, `screens/goals-detail-edit-desktop-light.png`, `screens/goals-mobile-light.png`.

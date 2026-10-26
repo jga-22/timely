@@ -938,13 +938,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .total-row .hrs { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .total-row .pct { min-width: 40px; text-align: right; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
-/* ── Config ── */
-.config-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--space-7);
-  align-items: start;
-}
+/* ── Lists and forms shared by Planner and Goals ── */
 .list-head {
   display: flex;
   align-items: baseline;
@@ -952,113 +946,37 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin: 0 0 var(--space-2);
 }
 .list-head .section-title { margin: 0; }
-.cat-list { display: flex; flex-direction: column; }
-.cat-row {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto 28px;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--rule-2);
-}
-.cat-row:last-child { border-bottom: none; }
-.swatch-wrap { position: relative; }
-.big-swatch {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--control-border);
-  cursor: pointer;
-}
-.big-swatch.is-static { cursor: default; }
-.cat-name-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.cat-row-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--ink);
-}
-.cat-name-input {
-  width: 100%;
-  padding: 0 0 2px;
-  border: none;
-  border-bottom: 1px solid var(--accent);
-  background: transparent;
-  color: var(--ink);
-  font-size: var(--fs-md);
-  font-weight: 500;
-  outline: none;
-}
-.cat-meta {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-.cat-hrs {
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.cat-hrs .n { font-weight: 600; color: var(--ink); }
-.cat-actions .btn {
-  width: 28px;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.12s;
-}
-.cat-row:hover .cat-actions .btn,
-.cat-actions .btn:focus-visible { opacity: 1; }
-
-/* Categories carry reorder controls beside delete */
-.cat-row-category { grid-template-columns: 20px minmax(0, 1fr) auto auto; }
-.cat-row-category .cat-actions { display: flex; gap: 2px; }
-.cat-row-category .cat-actions .btn:disabled { opacity: 0; }
-.cat-remove {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3) 36px;
-  padding: var(--space-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: var(--bg-2);
-}
-.cat-remove-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.cat-remove-note { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
-.config-note { margin: var(--space-3) 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
-
-.form-section + .form-section {
-  margin-top: var(--space-6);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--rule-2);
-}
-.form-section .section-title { margin-bottom: var(--space-4); }
 .form-stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
 }
-.form-section .btn-primary { margin-top: var(--space-4); }
-.new-cat-preview {
-  display: flex;
-  align-items: center;
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Inline confirmation for a destructive action: nothing changes before its button (FR-UX-7) */
+.inline-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--c) 14%, var(--bg));
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--ink);
+  background: var(--bg-2);
+}
+.inline-confirm-text {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
 }
 
 /* ── Goals vs planned time ── */
@@ -1141,7 +1059,6 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 1024px) {
   .view { padding: 32px 28px 72px; }
-  .config-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
 }
 
 @media (max-width: 768px) {
@@ -1184,10 +1101,8 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   .act-layout[data-selected="true"] .act-back { display: inline-flex; }
   .act-detail { padding-left: 0; border-left: none; }
 
-  .cat-row { grid-template-columns: 20px minmax(0, 1fr) 28px; gap: var(--space-3); }
-  .cat-row .cat-hrs { display: none; }
-  .cat-actions .btn { opacity: 1; }
-  .form-row { grid-template-columns: minmax(0, 1fr); }
+  .form-row,
+  .form-row-3 { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 480px) {

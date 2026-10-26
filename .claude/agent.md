@@ -29,9 +29,9 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 
 - `app/app.vue`: app shell, topbar, tab list, theme toggle.
 - `app/pages/index.vue`: switches the view by the `tab` route query (`useNav`, see URL state below).
-- `app/components/harada/`: Goals view (`HaradaView.vue`, `HabitList.vue`).
+- `app/components/harada/`: Goals screen: `HaradaView.vue` (vision, Harada map, category list), `CategoryDetail.vue` (category detail, view and edit), `HabitList.vue` (habit rows).
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea.
-- `app/components/planner/`: `PlannerView.vue` (template bar, activity list and detail, year grid), `ActivityGrid.vue` (the 24x7 activity grid, client only), `LegendView.vue` (the Configuration tab; categories only until slice 3). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
+- `app/components/planner/`: `PlannerView.vue` (template bar, activity list and detail, year grid), `ActivityGrid.vue` (the 24x7 activity grid, client only). `app/components/viz/VisualizationView.vue` (charts, replaced Insights), `app/components/home/HomeView.vue` (placeholder), `app/components/YearNav.vue` (shared year switcher), `app/composables/useNav.ts` (URL state and nav helper).
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/composables/usePlannerYear.ts`: today and the selected year, client-only. `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
@@ -50,12 +50,12 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 
 ## Model and decisions
 
-- **One list of categories.** Goal dimensions and planner categories are the same thing. `Category` has `id, name, color, order` plus `goal5y, target1y, targetTbd`. The first 8 categories by `order` form the 3x3 Goals grid. Categories are managed only in the Configuration tab.
+- **One list of categories.** Goal dimensions and planner categories are the same thing. `Category` has `id, name, color, order` plus `goal5y, target1y, targetTbd`. The first 8 categories by `order` form the 3x3 Goals grid. Categories are managed in Goals (list and detail edit mode); activities are managed in Planner.
 - **Activities are a separate level** under a category. **Habits** belong to a category, are measurable (frequency count per day/week/month plus optional `minutesPerOccurrence`) and may link to an activity.
 - **Insights compares like with like:** per category, the hours scheduled through the activities its habits link to, against the hours those habits ask for. A quiet second line shows everything scheduled in the category. An activity is never counted in two categories.
 - **Year:** the planner shows one ISO year, by default the current ISO year. It is set on mount, not persisted (a reload selects the current year again). Unassigned weeks use the active template everywhere (`effectiveTemplate`).
-- **Navigation order is Home, Goals, Planner, Visualization, Configuration** (Configuration is transitional; slice 3 removes it). Home is the default tab. Templates are still managed in the Planner's template switcher, not in Configuration.
-- **URL state.** Tab, selected item and edit mode live in the route query: `?tab=home|goals|planner|visualization|configuration&item=<id>&edit=1`. An unknown or missing tab shows Home. In code, `useNav()` gives `go(tab, { item, edit })` (pushes history) and `link(tab, { item, edit })` (a NuxtLink target, for Edit links to another screen). Nothing else is in the URL; the year and the Visualization Weekly or Monthly choice are view state.
+- **Navigation order is Home, Goals, Planner, Visualization** (four tabs; Configuration removed in slice 3). Home is the default tab. Templates are still managed in the Planner's template switcher, not in Configuration.
+- **URL state.** Tab, selected item and edit mode live in the route query: `?tab=home|goals|planner|visualization&item=<id>&edit=1`. An unknown or missing tab shows Home. In code, `useNav()` gives `go(tab, { item, edit })` (pushes history) and `link(tab, { item, edit })` (a NuxtLink target, for Edit links to another screen). Nothing else is in the URL; the year and the Visualization Weekly or Monthly choice are view state.
 - **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so Insights shows real bars).
 - **UI language is English.** User-entered content can be in any language.
 - **Style:** one font (IBM Plex Sans), calm blue palette, minimalist, light and dark themes. Details in `spec/frontend-design.md`. Do not reintroduce serif or mono fonts or the old terracotta accent.
@@ -78,13 +78,14 @@ The product is moving to Home · Goals · Planner · Visualization (Insights and
 ## Current state
 
 - Branch `feat/home-and-new-structure` (from `feat/harada-goals`) follows `spec/build-plan.md`, one slice per commit. Slice 0 (date foundation) is done: real today, ISO weeks (52 or 53), year switcher on the Planner year grid, effective template shared by Visualization and projections, week status removed, storage version 6.
-- Slice 2a (Planner activities: list, detail, edit, add and delete; activities leave Configuration) is done in one commit. Selection and edit mode are in the URL (`item`, `edit`). Recolouring a category keeps hand-picked activity colours (A6). Slice 2b (the 24x7 activity grid; the old week grid is retired) is done in its own commit, so slice 2 is complete except the FR-PLAN-17 edit-mode question. Next: slice 3 (Goals).
+- Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed) is done in one commit. Storage version unchanged (6). Browser run: 90 checks, no overflow, no console errors except the known hydration message. Reorder fixed in the store (`moveCategory`).
+- Slice 2a (Planner activities: list, detail, edit, add and delete; activities leave Configuration) is done in one commit. Selection and edit mode are in the URL (`item`, `edit`). Recolouring a category keeps hand-picked activity colours (A6). Slice 2b (the 24x7 activity grid; the old week grid is retired) is done in its own commit, so slice 2 is complete except the FR-PLAN-17 edit-mode question. Next: slice 4 (Home).
 - Slice 1 (shell, URL state, Visualization) is done in one commit: tabs Home (default), Goals, Planner, Visualization and a transitional Configuration; `VizVisualizationView` replaces Insights; the projection horizon moved from Configuration to Visualization. Storage version unchanged (6).
 - Branch `feat/harada-goals` is open as PR #7 against `main` (`https://github.com/jga-22/timely`) with the earlier work: Goals tab, merged categories, measurable habits, English seed, auto-growing text boxes, calm single-font redesign, navigation order. All earlier fixes (`fix/mobile-version`, `fix/planner`) are already in `main`.
 
 ## Open items and ideas
 
-- Move template management into Configuration (today it lives in the Planner's template switcher).
+- Template management lives in the Planner's template switcher; Configuration no longer exists, so decide whether it moves anywhere else.
 - Most seeded habits are not linked to activities yet; Economic and Social have no activities (Environment has Errands), so they show "No target yet". Add activities and link habits in the app or the seed.
 - Hydration: "Hydration completed but contains mismatches" appears in the production build whenever the saved state differs from the seed (slice 2a: a changed ambition sentence on Goals is enough; fresh loads are clean). The server renders the seed and the client restores storage before hydrating. A client-only wrapper is the fallback, but it changes server output; decide with the owner.
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).

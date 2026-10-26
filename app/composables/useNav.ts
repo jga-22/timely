@@ -1,7 +1,7 @@
 /**
  * Screen navigation kept in the route query (FR-UX-5, assumption A5):
  *   ?tab=planner&item=<id>&edit=1
- * tab   home | goals | planner | visualization | configuration. Missing or unknown falls back to home.
+ * tab   home | goals | planner | visualization. Missing or unknown (including the removed configuration) falls back to home.
  * item  id of the selected category, activity or habit. A screen ignores an id it does not know.
  * edit  "1" puts the selected item in edit mode.
  * Switching tab drops item and edit. Use `go` for a history entry (Back works) and `link` for NuxtLink.
@@ -11,9 +11,7 @@ export const TABS = [
   { id: 'home', label: 'Home', num: '01' },
   { id: 'goals', label: 'Goals', num: '02' },
   { id: 'planner', label: 'Planner', num: '03' },
-  { id: 'visualization', label: 'Visualization', num: '04' },
-  // Transitional: slice 3 removes it. It has no number.
-  { id: 'configuration', label: 'Configuration', num: '' }
+  { id: 'visualization', label: 'Visualization', num: '04' }
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']

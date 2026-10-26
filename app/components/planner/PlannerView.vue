@@ -512,7 +512,7 @@ function submitAdd() {
               <dd>{{ selectedActivity.shortCode }}</dd>
 
               <dt>Category</dt>
-              <dd><NuxtLink :to="link('goals')">{{ categoryName(selectedActivity.categoryId) }}</NuxtLink></dd>
+              <dd><NuxtLink :to="link('goals', { item: selectedActivity.categoryId })">{{ categoryName(selectedActivity.categoryId) }}</NuxtLink></dd>
 
               <dt>Colour</dt>
               <dd>{{ colourName(selectedActivity.color) }}</dd>
@@ -530,7 +530,7 @@ function submitAdd() {
                 </template>
                 <span v-else class="act-quiet">None linked yet.</span>
                 <span class="act-quiet">
-                  <NuxtLink :to="link('goals')">Link habits in Goals</NuxtLink>
+                  <NuxtLink :to="link('goals', { item: selectedActivity.categoryId })">Link habits in Goals</NuxtLink>
                 </span>
               </dd>
             </dl>

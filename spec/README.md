@@ -13,7 +13,7 @@ This folder holds the product and design specification for Timely. The code is t
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the v2 build (list below). | Compare before and after a UI change. Replace them as the v3 screens ship. |
 
-Screenshots in `screens/` (Goals and Planner from the v2 build; Home and Visualization from slice 1; Planner activities and Configuration from slice 2a):
+Screenshots in `screens/` (Goals from slice 3; Planner from the v2 build; Home and Visualization from slice 1):
 
 | File | Size | Notes |
 | --- | --- | --- |
@@ -23,8 +23,8 @@ Screenshots in `screens/` (Goals and Planner from the v2 build; Home and Visuali
 | `home-desktop-light.png` | 1280 px wide | Home placeholder, light (slice 1) |
 | `visualization-desktop-light.png` | 1280 px wide | Visualization, light (slice 1; replaces Insights) |
 | `visualization-mobile-light.png` | 400 px wide | Visualization, light (slice 1) |
-| `configuration-desktop-light.png` | 1280 px wide | Configuration, light: categories only (slice 2a; removed in slice 3) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: list, with the vision and map above |
+| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: a category in edit mode with long text grown (slice 3) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px: activities, activity grid, year (slice 2b) |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page (slice 2b) |
 

@@ -142,19 +142,24 @@ export const usePlannerStore = defineStore('planner', {
     setProjectionYears(years: number) {
       this.settings.projectionDefaults.years = years
     },
-    addCategory(name: string, color: string) {
+    /** Adds a category at the end of the list. Returns its id, or null when the name is blank */
+    addCategory(name: string, color: string): string | null {
       const trimmedName = name.trim()
 
       if (!trimmedName) {
-        return
+        return null
       }
 
+      const id = `category-${Date.now()}`
+
       this.categories.push({
-        id: `category-${Date.now()}`,
+        id,
         name: trimmedName,
         color,
         order: Math.max(0, ...this.categories.map(category => category.order)) + 1
       })
+
+      return id
     },
     updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
       const category = this.categories.find(item => item.id === categoryId)
@@ -188,7 +193,8 @@ export const usePlannerStore = defineStore('planner', {
       const current = ordered[index]!
       ordered[index] = ordered[targetIndex]!
       ordered[targetIndex] = current
-      this.categories = numberCategories(ordered)
+      // Renumber in the swapped order; sorting by the old order numbers would undo the swap
+      this.categories = ordered.map((category, position) => ({ ...category, order: position + 1 }))
     },
     /** Removes a category; its activities and habits must first move to another category */
     removeCategory(categoryId: string, targetCategoryId?: string): boolean {
@@ -306,19 +312,24 @@ export const usePlannerStore = defineStore('planner', {
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
       if (this.ambition) Object.assign(this.ambition, changes)
     },
-    addHabit(categoryId: string, name: string) {
+    /** Adds a habit to a category. Returns its id, or null when the name is blank or the category is unknown */
+    addHabit(categoryId: string, name: string): string | null {
       const trimmedName = name.trim()
 
       if (!trimmedName || !this.categories.some(category => category.id === categoryId)) {
-        return
+        return null
       }
 
+      const id = `habit-${Date.now()}`
+
       this.habits.push({
-        id: `habit-${Date.now()}`,
+        id,
         categoryId,
         name: trimmedName,
         frequency: { count: 1, period: 'week' }
       })
+
+      return id
     },
     updateHabit(habitId: string, changes: Partial<Pick<Habit, 'name' | 'minutesPerOccurrence'>>) {
       const habit = this.habits.find(item => item.id === habitId)

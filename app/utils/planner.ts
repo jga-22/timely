@@ -51,6 +51,9 @@ export const formatHour = (h: number): string => {
   return `${h - 12}PM`
 }
 
+/** "1 habit", "2 habits" */
+export const countLabel = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
+
 export const projectionInsight = (hours: number): string => {
   if (hours > 8000) return 'Mastery-level repetition.'
   if (hours > 4000) return 'Enough time to become highly proficient.'
@@ -162,9 +165,9 @@ const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO
 
 type HaradaHabitSeed = [string, number, HabitPeriod, string?, number?]
 
-/** Life categories around the ambition, in grid order: [id, name, colour, hint, goal5y, target1y, targetTbd, habits] */
-const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
-  ['physique', 'Physical', '#7a9471', 'Sport · nutrition · routine',
+/** Life categories around the ambition, in grid order: [id, name, colour, goal5y, target1y, targetTbd, habits] */
+const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
+  ['physique', 'Physical', '#7a9471',
     'Optimal fitness, stable energy, zero sleep debt.',
     'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
       ['Regular exercise (frequency and type to set)', 3, 'week', 'training', 60],
@@ -176,7 +179,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Daily hydration', 1, 'day'],
       ['Stretching and mobility', 3, 'week']
     ]],
-  ['spirituelle', 'Spiritual', '#6e5c7c', 'Meditation · faith / journal',
+  ['spirituelle', 'Spiritual', '#6e5c7c',
     'Inner clarity, calm in the face of professional pressure.',
     'To define — e.g. 10 minutes of daily meditation kept, weekly journaling kept up.', true, [
       ['Regular meditation', 1, 'day'],
@@ -188,7 +191,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Retreat or extended time once a year', 1, 'month'],
       ['Align actions with values', 1, 'week']
     ]],
-  ['relationnelle', 'Relational & emotional', '#c4767f', 'Family · managing emotions',
+  ['relationnelle', 'Relational & emotional', '#c4767f',
     'To be recognised by my family as a present, reliable father, husband, son and brother.',
     'Weekly ritual with my wife and a monthly one-on-one ritual with each child, kept at 90% over the year.', false, [
       ['Time dedicated to my wife (couple ritual)', 1, 'week', 'family', 90],
@@ -200,7 +203,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Recognise, express and regulate my emotions', 1, 'day'],
       ['Resolve tensions quickly, let nothing linger', 1, 'day']
     ]],
-  ['economique', 'Economic', '#c19a3e', 'Tracking · plan',
+  ['economique', 'Economic', '#c19a3e',
     'Financial independence, target net worth.',
     'To define — e.g. target savings rate reached, exact amount invested over the year.', true, [
       ['Monthly budget tracking', 1, 'month'],
@@ -212,7 +215,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Reduce spending not aligned with my values', 1, 'week'],
       ['Continuing education in personal finance', 1, 'month']
     ]],
-  ['cognitive', 'Cognitive', '#4a8683', 'AI · personal project',
+  ['cognitive', 'Cognitive', '#4a8683',
     'Stay at the leading edge of AI and enterprise architecture, able to lead a project of my own.',
     'AI / enterprise architecture certification obtained and a personal project launched — personal dev app or enterprise architecture app (to be decided).', false, [
       ['Active watch on AI / enterprise architecture', 3, 'week'],
@@ -224,7 +227,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Learn a new domain each year', 1, 'month'],
       ['Regularly challenge what I know', 1, 'month']
     ]],
-  ['sociale', 'Social', '#e09070', 'Community · helping others',
+  ['sociale', 'Social', '#e09070',
     'An active role in a professional or entrepreneurial community.',
     'To define — e.g. join an active community, start a mentoring relationship over the year.', true, [
       ['Active participation in one or more communities', 1, 'week'],
@@ -236,7 +239,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Maintain the existing network', 1, 'week'],
       ['New qualified connections each quarter', 1, 'month']
     ]],
-  ['professionnelle', 'Professional', '#3c4b63', 'Networking · leadership · CDO/CIO',
+  ['professionnelle', 'Professional', '#3c4b63',
     'Land a CDO or CIO role within five years.',
     'Take on an expanded role (e.g. Lead Enterprise Architect) covering IT and data, with 3 strategic initiatives delivered and visible to the executive committee.', false, [
       ['Targeted networking with IT / data leaders', 1, 'week'],
@@ -249,7 +252,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
       ['Publish professional articles to build my personal brand', 1, 'month'],
       ['Plan the week around professional priorities', 1, 'week', 'planning', 60]
     ]],
-  ['environnement', 'Environment', '#5c7248', 'Sustainability · pace of life',
+  ['environnement', 'Environment', '#5c7248',
     'A sustainable lifestyle, consistent with my values.',
     'To define — e.g. fixed Sunday ritual kept all year, footprint reduced in one identified area.', true, [
       ['Reduce my daily footprint', 1, 'day'],
@@ -263,16 +266,11 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, string, 
     ]]
 ]
 
-/** Short line under each seeded grid cell, keyed by category id */
-export const HARADA_HINTS: Record<string, string> = Object.fromEntries(
-  HARADA_CATEGORIES.map(([id, , , hint]) => [id, hint])
-)
-
 /** Seed Harada grid: one 5-year ambition, eight life categories and their daily/weekly/monthly habits */
 export const createHaradaSeed = (): Pick<PlannerState, 'ambition' | 'categories' | 'habits'> => {
   const habits: Habit[] = []
 
-  const categories: Category[] = HARADA_CATEGORIES.map(([id, name, color, , goal5y, target1y, targetTbd, items], index) => {
+  const categories: Category[] = HARADA_CATEGORIES.map(([id, name, color, goal5y, target1y, targetTbd, items], index) => {
     items.forEach(([habitName, count, period, activityId, minutesPerOccurrence], habitIndex) => {
       habits.push({
         id: `${id}-${habitIndex + 1}`,
