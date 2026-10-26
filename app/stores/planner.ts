@@ -10,7 +10,6 @@ import {
   getTemplateById,
   rangeConflicts,
   validateActivityFields,
-  yearlyActivityHours,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
@@ -24,19 +23,6 @@ export const usePlannerStore = defineStore('planner', {
   state: (): PlannerState => createInitialState(),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
-    /** Hours per activity over the horizon: the chosen year's scheduled hours times the horizon in years (PRD 17.11) */
-    yearlyProjectionHours(state) {
-      return (year: number) => {
-        const years = state.settings.projectionDefaults.years
-        const projected = new Map<string, number>()
-
-        for (const [activityId, hours] of yearlyActivityHours(state, year)) {
-          projected.set(activityId, hours * years)
-        }
-
-        return projected
-      }
-    }
   },
   actions: {
     hydrate(state: PlannerState | null) {

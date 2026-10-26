@@ -192,10 +192,6 @@ function submitAdd() {
   <div class="view harada-view" :data-selected="selected ? 'true' : 'false'">
     <header class="page-head">
       <h1 class="page-title">The best version of me</h1>
-      <p class="page-lede">
-        Why the plan exists: one five-year ambition and the eight life areas that serve it. Select an area to see its goals,
-        habits and planned time.
-      </p>
     </header>
 
     <div class="goals-top">
@@ -230,7 +226,6 @@ function submitAdd() {
       <section v-if="categories.length" class="section harada-map">
         <div class="section-head">
           <h2 class="section-title">Life areas</h2>
-          <p class="section-lede">Select an area to open it below. The map shows the first eight by order.</p>
         </div>
 
         <div class="harada-grid">
@@ -274,7 +269,6 @@ function submitAdd() {
       <div class="browse-list">
         <div class="section-head">
           <h2 class="section-title">Categories</h2>
-          <p class="section-lede">Select one to see its goals, habits and planned time.</p>
         </div>
         <ul class="goals-legend" aria-label="Legend">
           <li><span class="legend-swatch is-attention" aria-hidden="true" />Needs attention: under or over its time target</li>
@@ -300,10 +294,6 @@ function submitAdd() {
             </button>
           </li>
         </ul>
-
-        <p v-if="sortedCategories.length > MAP_SIZE" class="browse-note">
-          Only the first {{ MAP_SIZE }} categories appear on the Harada map. The others work everywhere else.
-        </p>
 
         <div class="add-category">
           <button v-if="!addOpen" ref="addTrigger" type="button" class="chip-add" @click="openAdd">+ Add category</button>
@@ -621,12 +611,6 @@ button.harada-cell:focus-visible {
 .cat-row[aria-current="true"] .cat-meta,
 .cat-row[aria-current="true"] .cat-flag {
   color: var(--ink-2);
-}
-
-.browse-note {
-  margin: var(--space-3) 0 0;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
 }
 
 .add-category {

@@ -314,10 +314,9 @@ function submitAdd() {
 
 <template>
   <div class="view" @click="colorPickerFor = null">
-    <!-- Page header: title and one hint line -->
+    <!-- Page header -->
     <header class="page-head">
-      <h1 class="page-title">Design your ideal week, hour by hour.</h1>
-      <p class="page-lede">Drag across hours to select a range, or tap a block to change it. Use the handles to resize, then choose an activity.</p>
+      <h1 class="page-title">Planner</h1>
     </header>
 
     <!-- Template switcher -->
@@ -413,7 +412,6 @@ function submitAdd() {
     <section class="section acts" aria-labelledby="activities-title">
       <div class="acts-head">
         <h2 id="activities-title" class="section-title">Activities</h2>
-        <p class="section-lede">Hours a week in {{ activeTemplate?.name ?? 'no template' }}</p>
       </div>
 
       <ul class="act-list">
@@ -623,7 +621,6 @@ function submitAdd() {
 
         <div class="year-body">
           <div class="year-paint-head">
-            <p class="section-lede">Choose a template, then click or drag across weeks to assign it.</p>
             <div class="year-controls">
               <YearNav />
             </div>

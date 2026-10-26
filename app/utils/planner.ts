@@ -54,14 +54,6 @@ export const formatHour = (h: number): string => {
 /** "1 habit", "2 habits" */
 export const countLabel = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
 
-export const projectionInsight = (hours: number): string => {
-  if (hours > 8000) return 'Mastery-level repetition.'
-  if (hours > 4000) return 'Enough time to become highly proficient.'
-  if (hours > 1000) return 'A meaningful long-term investment.'
-  if (hours > 500) return 'A habit with visible compounding.'
-  return 'Small, but it still adds up.'
-}
-
 export const slotCount = (granularityMinutes: 60 | 30) => (7 * 24 * 60) / granularityMinutes
 
 export const slotDurationHours = (granularityMinutes: 60 | 30) => granularityMinutes / 60
@@ -448,25 +440,6 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   }
 
   return categoryTotals
-}
-
-/** Scheduled hours per activity across the ISO weeks of a year, each week under its effective template (FR-DATE-2) */
-export const yearlyActivityHours = (state: PlannerState, year: number): Map<string, number> => {
-  const totals = new Map<string, number>()
-
-  for (const weekStart of isoWeekStarts(year)) {
-    const template = effectiveTemplate(state, weekStart)
-
-    if (!template) {
-      continue
-    }
-
-    for (const [activityId, hours] of aggregateTemplate(template, state.activities)) {
-      totals.set(activityId, (totals.get(activityId) ?? 0) + hours)
-    }
-  }
-
-  return totals
 }
 
 /** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */

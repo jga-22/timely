@@ -391,12 +391,6 @@ function confirmRemove() {
 }
 
 .detail-empty,
-.detail-lede {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-}
-
 .detail-flag {
   margin: 0;
   font-size: var(--fs-sm);

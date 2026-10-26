@@ -379,7 +379,7 @@ onBeforeUnmount(() => {
       <p class="wk-meta">{{ templateName }} · {{ plannedHours }} of 168 h planned</p>
     </div>
 
-    <p v-if="!hourly" class="wk-helper">This template uses 30-minute slots, which this grid does not edit. Choose an hourly template above.</p>
+    <p v-if="!hourly" class="wk-helper">This template has 30-minute slots, and this grid edits hourly templates only.</p>
 
     <template v-else>
       <div class="wk-scroll">
@@ -519,7 +519,6 @@ onBeforeUnmount(() => {
           <span class="wk-pop-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
           <span class="wk-pop-dur">{{ selection.end - selection.start }}h</span>
         </div>
-        <p class="wk-pop-hint">Choose an activity for these hours, or edit the range.</p>
         <div class="wk-pop-actions">
           <button type="button" class="btn btn-sm btn-primary" @click="pickFromBar">
             {{ selectionHasActivity ? 'Change…' : 'Apply…' }}
