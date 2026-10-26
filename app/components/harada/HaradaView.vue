@@ -38,14 +38,22 @@ const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value =
 const alignments = computed(() => categoryAlignments(planner.$state))
 
 // Quiet flag in the list: the habits ask for more time than their linked activities hold
+// Saved state is not known on the server, so the status-driven classes and text wait for mount: the first client render
+// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
+const mounted = ref(false)
+
 // Under or over the time target: the list row and the map cell get the attention border (FR-GOALS-23)
 const needsAttention = (categoryId: string) => {
+  if (!mounted.value) return false
+
   const status = alignments.value.get(categoryId)?.status
   return status === 'under' || status === 'over'
 }
 
 // Text beside the list row, so the state is not colour only
 const attentionLabel = (categoryId: string): string | null => {
+  if (!mounted.value) return null
+
   const row = alignments.value.get(categoryId)
   if (row?.status === 'under') return `Missing ${hoursLabel(-row.gapMinutes)}/wk`
   if (row?.status === 'over') return `${hoursLabel(row.gapMinutes)}/wk over`
@@ -117,6 +125,9 @@ function onWindowKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => window.addEventListener('keydown', onWindowKeydown))
+onMounted(() => {
+  mounted.value = true
+})
 onUnmounted(() => window.removeEventListener('keydown', onWindowKeydown))
 
 // Arrow keys move between map cells; Enter and Space (native buttons) select

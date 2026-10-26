@@ -34,6 +34,13 @@ const habitCount = computed(() => planner.habits.filter(habit => habit.categoryI
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
 // ── Needed against allocated time (FR-GOALS-16): hours a week, both bars on one scale
+// Saved state is not known on the server, so the status-driven classes and text wait for mount: the first client render
+// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
+const mounted = ref(false)
+onMounted(() => {
+  mounted.value = true
+})
+
 const alignments = computed(() => categoryAlignments(planner.$state))
 const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
 
@@ -182,7 +189,7 @@ function confirmRemove() {
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
       </section>
 
-      <section class="detail-block detail-goal">
+      <section v-if="mounted" class="detail-block detail-goal">
         <h4 class="detail-label">Hours a week</h4>
         <div class="compare" role="group" aria-label="Needed and allocated hours a week">
           <div class="compare-row">
