@@ -54,14 +54,6 @@ export const formatHour = (h: number): string => {
 /** "1 habit", "2 habits" */
 export const countLabel = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
 
-export const projectionInsight = (hours: number): string => {
-  if (hours > 8000) return 'Mastery-level repetition.'
-  if (hours > 4000) return 'Enough time to become highly proficient.'
-  if (hours > 1000) return 'A meaningful long-term investment.'
-  if (hours > 500) return 'A habit with visible compounding.'
-  return 'Small, but it still adds up.'
-}
-
 export const slotCount = (granularityMinutes: 60 | 30) => (7 * 24 * 60) / granularityMinutes
 
 export const slotDurationHours = (granularityMinutes: 60 | 30) => granularityMinutes / 60
@@ -158,7 +150,7 @@ const createSeedAppliedWeeks = (year: number): AppliedWeek[] => {
 }
 
 /** Bump when the persisted shape changes; while in development, a mismatch resets saves to the default seed */
-export const PLANNER_STATE_VERSION = 7
+export const PLANNER_STATE_VERSION = 8
 
 const HARADA_AMBITION_ID = 'ambition-harada'
 const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
@@ -170,7 +162,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean,
   ['physique', 'Physical', '#7a9471',
     'Optimal fitness, stable energy, zero sleep debt.',
     'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
-      ['Regular exercise (frequency and type to set)', 3, 'week', 'training', 60],
+      ['Regular exercise (frequency and type to set)', 6, 'week', 'training', 60],
       ['Structured eating, no improvised meals', 1, 'day'],
       ['Organised sleep and recovery', 1, 'day'],
       ['Tracking simple indicators (weight, fitness)', 1, 'week'],
@@ -250,7 +242,7 @@ const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean,
       ['Widen the scope: from EA to global IT/data governance', 1, 'month'],
       ['Showcase value created with quantified results', 1, 'month'],
       ['Publish professional articles to build my personal brand', 1, 'month'],
-      ['Plan the week around professional priorities', 1, 'week', 'planning', 60]
+      ['Plan the week around professional priorities', 1, 'week', 'planning', 120]
     ]],
   ['environnement', 'Environment', '#5c7248',
     'A sustainable lifestyle, consistent with my values.',
@@ -322,7 +314,13 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   const linksToCategory = (item: { categoryId?: string } | null) =>
     typeof item?.categoryId === 'string' && categoryIds.has(item.categoryId)
 
-  return activities.every(linksToCategory) && habits.every(linksToCategory)
+  // Secondary categories are optional; when present they must be known categories
+  const alsoLinks = (activity: Partial<Activity> | null) => {
+    const also = activity?.alsoCategoryIds
+    return also === undefined || (Array.isArray(also) && also.every(id => typeof id === 'string' && categoryIds.has(id)))
+  }
+
+  return activities.every(linksToCategory) && activities.every(alsoLinks) && habits.every(linksToCategory)
 }
 
 /** Seed for a year; the default is the ISO year of today. The store serialises this seed, so server and client share it */
@@ -343,7 +341,7 @@ export const createInitialState = (year: number = isoWeekOf(localDateKey()).year
     { id: 'family',    name: 'Family Time',     shortCode: 'FAM', categoryId: 'relationnelle',   color: '#c19a3e' },
     { id: 'learning',  name: 'Learning',        shortCode: 'LRN', categoryId: 'cognitive',       color: '#8a5a7a' },
     { id: 'projects',  name: 'Projects',        shortCode: 'PRJ', categoryId: 'cognitive',       color: '#a04e3e' },
-    { id: 'reading',   name: 'Reading',         shortCode: 'RDG', categoryId: 'cognitive',       color: '#6e5c7c' },
+    { id: 'reading',   name: 'Reading',         shortCode: 'RDG', categoryId: 'cognitive',       alsoCategoryIds: ['spirituelle'], color: '#6e5c7c' },
     { id: 'planning',  name: 'Weekly Planning', shortCode: 'PLN', categoryId: 'professionnelle', color: '#c19a3e' },
     { id: 'errands',   name: 'Errands',         shortCode: 'ERR', categoryId: 'environnement',   color: '#d97757' },
     { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
@@ -444,25 +442,6 @@ export const aggregateTemplateByCategory = (template: WeekTemplate, state: Plann
   return categoryTotals
 }
 
-/** Scheduled hours per activity across the ISO weeks of a year, each week under its effective template (FR-DATE-2) */
-export const yearlyActivityHours = (state: PlannerState, year: number): Map<string, number> => {
-  const totals = new Map<string, number>()
-
-  for (const weekStart of isoWeekStarts(year)) {
-    const template = effectiveTemplate(state, weekStart)
-
-    if (!template) {
-      continue
-    }
-
-    for (const [activityId, hours] of aggregateTemplate(template, state.activities)) {
-      totals.set(activityId, (totals.get(activityId) ?? 0) + hours)
-    }
-  }
-
-  return totals
-}
-
 /** Habit occurrences normalised to a weekly rate (a year is approximated as 52 weeks) */
 export const habitWeeklyOccurrences = (habit: Habit): number => {
   const { count, period } = habit.frequency
@@ -484,7 +463,29 @@ export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityI
   return (aggregateTemplate(template, state.activities).get(activityId) ?? 0) * 60
 }
 
-/** Scheduled minutes per week for one category, from the active template */
+/** Secondary links kept only when they name a known category other than the primary one, each once */
+export const cleanAlsoCategoryIds = (categories: Category[], primaryId: string, ids: string[]): string[] =>
+  [...new Set(ids)].filter(id => id !== primaryId && categories.some(category => category.id === id))
+
+/**
+ * Activities whose hours count toward a category's comparison (FR-GOALS-16), each once: the activities linked from
+ * the category's habits, and the activities that list the category as secondary. Primary membership alone does not count.
+ */
+export const comparedActivityIds = (state: PlannerState, categoryId: string): Set<string> => {
+  const ids = new Set<string>()
+
+  for (const habit of state.habits) {
+    if (habit.categoryId === categoryId && habit.activityId) ids.add(habit.activityId)
+  }
+
+  for (const activity of state.activities) {
+    if (activity.alsoCategoryIds?.includes(categoryId)) ids.add(activity.id)
+  }
+
+  return ids
+}
+
+/** Scheduled minutes per week for one category, from the active template: the hours of its comparedActivityIds */
 export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
   const template = getActiveTemplate(state)
 
@@ -492,51 +493,78 @@ export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryI
     return 0
   }
 
-  return (aggregateTemplateByCategory(template, state).get(categoryId) ?? 0) * 60
+  const hours = aggregateTemplate(template, state.activities)
+  let total = 0
+
+  for (const activityId of comparedActivityIds(state, categoryId)) {
+    total += hours.get(activityId) ?? 0
+  }
+
+  return total * 60
 }
+
+/** Slack before a category counts as under or over its time target: the larger of 30 minutes and 10% of the need */
+const ALIGNMENT_TOLERANCE_MINUTES = 30
+const ALIGNMENT_TOLERANCE_SHARE = 0.1
+
+/** under: allocated time is short of the need; over: it is beyond the need; none: the habits give no time to compare */
+export type AlignmentStatus = 'under' | 'over' | 'ok' | 'none'
 
 export interface CategoryAlignment {
-  /** Scheduled minutes per week of the activities linked from this category's habits */
-  habitMinutesPerWeek: number
-  /** Minutes per week the habits ask for */
-  targetMinutesPerWeek: number
-  /** Scheduled minutes per week across every activity in the category */
-  totalMinutesPerWeek: number
-  unlinkedHabits: number
-  coverage: number | null
+  /** Minutes a week the habits of the category ask for (habits with a time per occurrence) */
+  neededMinutes: number
+  /** Minutes a week scheduled in the active template through the activities of the category */
+  allocatedMinutes: number
+  /** Allocated minus needed: negative when time is missing */
+  gapMinutes: number
+  status: AlignmentStatus
 }
 
-/** Each activity counts once: the first category by order whose habits link it keeps it */
+export const alignmentStatus = (neededMinutes: number, allocatedMinutes: number): AlignmentStatus => {
+  if (neededMinutes <= 0) return 'none'
+
+  const tolerance = Math.max(ALIGNMENT_TOLERANCE_MINUTES, neededMinutes * ALIGNMENT_TOLERANCE_SHARE)
+  const gap = allocatedMinutes - neededMinutes
+
+  if (gap < -tolerance) return 'under'
+  if (gap > tolerance) return 'over'
+  return 'ok'
+}
+
+/** Needed against allocated time per category, in minutes a week (FR-GOALS-16). Every category has an entry */
 export const categoryAlignments = (state: PlannerState): Map<string, CategoryAlignment> => {
-  const claimed = new Set<string>()
   const alignments = new Map<string, CategoryAlignment>()
 
-  for (const category of [...state.categories].sort((a, b) => a.order - b.order)) {
-    const habits = state.habits.filter(habit => habit.categoryId === category.id)
-    const activityIds = [...new Set(habits.flatMap(habit => (habit.activityId ? [habit.activityId] : [])))]
-      .filter(activityId => !claimed.has(activityId))
-    activityIds.forEach(activityId => claimed.add(activityId))
-
-    const habitMinutesPerWeek = activityIds.reduce(
-      (total, activityId) => total + scheduledWeeklyMinutesForActivity(state, activityId),
-      0
-    )
-    const targetMinutesPerWeek = habits.reduce(
-      (total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0),
-      0
-    )
+  for (const category of state.categories) {
+    const neededMinutes = state.habits
+      .filter(habit => habit.categoryId === category.id)
+      .reduce((total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0), 0)
+    const allocatedMinutes = scheduledWeeklyMinutesForCategory(state, category.id)
 
     alignments.set(category.id, {
-      habitMinutesPerWeek,
-      targetMinutesPerWeek,
-      totalMinutesPerWeek: scheduledWeeklyMinutesForCategory(state, category.id),
-      unlinkedHabits: habits.filter(habit => !habit.activityId).length,
-      coverage: targetMinutesPerWeek > 0 ? habitMinutesPerWeek / targetMinutesPerWeek : null
+      neededMinutes,
+      allocatedMinutes,
+      gapMinutes: allocatedMinutes - neededMinutes,
+      status: alignmentStatus(neededMinutes, allocatedMinutes)
     })
   }
 
   return alignments
 }
+
+/** Hours for display: one decimal at most, no trailing zero (2.5 h, 3 h) */
+export const hoursLabel = (minutes: number): string => `${Math.round((minutes / 60) * 10) / 10} h`
+
+/** One habit's own comparison: its need and, when it is linked, the minutes a week of its activity (null when not linked) */
+export interface HabitAlignment {
+  neededMinutes: number
+  allocatedMinutes: number | null
+}
+
+export const habitAlignment = (state: PlannerState, habit: Habit): HabitAlignment => ({
+  neededMinutes: habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0,
+  allocatedMinutes: habit.activityId ? scheduledWeeklyMinutesForActivity(state, habit.activityId) : null
+})
 
 /* ── Activity grid (FR-PLAN-17 to 19): hourly cells of one template ── */
 

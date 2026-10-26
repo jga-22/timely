@@ -7,9 +7,9 @@ Shared context for any Claude Code session working on this repo. Read it first, 
 Timely is a local-first planning app. It combines two ideas:
 
 - **The why (goals):** a Harada grid. One 5-year ambition, 8 life areas (categories), each with a 5-year goal, a 1-year target and measurable daily habits.
-- **The time (planner):** a weekly template of hour slots, applied across the 52 or 53 weeks of the year, with Home for today, this week and this month, and Visualization for the year.
+- **The time (planner):** a weekly template of hour slots, applied across the 52 or 53 weeks of the year. Home shows today; Insights charts the planned hours of one year or several.
 
-The link between them is the product: a habit points at an activity, and Visualization and Goals compare the time scheduled for those activities with the time the habits ask for.
+The link between them is the product: a habit points at an activity, Goals compares the time the habits ask for with the time scheduled for their categories, and Insights shows where the planned hours go.
 
 The owner is a solo developer. The app is still in dev mode: no production users, no backward compatibility needed.
 
@@ -29,10 +29,11 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 
 Four screens, one page component that switches on the `tab` query:
 
-- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Day, Week and Month for the period selector; activity rows, then a timeline of the same hours (no totals, no category bar). Read-only except the period selector and the journal card (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`).
+- **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Today only. Title and date, the hour timeline (24 segments, axis labels 9h, 12h, 18h, 22h), today's activities with Edit links, then the journal card (`app/components/home/JournalCard.vue`, one note per day).
 - **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, category list, the Harada map from 1100px only), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows).
 - **Planner** (`app/components/planner/`): `PlannerView.vue` (template bar, the week grid, the Activities list with detail and the add form, the year grid), `ActivityGrid.vue` (the week grid: range select, action bar, activity menu, edit handles, undo; client only).
-- **Visualization** (`app/components/viz/VisualizationView.vue`): the year recap (two headline numbers and the category bar), goals vs. planned, then key insights (horizon, weekly and monthly chart).
+- **Edit control:** `app/components/EditButton.vue` is the only pencil. Habit rows edit in place (`HabitList.vue`). Template edit is the panel under the template bar in Planner.
+- **Insights** (`app/components/insights/InsightsView.vue`, pure calculations in `app/utils/insights.ts`): one planned-hours bar chart stacked by category, granularity Year, Quarter, Month or Week, range one year or several (the shared year plus the projection horizon), then the categories in hours or weeks with their share of the total. Read-only.
 
 Shell and shared code:
 
@@ -41,7 +42,7 @@ Shell and shared code:
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea. `app/components/YearNav.vue`: shared year switcher.
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/stores/planner.ts`: Pinia store and actions.
 - `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
-- `app/utils/palette.ts` and `app/composables/usePlannerFill.ts`: the one planned-fill rule (3:1 on the surface), used by the year grid, week grid, Home and Visualization. Colour semantics: `spec/frontend-design.md` section 5.
+- `app/utils/palette.ts` and `app/composables/usePlannerFill.ts`: the one planned-fill rule (3:1 on the surface), used by the year grid, week grid, Home and Insights. Colour semantics: `spec/frontend-design.md` section 5.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
 - `spec/`: specifications (below). `design/` is an old gitignored design export with the previous look; do not use it.
 
@@ -57,12 +58,13 @@ Shell and shared code:
 
 - **One list of categories.** Goal dimensions and planner categories are the same thing. `Category` has `id, name, color, order` plus `goal5y, target1y, targetTbd`. The first 8 categories by `order` form the 3x3 Goals grid. Categories are managed in Goals (list and detail edit mode); activities are managed in Planner.
 - **Activities are a separate level** under a category. **Habits** belong to a category, are measurable (frequency count per day/week/month plus optional `minutesPerOccurrence`) and may link to an activity.
-- **Insights compares like with like:** per category, the hours scheduled through the activities its habits link to, against the hours those habits ask for. A quiet second line shows everything scheduled in the category. An activity is never counted in two categories. (The Insights tab is now Visualization and Goals.)
+- **Goals comparison (FR-GOALS-16):** per category, needed = the time the habits ask for (habits with minutes per occurrence). Allocated = scheduled hours a week in the active template of the activities linked from the category's habits and the activities that list it as secondary (each once). Primary membership alone does not count. Status `under`, `over`, `ok` (within the larger of 30 min and 10%) or `none` (no time target). Per habit: the linked activity's hours against the need, or Not linked. Under and over get the `--attention` outline on the list row and map cell.
+- **Activities have one primary category and optional secondary ones.** `categoryId` is the primary category: it gives the colour and the listing, and Insights counts each activity once there, so its shares add up to 100. `alsoCategoryIds?: string[]` lists other categories whose comparison also counts the hours (never the primary one; the Planner form offers them as "Also counts toward").
 - **Editing rules (PRD 11.2, 11.6):** inline edit on the owning screen, one item in edit mode per screen. The week grid is the original range-select grid (FR-PLAN-23): drag or tap to select hours, then apply, edit or clear them from its action bar; it is always editable for an hourly template. Activities are edited inline in the Activities list (`edit=1`).
 - **Year:** the planner shows one ISO year, by default the current ISO year. It is set on mount, not persisted (a reload selects the current year again). Unassigned weeks use the active template everywhere (`effectiveTemplate`).
-- **Navigation order is Home, Goals, Planner, Visualization.** Home is the default tab. Templates are managed in the Planner's template switcher.
-- **URL state.** `?tab=home|goals|planner|visualization&item=<id>&edit=1`, plus `add=1&category=<id>` to open the Planner's add-activity form with a category preselected (from Goals, FR-GOALS-20). An unknown or missing tab shows Home; an unknown category falls back to the first. In code, `useNav()` gives `go(tab, target)` (pushes history), `link(tab, target)` (a NuxtLink target) and `setSelection(target)`. Nothing else is in the URL: the Home period is session state (Nuxt `useState`), the year and the Visualization view settings are in memory.
-- **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`, currently 7). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so the charts show real bars).
+- **Navigation order is Home, Goals, Planner, Insights.** Home is the default tab. Templates are managed in the Planner's template switcher.
+- **URL state.** `?tab=home|goals|planner|insights&item=<id>&edit=1`, plus `add=1&category=<id>` to open the Planner's add-activity form with a category preselected (from Goals, FR-GOALS-20). An unknown or missing tab shows Home; an unknown category falls back to the first. In code, `useNav()` gives `go(tab, target)` (pushes history), `link(tab, target)` (a NuxtLink target) and `setSelection(target)`. Nothing else is in the URL: the Home period is session state (Nuxt `useState`), the year and the Insights settings are in memory. An old `?tab=visualization` falls back to Home.
+- **Storage has no migrations.** The saved state carries `version` (`PLANNER_STATE_VERSION`, currently 8; version 8 added `alsoCategoryIds`). A version mismatch or an invalid or corrupt state is discarded and replaced by the seeded default. Bump the version whenever the stored shape changes. Keep the seed in `app/utils/planner.ts` a good test dataset (several categories with linked habits so the charts show real bars).
 - **UI language is English.** User-entered content can be in any language.
 - **Style:** one font (IBM Plex Sans), calm blue palette, minimalist, light and dark themes. Details in `spec/frontend-design.md`. Do not reintroduce serif or mono fonts or the old terracotta accent.
 
@@ -82,9 +84,10 @@ Shell and shared code:
 
 ## Current state
 
-- Branch `feat/ux-improvements`, cut from `fix/restore-original-week-grid`. PRs #7 and #8 are merged into `main`; PR #9 (`fix/restore-original-week-grid`) is open and unmerged. Nothing pushed from this branch.
+- Branch `feat/ux-polish`, stacked on `feat/ux-improvements` (PR #10, open, unmerged). PRs #7 to #9 are merged into `main`. Nothing pushed.
 - The Planner week is the original range-select grid again (FR-PLAN-23, 24). It replaces the week-first brush palette of slice 7; FR-PLAN-17 to 20 and 22 are Superseded. Storage version is unchanged (7).
-- UX improvements (one commit per item): Home order and timeline, Goals list-first with Close and Escape and the matrix from 1100px, one planned-time palette, Visualization recap first. Specs updated (PRD 23.1, design spec section 5). Storage unchanged (7).
+- Batch 3 (one commit per item, `feat/ux-polish`): one pencil Edit control; habit rows edit in place; template edit panel; unlink of secondary categories and habit links; Insights available-time line and one unit selector; docs and screenshots regenerated from a clean seed. Resolved: the FR-UX-2 and FR-GOALS-18 partials, the stale outline after reload (mount gating), the Sleep question (owner: allocated rule).
+- UX polish batch (one commit per item): Home is Today only; Goals needed-vs-allocated comparison, attention outlines and legend; multi-category activities (storage 8); Visualization renamed Insights; copy sweep; docs and clean-seed screenshots.
 - A local `main` can lag `origin/main` (it did at beb6f93, before PR #7). Branch from `origin/main`.
 - Slice 6 (journal experiment on Home, FR-HOME-11 to 13) is done as an experiment. Slice 7 is this week-grid fix. The remaining and later ideas are at the end of `spec/build-plan.md`.
 
@@ -93,7 +96,6 @@ Shell and shared code:
 - **Hydration warning:** "Hydration completed but contains mismatches" appears when the saved state differs from the seed (for example after a rename on Goals). Fresh loads are clean. The server renders the seed and the client restores storage before hydrating. A client-only wrapper is the fallback, but it changes server output; decide with the owner.
 - **Unused `timeGranularity` field** in `settings` (type and seed). Nothing reads it. Removing it changes the stored shape, so it needs a version bump that resets saved local data. Owner to decide.
 - **Possibly unused packages:** `@mdi/font` (loaded through the Vuetify icon config; no icon is rendered by Vuetify), `vuetify` (only `VApp` and `useTheme`), `vue-router` (Nuxt provides it; not imported directly). Not removed; ask first.
-- **Template Edit button** (FR-UX-2 Partial): templates are renamed by double-click, recoloured from the chip dot and deleted inline. Habit rows have no per-row Edit (FR-GOALS-18 Partial).
 - Template management lives in the Planner's template switcher; Configuration no longer exists, so decide whether it moves anywhere else.
 - Week grid keyboard path: the original grid had no keyboard support. The arrow, Shift-range, Enter and Escape path is an addition to keep FR-PLAN-19 operable. Confirm with the owner.
 - Most seeded habits are not linked to activities yet; Economic and Social have no activities (Environment has Errands), so they show "No target yet". Add activities and link habits in the app or the seed.

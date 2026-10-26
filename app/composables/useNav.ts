@@ -1,7 +1,7 @@
 /**
  * Screen navigation kept in the route query (FR-UX-5, assumption A5):
  *   ?tab=planner&item=<id>&edit=1
- * tab   home | goals | planner | visualization. Missing or unknown falls back to home.
+ * tab   home | goals | planner | insights. Missing or unknown falls back to home (an old ?tab=visualization too).
  * item  id of the selected category, activity or habit. A screen ignores an id it does not know.
  * edit  "1" puts the selected item in edit mode.
  * add   "1" opens the Planner's new-activity form; category preselects its category (FR-GOALS-20). An unknown category falls back to the first.
@@ -12,7 +12,7 @@ export const TABS = [
   { id: 'home', label: 'Home', num: '01' },
   { id: 'goals', label: 'Goals', num: '02' },
   { id: 'planner', label: 'Planner', num: '03' },
-  { id: 'visualization', label: 'Visualization', num: '04' }
+  { id: 'insights', label: 'Insights', num: '04' }
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']

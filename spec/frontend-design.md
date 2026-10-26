@@ -11,7 +11,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | The week grid is the original range-select grid (`ActivityGrid.vue`, section 4.12): a 52 px hour gutter, seven day columns, 28 px hour rows and a frame of at least 540 px that scrolls sideways inside `.wk-scroll` on phones (the page does not). The Activities list (section 4.17) is a row of chips under the grid. The year grid is full width (13 week columns, 32 px cells, a quarter label per row) and collapsible. Measured in the 2026-10-26 run (section 11). |
 | Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
-| Visualization | [visualization-desktop-light.png](screens/visualization-desktop-light.png) | [visualization-mobile-light.png](screens/visualization-mobile-light.png) |
+| Insights | [insights-desktop-light.png](screens/insights-desktop-light.png) | [insights-mobile-light.png](screens/insights-mobile-light.png) |
 
 ---
 
@@ -158,7 +158,7 @@ Desktop (above 768px):
 
 - `.topbar`: `position: sticky; top: 0; z-index: 10; height: 64px; padding: 0 40px; gap: 32px; background: var(--bg); border-bottom: 1px solid var(--rule-2)`. Measured: 64px at 1280.
 - `.brand`: "timely", lowercase, `--fs-lg` 600, `-0.01em`, `--ink`.
-- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Planner, Visualization (four tabs, numbered 01 to 04; Configuration removed in slice 3).
+- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Planner, Insights (four tabs, numbered 01 to 04; Configuration removed in slice 3).
 - `.tab`: 15px 500, `--ink-3`; hover and selected `--ink`. Height 100% of the bar. Each tab carries `.tab-num` (`01` to `04`, 12px 400, tabular, `aria-hidden`).
 - Active indicator: `.tab::after` is a 2px bar in `--accent`, `left:0; right:0; bottom:-1px`, scaled from `scaleX(0)` to `scaleX(1)` over 0.18s on `[aria-selected="true"]`.
 - `.theme-toggle`: 36x36, radius 6, icon 18px, `--ink-3`; hover `--bg-3` and `--ink`. It is the last flex item, so it sits at the right edge.
@@ -192,7 +192,7 @@ The side gutter is 16px at 400px, which meets the minimum.
 | --- | --- | --- |
 | 1280px | `main.css` | `.view` padding |
 | 1024px | `main.css` | `.view` padding |
-| 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Visualization defaults to monthly chart (JS, `window.innerWidth < 768`) |
+| 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Insights defaults to monthly chart (JS, `window.innerWidth < 768`) |
 | 1100px | `HaradaView.vue` (scoped) | The Harada matrix is shown from here up and hidden (`display: none`) below; the category list is the primary view at every size |
 | 480px | `main.css` | Template delete shows only the glyph; Home: period selector full width, Day rows put the time on its own line |
 | `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
@@ -208,7 +208,7 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | Goals | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
 | Planner | The week grid (`ActivityGrid.vue`, section 4.12) has a 52px hour column, seven day columns and 28px hour rows, always editable for an hourly template. Its frame is at least 540px and scrolls sideways inside `.wk-scroll` on phones. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |
-| Visualization | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
+| Insights | Default monthly chart (about 500px wide) scrolls horizontally inside `.chart-scroll`. Metrics stack in one column. |
 | Home | The period selector is full width. Day rows put the time range on its own line above the name; Edit stays at the row end. Week and Month rows keep name, hours and share on one line. Measured at 400px: no page overflow in any period, light or dark. |
 
 Rule: only tables, the year grid and charts may be wider than the viewport, and each is in its own `overflow-x: auto` container. Everything else must wrap or stack.
@@ -236,7 +236,7 @@ Class names below are the ones in `main.css` unless a file is given. Components 
 - Native `<details>`. Summary is inline flex, 13px 500, `--ink-2`, padding 4px 0, no native marker. A 6px chevron (1.5px border, rotated -45deg; rotated 45deg when open) sits before the label.
 - States: default `--ink-2`; hover `--ink`; open chevron rotates; focus uses the global focus ring.
 - Body: `.disclosure-body` top padding 16px.
-- Used for "Week by week" (open by default) and "Year by category" (closed) on Visualization.
+- Used for "Week by week" (open by default) and "Year by category" (closed) on Insights.
 - Habit "Details" is not a disclosure; it is a text toggle button (4.11).
 
 ### 4.4 Buttons
@@ -259,7 +259,7 @@ Rules: one primary action per block. Destructive actions are text-coloured, neve
 
 ### 4.5 Chips (`.chip`, `.chip-add`)
 
-- `.chip`: 32px high (28px in the Visualization focus strip), padding 0 12px, radius 6px, 1px transparent border, `--bg-3` background, `--ink-2` 13px text, max width 220px with ellipsis.
+- `.chip`: 32px high (28px in the Insights focus strip), padding 0 12px, radius 6px, 1px transparent border, `--bg-3` background, `--ink-2` 13px text, max width 220px with ellipsis.
 - States: default; hover `--bg-4` background and `--ink`; selected via `data-active="true"`: `--accent-soft` background, 1px `--accent` border, `--ink`.
 - Inside a chip: `.dot` (colour, with a `--control-border` ring so dark colours stay visible), name, and `.pill-count` (12px `--ink-2`, tabular).
 - `.chip-add`: accent-coloured text link, 13px 500, underline on hover. Used for "+ New template".
@@ -325,7 +325,7 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Ord
 - Head: `h3.detail-name` (dot and name, 18px 600) and Edit (`.btn-sm.btn-outline`, `aria-label` "Edit {name}") or Done (`.btn-primary`). Done returns focus to Edit. Escape closes a removal confirmation first, otherwise leaves edit mode. Close (`.btn-sm`, "Close" on desktop, "Back to categories" on phones) clears the selection.
 - View mode:
   - "5-year goal" and "1-year target" (`.detail-text`, "Not written yet." in ink-3). The "To define" flag (warn) sits above the target text when the target is flagged.
-  - "Goals vs. planned" (`.detail-goal`): a caption "Hours a week in {template}, through this category's habits.", the track (`.goal-track`, `.goal-fill`, `.goal-target` tick) drawn on the largest value across all categories (the Visualization scale), figures in `.goal-figures` ("X h of Y h a week", or "X h a week scheduled" without a target), the quiet total ("Z h scheduled in total") and flags ("No target yet", "No time planned", "N habits not linked to an activity"). The same computation as Visualization (`categoryAlignments`).
+  - Superseded by section 12, formerly "Goals vs. planned" (`.detail-goal`): a caption "Hours a week in {template}, through this category's habits.", the track (`.goal-track`, `.goal-fill`, `.goal-target` tick) drawn on the largest value across all categories (the Insights scale), figures in `.goal-figures` ("X h of Y h a week", or "X h a week scheduled" without a target), the quiet total ("Z h scheduled in total") and flags ("No target yet", "No time planned", "N habits not linked to an activity"). The same computation as Insights (`categoryAlignments`).
   - "Habits": read-only rows (`.habit-row`): name, "N a week, M min", then "Linked to {activity}" (a link to the activity in Planner) with the activity's category in brackets when it differs from the habit's own, or "Not linked to an activity" in warn (FR-GOALS-22). Empty: "No daily habits yet for this category."
   - "Activities": rows with name, short code and hours a week in the active template, and an "Edit" link to the activity in Planner with edit mode (FR-UX-4). Empty: "No activities in this category yet. Add one in Planner."
 - Edit mode (edits apply at once, FR-UX-6):
@@ -337,7 +337,9 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Ord
   - Move up and Move down (`.btn-sm`, disabled at the ends); Remove category (`.btn-danger`) opens an inline confirmation (`.inline-confirm`) that names the impact: "Its N activities and M habits must move to another category before X is removed." with a select of the other categories and "Move and remove"; with no content, "Remove X? It has no activities or habits." Without another category: "Add another category first, then remove X." Removal selects nothing afterwards.
 - Shared classes (`main.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
 
-### 4.11 Visualization (`app/components/viz/VisualizationView.vue`)
+### 4.11 Insights (`app/components/insights/InsightsView.vue`)
+
+Superseded in part by section 12. This section describes the former Visualization screen: the goals-vs-planned block and the key-insights text are removed, and the charts are one planned-hours chart with granularity and range.
 
 Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
@@ -464,7 +466,9 @@ Slice 7 (FR-PLAN-22). The palette is the brush. Section title "Activities" (sect
 - Add: "+ Add activity" (`.chip-add`) reveals `.pal-add`: name, short code, category, colour, primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Opening from Goals (`add=1&category=`) opens it with that category preselected (FR-GOALS-20).
 - Empty list: "No activities yet. Add one to plan when it happens." (`.pal-empty`).
 
-### 4.18 Journal (`app/components/home/JournalCard.vue`; key message in `app/utils/journal.ts`)
+### 4.18 Journal (`app/components/home/JournalCard.vue`)
+
+Superseded in part by section 12: no key message, no readings, no experiment label.
 
 Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every period. It is marked as an experiment in the UI and may be removed after the test.
 
@@ -478,7 +482,7 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 
 ## 5. Colour handling: one palette for planned time
 
-One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Visualization bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.
+One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Insights bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.
 
 ### 5.1 Semantic tokens (planned time)
 
@@ -486,11 +490,11 @@ Defined in `main.css` (`--cell-empty`, `--cell-line`) and computed in `app/utils
 
 | Semantic state | Token or rule | Light | Dark | Use | Contrast (light / dark) |
 | --- | --- | --- | --- | --- | --- |
-| Empty (unplanned hour, empty week, empty bar) | `--cell-empty` | `#ffffff` | `#0f1624` | Home timeline, year cells, week grid background, Visualization empty bars | Equals the page surface |
+| Empty (unplanned hour, empty week, empty bar) | `--cell-empty` | `#ffffff` | `#0f1624` | Home timeline, year cells, week grid background, Insights empty bars | Equals the page surface |
 | Empty outline | `--cell-line` | `#7d879b` | `#67738f` | 1px inset hairline around every empty cell, unplanned segment and empty bar | 3.61 / 3.81 on `--cell-empty` (non-text, 3:1 met) |
-| Planned | `fillFor(colour, dark)` (served as `--c`) | the colour as given when it reaches 3:1; otherwise shaded toward black | as given, or lightened toward white | Planned hour, week cell, Home segment, Visualization segment, week block, template paint dot | At least 3.02 light (cream shaded to `#a19375`) and 3.00 dark (dusk); see 5.2 |
+| Planned | `fillFor(colour, dark)` (served as `--c`) | the colour as given when it reaches 3:1; otherwise shaded toward black | as given, or lightened toward white | Planned hour, week cell, Home segment, Insights segment, week block, template paint dot | At least 3.02 light (cream shaded to `#a19375`) and 3.00 dark (dusk); see 5.2 |
 | Text on a planned fill (`--c-ink`) | `inkOn(fill)`: white or `#0f1624`, whichever contrasts more | `#ffffff` or `#0f1624` | same rule | Year cell numbers, week block names and times | At least 4.33 (teal, both themes); all others 5.4 or more |
-| Current | `--accent` | `#1b4b8f` | `#86aee8` | Year cell: 2px outline outside the cell, bold number. Visualization: 3px marker above the current bar. Home: "Now" tag | 8.57 / 7.96 on the surface |
+| Current | `--accent` | `#1b4b8f` | `#86aee8` | Year cell: 2px outline outside the cell, bold number. Insights: 3px marker above the current bar. Home: "Now" tag | 8.57 / 7.96 on the surface |
 | Selected | `--accent` range (week grid) and `--bg-3` hover (year cells) | range: `--accent` at 16% with a 1px accent frame; hover: `#eef3fa` | range: `--accent` at 16%; hover: `#1a2539` | Week grid drag range and action bar; year cell hover | Accent 8.57 / 7.96 on the surface |
 
 The year grid has no selected week (it has hover, and the readout under it). Choosing a week is a paint action, so "selected" maps to the hover state there.
@@ -524,7 +528,7 @@ Text on a planned fill: the lowest contrast is teal at 4.33:1 (both themes), jus
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Pass for planned fills and empty-cell outlines (section 5). | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Visualization, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Insights, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
@@ -644,3 +648,22 @@ These are facts about the code as it is today. They are not requirements for new
 - Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.
 - Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `screens/planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`.
 - Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `main.css` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
+
+## 12. UX polish batch (feat/ux-polish)
+
+- **Attention token.** `--attention` is the outline of a category under or over its time target: `#a33a3a` on light and `#ee9a9a` on dark (6.9:1 and 9:1 on the surfaces). It is a 2px outline set inside the box (the grid frame clips outside outlines). The legend swatch uses the same token, plus a neutral 1px swatch for on track or no target.
+- **Comparison bars.** Needed and Allocated share one scale in the category detail; Needed is `--ink-4`, Allocated `--accent`. The verdict colours: Missing `--warn`, over `--accent`, On track `--ok`, No time target `--ink-3`. The verdict is text, so colour is never the only signal.
+- **Hour timeline.** 24 colour-only segments under the Today title, 10px tall. Axis labels 9h, 12h, 18h and 22h sit at their hour on a 24-hour scale, 12px, with a 4px tick above each. Labels are HTML, not SVG, so they keep the 12px minimum.
+- **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The categories list uses a 6px share bar under the name row. The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
+- **Copy rules.** No intro paragraphs, subtitles or instructional sentences under titles, section titles or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints can live in `title` tooltips or `aria-label`s, not in visible text.
+- **Removed.** `.page-lede`, `.section-lede`, `.detail-lede`, `.browse-note`, `.wk-pop-hint`, the Visualization classes (`.viz-*`, `.metric*`, `.goal-*`) and the journal experiment classes.
+
+### 12.1 Edit control (batch 3)
+
+- `app/components/EditButton.vue` is the only Edit control: a 16px pencil (stroke `currentColor`, width 2) in a 28px square, `--ink-3` at rest, `--accent` on hover and while expanded, on a `--bg-3` tint. It has the item's name in `aria-label` and `title`, `aria-expanded` when it opens something, and the 2px `--accent` focus ring. With `to` it is a router link; without, a button. It exposes `focus()` for focus return.
+- Text buttons remain for Done, Write today's note and the confirmations.
+
+### 12.2 Available-time line (batch 3)
+
+- The capacity line of Insights is a 2px `--attention` bar per period at its available hours (`.insights-cap`), and its label (`.insights-cap-label`, 12px, weight 600) sits at the right end, on the surface colour so it stays legible over a bar. The same token as the attention outline: a red line here means the available-time marker, not an error.
+- The unit selector is a `.segmented` group (Hours, Days, Weeks) next to the granularity group.

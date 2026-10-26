@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, aggregateTemplate, categoryAlignments, countLabel } from '~/utils/planner'
+import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
@@ -17,54 +17,54 @@ const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
 
 const categoryActivities = computed(() => activities.value.filter(activity => activity.categoryId === props.categoryId))
+// Rows of the activities list: every activity of the category, plus those counted here from another category
+// (a habit link or a secondary category). Each row says whether its hours count toward the comparison, and why
+const comparedIds = computed(() => comparedActivityIds(planner.$state, props.categoryId))
+const categoryRows = computed(() => activities.value
+  .filter(activity => activity.categoryId === props.categoryId || comparedIds.value.has(activity.id))
+  .map(activity => ({
+    activity,
+    note: !comparedIds.value.has(activity.id)
+      ? 'not in comparison'
+      : activity.categoryId === props.categoryId ? '' : activity.alsoCategoryIds?.includes(props.categoryId) ? 'also counts here' : 'linked by a habit'
+  })))
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
 const activityCount = computed(() => categoryActivities.value.length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
-// ── Goals vs. planned (FR-GOALS-16): the same computation as Visualization, on the active template
+// ── Needed against allocated time (FR-GOALS-16): hours a week, both bars on one scale
+// Saved state is not known on the server, so the status-driven classes and text wait for mount: the first client render
+// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
+const mounted = ref(false)
+onMounted(() => {
+  mounted.value = true
+})
+
 const alignments = computed(() => categoryAlignments(planner.$state))
 const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
 
-// The bar uses the largest value across all categories, as the Visualization overview does
-const scaleMinutes = computed(() =>
-  Math.max(1, ...[...alignments.value.values()].flatMap(row => [row.habitMinutesPerWeek, row.targetMinutesPerWeek]))
-)
-const percentOfScale = (minutes: number) => `${Math.min((minutes / scaleMinutes.value) * 100, 100)}%`
-const fillWidth = computed(() => percentOfScale(alignment.value?.habitMinutesPerWeek ?? 0))
-const targetLeft = computed(() => percentOfScale(alignment.value?.targetMinutesPerWeek ?? 0))
+// Unlink a secondary category from an activity; the primary category is changed in Planner only. Inline confirmation first
+const unlinkId = ref<string | null>(null)
+// Only a secondary link that no habit of this category also holds can be removed here: a habit link keeps the hours counted
+const linkedByHabit = (activityId: string) => planner.habits.some(habit => habit.categoryId === props.categoryId && habit.activityId === activityId)
+const isSecondary = (activity: { id: string; categoryId: string; alsoCategoryIds?: string[] }) =>
+  activity.categoryId !== props.categoryId && !!activity.alsoCategoryIds?.includes(props.categoryId) && !linkedByHabit(activity.id)
+const confirmUnlink = (activityId: string) => {
+  planner.removeAlsoCategory(activityId, props.categoryId)
+  unlinkId.value = null
+}
 
-const hoursLabel = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10} h`
+const scaleMinutes = computed(() => Math.max(60, alignment.value?.neededMinutes ?? 0, alignment.value?.allocatedMinutes ?? 0))
+const barWidth = (minutes: number) => `${Math.min((minutes / scaleMinutes.value) * 100, 100)}%`
 
-const figures = computed(() => {
+// One plain verdict line with the gap; its tone follows the status used by the list and the map
+const verdict = computed(() => {
   const row = alignment.value
-  if (!row) return ''
-  if (row.targetMinutesPerWeek > 0) return `${hoursLabel(row.habitMinutesPerWeek)} of ${hoursLabel(row.targetMinutesPerWeek)} a week`
-
-  return `${hoursLabel(row.habitMinutesPerWeek)} a week scheduled`
-})
-
-const goalLabel = computed(() => {
-  const row = alignment.value
-  if (!row) return ''
-  if (row.targetMinutesPerWeek > 0) return `${hoursLabel(row.habitMinutesPerWeek)} scheduled through habits, ${hoursLabel(row.targetMinutesPerWeek)} target`
-
-  return `${hoursLabel(row.habitMinutesPerWeek)} scheduled through habits, no target yet`
-})
-
-// One calm line, only for what is missing (the same flags as Visualization)
-const flags = computed(() => {
-  const row = alignment.value
-  if (!row) return []
-
-  const notes: string[] = []
-  if (row.targetMinutesPerWeek === 0) notes.push('No target yet')
-  if (row.habitMinutesPerWeek === 0) notes.push('No time planned')
-  if (row.targetMinutesPerWeek > 0 && row.unlinkedHabits) {
-    notes.push(`${countLabel(row.unlinkedHabits, 'habit', 'habits')} not linked to an activity`)
-  }
-
-  return notes
+  if (!row || row.status === 'none') return { text: 'No time target yet', tone: 'none' }
+  if (row.status === 'under') return { text: `Missing ${hoursLabel(-row.gapMinutes)} a week`, tone: 'under' }
+  if (row.status === 'over') return { text: `${hoursLabel(row.gapMinutes)} a week over`, tone: 'over' }
+  return { text: 'On track', tone: 'ok' }
 })
 
 // ── Activities: hours a week in the active template
@@ -176,18 +176,11 @@ function confirmRemove() {
         <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
         {{ category.name }}
       </h3>
-      <button
-        v-if="!editing"
-        ref="editButton"
-        type="button"
-        class="btn btn-sm btn-outline"
-        :aria-label="`Edit ${category.name}`"
-        @click="startEdit"
-      >Edit</button>
+      <EditButton v-if="!editing" ref="editButton" :label="`Edit ${category.name}`" @click="startEdit" />
       <button v-else type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
     </div>
 
-    <!-- View mode: read-only; the goals-vs-planned bar is the primary signal -->
+    <!-- View mode: read-only; the comparison bars are the primary signal -->
     <template v-if="!editing">
       <section class="detail-block">
         <h4 class="detail-label">5-year goal</h4>
@@ -200,23 +193,21 @@ function confirmRemove() {
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
       </section>
 
-      <section class="detail-block detail-goal">
-        <h4 class="detail-label">Goals vs. planned</h4>
-        <p class="detail-lede">Hours a week in {{ activeTemplate?.name ?? 'the active template' }}, through this category's habits.</p>
-        <div
-          class="goal-track"
-          :class="{ 'is-untargeted': !alignment?.targetMinutesPerWeek }"
-          role="img"
-          :aria-label="goalLabel"
-        >
-          <span class="goal-fill" :style="{ width: fillWidth }" />
-          <span v-if="alignment?.targetMinutesPerWeek" class="goal-target" :style="{ left: targetLeft }" />
+      <section v-if="mounted" class="detail-block detail-goal">
+        <h4 class="detail-label">Hours a week</h4>
+        <div class="compare" role="group" aria-label="Needed and allocated hours a week">
+          <div class="compare-row">
+            <span class="compare-name">Needed</span>
+            <span class="compare-track"><span class="compare-fill is-needed" :style="{ width: barWidth(alignment?.neededMinutes ?? 0) }" /></span>
+            <span class="compare-value">{{ hoursLabel(alignment?.neededMinutes ?? 0) }}</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-name">Allocated</span>
+            <span class="compare-track"><span class="compare-fill is-allocated" :style="{ width: barWidth(alignment?.allocatedMinutes ?? 0) }" /></span>
+            <span class="compare-value">{{ hoursLabel(alignment?.allocatedMinutes ?? 0) }}</span>
+          </div>
         </div>
-        <p class="goal-figures">{{ figures }}</p>
-        <p v-if="alignment?.totalMinutesPerWeek" class="goal-total">{{ hoursLabel(alignment.totalMinutesPerWeek) }} scheduled in total</p>
-        <p v-if="flags.length" class="goal-flags">
-          <span v-for="note in flags" :key="note">{{ note }}</span>
-        </p>
+        <p class="compare-verdict" :class="`is-${verdict.tone}`">{{ verdict.text }}</p>
       </section>
 
       <section class="detail-block">
@@ -226,13 +217,26 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryActivities.length" class="row-list">
-          <li v-for="activity in categoryActivities" :key="activity.id" class="row-item">
+        <ul v-if="categoryRows.length" class="row-list">
+          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
-            <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
+            <template v-if="isSecondary(activity)">
+              <span v-if="unlinkId === activity.id" class="row-confirm">
+                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
+                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
+              </span>
+              <button
+                v-else
+                type="button"
+                class="btn btn-xs btn-outline"
+                :aria-label="`Unlink ${activity.name} from ${category.name}`"
+                @click="unlinkId = activity.id"
+              >Unlink</button>
+            </template>
+            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
@@ -309,13 +313,26 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryActivities.length" class="row-list">
-          <li v-for="activity in categoryActivities" :key="activity.id" class="row-item">
+        <ul v-if="categoryRows.length" class="row-list">
+          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
-            <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
+            <template v-if="isSecondary(activity)">
+              <span v-if="unlinkId === activity.id" class="row-confirm">
+                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
+                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
+              </span>
+              <button
+                v-else
+                type="button"
+                class="btn btn-xs btn-outline"
+                :aria-label="`Unlink ${activity.name} from ${category.name}`"
+                @click="unlinkId = activity.id"
+              >Unlink</button>
+            </template>
+            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
@@ -420,12 +437,6 @@ function confirmRemove() {
 }
 
 .detail-empty,
-.detail-lede {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-}
-
 .detail-flag {
   margin: 0;
   font-size: var(--fs-sm);
@@ -433,21 +444,50 @@ function confirmRemove() {
   color: var(--warn);
 }
 
-/* The bar: the same track, fill and tick as Visualization, with figures and flags beneath */
-.detail-goal .goal-track {
-  margin: var(--space-2) 0 var(--space-1);
+/* Needed and allocated bars share one scale, so their lengths compare directly */
+.compare {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
-
-.detail-goal .goal-figures {
+.compare-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+}
+.compare-name { color: var(--ink-2); }
+.compare-track {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--bg-3);
+}
+.compare-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+}
+.compare-fill.is-needed { background: var(--ink-4); }
+.compare-fill.is-allocated { background: var(--accent); }
+.compare-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.compare-verdict {
+  margin: var(--space-3) 0 0;
   font-size: var(--fs-md);
   font-weight: 500;
-  color: var(--ink);
-  text-align: left;
+  color: var(--ink-3);
 }
-
-.detail-goal .goal-flags {
-  margin-top: var(--space-1);
-}
+.compare-verdict.is-under { color: var(--warn); }
+.compare-verdict.is-over { color: var(--accent); }
+.compare-verdict.is-ok { color: var(--ok); }
 
 .row-list {
   margin: 0;

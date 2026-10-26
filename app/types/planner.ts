@@ -14,7 +14,10 @@ export interface Activity {
   id: string
   name: string
   shortCode: string
+  /** Primary category: its colour, its listing and its share of the Insights totals (counted once) */
   categoryId: string
+  /** Other categories the hours also count toward in the Goals comparison (never the primary one) */
+  alsoCategoryIds?: string[]
   color: string
 }
 

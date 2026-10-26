@@ -1,5 +1,5 @@
 /**
- * One colour rule for every planned fill: the year grid, the week grid, the Home timeline and the Visualization bars
+ * One colour rule for every planned fill: the year grid, the week grid, the Home timeline and the Insights bars
  * (spec/frontend-design.md, section 5). A category, activity or template colour is shown as given when it reaches
  * 3:1 against the surface of the theme (WCAG 1.4.11, non-text). Otherwise it is shaded toward black (light) or white
  * (dark) until it does: the hue stays, only the lightness moves. Pure functions, so they run in node.

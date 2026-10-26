@@ -21,6 +21,7 @@ const { fill } = usePlannerFill()
 
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
+const templateEditOpen = ref(false)
 const colorPickerFor = ref<string | null>(null)
 const newTemplateOpen = ref(false)
 const newTemplateName = ref('')
@@ -196,7 +197,7 @@ watch(
   { immediate: true }
 )
 
-function applyField(changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>) {
+function applyField(changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>) {
   const activity = selectedActivity.value
   if (!activity) return
 
@@ -260,7 +261,7 @@ function confirmDelete() {
 
 // New activity: a quiet link reveals the form (progressive disclosure)
 const addOpen = ref(false)
-const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '' })
+const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '', alsoCategoryIds: [] as string[] })
 const addErrors = ref<ActivityFieldErrors>({})
 const addNameInput = ref<HTMLInputElement | null>(null)
 const addTrigger = ref<HTMLButtonElement | null>(null)
@@ -268,6 +269,7 @@ const addTrigger = ref<HTMLButtonElement | null>(null)
 // A new activity starts in its category's colour; changing the category follows it
 watch(() => addDraft.categoryId, (categoryId) => {
   addDraft.color = categoryMap.value.get(categoryId)?.color ?? DESIGN_COLORS[0]!.bg
+  addDraft.alsoCategoryIds = addDraft.alsoCategoryIds.filter(id => id !== categoryId)
 })
 
 // categoryId preselects a category (FR-GOALS-20); an unknown or missing id falls back to the first category
@@ -277,6 +279,7 @@ function openAdd(categoryId?: string | null) {
   addDraft.name = ''
   addDraft.shortCode = ''
   addDraft.categoryId = presetId
+  addDraft.alsoCategoryIds = []
   addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
   addErrors.value = {}
   addOpen.value = true
@@ -304,7 +307,7 @@ function submitAdd() {
 
   if (Object.keys(errors).length) return
 
-  const id = planner.addActivity(addDraft.name, addDraft.shortCode, addDraft.categoryId, addDraft.color)
+  const id = planner.addActivity(addDraft.name, addDraft.shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
   addOpen.value = false
   if (id) selectActivity(id)
 }
@@ -312,10 +315,9 @@ function submitAdd() {
 
 <template>
   <div class="view" @click="colorPickerFor = null">
-    <!-- Page header: title and one hint line -->
+    <!-- Page header -->
     <header class="page-head">
-      <h1 class="page-title">Design your ideal week, hour by hour.</h1>
-      <p class="page-lede">Drag across hours to select a range, or tap a block to change it. Use the handles to resize, then choose an activity.</p>
+      <h1 class="page-title">Planner</h1>
     </header>
 
     <!-- Template switcher -->
@@ -375,6 +377,8 @@ function submitAdd() {
       </div>
       <button v-else class="chip-add" @click="newTemplateOpen = true">+ New template</button>
 
+      <EditButton v-if="activeTemplate" label="Edit template" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
+
       <button
         v-if="templates.length > 1"
         ref="deleteTemplateTrigger"
@@ -385,6 +389,42 @@ function submitAdd() {
         <span class="delete-template-btn-label">Delete "{{ activeTemplate?.name }}"</span>
         <span class="delete-template-btn-icon" aria-hidden="true">✕</span>
       </button>
+    </div>
+
+    <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
+    <div v-if="templateEditOpen && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="templateEditOpen = false">
+      <div class="act-panel-head">
+        <h3 class="act-panel-title">Edit template</h3>
+        <button type="button" class="btn btn-sm btn-primary" @click="templateEditOpen = false">Done</button>
+      </div>
+      <div class="form-stack">
+        <div class="field">
+          <label class="field-label" for="template-edit-name">Name</label>
+          <input
+            id="template-edit-name"
+            class="timely-input"
+            :value="activeTemplate.name"
+            @change="planner.renameTemplate(activeTemplate.id, ($event.target as HTMLInputElement).value)"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Colour</span>
+          <div class="color-pop color-pop-inline">
+            <button
+              v-for="col in DESIGN_COLORS"
+              :key="col.id"
+              type="button"
+              :style="{ background: col.bg }"
+              :data-active="activeTemplate.color === col.bg"
+              :aria-label="`Colour ${col.id}`"
+              @click="planner.setTemplateColor(activeTemplate.id, col.bg)"
+            />
+          </div>
+        </div>
+        <div v-if="templates.length > 1" class="form-actions">
+          <button type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete template</button>
+        </div>
+      </div>
     </div>
 
     <div
@@ -411,7 +451,6 @@ function submitAdd() {
     <section class="section acts" aria-labelledby="activities-title">
       <div class="acts-head">
         <h2 id="activities-title" class="section-title">Activities</h2>
-        <p class="section-lede">Hours a week in {{ activeTemplate?.name ?? 'no template' }}</p>
       </div>
 
       <ul class="act-list">
@@ -436,14 +475,9 @@ function submitAdd() {
         <span class="dot dot-lg" :style="{ background: selectedActivity.color }" />
         <div class="act-detail-main">
           <span class="act-detail-name">{{ selectedActivity.name }}</span>
-          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }} · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
+          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }}<template v-if="selectedActivity.alsoCategoryIds?.length"> · also {{ selectedActivity.alsoCategoryIds.map(categoryName).join(', ') }}</template> · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
         </div>
-        <button
-          type="button"
-          class="btn btn-xs btn-outline act-edit-btn"
-          :aria-label="`Edit ${selectedActivity.name}`"
-          @click="startEdit"
-        >Edit</button>
+        <EditButton :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
       </div>
 
       <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
@@ -488,6 +522,7 @@ function submitAdd() {
               <select
                 id="act-edit-cat"
                 class="timely-select"
+                title="The primary category is changed here; it cannot be unlinked"
                 :value="selectedActivity.categoryId"
                 @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
               >
@@ -496,6 +531,13 @@ function submitAdd() {
               <p v-if="editErrors.categoryId" class="field-error">{{ editErrors.categoryId }}</p>
             </div>
           </div>
+
+          <PlannerAlsoCategories
+            :model-value="selectedActivity.alsoCategoryIds ?? []"
+            :categories="orderedCategories"
+            :primary-id="selectedActivity.categoryId"
+            @update:model-value="applyField({ alsoCategoryIds: $event })"
+          />
 
           <div class="field">
             <span class="field-label">Colour</span>
@@ -574,6 +616,12 @@ function submitAdd() {
             </div>
           </div>
 
+          <PlannerAlsoCategories
+            v-model="addDraft.alsoCategoryIds"
+            :categories="orderedCategories"
+            :primary-id="addDraft.categoryId"
+          />
+
           <div class="field">
             <span class="field-label">Colour</span>
             <div class="color-pop color-pop-inline">
@@ -608,7 +656,6 @@ function submitAdd() {
 
         <div class="year-body">
           <div class="year-paint-head">
-            <p class="section-lede">Choose a template, then click or drag across weeks to assign it.</p>
             <div class="year-controls">
               <YearNav />
             </div>

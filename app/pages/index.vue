@@ -11,5 +11,5 @@ const { tab } = useNav()
   <HomeView                 v-if="tab === 'home'" />
   <HaradaView               v-else-if="tab === 'goals'" />
   <PlannerView              v-else-if="tab === 'planner'" />
-  <VizVisualizationView     v-else />
+  <InsightsView             v-else />
 </template>
