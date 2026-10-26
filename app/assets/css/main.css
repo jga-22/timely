@@ -1385,18 +1385,12 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   .metric-value { font-size: var(--fs-lg); }
 }
 
-/* ── Home: period selector, activity rows, timeline ── */
-.home-toolbar {
+/* ── Home: timeline with hour axis, activity rows, journal ── */
+.home-timeline { margin: var(--space-4) 0 var(--space-6); }
+/* Thin colour-only bar: one flex segment per hour, no text inside */
+.home-timeline-bar {
   display: flex;
-  align-items: center;
-  margin-bottom: var(--space-5);
-}
-.home-note { margin-top: var(--space-2); }
-/* Thin timeline under the list: one flex segment per hour (Day) or per activity (Week, Month); no text inside */
-.home-timeline {
-  display: flex;
-  height: 12px;
-  margin-top: var(--space-5);
+  height: 10px;
   overflow: hidden;
   border-radius: 3px;
 }
@@ -1408,6 +1402,32 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   background: var(--cell-empty);
   box-shadow: inset 0 0 0 1px var(--cell-line);
 }
+/* Axis labels sit at their hour on the 24-hour scale, each with a short tick above it */
+.home-axis {
+  position: relative;
+  height: 22px;
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.home-axis-tick {
+  position: absolute;
+  top: 0;
+  padding-top: 6px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  line-height: 1;
+}
+.home-axis-tick::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: var(--ink-3);
+}
 .home-rows {
   margin: 0;
   padding: 0;
@@ -1415,7 +1435,7 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .home-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 112px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--space-3);
   position: relative;
@@ -1425,7 +1445,6 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .home-row:last-child { border-bottom: none; }
 .home-row .btn { text-decoration: none; }
-.home-row.is-block { grid-template-columns: 112px minmax(0, 1fr) auto auto; }
 /* The Now marker sits in the gutter to the left, so every row keeps the same column edges */
 .home-row.is-now::before {
   content: "";
@@ -1463,14 +1482,12 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   justify-self: start;
 }
 .home-row-cat:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.home-row-hours,
-.home-row-share {
+.home-row-hours {
   min-width: 40px;
   text-align: right;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-.home-row-share { color: var(--ink-3); }
 .home-now {
   padding: 0 var(--space-2);
   border-radius: 4px;
@@ -1479,36 +1496,13 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   font-weight: 600;
   color: var(--ink);
 }
-.home-empty { margin: 0; }
+.home-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
 
-/* Journal experiment (FR-HOME-11 to 13) */
-.journal-tag {
-  margin-left: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: 4px;
-  background: var(--bg-3);
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--ink-2);
-  vertical-align: middle;
-}
-.journal-key { margin-bottom: var(--space-5); }
-.journal-statement {
-  margin: 0;
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--ink);
-}
-.journal-focus {
-  margin: var(--space-2) 0 0;
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-  color: var(--ink-2);
-}
+/* Journal (FR-HOME-11 to 13) */
 .journal-view,
 .journal-edit { display: grid; gap: var(--space-3); justify-items: start; }
 .journal-edit { justify-items: stretch; }
+.journal-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
 .journal-text {
   margin: 0;
   font-size: var(--fs-md);
@@ -1525,17 +1519,8 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   min-height: 32px;
 }
 .journal-status { font-size: var(--fs-sm); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.journal-readings { margin-top: var(--space-6); }
-.journal-subtitle {
-  margin: 0 0 var(--space-1);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: var(--ink);
-}
 
 @media (max-width: 480px) {
-  .home-toolbar .segmented { width: 100%; }
-  .home-toolbar .segmented button { flex: 1; }
-  .home-row.is-block { grid-template-columns: minmax(0, 1fr) auto auto; }
-  .home-row.is-block .home-row-time { grid-column: 1 / -1; }
+  .home-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .home-row .home-row-time { grid-column: 1 / -1; }
 }
