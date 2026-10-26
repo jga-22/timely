@@ -6,6 +6,9 @@ const { tab, go } = useNav()
 const dark = useState('dark', () => false)
 const theme = useTheme()
 const { today } = usePlannerYear()
+const { status: storageStatus } = useStorageStatus()
+
+const storageLabels = { loading: 'Loading', saving: 'Saving', saved: 'Saved', error: 'Not saved' }
 
 // Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
 watch(dark, (v) => {
@@ -48,6 +51,17 @@ const toggleDark = () => {
             {{ entry.label }}
           </button>
         </nav>
+
+        <span
+          v-if="storageStatus.state !== 'local'"
+          class="storage-status"
+          :data-state="storageStatus.state"
+          role="status"
+          :title="storageStatus.message || undefined"
+        >
+          <span class="storage-status-dot" aria-hidden="true" />
+          {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
+        </span>
 
         <button
           class="theme-toggle"

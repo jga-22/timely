@@ -194,6 +194,26 @@ a { color: var(--accent); text-underline-offset: 3px; }
   font-variant-numeric: tabular-nums;
 }
 
+/* Remote storage only (hidden in 'local' mode): a quiet dot and label */
+.storage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.storage-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+.storage-status[data-state="saved"] .storage-status-dot { background: var(--ok); }
+.storage-status[data-state="error"] { color: var(--danger); }
+.storage-status[data-state="error"] .storage-status-dot { background: var(--danger); }
+
 .theme-toggle {
   display: inline-grid;
   place-items: center;

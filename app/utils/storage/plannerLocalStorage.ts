@@ -1,10 +1,10 @@
 import type { PlannerState } from '~/types/planner'
-import type { PlannerStorageAdapter } from '~/types/storage'
+import type { PlannerStorage } from '~/utils/storage/types'
 import { isPlannerState } from '~/utils/planner'
 
 export const PLANNER_STORAGE_KEY = 'timely-planner-state'
 
-export const createPlannerLocalStorageAdapter = (): PlannerStorageAdapter => ({
+export const createPlannerLocalStorageAdapter = (): PlannerStorage => ({
   load() {
     if (!import.meta.client) {
       return null
