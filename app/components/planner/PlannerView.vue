@@ -196,7 +196,7 @@ watch(
   { immediate: true }
 )
 
-function applyField(changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>) {
+function applyField(changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>) {
   const activity = selectedActivity.value
   if (!activity) return
 
@@ -260,7 +260,7 @@ function confirmDelete() {
 
 // New activity: a quiet link reveals the form (progressive disclosure)
 const addOpen = ref(false)
-const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '' })
+const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '', alsoCategoryIds: [] as string[] })
 const addErrors = ref<ActivityFieldErrors>({})
 const addNameInput = ref<HTMLInputElement | null>(null)
 const addTrigger = ref<HTMLButtonElement | null>(null)
@@ -268,6 +268,7 @@ const addTrigger = ref<HTMLButtonElement | null>(null)
 // A new activity starts in its category's colour; changing the category follows it
 watch(() => addDraft.categoryId, (categoryId) => {
   addDraft.color = categoryMap.value.get(categoryId)?.color ?? DESIGN_COLORS[0]!.bg
+  addDraft.alsoCategoryIds = addDraft.alsoCategoryIds.filter(id => id !== categoryId)
 })
 
 // categoryId preselects a category (FR-GOALS-20); an unknown or missing id falls back to the first category
@@ -277,6 +278,7 @@ function openAdd(categoryId?: string | null) {
   addDraft.name = ''
   addDraft.shortCode = ''
   addDraft.categoryId = presetId
+  addDraft.alsoCategoryIds = []
   addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
   addErrors.value = {}
   addOpen.value = true
@@ -304,7 +306,7 @@ function submitAdd() {
 
   if (Object.keys(errors).length) return
 
-  const id = planner.addActivity(addDraft.name, addDraft.shortCode, addDraft.categoryId, addDraft.color)
+  const id = planner.addActivity(addDraft.name, addDraft.shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
   addOpen.value = false
   if (id) selectActivity(id)
 }
@@ -436,7 +438,7 @@ function submitAdd() {
         <span class="dot dot-lg" :style="{ background: selectedActivity.color }" />
         <div class="act-detail-main">
           <span class="act-detail-name">{{ selectedActivity.name }}</span>
-          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }} · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
+          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }}<template v-if="selectedActivity.alsoCategoryIds?.length"> · also {{ selectedActivity.alsoCategoryIds.map(categoryName).join(', ') }}</template> · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
         </div>
         <button
           type="button"
@@ -496,6 +498,13 @@ function submitAdd() {
               <p v-if="editErrors.categoryId" class="field-error">{{ editErrors.categoryId }}</p>
             </div>
           </div>
+
+          <PlannerAlsoCategories
+            :model-value="selectedActivity.alsoCategoryIds ?? []"
+            :categories="orderedCategories"
+            :primary-id="selectedActivity.categoryId"
+            @update:model-value="applyField({ alsoCategoryIds: $event })"
+          />
 
           <div class="field">
             <span class="field-label">Colour</span>
@@ -573,6 +582,12 @@ function submitAdd() {
               </select>
             </div>
           </div>
+
+          <PlannerAlsoCategories
+            v-model="addDraft.alsoCategoryIds"
+            :categories="orderedCategories"
+            :primary-id="addDraft.categoryId"
+          />
 
           <div class="field">
             <span class="field-label">Colour</span>

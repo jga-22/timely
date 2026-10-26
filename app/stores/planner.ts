@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   applyActivityCells,
+  cleanAlsoCategoryIds,
   createEmptySlots,
   createHaradaSeed,
   createInitialState,
@@ -217,6 +218,7 @@ export const usePlannerStore = defineStore('planner', {
         return false
       }
 
+      // Only primary links need a new home; secondary links are simply dropped below
       const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
         || this.habits.some(habit => habit.categoryId === categoryId)
       const target = targetCategoryId && targetCategoryId !== categoryId
@@ -238,11 +240,17 @@ export const usePlannerStore = defineStore('planner', {
         }
       }
 
+      for (const activity of this.activities) {
+        if (!activity.alsoCategoryIds) continue
+
+        activity.alsoCategoryIds = cleanAlsoCategoryIds(this.categories, activity.categoryId, activity.alsoCategoryIds.filter(id => id !== categoryId))
+      }
+
       this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
       return true
     },
     /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
-    addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
+    addActivity(name: string, shortCode: string, categoryId: string, color?: string, alsoCategoryIds: string[] = []): string | null {
       const fields = { name, shortCode, categoryId }
 
       if (Object.keys(validateActivityFields(this.$state, fields)).length) {
@@ -257,13 +265,14 @@ export const usePlannerStore = defineStore('planner', {
         name: name.trim(),
         shortCode: shortCode.trim().toUpperCase(),
         categoryId,
+        alsoCategoryIds: cleanAlsoCategoryIds(this.categories, categoryId, alsoCategoryIds),
         color: color ?? category?.color ?? '#685847'
       })
 
       return id
     },
     /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
-    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
+    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>): ActivityFieldErrors {
       const activity = this.activities.find(item => item.id === activityId)
 
       if (!activity) {
@@ -277,8 +286,14 @@ export const usePlannerStore = defineStore('planner', {
       }
 
       // Changing the category moves the activity's hours with it; its slots and habit links stay as they are
+      // Secondary links follow the primary category: one that becomes primary is dropped from them
+      const alsoCategoryIds = changes.alsoCategoryIds !== undefined || changes.categoryId !== undefined
+        ? cleanAlsoCategoryIds(this.categories, changes.categoryId ?? activity.categoryId, changes.alsoCategoryIds ?? activity.alsoCategoryIds ?? [])
+        : undefined
+
       Object.assign(activity, {
         ...changes,
+        ...(alsoCategoryIds !== undefined ? { alsoCategoryIds } : {}),
         ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
         ...(changes.shortCode !== undefined ? { shortCode: changes.shortCode.trim().toUpperCase() } : {})
       })

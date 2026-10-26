@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, aggregateTemplate, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
+import { DESIGN_COLORS, activityCategoryIds, aggregateTemplate, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
@@ -17,6 +17,8 @@ const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
 
 const categoryActivities = computed(() => activities.value.filter(activity => activity.categoryId === props.categoryId))
+// Every activity that counts toward this category: its own, and those it is secondary in (marked in the list)
+const countedActivities = computed(() => activities.value.filter(activity => activityCategoryIds(activity).includes(props.categoryId)))
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
 const activityCount = computed(() => categoryActivities.value.length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
@@ -195,11 +197,11 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryActivities.length" class="row-list">
-          <li v-for="activity in categoryActivities" :key="activity.id" class="row-item">
+        <ul v-if="countedActivities.length" class="row-list">
+          <li v-for="activity in countedActivities" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ activity.categoryId === category.id ? '' : ' · also counts here' }}</span>
             </span>
             <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
           </li>
@@ -278,11 +280,11 @@ function confirmRemove() {
 
       <section class="detail-block">
         <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryActivities.length" class="row-list">
-          <li v-for="activity in categoryActivities" :key="activity.id" class="row-item">
+        <ul v-if="countedActivities.length" class="row-list">
+          <li v-for="activity in countedActivities" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ activity.categoryId === category.id ? '' : ' · also counts here' }}</span>
             </span>
             <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
           </li>
