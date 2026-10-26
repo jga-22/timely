@@ -90,7 +90,7 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
           <span v-if="linkedActivity(habit)" class="habit-link">
             Linked to <NuxtLink :to="link('planner', { item: habit.activityId })">{{ linkedLabel(habit) }}</NuxtLink>
           </span>
-          <span v-else class="habit-unlinked">Not linked to an activity</span>
+          <span v-else class="habit-unlinked">Not linked</span>
         </li>
       </ul>
       <p v-else class="habit-empty">No daily habits yet for this category.</p>
