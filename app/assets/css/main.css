@@ -1136,12 +1136,17 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   background: var(--bg-3);
 }
 .home-bar-seg { flex: none; height: 100%; }
+/* Two columns from about 740 px; one column on phones */
 .home-legend {
-  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  column-gap: var(--space-6);
   margin: var(--space-4) 0 0;
   padding: 0;
   list-style: none;
 }
+.home-legend .total-row,
+.home-legend .total-row:last-child { border-bottom: 1px solid var(--rule-2); }
 .home-rows {
   margin: 0;
   padding: 0;
@@ -1152,6 +1157,7 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: var(--space-3);
+  position: relative;
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--rule-2);
   font-size: var(--fs-sm);
@@ -1159,9 +1165,15 @@ a.goal-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 .home-row:last-child { border-bottom: none; }
 .home-row .btn { text-decoration: none; }
 .home-row.is-block { grid-template-columns: 112px minmax(0, 1fr) auto auto; }
-.home-row.is-now {
-  padding-left: var(--space-3);
-  box-shadow: inset 3px 0 0 var(--accent);
+/* The Now marker sits in the gutter to the left, so every row keeps the same column edges */
+.home-row.is-now::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--space-3) * -1);
+  width: 3px;
+  background: var(--accent);
 }
 .home-row-time {
   color: var(--ink-2);
