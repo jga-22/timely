@@ -1158,6 +1158,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   line-height: 1;
 }
 .insights-axis-top { top: 0; }
+.insights-axis-mid { bottom: 50%; transform: translateY(50%); }
 .insights-axis-zero { bottom: 0; }
 .insights-plot { min-width: 0; }
 .insights-bars {
@@ -1168,6 +1169,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border-bottom: 1px solid var(--cell-line);
 }
 .insights-bar {
+  position: relative;
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
@@ -1183,6 +1185,29 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .insights-seg {
   flex: 1 1 0;
   min-height: 0;
+}
+/* Available time: a 2px attention line per bar at its capacity, and its value at the right end (PRD FR-INS-4) */
+.insights-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--attention);
+  pointer-events: none;
+}
+.insights-cap-label {
+  position: absolute;
+  right: 0;
+  padding: 0 4px;
+  transform: translateY(-100%);
+  background: var(--bg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--attention);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 .insights-ticks {
   display: flex;
