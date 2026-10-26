@@ -21,6 +21,7 @@ const { fill } = usePlannerFill()
 
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
+const templateEditOpen = ref(false)
 const colorPickerFor = ref<string | null>(null)
 const newTemplateOpen = ref(false)
 const newTemplateName = ref('')
@@ -376,6 +377,8 @@ function submitAdd() {
       </div>
       <button v-else class="chip-add" @click="newTemplateOpen = true">+ New template</button>
 
+      <EditButton v-if="activeTemplate" label="Edit template" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
+
       <button
         v-if="templates.length > 1"
         ref="deleteTemplateTrigger"
@@ -386,6 +389,42 @@ function submitAdd() {
         <span class="delete-template-btn-label">Delete "{{ activeTemplate?.name }}"</span>
         <span class="delete-template-btn-icon" aria-hidden="true">✕</span>
       </button>
+    </div>
+
+    <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
+    <div v-if="templateEditOpen && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="templateEditOpen = false">
+      <div class="act-panel-head">
+        <h3 class="act-panel-title">Edit template</h3>
+        <button type="button" class="btn btn-sm btn-primary" @click="templateEditOpen = false">Done</button>
+      </div>
+      <div class="form-stack">
+        <div class="field">
+          <label class="field-label" for="template-edit-name">Name</label>
+          <input
+            id="template-edit-name"
+            class="timely-input"
+            :value="activeTemplate.name"
+            @change="planner.renameTemplate(activeTemplate.id, ($event.target as HTMLInputElement).value)"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Colour</span>
+          <div class="color-pop color-pop-inline">
+            <button
+              v-for="col in DESIGN_COLORS"
+              :key="col.id"
+              type="button"
+              :style="{ background: col.bg }"
+              :data-active="activeTemplate.color === col.bg"
+              :aria-label="`Colour ${col.id}`"
+              @click="planner.setTemplateColor(activeTemplate.id, col.bg)"
+            />
+          </div>
+        </div>
+        <div v-if="templates.length > 1" class="form-actions">
+          <button type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete template</button>
+        </div>
+      </div>
     </div>
 
     <div
@@ -438,12 +477,7 @@ function submitAdd() {
           <span class="act-detail-name">{{ selectedActivity.name }}</span>
           <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }}<template v-if="selectedActivity.alsoCategoryIds?.length"> · also {{ selectedActivity.alsoCategoryIds.map(categoryName).join(', ') }}</template> · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
         </div>
-        <button
-          type="button"
-          class="btn btn-xs btn-outline act-edit-btn"
-          :aria-label="`Edit ${selectedActivity.name}`"
-          @click="startEdit"
-        >Edit</button>
+        <EditButton :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
       </div>
 
       <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->

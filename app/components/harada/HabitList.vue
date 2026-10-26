@@ -6,7 +6,6 @@ import { habitAlignment, hoursLabel } from '~/utils/planner'
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 
 const planner = usePlannerStore()
-const { link } = useNav()
 
 const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 const habits = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId))
@@ -81,20 +80,98 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
 
 <template>
   <div class="habit-list">
-    <!-- View mode: read-only rows -->
-    <template v-if="!editing">
-      <ul v-if="habits.length" class="habit-rows">
-        <li v-for="habit in habits" :key="habit.id" class="habit-row">
+    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this category.</p>
+
+    <!-- Every habit has its own pencil: its form opens inline, whatever the category's edit mode -->
+    <div v-for="habit in habits" :key="habit.id" class="habit-edit" :class="{ 'is-open': openId === habit.id }">
+      <div class="habit-summary">
+        <div class="habit-summary-text">
           <span class="habit-name">{{ habit.name }}</span>
           <span class="habit-meta">{{ frequencyText(habit) }}</span>
-          <span v-if="linkedActivity(habit)" class="habit-link">
-            Linked to <NuxtLink :to="link('planner', { item: habit.activityId })">{{ linkedLabel(habit) }}</NuxtLink>
-          </span>
-          <span v-else class="habit-unlinked">Not linked</span>
-        </li>
-      </ul>
-      <p v-else class="habit-empty">No daily habits yet for this category.</p>
-    </template>
+          <span class="habit-meta" :class="{ 'is-warn': !linkedActivity(habit) }">{{ linkedLabel(habit) }}</span>
+        </div>
+        <EditButton :label="`Edit habit ${habit.name}`" :expanded="openId === habit.id" @click="toggleOpen(habit.id)" />
+      </div>
+
+      <div v-if="openId === habit.id" class="habit-form form-stack">
+        <AutoTextarea
+          :model-value="habit.name"
+          label="Habit name"
+          @update:model-value="planner.updateHabit(habit.id, { name: $event })"
+        />
+
+        <div class="form-row-3">
+          <div class="field">
+            <label class="field-label" :for="`habit-count-${habit.id}`">Times</label>
+            <input
+              :id="`habit-count-${habit.id}`"
+              class="timely-input"
+              type="number"
+              min="0"
+              :value="habit.frequency.count"
+              @input="planner.setHabitFrequency(habit.id, Number(($event.target as HTMLInputElement).value) || 0, habit.frequency.period)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`habit-period-${habit.id}`">Period</label>
+            <select
+              :id="`habit-period-${habit.id}`"
+              class="timely-select"
+              :value="habit.frequency.period"
+              @change="planner.setHabitFrequency(habit.id, habit.frequency.count, ($event.target as HTMLSelectElement).value as HabitPeriod)"
+            >
+              <option value="day">per day</option>
+              <option value="week">per week</option>
+              <option value="month">per month</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`habit-minutes-${habit.id}`">Minutes each</label>
+            <input
+              :id="`habit-minutes-${habit.id}`"
+              class="timely-input"
+              type="number"
+              min="0"
+              :value="habit.minutesPerOccurrence ?? ''"
+              @input="planner.updateHabit(habit.id, { minutesPerOccurrence: minutesFrom(($event.target as HTMLInputElement).value) })"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" :for="`habit-activity-${habit.id}`">Linked activity</label>
+          <select
+            :id="`habit-activity-${habit.id}`"
+            class="timely-select"
+            :value="habit.activityId ?? ''"
+            @change="planner.setHabitActivity(habit.id, ($event.target as HTMLSelectElement).value || null)"
+          >
+            <option value="">None</option>
+            <optgroup v-for="group in activityGroups(habit)" :key="group.category.id" :label="group.category.name">
+              <option v-for="activity in group.activities" :key="activity.id" :value="activity.id">{{ activity.name }}</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div v-if="confirmRemoveId === habit.id" class="inline-confirm" role="group" aria-label="Confirm remove habit">
+          <p class="inline-confirm-text">Remove {{ habit.name }}? This cannot be undone.</p>
+          <div class="form-actions">
+            <button type="button" class="btn btn-sm btn-danger" @click="removeHabit(habit.id)">Remove</button>
+            <button type="button" class="btn btn-sm" @click="confirmRemoveId = null">Cancel</button>
+          </div>
+        </div>
+        <div v-else class="form-actions">
+          <button type="button" class="btn btn-sm btn-danger" @click="confirmRemoveId = habit.id">Remove habit</button>
+          <button type="button" class="btn btn-sm btn-primary" @click="toggleOpen(habit.id)">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <button v-if="editing" type="button" class="chip-add habit-add" @click="addHabit">+ Add habit</button>
+  </div>
+</template>
 
     <!-- Edit mode: a row per habit; its form opens inline -->
     <template v-else>

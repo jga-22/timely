@@ -210,14 +210,7 @@ function submitAdd() {
       <section v-if="ambition" class="vision" @keydown="onVisionKeydown">
         <div class="vision-head">
           <h2 class="section-title">Vision, {{ horizonText }}</h2>
-          <button
-            v-if="!visionEditing"
-            ref="visionEditButton"
-            type="button"
-            class="btn btn-sm btn-outline"
-            aria-label="Edit ambition"
-            @click="startVisionEdit"
-          >Edit</button>
+          <EditButton v-if="!visionEditing" ref="visionEditButton" label="Edit ambition" @click="startVisionEdit" />
           <button v-else type="button" class="btn btn-sm btn-primary" @click="finishVisionEdit">Done</button>
         </div>
 

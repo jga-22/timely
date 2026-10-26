@@ -87,6 +87,13 @@ export const usePlannerStore = defineStore('planner', {
 
       return true
     },
+    /** Renames a template; a blank name keeps the old one */
+    renameTemplate(templateId: string, name: string) {
+      const template = getTemplateById(this.$state, templateId)
+      const trimmed = name.trim()
+
+      if (template && trimmed) template.name = trimmed
+    },
     setTemplateColor(templateId: string, color: string) {
       const template = getTemplateById(this.$state, templateId)
       if (template) template.color = color

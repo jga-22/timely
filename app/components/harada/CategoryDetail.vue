@@ -165,14 +165,7 @@ function confirmRemove() {
         <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
         {{ category.name }}
       </h3>
-      <button
-        v-if="!editing"
-        ref="editButton"
-        type="button"
-        class="btn btn-sm btn-outline"
-        :aria-label="`Edit ${category.name}`"
-        @click="startEdit"
-      >Edit</button>
+      <EditButton v-if="!editing" ref="editButton" :label="`Edit ${category.name}`" @click="startEdit" />
       <button v-else type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
     </div>
 
@@ -219,7 +212,7 @@ function confirmRemove() {
               <span class="row-name">{{ activity.name }}</span>
               <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
-            <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
+            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
@@ -302,7 +295,7 @@ function confirmRemove() {
               <span class="row-name">{{ activity.name }}</span>
               <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
             </span>
-            <NuxtLink class="row-link" :to="link('planner', { item: activity.id, edit: true })" :aria-label="`Edit ${activity.name} in Planner`">Edit</NuxtLink>
+            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
         <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>

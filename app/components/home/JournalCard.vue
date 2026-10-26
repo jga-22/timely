@@ -89,9 +89,8 @@ onBeforeUnmount(() => {
       <div v-if="!editing" class="journal-view">
         <p v-if="note" class="journal-text">{{ note }}</p>
         <p v-else class="journal-empty">No note for today yet.</p>
-        <button ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">
-          {{ note ? 'Edit' : 'Write today\'s note' }}
-        </button>
+        <EditButton v-if="note" ref="editButton" label="Edit today's note" @click="startEdit" />
+        <button v-else ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">Write today's note</button>
       </div>
 
       <div v-else ref="editor" class="journal-edit" @keydown.esc="finishEdit()">

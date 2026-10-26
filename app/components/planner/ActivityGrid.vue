@@ -523,7 +523,7 @@ onBeforeUnmount(() => {
           <button type="button" class="btn btn-sm btn-primary" @click="pickFromBar">
             {{ selectionHasActivity ? 'Change…' : 'Apply…' }}
           </button>
-          <button type="button" class="btn btn-sm" :disabled="!selectionHasActivity" @click="startEdit">Edit</button>
+          <EditButton label="Edit range" :disabled="!selectionHasActivity" @click="startEdit" />
           <button v-if="selectionHasActivity" type="button" class="btn btn-sm btn-danger" @click="clearSelection">Delete</button>
           <button type="button" class="btn btn-sm btn-ghost" @click="closeAll">Cancel</button>
         </div>

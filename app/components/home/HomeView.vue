@@ -136,11 +136,7 @@ const axisLeft = (hour: number) => `${(hour / 24) * 100}%`
               <NuxtLink class="home-row-cat" :to="link('goals', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
             </div>
             <span class="home-row-hours">{{ row.block.end - row.block.start }} h</span>
-            <NuxtLink
-              class="btn btn-xs btn-outline"
-              :to="link('planner', { item: row.activity.id, edit: true })"
-              :aria-label="`Edit ${row.activity.name}`"
-            >Edit</NuxtLink>
+            <EditButton :to="link('planner', { item: row.activity.id, edit: true })" :label="`Edit ${row.activity.name}`" />
           </li>
         </ol>
         <p v-else class="home-empty">
