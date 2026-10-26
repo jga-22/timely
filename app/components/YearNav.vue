@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Previous and next year of the shared planner year (usePlannerYear); used by Planner and Visualization
+// Previous and next year of the shared planner year (usePlannerYear); used by Planner and Insights
 const { year, shiftYear } = usePlannerYear()
 </script>
 
