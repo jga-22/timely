@@ -193,7 +193,7 @@ The side gutter is 16px at 400px, which meets the minimum.
 | 1280px | `main.css` | `.view` padding |
 | 1024px | `main.css` | `.view` padding |
 | 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Visualization defaults to monthly chart (JS, `window.innerWidth < 768`) |
-| 600px | `HaradaView.vue` (scoped) | Harada grid to two columns; centre cell first, full width |
+| 1100px | `HaradaView.vue` (scoped) | The Harada matrix is shown from here up and hidden (`display: none`) below; the category list is the primary view at every size |
 | 480px | `main.css` | Template delete shows only the glyph; Home: period selector full width, Day rows put the time on its own line |
 | `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
 
@@ -309,19 +309,20 @@ Habit fields are different. Inside habit details, count, period, minutes, and li
 Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Order top to bottom: vision, Harada map, then the category list with its detail (PRD 11.5).
 
 - **Vision** (`section.vision`): `h2.section-title` "Vision, N years" (N from the stored horizon, shown, not editable) and an Edit button (`aria-label` "Edit ambition"). View mode: the statement at 18px 500, line height 1.45. Edit mode: `AutoTextarea` "Ambition statement" that applies at once; Done returns focus to Edit; Escape leaves. Vision edit mode is local to the screen (one field), not in the URL. Opening it ends a category edit, and selecting a category ends it.
-- **Map** (`.harada-grid`, read-only): 3x3 with hairline gaps. The centre (`.harada-centre`) shows "Ambition, N years" and the statement. Eight outer cells are `button.harada-cell` with a colour dot (16px), the order (`.cell-num`, "01" to "08"), the name (`.cell-title`) and "To define" (`.cell-status`, warn). Nothing else: no hints, counts or hours. A missing category leaves an empty placeholder (`.harada-empty`, `--bg-2`, `aria-hidden`). The selected cell has `--bg-4`, a 3px accent bar and `aria-pressed="true"`. Focus: the 2px inset accent ring (section 2.8). Keyboard: Tab between cells; Enter or Space selects; arrow keys move focus and skip the centre and empty slots without wrapping.
+- **Map** (`.harada-grid`, read-only; shown only from 1100px, hidden below): 3x3 with hairline gaps. The centre (`.harada-centre`) shows "Ambition, N years" and the statement. Eight outer cells are `button.harada-cell` with a colour dot (16px), the order (`.cell-num`, "01" to "08"), the name (`.cell-title`) and "To define" (`.cell-status`, warn). Nothing else: no hints, counts or hours. A missing category leaves an empty placeholder (`.harada-empty`, `--bg-2`, `aria-hidden`). The selected cell has `--bg-4`, a 3px accent bar and `aria-pressed="true"`. Focus: the 2px inset accent ring (section 2.8). Keyboard: Tab between cells; Enter or Space selects; arrow keys move focus and skip the centre and empty slots without wrapping.
 - **Categories** (`section.section.browse`): on desktop, the list (300px) sits left and the detail right, separated by a 1px `--rule-2` rule with 32px padding. Phones stack them (section 3.5).
-  - List (`ul.cat-list`, rows `button.cat-row`, min height 44px): colour dot, name (15px 500), counts in 12px ink-3 ("2 activities · 8 habits"), and a quiet "Below target" flag when the linked hours are below the habit target (coverage under 1, the same rule as Home's signal). The selected row has `aria-current="true"` (set from the URL selection only, so on a phone with nothing selected no row is marked), `--bg-4` and a 3px accent bar; its secondary text uses `--ink-2` on the tint. Up and Down arrows move focus between rows.
+  - List (`ul.cat-list`, rows `button.cat-row`, min height 44px): colour dot, name (15px 500), the 1-year target in 12px ink-3 (or "Target to define" in warn), and a quiet "Below target" flag when the linked hours are below the habit target (coverage under 1, the same rule as Home's signal). The selected row has `aria-current="true"` (set from the URL selection only, so on a phone with nothing selected no row is marked), `--bg-4` and a 3px accent bar; its secondary text uses `--ink-2` on the tint. Up and Down arrows move focus between rows.
   - Note under the list above eight categories (13px ink-3): "Only the first 8 categories appear on the Harada map. The others work everywhere else." (FR-GOALS-21).
   - "+ Add category" (`.chip-add`) reveals a form (progressive disclosure, FR-GOALS-19): name (`.timely-input`, "Name can't be empty" as `.field-error` when submitted blank), colour (inline palette `.color-pop-inline`), primary "Add category" and "Cancel"; Enter submits; Escape closes. The new category opens selected in edit mode with its name focused.
 - Empty state (no categories): "No goals yet. Start from the starter grid and adapt it." with "Load starter grid" (`.btn-primary`, FR-GOALS-10). The vision still shows above it.
-- Phones (768px and below): the vision and the map stack above the list. When a category is selected the vision, map and list are hidden and the detail shows full width with "Back to list" (`.detail-back`, FR-UX-8); Back restores the scroll position and focuses the row. The map is two columns at 600px and below, with the centre first and full width.
+- Phones (768px and below): the vision and the map stack above the list. When a category is selected the vision, map and list are hidden and the detail shows full width with "Back to categories" (`.detail-back`, FR-UX-8); Back restores the scroll position and focuses the row. The map is hidden on phones and tablets.
+- Closing (desktop and phones): the Close button (`.detail-back`, end of the detail head on desktop) and Escape clear the selection (`item` and `edit` leave the URL) and return to the list. Escape in edit mode first leaves edit mode, then closes. With nothing selected, desktop shows a placeholder beside the list; phones show the list alone.
 
 ### 4.10 Category detail and habit rows (`CategoryDetail.vue`, `HabitList.vue`, scoped)
 
 `HaradaCategoryDetail` (FR-GOALS-16 to 18; FR-GOALS-20 is not built). Keyed by the category, so its drafts reset on change.
 
-- Head: `h3.detail-name` (dot and name, 18px 600) and Edit (`.btn-sm.btn-outline`, `aria-label` "Edit {name}") or Done (`.btn-primary`). Done returns focus to Edit. Escape closes a removal confirmation first, otherwise leaves edit mode.
+- Head: `h3.detail-name` (dot and name, 18px 600) and Edit (`.btn-sm.btn-outline`, `aria-label` "Edit {name}") or Done (`.btn-primary`). Done returns focus to Edit. Escape closes a removal confirmation first, otherwise leaves edit mode. Close (`.btn-sm`, "Close" on desktop, "Back to categories" on phones) clears the selection.
 - View mode:
   - "5-year goal" and "1-year target" (`.detail-text`, "Not written yet." in ink-3). The "To define" flag (warn) sits above the target text when the target is flagged.
   - "Goals vs. planned" (`.detail-goal`): a caption "Hours a week in {template}, through this category's habits.", the track (`.goal-track`, `.goal-fill`, `.goal-target` tick) drawn on the largest value across all categories (the Visualization scale), figures in `.goal-figures` ("X h of Y h a week", or "X h a week scheduled" without a target), the quiet total ("Z h scheduled in total") and flags ("No target yet", "No time planned", "N habits not linked to an activity"). The same computation as Visualization (`categoryAlignments`).
@@ -340,7 +341,7 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Ord
 
 Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
-Page: "Where your time goes". Toolbar, then sections in this order: the year metrics, goals vs. planned overview, week by week, year by category.
+Page: "Where your time goes". Year control only, then sections in this order: The year (two headline numbers and the category bar with its rows), goals vs. planned overview, Key insights (horizon, the top projection line, then the week by week chart).
 
 **Goals vs. planned time** (overview for all categories, FR-VIZ-6; the primary view is the Goals detail). Each name links to its category in Goals. Section lede explains the tick and the quiet line. Each row (`.goal-row`) is a grid: name (minmax 140 to 220px), track (fluid), figures (auto). Row divider `--rule-2`, first row no divider.
 
@@ -365,7 +366,7 @@ Page: "Where your time goes". Toolbar, then sections in this order: the year met
 - Current-week marker: a 3px accent bar 5px above the current bar (monthly: current month).
 - Legend: dot, name, `N h/wk` (average per week of the selected year).
 - Unassigned weeks have no applied template. They use the active template and draw at 45% opacity; a note under the legend names that template (FR-VIZ-3).
-- Year by category (closed disclosure, FR-VIZ-4): rows (`.total-row`) with dot, name (a link to Goals), planned hours in the year and a percentage of planned hours. Percentages use largest remainder, so they add up to 100.
+- Year by category (FR-VIZ-4, now in The year, not in a disclosure): a stacked bar of planned hours (segments in the planned fill, 5.2) with rows below (`.total-row`) with dot, name (a link to Goals), planned hours in the year and a percentage of planned hours. Percentages use largest remainder, so they add up to 100.
 
 ### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `main.css`)
 
@@ -430,12 +431,11 @@ Read-only except the period selector and the journal card (FR-HOME-1). The journ
 
 - Page header: "Home", a one-line lede, and `p.page-meta` with the header line: date, ISO week and templates ("Sunday 25 October 2026 · Week 43 · Standard Week"; Month lists each template with its days, "October 2026 · Standard Week 31 d"). A `p.section-lede.home-note` names the active template when the current week has no template of its own. Date output is null until mounted (FR-DATE-6).
 - Period selector (`.segmented` in `.home-toolbar`, group "Period"): Day, Week, Month as buttons with `aria-pressed`. Left, Right, Up and Down move the selection and focus with wrap-around; Home and End go to the first and last. The choice is session state, so it survives a tab switch and resets on reload. Default Day.
-- Totals (`.metrics`, three metrics): planned, unplanned and hours in the period (FR-HOME-7). Values are whole hours.
-- Time per category: `.home-bar` is one 12px stacked bar (radius 3px, `--bg-3` track). Categories use the softened colour from Visualization (`color-mix` 80%); Unplanned is the last segment in `--bg-3`. The bar is `role="img"` with an aria-label that lists every segment. `.home-legend` is a grid of `.total-row`s (two columns from about 740px, one on phones): dot, name (a link to Goals; Unplanned is plain text), hours and percent. Percents are largest remainder, so they add up to 100 with Unplanned.
+- Order (UX slice 8): the activities of the period first (the list below), the timeline directly under it, then the journal card. The totals row, the time-per-category bar and legend, and the below-target line are removed.
+- Timeline (`.home-timeline`): a 12px bar of coloured segments only, no text inside. Day: 24 segments, one per hour, in order. Week and Month: one segment per activity, proportional to its hours (largest first), then Unplanned. Unplanned time is `--cell-empty` with a `--cell-line` outline (section 5). Each segment has a title and an aria-label such as "Deep Work, 12 h, 20%"; the group is labelled "Hours today by activity" (or this week, this month).
 - Day list: `.home-rows` with `.home-row.is-block` rows: time range (`.home-row-time`, 12AM style), name with its colour dot (`.home-row-name`), category link (`.home-row-cat`), hours and Edit. The block that holds the current hour has `.is-now` (3px accent bar on the left) and a `.home-now` tag. Empty day: `.home-empty` with a link to Planner.
 - Week and Month list: `.home-row` rows sorted by hours, largest first: name, category link, hours, percent of the period and Edit. Empty period: `.home-empty` with a link to Planner. No activities at all: "No activities yet." with a link to Planner.
 - Edit (`.btn.btn-xs.btn-outline`, a link named "Edit {activity}") opens Planner with the activity in edit mode. Category links open Goals with the category selected.
-- Below target (`.home-signal`): one line, "2 categories are below their habit target: Physical, Cognitive.", each name linked to Goals. Hidden when none is below. It matches the Goals "Below target" flag.
 - Phones: see 3.5. Blocks wrap; Edit stays at the row end.
 
 ### 4.17 Activities under the week (`PlannerView.vue`, `.acts`, `.act-*` in `main.css`)
