@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, categoryAlignments, countLabel } from '~/utils/planner'
+import { DESIGN_COLORS, categoryAlignments } from '~/utils/planner'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
 const MAP_SIZE = 8
@@ -27,10 +27,9 @@ const isMapCategory = (position: number) => {
   return typeof cell === 'object' && cell !== null
 }
 
-// The category named in the URL; an id that does not exist selects nothing (FR-UX-5)
+// The category named in the URL; an id that does not exist selects nothing (FR-UX-5).
+// Nothing selected shows the list alone on phones and a placeholder beside it on desktop; Close returns to that state
 const selected = computed<Category | null>(() => sortedCategories.value.find(category => category.id === item.value) ?? null)
-// Desktop shows the first category until another is chosen (FR-GOALS-15); phones show the list until one is selected
-const shown = computed<Category | null>(() => selected.value ?? sortedCategories.value[0] ?? null)
 const editing = computed(() => !!selected.value && edit.value)
 
 const horizonYears = computed(() => ambition.value?.horizonYears ?? 5)
@@ -44,12 +43,10 @@ const isBelowTarget = (categoryId: string) => {
   return coverage !== null && coverage < 1
 }
 
-const countsText = (categoryId: string) => {
-  const activityCount = planner.activities.filter(activity => activity.categoryId === categoryId).length
-  const habitCount = planner.habits.filter(habit => habit.categoryId === categoryId).length
-
-  return `${countLabel(activityCount, 'activity', 'activities')} · ${countLabel(habitCount, 'habit', 'habits')}`
-}
+// Short line under each name in the list: the 1-year target, or that it is still to be defined
+const targetLine = (category: Category) => category.targetTbd
+  ? { text: 'Target to define', warn: true }
+  : { text: category.target1y || 'No target written yet', warn: false }
 
 // ── Vision: the only place the ambition is edited (FR-GOALS-13). Edit mode is local: one field, one edit at a time
 const visionEditing = ref(false)
@@ -100,6 +97,18 @@ function backToList() {
     document.querySelector<HTMLElement>(`[data-category-id="${lastOpened}"]`)?.focus({ preventScroll: true })
   })))
 }
+
+// Escape closes the open category. Inside a field, the vision editor, the add form or edit mode it belongs to them
+// (edit mode: Escape leaves edit mode first, see CategoryDetail)
+function onWindowKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !selected.value || editing.value || visionEditing.value || addOpen.value) return
+  if ((event.target as HTMLElement | null)?.closest('input, textarea, select')) return
+
+  backToList()
+}
+
+onMounted(() => window.addEventListener('keydown', onWindowKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onWindowKeydown))
 
 // Arrow keys move between map cells; Enter and Space (native buttons) select
 function onMapKeydown(event: KeyboardEvent, position: number) {
@@ -209,7 +218,7 @@ function submitAdd() {
       </section>
 
       <!-- Harada map: read-only, the ambition in the centre; a cell selects its category -->
-      <section v-if="categories.length" class="section">
+      <section v-if="categories.length" class="section harada-map">
         <div class="section-head">
           <h2 class="section-title">Life areas</h2>
           <p class="section-lede">Select an area to open it below. The map shows the first eight by order.</p>
@@ -226,7 +235,7 @@ function submitAdd() {
               v-else-if="cell"
               type="button"
               class="harada-cell"
-              :class="{ 'is-active': shown?.id === cell.id }"
+              :class="{ 'is-active': selected?.id === cell.id }"
               :aria-pressed="selected?.id === cell.id"
               :data-map-position="position"
               @click="openCategory(cell.id)"
@@ -271,7 +280,7 @@ function submitAdd() {
               <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
               <span class="cat-main">
                 <span class="cat-row-name">{{ category.name }}</span>
-                <span class="cat-meta">{{ countsText(category.id) }}</span>
+                <span class="cat-meta" :class="{ 'is-warn': targetLine(category).warn }">{{ targetLine(category).text }}</span>
               </span>
               <span v-if="isBelowTarget(category.id)" class="cat-flag">Below target</span>
             </button>
@@ -326,12 +335,13 @@ function submitAdd() {
 
       <div class="browse-detail">
         <HaradaCategoryDetail
-          v-if="shown"
-          :key="shown.id"
-          :category-id="shown.id"
+          v-if="selected"
+          :key="selected.id"
+          :category-id="selected.id"
           :editing="editing"
           @back="backToList"
         />
+        <p v-else class="browse-placeholder">Select a category to see its goals, habits and planned time.</p>
       </div>
     </section>
   </div>
@@ -369,7 +379,13 @@ function submitAdd() {
   max-width: 720px;
 }
 
-/* 3x3 map separated by hairlines, as in the prototype; read-only */
+/* 3x3 map separated by hairlines, as in the prototype; read-only. Large screens only: hidden, not squeezed, below 1100px */
+.harada-map { display: none; }
+
+@media (min-width: 1100px) {
+  .harada-map { display: block; }
+}
+
 .harada-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -529,6 +545,22 @@ button.harada-cell:focus-visible {
   color: var(--ink-3);
 }
 
+.cat-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-meta.is-warn {
+  color: var(--warn);
+}
+
+.browse-placeholder {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--ink-3);
+}
+
 .cat-flag {
   flex: none;
   white-space: nowrap;
@@ -575,30 +607,5 @@ button.harada-cell:focus-visible {
     display: none;
   }
 
-  /* With nothing selected on a phone, no row or cell shows a selected tint */
-  .harada-view[data-selected="false"] .cat-row[aria-current="true"] {
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .harada-view[data-selected="false"] .harada-cell.is-active {
-    background: var(--bg);
-  }
-
-  .harada-view[data-selected="false"] .harada-cell.is-active::before {
-    display: none;
-  }
-}
-
-@media (max-width: 600px) {
-  .harada-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .harada-centre {
-    order: -1;
-    grid-column: 1 / -1;
-    min-height: 100px;
-  }
 }
 </style>
