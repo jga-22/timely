@@ -22,7 +22,7 @@ const share = (minutes: number) => (scale.value > 0 ? `${(minutes / scale.value)
 const plannedColor = computed(() => (props.color ? fill(props.color) : 'var(--accent)'))
 
 const text = computed(() => {
-  if (status.value === 'none') return 'No time target yet'
+  if (status.value === 'none') return props.plannedMinutes > 0 ? `${hoursLabel(props.plannedMinutes)} planned, no target yet` : 'No time target yet'
   if (status.value === 'under') return `Needs ${hoursLabel(props.neededMinutes - props.plannedMinutes)} more`
   if (status.value === 'over') return `${hoursLabel(props.plannedMinutes - props.neededMinutes)} over`
 
