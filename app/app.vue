@@ -148,6 +148,7 @@ const toggleDark = () => {
     <!-- Hidden on the legal pages only: the state is kept, so Welcome or the tour shows again on Home -->
     <ClientOnly>
       <OnboardingFlow v-if="!legalPage" />
+      <OnboardingIntro v-if="!legalPage" />
       <OnboardingTour v-if="!legalPage" />
       <AccountResetDataDialog v-if="resetOpen" @close="resetOpen = false" />
     </ClientOnly>

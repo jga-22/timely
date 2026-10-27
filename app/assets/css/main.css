@@ -448,6 +448,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin-top: var(--space-2);
 }
 .onb-tour-nav { display: flex; gap: var(--space-2); margin-left: auto; }
+.onb-tour-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 
 @media (max-width: 768px) {
   /* Touch targets: 44px buttons and links in both the dialog and the tour card */
@@ -458,6 +459,99 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .onb-chips .chip { padding: 0 var(--space-3); }
   .onb-dialog { padding: var(--space-5); }
   .onb-tour { bottom: max(var(--space-3), env(safe-area-inset-bottom)); max-height: min(36vh, 300px); }
+}
+
+/* Intro (FR-ONB-9): five scenes in one SVG, crossfading. Each scene is drawn in its final state; its animations run only while
+   it is the active scene, and pause with the stage. Reduced motion switches them off, so every scene shows whole. */
+.onb-intro { max-width: 640px; }
+.onb-intro-stage {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.onb-intro-stage svg { display: block; width: 100%; height: 100%; }
+.onb-intro-scene { opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s; }
+.onb-intro-scene[data-active="true"] { opacity: 1; visibility: visible; }
+.onb-intro-stage[data-paused="true"] * { animation-play-state: paused; }
+.onb-intro-scene[data-active="true"] .onb-intro-fade { animation: onb-intro-fade 0.6s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-rise { animation: onb-intro-rise 0.6s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-slide { animation: onb-intro-slide 0.6s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-pop { animation: onb-intro-pop 0.5s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-grow-x { animation: onb-intro-grow-x 1.6s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-grow-y { animation: onb-intro-grow-y 0.6s ease var(--d, 0s) both; }
+.onb-intro-scene[data-active="true"] .onb-intro-draw { animation: onb-intro-draw 0.8s ease var(--d, 0s) both; }
+.onb-intro-pop { transform-box: fill-box; transform-origin: center; }
+.onb-intro-grow-x { transform-box: fill-box; transform-origin: left center; }
+.onb-intro-grow-y { transform-box: fill-box; transform-origin: center bottom; }
+.onb-intro-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+@keyframes onb-intro-fade { from { opacity: 0; } }
+@keyframes onb-intro-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes onb-intro-slide { from { opacity: 0; transform: translateX(28px); } }
+@keyframes onb-intro-pop { from { opacity: 0; transform: scale(0.3); } }
+@keyframes onb-intro-grow-x { from { transform: scaleX(0); } }
+@keyframes onb-intro-grow-y { from { transform: scaleY(0); } }
+@keyframes onb-intro-draw { from { stroke-dashoffset: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .onb-intro-scene,
+  .onb-intro-scene * { animation: none !important; transition: none !important; }
+}
+
+/* Scene colours: tokens only; planned fills are set as attributes from the palette rule */
+.onb-intro-svg-cell { fill: var(--bg); stroke: var(--control-border); stroke-width: 1.5; }
+.onb-intro-svg-track { fill: var(--bg-4); stroke: var(--control-border); stroke-width: 1.5; }
+.onb-intro-svg-week { fill: var(--cell-empty); stroke: var(--rule); stroke-width: 1; }
+.onb-intro-svg-accent { fill: var(--accent); }
+.onb-intro-svg-ok { fill: var(--ok); }
+.onb-intro-svg-label { fill: var(--ink); font-family: var(--font-ui); font-weight: 500; }
+.onb-intro-svg-muted { fill: var(--ink-3); font-family: var(--font-ui); }
+.onb-intro-svg-on-accent { fill: var(--on-accent); font-family: var(--font-ui); font-weight: 600; }
+.onb-intro-svg-link { fill: none; stroke: var(--control-border); stroke-width: 1.5; }
+.onb-intro-svg-check { fill: none; stroke: var(--bg); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+.onb-intro-caption {
+  min-height: 3em;
+  margin: var(--space-4) 0 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.onb-intro-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+.onb-intro-segment { display: flex; align-items: center; height: 24px; }
+.onb-intro-bar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--rule);
+}
+.onb-intro-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: calc(var(--fill, 0) * 100%);
+  background: var(--accent);
+}
+.onb-intro-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  /* Touch targets: the scene segments and the controls are 44px high */
+  .onb-intro-segment { height: 44px; }
+  .onb-intro-controls .btn { height: 44px; }
 }
 
 /* ── View and page header ── */

@@ -4,7 +4,7 @@ import { firstCategory } from '~/utils/onboarding'
 
 /** Guided tour (FR-ONB-6): a compact card at the bottom of the screen. It never blocks the page and can be skipped at any step */
 const planner = usePlannerStore()
-const { phase, step, next, back, close } = useOnboarding()
+const { phase, step, next, back, close, openIntro } = useOnboarding()
 const heading = ref<HTMLElement | null>(null)
 
 const category = computed(() => firstCategory(planner.$state))
@@ -74,7 +74,10 @@ watch([phase, step], ([value]) => {
     <h2 id="onb-tour-title" ref="heading" class="onb-tour-title" tabindex="-1">{{ current.title }}</h2>
     <p id="onb-tour-body" class="onb-tour-body">{{ current.body }}</p>
     <div class="onb-tour-actions">
-      <button type="button" class="btn btn-sm" @click="close">Skip tour</button>
+      <div class="onb-tour-start">
+        <button type="button" class="btn btn-sm" @click="close">Skip tour</button>
+        <button v-if="isLast" type="button" class="btn btn-sm" @click="openIntro('tour')">Watch the intro again</button>
+      </div>
       <div class="onb-tour-nav">
         <button type="button" class="btn btn-sm" :disabled="step === 0" @click="back">Back</button>
         <button type="button" class="btn btn-sm btn-primary" @click="next">{{ isLast ? 'Done' : 'Next' }}</button>

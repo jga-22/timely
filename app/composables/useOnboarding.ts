@@ -3,7 +3,7 @@ import { localDateKey, isoWeekOf } from '~/utils/dates'
 import { createInitialState } from '~/utils/planner'
 import { buildOnboardingState, firstCategory, type OnboardingAnswers } from '~/utils/onboarding'
 
-export type OnboardingPhase = 'closed' | 'welcome' | 'form' | 'tour'
+export type OnboardingPhase = 'closed' | 'welcome' | 'intro' | 'form' | 'tour'
 
 /** Steps 0 to 4: Goals, Planner, Insights, Home, What next. The last one stays on the current screen */
 export const TOUR_STEP_COUNT = 5
@@ -19,6 +19,8 @@ export const useOnboarding = () => {
 
   const phase = useState<OnboardingPhase>('onboarding-phase', () => 'closed')
   const step = useState<number>('onboarding-step', () => 0)
+  /** Where the intro was opened from: after Welcome it leads to the form, from the tour it returns to the tour */
+  const introFrom = useState<'welcome' | 'tour'>('onboarding-intro-from', () => 'welcome')
 
   /** Where each tour step shows its subject, built from the first life area and its activity */
   const stepTarget = (index: number): { tab: TabId, target?: NavTarget } | null => {
@@ -43,6 +45,17 @@ export const useOnboarding = () => {
 
   const openWelcome = () => {
     phase.value = 'welcome'
+  }
+
+  const openIntro = (from: 'welcome' | 'tour') => {
+    introFrom.value = from
+    phase.value = 'intro'
+  }
+
+  /** Leaves the intro: to the form after Welcome, back to the tour when it was opened from there */
+  const finishIntro = () => {
+    if (introFrom.value === 'tour') phase.value = 'tour'
+    else openForm()
   }
 
   const openForm = () => {
@@ -87,5 +100,5 @@ export const useOnboarding = () => {
     startTour()
   }
 
-  return { phase, step, openWelcome, openForm, close, startTour, next, back, startEmpty, useSampleData, build }
+  return { phase, step, openWelcome, openIntro, finishIntro, openForm, close, startTour, next, back, startEmpty, useSampleData, build }
 }
