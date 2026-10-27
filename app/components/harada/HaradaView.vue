@@ -452,6 +452,7 @@ button.harada-cell:focus-visible {
   font-size: var(--fs-md);
   font-weight: 600;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .harada-centre .cell-title {

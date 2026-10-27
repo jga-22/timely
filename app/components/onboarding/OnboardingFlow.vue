@@ -67,6 +67,14 @@ const submitAmbition = () => {
   else openGoals()
 }
 
+/** Enter is Next: the ambition is one paragraph, so Enter never adds a line (IME composition keeps its Enter) */
+const onAmbitionKey = (event: KeyboardEvent) => {
+  if (event.key !== 'Enter' || event.isComposing) return
+
+  event.preventDefault()
+  submitAmbition()
+}
+
 const submitGoals = () => {
   goals.value.forEach((goal, index) => {
     goal.error.area = !goal.categoryId
@@ -124,17 +132,16 @@ const removeGoal = () => {
         <p class="onb-lede">Where do you want to be in 5 years? Everything else in Timely serves this.</p>
 
         <div class="field">
-          <label class="field-label" for="onb-ambition">Your ambition</label>
-          <input
-            id="onb-ambition"
-            v-model="ambition"
-            class="timely-input"
-            type="text"
+          <AutoTextarea
+            :model-value="ambition"
+            label="Your ambition"
             placeholder="For example, be a present father and run a half marathon"
             data-autofocus
             :aria-invalid="ambitionError ? 'true' : undefined"
             :aria-describedby="ambitionError ? 'onb-ambition-error' : undefined"
-          >
+            @update:model-value="ambition = $event.replace(/\s*\n\s*/g, ' ')"
+            @keydown="onAmbitionKey"
+          />
           <p v-if="ambitionError" id="onb-ambition-error" class="field-error" role="alert">{{ ambitionError }}</p>
         </div>
 
