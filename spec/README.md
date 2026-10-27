@@ -14,17 +14,17 @@ This folder holds the product and design specification for Timely. The code is t
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 | `database/` | Draft design for storing the data in PostgreSQL or Supabase instead of localStorage (not built): data model, `schema.sql`, ERD (draw.io and Mermaid) and the effort evaluation. | Read before any storage change. The app does not depend on it yet; the storage decision is pending with the owner. |
 
-Screenshots in `screens/` (regenerated on 26 October 2026 from the production build of `feat/ux-polish`, clean seed, no test paint):
+Screenshots in `screens/` (regenerated on 27 October 2026 from the production build of `feat/polish-v3`, generic sample data, no test paint):
 
 | File | Size | Notes |
 | --- | --- | --- |
 | `home-desktop-light.png` | 1280 px wide | Today, light: title and date, the hour timeline with 9h, 12h, 18h and 22h, the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light: legend, vision, Harada map with attention outlines, list with attention rows, first category detail |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, the Harada map, the category list with the needed-and-planned bar and status text under each target |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the legend, full page |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, needed and allocated bars, verdict "On track" |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the bars, full page |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, the needed-and-planned bar with "2 h planned of 1.5 h needed", and the quiet "Not linked" habit |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
@@ -34,7 +34,7 @@ Screenshots in `screens/` (regenerated on 26 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 
-Onboarding screens (feat/onboarding-flow-v2, 27 October 2026, local storage, a fresh user):
+Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
 
 | File | Size | Notes |
 | --- | --- | --- |
@@ -45,9 +45,9 @@ Onboarding screens (feat/onboarding-flow-v2, 27 October 2026, local storage, a f
 | `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Step 3 of 5 on Planner: "Timely placed 3 h for Physical" and the week the build placed |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
-| `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: the product line and the Google card on the left, the intro player (scene 1 of 5, looping) on the right, the consent line and the footer |
+| `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the product line and headline, the intro player (scene 1 of 5, looping, frameless), the Google sign-in block, the consent line and the footer |
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in page, dark, the same layout |
-| `login-gate-mobile-light.png` | 400 px wide | Sign-in page, light, one column: the copy, the card, the consent line, then the intro player below |
+| `login-gate-mobile-light.png` | 400 px wide | Sign-in page, light, one column: the copy, the intro player, the sign-in button, the consent line |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in page, dark, one column |
 | `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Ambition: the caption band at the top, the ambition in the centre of the grid and the life areas around it (stage only) |
 | `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
@@ -62,10 +62,10 @@ Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with loca
 | --- | --- | --- |
 | `legal-privacy-desktop-light.png` | 1280 px wide | Privacy Policy: title, "Last updated", the short summary, the reading column, the footer |
 | `legal-terms-mobile-dark.png` | 400 px wide, dark | Terms of Use at phone width in dark mode, full page |
-| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in page with the consent line under the card (the current page, as in `login-gate-desktop-light.png`) |
+| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in page with the consent line under the sign-in button (the current page, as in `login-gate-desktop-light.png`) |
 | `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in page at phone width in dark mode, with the consent line and the intro player below |
 
-`goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
+Onboarding and sign-in screens use the names above; the Goals and Planner screens are regenerated on the same date with the generic seed.
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
 
