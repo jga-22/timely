@@ -244,38 +244,31 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .account-email { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
 
-/* Sign-in page (LoginGate.vue, Supabase mode, signed out): the copy and the card on the left, the intro player on the right from 900px.
-   On phones one column: copy, card, consent line, then the player. No helper prose beyond the one sentence */
+/* Sign-in page (LoginGate.vue, Supabase mode, signed out): one centred column, 640px at most, full width minus the gutters on phones.
+   Order: the mark and headline, the intro (frameless, on the page surface), the sign-in block, the consent line. No card frame */
 .login-gate {
-  display: grid;
-  align-items: center;
-  gap: var(--space-6);
+  display: flex;
+  justify-content: center;
   width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
   padding: var(--space-6) var(--space-4) var(--space-5);
 }
 @media (min-width: 900px) {
-  .login-gate {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: var(--space-7);
-    padding: var(--space-7) 40px var(--space-6);
-  }
+  .login-gate { padding: var(--space-7) 40px var(--space-6); }
 }
 .login-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   width: 100%;
-  max-width: 380px;
+  max-width: 640px;
   margin: 0 auto;
 }
-@media (min-width: 900px) { .login-main { margin: 0; } }
-.login-intro { display: flex; flex-direction: column; gap: var(--space-3); }
+.login-intro { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
 .login-mark { margin: 0; font-size: var(--fs-sm); font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
 .login-heading { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 600; line-height: 1.2; color: var(--ink); }
-.login-lede { margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
+.login-lede { max-width: 520px; margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
 .login-showcase { min-width: 0; }
+.login-action-block { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
 .login-consent {
   width: 100%;
   margin: 0;
@@ -284,20 +277,13 @@ a { color: var(--accent); text-underline-offset: 3px; }
   color: var(--ink-3);
   text-align: center;
 }
-.login-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-  margin: 0;
-  padding: var(--space-6);
-  background: var(--bg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.login-title { margin: 0; font-size: var(--fs-lg); font-weight: 600; color: var(--ink); }
-.login-action { align-self: flex-start; }
+.login-title { margin: 0; font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+.login-action { min-width: 240px; }
+
+/* The intro on the sign-in page (IntroPlayer `quiet`): no frame, a hairline tone on the page surface, text controls, the thin progress line */
+.is-quiet .onb-intro-stage { border: 0; border-radius: 8px; }
+.is-quiet .onb-intro-progress { margin-top: var(--space-3); }
+.is-quiet .onb-intro-controls { justify-content: center; gap: var(--space-4); margin-top: var(--space-2); }
 
 /* Links in running text (consent line, legal pages). Footer links are quieter */
 .legal-link {
@@ -611,6 +597,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
   .btn.login-action { height: 44px; }
+  .is-quiet .onb-intro-controls .onb-link { height: 44px; }
 }
 
 /* ── View and page header ── */
@@ -1137,7 +1124,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .wk-block-name {
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   padding-right: 24px;
   font-weight: 600;
@@ -1339,12 +1325,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .wk-menu-item:hover,
 .wk-menu-item:focus-visible { background: var(--bg-3); }
 .wk-menu-item.is-clear { color: var(--ink-2); }
+/* The menu keeps the full activity name: it wraps rather than being cut off */
 .wk-menu-name {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .wk-menu-hrs {
   font-size: var(--fs-xs);

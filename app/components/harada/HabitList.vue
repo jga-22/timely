@@ -88,7 +88,7 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
         <div class="habit-summary-text">
           <span class="habit-name">{{ habit.name }}</span>
           <span class="habit-meta">{{ frequencyText(habit) }}</span>
-          <span class="habit-meta" :class="{ 'is-warn': !linkedActivity(habit) }">{{ linkedLabel(habit) }}</span>
+          <span class="habit-meta" :class="{ 'is-unlinked': !linkedActivity(habit) }">{{ linkedLabel(habit) }}</span>
         </div>
         <EditButton :label="`Edit habit ${habit.name}`" :expanded="openId === habit.id" @click="toggleOpen(habit.id)" />
       </div>
@@ -213,9 +213,10 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
   font-variant-numeric: tabular-nums;
 }
 
-.habit-meta.is-warn,
-.habit-unlinked {
-  color: var(--warn);
+/* Not linked is not a problem, so it is quiet: smaller, muted, no badge and not bold. The linked line carries the information */
+.habit-meta.is-unlinked {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
 }
 
 .habit-link {
