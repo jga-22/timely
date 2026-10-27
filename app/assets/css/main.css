@@ -367,6 +367,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .onb-dialog {
   width: 100%;
+  margin: auto;
   max-width: 460px;
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
@@ -519,7 +520,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 @keyframes onb-intro-grow-x { from { transform: scaleX(0); } }
 @keyframes onb-intro-grow-y { from { transform: scaleY(0); } }
 @keyframes onb-intro-draw { from { stroke-dashoffset: 1; } }
-@keyframes onb-intro-caption { from { opacity: 0; transform: translateY(-10px); } }
+@keyframes onb-intro-caption { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .onb-intro-scene,
   .onb-intro-scene *,
@@ -548,9 +549,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28%;
+  min-height: 28%;
   margin: 0;
-  padding: 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
   background: var(--bg);
   border-bottom: 1px solid var(--rule);
   font-size: clamp(0.875rem, 2.4vw, 1.3rem);
@@ -597,6 +598,13 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .onb-intro-controls .btn { height: 44px; }
   .btn.login-action { height: 44px; }
   .is-quiet .onb-intro-controls .onb-link { height: 44px; }
+}
+
+/* Phones: less padding in the dialog, and a caption size that keeps the first caption to two lines in its band. The band grows
+   when a caption needs a third line, and it never moves above the stage, so no text is clipped */
+@media (max-width: 480px) {
+  .onb-dialog { padding: var(--space-4); }
+  .onb-intro-caption { font-size: 0.8125rem; }
 }
 
 /* ── View and page header ── */
