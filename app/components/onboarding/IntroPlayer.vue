@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
       </svg>
     </div>
 
-    <p id="onb-intro-caption" class="sr-only" aria-live="polite">{{ current.caption }}</p>
+    <p id="onb-intro-caption" class="sr-only" :aria-live="loop ? 'off' : 'polite'">{{ current.caption }}</p>
 
     <div class="onb-intro-progress" role="group" aria-label="Scenes">
       <button
