@@ -105,6 +105,7 @@ Goal: Home and Visualization can know what "today", "this week" and "the year" a
 
 | Date | Event |
 | --- | --- |
+| 2026-10-27 | First-run onboarding (`feat/onboarding`, FR-ONB-1 to 8, PRD 9.13): Welcome for a new user, a five-question form that builds one life area, habit, activity and week, a skippable five-step tour with the owner's data, and a Tour button in the topbar. Storage version unchanged (8); `onboarding` is an optional field. Checks: `npx nuxi typecheck` 0 errors; `npm run build` clean; tsx checks of the build function for 1 to 7 times a week and 1 to 3 hours (21 cases, all `ok` and valid); headless Edge run of 44 checks on the production build, 0 failed; screenshots in `spec/screens/onboarding-*`. Open: the hydration warning now shows on every returning save; no focus trap in the dialog; Supabase first run not run against a real project. |
 | 2026-10-25 | Plan written from PRD v3. |
 | 2026-10-25 | Slice 0 (date foundation) done in one commit. FR-DATE-1 to 5 done; FR-DATE-6 partial until the Home placeholder (slice 4). |
 | 2026-10-25 | Slice 1 done in one commit: Home (placeholder, default), Goals, Planner, Visualization and transitional Configuration; URL state in `useNav`; Insights replaced by Visualization; horizon moved to Visualization. FR-VIZ-1 to 4 Done; FR-VIZ-5 and 6, FR-UX-5, FR-APP-7 and 8 Partial. FR-DATE-6 and FR-APP-6 Done. |

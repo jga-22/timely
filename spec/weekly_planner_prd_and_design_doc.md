@@ -382,6 +382,19 @@ Derived values: 168 hours is one week. The Goals tolerance is the larger of 30 m
 
 Deviation: available time counts the days of whole ISO weeks, not calendar days, because the planned hours of a bar are its ISO weeks. A calendar month would not match them and the free time would be wrong.
 
+### 9.13 First-run onboarding (feat/onboarding)
+
+| ID | Requirement | Status and evidence |
+| --- | --- | --- |
+| FR-ONB-1 | Start: Welcome shows only for a new user: nothing valid was loaded from storage (local: no saved state or a discarded one; Supabase: no row or a discarded row, not a failed load), or a save still marked `onboarding: 'pending'`. A save without the field is never onboarded. | Done: `planner-persistence.client.ts`, `utils/storage/session.ts`, `needsOnboarding` in `utils/onboarding.ts`. Browser: empty storage opens Welcome; the rich seed saved without the field opens with no Welcome (test D). The Supabase branch is code-checked only (no real project run). |
+| FR-ONB-2 | Fresh state: `createOnboardingState()` (no data, one empty hourly template "My week", `onboarding: 'pending'`) is the store default and what a new user starts from. `onboarding` is optional and validated (other values rejected); `PLANNER_STATE_VERSION` is unchanged (8). Sign-out and user switch reset to the empty state without writing; `replaceState` and `$reset` stop a previous user's data or flag from carrying over. | Done: `utils/planner.ts`, `stores/planner.ts`, `utils/storage/bind.ts` (saves `onboarding`). tsx: an old-shaped state is accepted, `onboarding: 'maybe'` is rejected. Browser: Start empty stores `done` with no data and does not return after reload (test B). |
+| FR-ONB-3 | Welcome dialog: one sentence on the idea; Guide me, Start empty (no data, done) and Explore with sample data (the rich seed, done). Focus moves into the dialog; Escape is Start empty. Client only: nothing in the server HTML. | Partial: `components/onboarding/OnboardingFlow.vue`. Browser: focus in the dialog, sample data and Start empty (tests A, B, C), no hydration warning on a fresh load. Gap: no focus trap, so Tab can reach the page behind. Screenshot `spec/screens/onboarding-welcome-desktop-light.png`. |
+| FR-ONB-4 | Form: 5-year ambition (optional), first life area (required; chips from the Harada seed), one habit (required), times a week (1 to 7, default 3), hours each time (1 to 3, default 1). Inline errors with `aria-invalid` and `aria-describedby`; Enter submits; Escape returns to Welcome. | Done: `OnboardingFlow.vue`. Browser: an empty submit shows two errors; Enter submits; Escape returns to Welcome (tests A, E). Screenshot `onboarding-form-desktop-light.png`. |
+| FR-ONB-5 | Build: one life area (order 1, a colour from `DESIGN_COLORS`), one habit (N a week, hours times 60 minutes, linked to the activity), one activity (named after the habit, a 1 to 3 letter code), the template filled with that activity at 6PM on N distinct weekdays, and the template assigned to every ISO week of the planner year. Goals then shows the life area as "On track"; Insights shows bars. | Done: `utils/onboarding.ts` (`buildOnboardingState`), `useOnboarding.build`. tsx: 21 cases (N 1 to 7, hours 1 to 3): slots equal N times hours, N days, status `ok`, `isPlannerState` true. Browser: 53 weeks assigned; Insights has 12 non-empty month bars (test A). |
+| FR-ONB-6 | Tour: five steps (Goals, Planner, Insights, Home, What next) that name the user's life area, habit, activity, days and hours; a compact card at the bottom of the screen that does not block; Back, Next, Done and "Skip tour"; "n of 5"; Escape skips; session only, so a reload closes it. | Done: `OnboardingTour.vue`, `useOnboarding.ts`. Browser: all five steps with their routes and copy (test A), skip from the Tour button (test F), 400 px card inside the viewport with no overflow (test G). Screenshots `onboarding-tour-goals-*` and `onboarding-tour-insights-desktop-light.png`. |
+| FR-ONB-7 | Replay: a "Tour" text button in the topbar, shown when the tabs are shown and storage has loaded. With a life area it opens the tour at step 1; without one it opens Welcome. | Done: `app/app.vue`. Browser: replay with the sample data and with an existing save (tests D, F). |
+| FR-ONB-8 | Accessibility and touch: `role="dialog"` with a name, focus in the panel on open, labels linked to fields, 44px targets at 768 px and below. | Partial: focus, labels and touch sizes checked in the browser; the focus trap gap is in FR-ONB-3. Known issue: a returning save logs "Hydration completed but contains mismatches" (the server renders the empty state; see `.claude/agent.md`, open items). |
+
 ## 10. Non-functional requirements
 
 | Area | Requirement | Status |
@@ -585,7 +598,7 @@ Projection over 5 years
 
 ### First run
 
-1. The seed loads; Home opens.
+1. A new user (nothing saved) sees Welcome over an empty Home. Guide me builds a first life area, habit, activity and week from four short answers and starts a five-step tour with that data; Start empty and Explore with sample data skip it (FR-ONB-1 to 7). An existing save opens as before.
 2. Goals: edit the vision, then each category's goals, target and habits.
 3. Goals detail: "Add activity" for a life area that needs time; Planner opens with the category preset.
 4. Planner: name the activity and paint its hours.
@@ -823,6 +836,7 @@ v2 gaps and where they went: weekday view (Later); week status UI (Q5); grid key
 | --- | --- |
 | 2026-04-15 | Original PRD and design document (v1 plan). |
 | 2026-10-25 | v2: rewritten to describe the built product (Goals, Planner, Insights, Configuration) with requirement IDs and statuses. |
+| 2026-10-27 | First-run onboarding (`feat/onboarding`): Welcome, a short form that builds a first life area, habit, activity and week, and a skippable five-step tour; an optional `onboarding` field in the state (version unchanged, 8). FR-ONB-1 to 8 (section 9.13): 6 Done, 2 Partial (no focus trap; a hydration warning on returning saves). |
 | 2026-10-27 | Storage adapter: optional Supabase snapshot mode with email magic-link sign-in (FR-APP-9 and 10); NFR Local-first and Privacy qualified for the optional mode. |
 | 2026-10-26 | Slice 6 (journal experiment): `journal` map in the state (version 7), Journal card last on Home with the key message and a Readings placeholder. FR-HOME-11 to 13 Done as an experiment; FR-HOME-1 Done. Deviations are listed in each row. Node checks and browser checks passed (see build-plan status log). |
 | 2026-10-26 | Slice 4 (Home): period selector (Day, Week, Month), Day blocks, Week and Month activity rows, time per category, totals, goals signal, empty states. FR-HOME-1 to 10 with evidence (FR-HOME-1 and 10 Partial, 2 to 9 Done); journal items 11 to 13 stay for slice 6. |

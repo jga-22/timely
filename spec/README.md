@@ -34,6 +34,16 @@ Screenshots in `screens/` (regenerated on 26 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 
+Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh user):
+
+| File | Size | Notes |
+| --- | --- | --- |
+| `onboarding-welcome-desktop-light.png` | 1280 px wide | Welcome dialog over the empty Home: the idea, Guide me, Start empty, Explore with sample data |
+| `onboarding-form-desktop-light.png` | 1280 px wide | The first-run form filled in: ambition, the Physical chip, Run, three times a week, one hour |
+| `onboarding-tour-goals-desktop-light.png` | 1280 px wide | Tour step 1 of 5 on Goals: the new life area and its habit, needed against planned hours |
+| `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Tour step 3 of 5 on Insights: the planned-time bars of the new week |
+| `onboarding-tour-goals-mobile-light.png` | 400 px wide | Tour step 1 of 5 on Goals at 400 px: the card at the bottom |
+
 `goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
@@ -54,6 +64,11 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Not built yet: export, import and reset (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### First-run onboarding (2026-10-27, branch `feat/onboarding`)
+
+- A new user (nothing valid saved) sees Welcome over an empty app: Guide me, Start empty or Explore with sample data. Guide me asks four short questions (5-year ambition, first life area, one habit, times a week and hours each time) and builds one life area, habit, activity and week from them, then a five-step tour walks Goals, Planner, Insights and Home with that data. The tour is skippable; a Tour button in the topbar replays it (FR-ONB-1 to 8, PRD 9.13).
+- The saved state gains an optional `onboarding` field; the version stays 8, so existing saves (the owner's included) open as before.
 
 ### Storage adapter (2026-10-27, branch `feat/storage-adapter`)
 
