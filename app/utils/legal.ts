@@ -6,15 +6,15 @@
  */
 export const legal = {
   /** Who runs Timely (an individual, not a company) */
-  operatorName: '[your name]',
+  operatorName: 'Juan Galvis',
   /** Where data requests, deletion requests and complaints go */
-  contactEmail: '[your contact email]',
+  contactEmail: 'js.galvis22@gmail.com',
   /** Country the operator lives in; shown in the Terms */
-  country: '[your country]',
+  country: 'France',
   /** Region of the Supabase project that stores accounts and planner rows */
-  supabaseRegion: '[Supabase project region, e.g. Frankfurt (eu-central-1)]',
+  supabaseRegion: 'Ireland (eu-west-1)',
   /** Law that governs the Terms, and where disputes go */
-  governingLaw: '[the law of your country, and its courts]',
+  governingLaw: 'French law, with the courts of France competent',
   /** ISO date of the last change to either document */
   lastUpdated: '2026-10-27'
 } as const
