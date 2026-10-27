@@ -57,7 +57,7 @@ const onTab = (event: KeyboardEvent) => {
       <h2 id="reset-title" class="onb-title">Reset my data?</h2>
       <p id="reset-body" class="onb-lede">This permanently deletes your goals, habits, activities, weeks and journal notes from this account and starts again from the beginning. Your sign-in stays. This cannot be undone.</p>
       <p v-if="error" class="field-error" role="alert">{{ error }}</p>
-      <div class="onb-actions">
+      <div class="onb-actions onb-actions-spaced">
         <button ref="cancelButton" type="button" class="btn btn-outline" :disabled="busy" @click="cancel">Cancel</button>
         <button ref="deleteButton" type="button" class="btn btn-danger-solid" :disabled="busy" @click="confirm">Delete my data</button>
       </div>
