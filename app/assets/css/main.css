@@ -594,7 +594,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin-top: var(--space-4);
 }
 
-/* Play overlay: a round button over the centre of the stage, shown until the first Play. Its own target is large (64px, 72px on phones) */
+/* Play overlay: a round button over the centre of the stage, shown until the first Play. Large target (64px, 56px on phones, above 44px) */
 .onb-intro-play {
   position: absolute;
   top: 50%;
@@ -620,7 +620,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 @media (max-width: 768px) {
   /* Touch targets: the scene segments and the controls are 44px high */
-  .onb-intro-play { width: 72px; height: 72px; }
+  .onb-intro-play { width: 56px; height: 56px; }
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
   .btn.login-action { height: 44px; }
