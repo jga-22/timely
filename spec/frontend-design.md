@@ -306,7 +306,7 @@ Habit fields are different. Inside habit details, count, period, minutes, and li
 
 ### 4.9 Goals (Harada), `app/components/harada/HaradaView.vue` (scoped)
 
-Slice 3 (FR-GOALS-13 to 22). Page: `h1` "The best version of me" and a lede. Order top to bottom: vision, Harada map, then the category list with its detail (PRD 11.5).
+Slice 3 (FR-GOALS-13 to 22). Page: `h1` "My vision" and a lede. Order top to bottom: vision, Harada map, then the category list with its detail (PRD 11.5).
 
 - **Vision** (`section.vision`): `h2.section-title` "Vision, N years" (N from the stored horizon, shown, not editable) and an Edit button (`aria-label` "Edit ambition"). View mode: the statement at 18px 500, line height 1.45. Edit mode: `AutoTextarea` "Ambition statement" that applies at once; Done returns focus to Edit; Escape leaves. Vision edit mode is local to the screen (one field), not in the URL. Opening it ends a category edit, and selecting a category ends it.
 - **Map** (`.harada-grid`, read-only; shown only from 1100px, hidden below): 3x3 with hairline gaps. The centre (`.harada-centre`) shows "Ambition, N years" and the statement. Eight outer cells are `button.harada-cell` with a colour dot (16px), the order (`.cell-num`, "01" to "08"), the name (`.cell-title`) and "To define" (`.cell-status`, warn). Nothing else: no hints, counts or hours. A missing category leaves an empty placeholder (`.harada-empty`, `--bg-2`, `aria-hidden`). The selected cell has `--bg-4`, a 3px accent bar and `aria-pressed="true"`. Focus: the 2px inset accent ring (section 2.8). Keyboard: Tab between cells; Enter or Space selects; arrow keys move focus and skip the centre and empty slots without wrapping.

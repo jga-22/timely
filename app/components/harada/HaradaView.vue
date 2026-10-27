@@ -183,7 +183,7 @@ function submitAdd() {
 <template>
   <div class="view harada-view" :data-selected="selected ? 'true' : 'false'">
     <header class="page-head">
-      <h1 class="page-title">The best version of me</h1>
+      <h1 class="page-title">My vision</h1>
     </header>
 
     <div class="goals-top">
