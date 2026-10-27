@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, hoursLabel } from '~/utils/planner'
+import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
@@ -54,18 +54,6 @@ const confirmUnlink = (activityId: string) => {
   planner.removeAlsoCategory(activityId, props.categoryId)
   unlinkId.value = null
 }
-
-const scaleMinutes = computed(() => Math.max(60, alignment.value?.neededMinutes ?? 0, alignment.value?.allocatedMinutes ?? 0))
-const barWidth = (minutes: number) => `${Math.min((minutes / scaleMinutes.value) * 100, 100)}%`
-
-// One plain verdict line with the gap; its tone follows the status used by the list and the map
-const verdict = computed(() => {
-  const row = alignment.value
-  if (!row || row.status === 'none') return { text: 'No time target yet', tone: 'none' }
-  if (row.status === 'under') return { text: `Missing ${hoursLabel(-row.gapMinutes)} a week`, tone: 'under' }
-  if (row.status === 'over') return { text: `${hoursLabel(row.gapMinutes)} a week over`, tone: 'over' }
-  return { text: 'On track', tone: 'ok' }
-})
 
 // ── Activities: hours a week in the active template
 const activeHours = computed(() =>
@@ -200,19 +188,11 @@ function confirmRemove() {
 
       <section v-if="mounted" class="detail-block detail-goal">
         <h4 class="detail-label">Hours a week</h4>
-        <div class="compare" role="group" aria-label="Needed and allocated hours a week">
-          <div class="compare-row">
-            <span class="compare-name">Needed</span>
-            <span class="compare-track"><span class="compare-fill is-needed" :style="{ width: barWidth(alignment?.neededMinutes ?? 0) }" /></span>
-            <span class="compare-value">{{ hoursLabel(alignment?.neededMinutes ?? 0) }}</span>
-          </div>
-          <div class="compare-row">
-            <span class="compare-name">Allocated</span>
-            <span class="compare-track"><span class="compare-fill is-allocated" :style="{ width: barWidth(alignment?.allocatedMinutes ?? 0) }" /></span>
-            <span class="compare-value">{{ hoursLabel(alignment?.allocatedMinutes ?? 0) }}</span>
-          </div>
-        </div>
-        <p class="compare-verdict" :class="`is-${verdict.tone}`">{{ verdict.text }}</p>
+        <HaradaNeededPlannedBar
+          :needed-minutes="alignment?.neededMinutes ?? 0"
+          :planned-minutes="alignment?.allocatedMinutes ?? 0"
+          :color="category.color"
+        />
       </section>
 
       <section class="detail-block">
@@ -458,51 +438,6 @@ function confirmRemove() {
   font-weight: 500;
   color: var(--warn);
 }
-
-/* Needed and allocated bars share one scale, so their lengths compare directly */
-.compare {
-  display: grid;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-.compare-row {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 56px;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--fs-sm);
-}
-.compare-name { color: var(--ink-2); }
-.compare-track {
-  position: relative;
-  height: 10px;
-  overflow: hidden;
-  border-radius: 3px;
-  background: var(--bg-3);
-}
-.compare-fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: 3px;
-}
-.compare-fill.is-needed { background: var(--ink-4); }
-.compare-fill.is-allocated { background: var(--accent); }
-.compare-value {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.compare-verdict {
-  margin: var(--space-3) 0 0;
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--ink-3);
-}
-.compare-verdict.is-under { color: var(--warn); }
-.compare-verdict.is-over { color: var(--accent); }
-.compare-verdict.is-ok { color: var(--ok); }
 
 .row-list {
   margin: 0;

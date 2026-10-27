@@ -37,28 +37,9 @@ const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value =
 
 const alignments = computed(() => categoryAlignments(planner.$state))
 
-// Quiet flag in the list: the habits ask for more time than their linked activities hold
-// Saved state is not known on the server, so the status-driven classes and text wait for mount: the first client render
-// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
+// The needed-and-planned bar of each row waits for mount: the saved state is not known on the server, so the first client render
+// matches the server, and the next render patches the bars (a reload with a saved state that differs from the seed)
 const mounted = ref(false)
-
-// Under or over the time target: the list row and the map cell get the attention border (FR-GOALS-23)
-const needsAttention = (categoryId: string) => {
-  if (!mounted.value) return false
-
-  const status = alignments.value.get(categoryId)?.status
-  return status === 'under' || status === 'over'
-}
-
-// Text beside the list row, so the state is not colour only
-const attentionLabel = (categoryId: string): string | null => {
-  if (!mounted.value) return null
-
-  const row = alignments.value.get(categoryId)
-  if (row?.status === 'under') return `Missing ${hoursLabel(-row.gapMinutes)}/wk`
-  if (row?.status === 'over') return `${hoursLabel(row.gapMinutes)}/wk over`
-  return null
-}
 
 // Short line under each name in the list: the 1-year target, or that it is still to be defined
 const targetLine = (category: Category) => category.targetTbd
@@ -243,7 +224,7 @@ function submitAdd() {
               v-else-if="cell"
               type="button"
               class="harada-cell"
-              :class="{ 'is-active': selected?.id === cell.id, 'needs-attention': needsAttention(cell.id) }"
+              :class="{ 'is-active': selected?.id === cell.id }"
               :aria-pressed="selected?.id === cell.id"
               :data-map-position="position"
               @click="openCategory(cell.id)"
@@ -274,17 +255,11 @@ function submitAdd() {
         <div class="section-head">
           <h2 class="section-title">Categories</h2>
         </div>
-        <ul class="goals-legend" aria-label="Legend">
-          <li><span class="legend-swatch is-attention" aria-hidden="true" />Needs attention: under or over its time target</li>
-          <li><span class="legend-swatch" aria-hidden="true" />On track or no target</li>
-        </ul>
-
         <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
           <li v-for="category in sortedCategories" :key="category.id">
             <button
               type="button"
               class="cat-row"
-              :class="{ 'needs-attention': needsAttention(category.id) }"
               :data-category-id="category.id"
               :aria-current="selected?.id === category.id ? 'true' : undefined"
               @click="openCategory(category.id)"
@@ -293,8 +268,13 @@ function submitAdd() {
               <span class="cat-main">
                 <span class="cat-row-name">{{ category.name }}</span>
                 <span class="cat-meta" :class="{ 'is-warn': targetLine(category).warn }">{{ targetLine(category).text }}</span>
+                <HaradaNeededPlannedBar
+                  v-if="mounted"
+                  :needed-minutes="alignments.get(category.id)?.neededMinutes ?? 0"
+                  :planned-minutes="alignments.get(category.id)?.allocatedMinutes ?? 0"
+                  :color="category.color"
+                />
               </span>
-              <span v-if="attentionLabel(category.id)" class="cat-flag">{{ attentionLabel(category.id) }}</span>
             </button>
           </li>
         </ul>
@@ -511,7 +491,7 @@ button.harada-cell:focus-visible {
 
 .cat-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   width: 100%;
   min-height: 44px;
@@ -531,32 +511,28 @@ button.harada-cell:focus-visible {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* The dot sits on the first line of the name, whatever the height of the row */
+.cat-row > .dot { margin-top: 3px; }
+
 .cat-main {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
+/* Names and targets wrap: the list row grows with its text, nothing is cut off */
 .cat-row-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: var(--fs-md);
   font-weight: 500;
 }
 
-.cat-meta,
-.cat-flag {
+.cat-meta {
   font-size: var(--fs-xs);
   color: var(--ink-3);
-}
-
-.cat-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .cat-meta.is-warn {
@@ -569,51 +545,8 @@ button.harada-cell:focus-visible {
   color: var(--ink-3);
 }
 
-.cat-flag {
-  flex: none;
-  white-space: nowrap;
-}
-
-/* Attention: an outline in --attention, inside the box so the grid frame does not clip it */
-.cat-row.needs-attention,
-.harada-cell.needs-attention {
-  outline: 2px solid var(--attention);
-  outline-offset: -2px;
-}
-
-.goals-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  list-style: none;
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-
-.goals-legend li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.legend-swatch {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  box-sizing: border-box;
-  border: 1px solid var(--cell-line);
-  border-radius: 3px;
-}
-
-.legend-swatch.is-attention {
-  border: 2px solid var(--attention);
-}
-
 /* On the tinted selected row, secondary text uses --ink-2 (contrast on bg-4) */
-.cat-row[aria-current="true"] .cat-meta,
-.cat-row[aria-current="true"] .cat-flag {
+.cat-row[aria-current="true"] .cat-meta {
   color: var(--ink-2);
 }
 
