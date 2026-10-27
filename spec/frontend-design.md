@@ -454,6 +454,19 @@ Restored on 2026-10-26 (FR-PLAN-24). The Activities list is a compact section un
 - Empty list: "No activities yet. Add one to plan when it happens." (`.acts-empty`).
 - Phones: chips wrap; the editor and the form take the full width, and their two-column rows stack under 480px.
 
+### 4.18 First-run onboarding (`app/components/onboarding/`, `.onb-*` in `main.css`)
+
+Feature FR-ONB (PRD 9.13). Session state only (`useOnboarding`, Nuxt `useState`); nothing here is saved. Client only (`ClientOnly` in `app.vue`).
+
+- **Welcome and form** (`OnboardingFlow.vue`): a centred dialog (`.onb-overlay` scrim in `color-mix` of `--ink`, `.onb-dialog`: `--bg`, 1px `--rule`, radius 6px, `--shadow`, 460px max, 24px padding on phones). Title `.onb-title` (18px 600, `aria-labelledby`), lede `.onb-lede` (15px, `--ink-2`, 1.6). Welcome actions: "Guide me" (`.btn-primary`), "Start empty" (`.btn-outline`) and "Explore with sample data" (`.onb-link`, accent text, underline on hover). The form uses `.field` with `.field-label` and `.timely-input` or `.timely-select`; the life-area suggestions are `.chip` buttons in `.onb-chips` (`aria-pressed`, `data-active`); the times and hours selects sit side by side in `.onb-pair` (one column under 480px). Errors are `.field-error` with `role="alert"`. Focus goes to the marked field (`data-autofocus`) on open. Escape: Welcome is Start empty, the form goes back to Welcome.
+- **Tour card** (`OnboardingTour.vue`): `section.onb-tour`, fixed to the bottom centre (`min(440px, 100% - 32px)`, `bottom` with the safe-area inset, `max-height` 40vh and scroll; 36vh on phones), `--bg`, 1px `--rule`, `--shadow`, z-index 30. It does not block the page. Parts: step count `.onb-step` (12px `--ink-3`, tabular, "2 of 5"), title `.onb-tour-title` (15px 600), body `.onb-tour-body` (13px, `--ink-2`, 1.6), and actions: "Skip tour" (`.btn-sm`) on the left, Back and Next or Done (`.btn-sm`, primary on the last) on the right. Focus moves to the title on open and on each step. Escape skips.
+- **Topbar "Tour"** (`.tour-button`): a 32px text button next to the theme toggle, `--ink-2`, hover `--bg-3`. Shown with the tabs and once storage has loaded.
+- **Touch:** at 768px and below the dialog buttons, tour buttons and the chips are 44px high.
+- **Scrim and motion:** no animation; the dialog appears at once.
+- Visual check: `spec/screens/onboarding-*`.
+
+Known gaps: the dialog has no focus trap; the tour card can cover the lower part of a short phone screen (it scrolls and is dismissible).
+
 ### 4.17a Retired: brush palette (slice 7, `.pal-*`)
 
 Removed on 2026-10-26. The palette set the brush (an activity or Erase) and the grid painted at once with no edit gate. Both are superseded (FR-PLAN-17 to 20 and 22).

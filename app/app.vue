@@ -8,7 +8,15 @@ const theme = useTheme()
 const { today } = usePlannerYear()
 const { status: storageStatus } = useStorageStatus()
 const { state: auth, signOut } = useAuth()
+const planner = usePlannerStore()
+const onboarding = useOnboarding()
 const accountOpen = ref(false)
+
+/** Replays the tour; without a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
+const replayTour = () => {
+  if (planner.categories.length) onboarding.startTour()
+  else onboarding.openWelcome()
+}
 
 const onSignOut = async () => {
   accountOpen.value = false
@@ -89,6 +97,15 @@ const toggleDark = () => {
         </div>
 
         <button
+          v-if="(auth.status === 'off' || auth.status === 'signed-in') && storageStatus.state !== 'loading'"
+          type="button"
+          class="tour-button"
+          @click="replayTour"
+        >
+          Tour
+        </button>
+
+        <button
           class="theme-toggle"
           type="button"
           :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'"
@@ -110,6 +127,11 @@ const toggleDark = () => {
       <AuthLoginGate v-if="auth.status === 'signed-out'" />
       <NuxtPage v-else-if="auth.status !== 'loading'" />
     </div>
+    <!-- Client only: the first-run state is set before hydration, so the server markup must not contain it -->
+    <ClientOnly>
+      <OnboardingFlow />
+      <OnboardingTour />
+    </ClientOnly>
     <NuxtRouteAnnouncer />
   </VApp>
 </template>
