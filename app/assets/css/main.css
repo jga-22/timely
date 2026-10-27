@@ -409,6 +409,13 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .onb-link:hover { text-decoration: underline; }
 .onb-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 .onb-chips .chip { cursor: pointer; }
+.onb-chips .chip:disabled { opacity: 0.45; cursor: not-allowed; }
+/* One goal block of the second step: a rule above each block after the first */
+.onb-goal { display: flex; flex-direction: column; gap: var(--space-4); margin: 0; padding: 0; border: 0; }
+.onb-goal + .onb-goal { padding-top: var(--space-4); border-top: 1px solid var(--rule); }
+.onb-goal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.onb-goal-title { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.onb-add { align-self: flex-start; }
 .onb-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
 @media (max-width: 480px) {
   .onb-pair { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }

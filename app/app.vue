@@ -17,9 +17,9 @@ const onboarding = useOnboarding()
 const accountOpen = ref(false)
 const resetOpen = ref(false)
 
-/** Replays the tour; without a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
+/** Replays the tour from Plan your week; without an ambition and a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
-  if (planner.categories.length) onboarding.startTour()
+  if (planner.ambition && planner.categories.length) onboarding.startTour()
   else onboarding.openWelcome()
 }
 

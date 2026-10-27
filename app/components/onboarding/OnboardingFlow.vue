@@ -1,62 +1,106 @@
 <script setup lang="ts">
 import { createHaradaSeed } from '~/utils/planner'
+import { MAX_ONBOARDING_GOALS } from '~/utils/onboarding'
 
-/** Welcome and the first-run form (FR-ONB-3, 4). A dialog: focus moves into it, Escape leaves it */
-const { phase, openWelcome, openIntro, startEmpty, useSampleData, build } = useOnboarding()
+/** Welcome, then the two guided dialogs: 1 Your ambition and 2 Goals and habits (FR-ONB-3, 4). Focus moves into them, Escape goes back */
+const { phase, openWelcome, openIntro, openAmbition, openGoals, startEmpty, useSampleData, build } = useOnboarding()
 
 const suggestions = createHaradaSeed().categories.map(category => category.name)
 
+interface GoalDraft {
+  areaName: string
+  target1y: string
+  habitName: string
+  timesPerWeek: number
+  hoursEach: number
+  error: { area: string, habit: string }
+}
+
+const draft = (): GoalDraft => ({ areaName: '', target1y: '', habitName: '', timesPerWeek: 3, hoursEach: 1, error: { area: '', habit: '' } })
+
 const dialog = ref<HTMLElement | null>(null)
 const ambition = ref('')
-const areaName = ref('')
-const habitName = ref('')
-const timesPerWeek = ref(3)
-const hoursEach = ref(1)
-const errors = reactive<{ area: string, habit: string }>({ area: '', habit: '' })
-const areaInput = ref<HTMLInputElement | null>(null)
-const habitInput = ref<HTMLInputElement | null>(null)
+const ambitionError = ref('')
+const goals = ref<GoalDraft[]>([draft()])
 
-const hourOptions = [1, 2, 3]
 const timeOptions = [1, 2, 3, 4, 5, 6, 7]
+const hourOptions = [1, 2, 3]
 
 /** Moves focus to the element marked for the current view, once it is rendered */
 const focusStart = () => nextTick(() => dialog.value?.querySelector<HTMLElement>('[data-autofocus]')?.focus())
 
-watch(phase, (value) => {
-  if (value === 'welcome' || value === 'form') focusStart()
+/** Moves focus to the first field that is marked invalid */
+const focusInvalid = () => nextTick(() => dialog.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
+
+/** A new run (first load, or after Reset my data) starts with empty answers; Back to Welcome keeps them */
+const clearDrafts = () => {
+  ambition.value = ''
+  ambitionError.value = ''
+  goals.value = [draft()]
+}
+
+watch(phase, (value, previous) => {
+  if (value === 'welcome' && previous === 'closed') clearDrafts()
+  if (value === 'welcome' || value === 'ambition' || value === 'goals') focusStart()
 })
 
 // The first-run welcome is set before the page mounts, so the watch above has not seen it
 onMounted(() => {
-  if (phase.value === 'welcome' || phase.value === 'form') focusStart()
+  if (phase.value === 'welcome' || phase.value === 'ambition' || phase.value === 'goals') focusStart()
 })
 
 const onEscape = () => {
   if (phase.value === 'welcome') startEmpty()
-  else if (phase.value === 'form') openWelcome()
+  else if (phase.value === 'ambition') openWelcome()
+  else if (phase.value === 'goals') openAmbition()
 }
 
-const submit = () => {
-  errors.area = areaName.value.trim() ? '' : 'Name a life area, for example Physical.'
-  errors.habit = habitName.value.trim() ? '' : 'Name one habit, for example Run or Read.'
+/** A life area the other goal already has cannot be chosen again */
+const taken = (name: string, index: number) => goals.value.some((goal, other) => other !== index && goal.areaName.trim() === name)
 
-  if (errors.area || errors.habit) {
-    nextTick(() => (errors.area ? areaInput.value : habitInput.value)?.focus())
+const submitAmbition = () => {
+  ambitionError.value = ambition.value.trim() ? '' : 'Write your 5-year ambition in a sentence.'
+
+  if (ambitionError.value) focusInvalid()
+  else openGoals()
+}
+
+const submitGoals = () => {
+  const first = goals.value[0]!.areaName.trim().toLowerCase()
+
+  goals.value.forEach((goal, index) => {
+    const name = goal.areaName.trim().toLowerCase()
+
+    goal.error.area = !name
+      ? 'Name a life area, for example Physical.'
+      : index > 0 && name === first ? 'Pick a different life area for the second goal.' : ''
+    goal.error.habit = goal.habitName.trim() ? '' : 'Name one habit, for example Run or Read.'
+  })
+
+  if (goals.value.some(goal => goal.error.area || goal.error.habit)) {
+    focusInvalid()
     return
   }
 
   build({
     ambition: ambition.value,
-    areaName: areaName.value,
-    habitName: habitName.value,
-    timesPerWeek: timesPerWeek.value,
-    hoursEach: hoursEach.value
+    goals: goals.value.map(({ areaName, target1y, habitName, timesPerWeek, hoursEach }) => ({ areaName, target1y, habitName, timesPerWeek, hoursEach }))
   })
+}
+
+const addGoal = () => {
+  goals.value.push(draft())
+  nextTick(() => dialog.value?.querySelectorAll<HTMLElement>('[data-area]')[1]?.focus())
+}
+
+const removeGoal = () => {
+  goals.value.pop()
+  nextTick(() => dialog.value?.querySelector<HTMLElement>('.onb-add')?.focus())
 }
 </script>
 
 <template>
-  <div v-if="phase === 'welcome' || phase === 'form'" class="onb-overlay">
+  <div v-if="phase === 'welcome' || phase === 'ambition' || phase === 'goals'" class="onb-overlay">
     <div
       ref="dialog"
       class="onb-dialog"
@@ -76,76 +120,111 @@ const submit = () => {
         </div>
       </template>
 
-      <form v-else class="onb-form" novalidate @submit.prevent="submit">
-        <h2 id="onb-title" class="onb-title" tabindex="-1">Your first goal</h2>
-        <p class="onb-lede">A few short answers. Timely builds a life area, a habit and a week from them; you can change any of it later.</p>
+      <form v-else-if="phase === 'ambition'" class="onb-form" novalidate @submit.prevent="submitAmbition">
+        <p class="onb-step">Step 1 of 5</p>
+        <h2 id="onb-title" class="onb-title" tabindex="-1">Your 5-year ambition</h2>
+        <p class="onb-lede">Where do you want to be in 5 years? Everything else in Timely serves this.</p>
 
         <div class="field">
-          <label class="field-label" for="onb-ambition">Your 5-year ambition (optional)</label>
-          <input id="onb-ambition" v-model="ambition" class="timely-input" type="text" placeholder="For example, be a present father within 5 years" data-autofocus>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="onb-area">A first life area</label>
+          <label class="field-label" for="onb-ambition">Your ambition</label>
           <input
-            id="onb-area"
-            ref="areaInput"
-            v-model="areaName"
+            id="onb-ambition"
+            v-model="ambition"
             class="timely-input"
             type="text"
-            placeholder="For example, Physical"
-            required
-            :aria-invalid="errors.area ? 'true' : undefined"
-            :aria-describedby="errors.area ? 'onb-area-error' : undefined"
+            placeholder="For example, be a present father and run a half marathon"
+            data-autofocus
+            :aria-invalid="ambitionError ? 'true' : undefined"
+            :aria-describedby="ambitionError ? 'onb-ambition-error' : undefined"
           >
-          <div class="onb-chips" role="group" aria-label="Suggested life areas">
-            <button
-              v-for="name in suggestions"
-              :key="name"
-              type="button"
-              class="chip"
-              :data-active="areaName === name"
-              :aria-pressed="areaName === name"
-              @click="areaName = name"
-            >{{ name }}</button>
-          </div>
-          <p v-if="errors.area" id="onb-area-error" class="field-error" role="alert">{{ errors.area }}</p>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="onb-habit">One habit for it</label>
-          <input
-            id="onb-habit"
-            ref="habitInput"
-            v-model="habitName"
-            class="timely-input"
-            type="text"
-            placeholder="For example, Run"
-            required
-            :aria-invalid="errors.habit ? 'true' : undefined"
-            :aria-describedby="errors.habit ? 'onb-habit-error' : undefined"
-          >
-          <p v-if="errors.habit" id="onb-habit-error" class="field-error" role="alert">{{ errors.habit }}</p>
-        </div>
-
-        <div class="onb-pair">
-          <div class="field">
-            <label class="field-label" for="onb-times">How many times a week?</label>
-            <select id="onb-times" v-model.number="timesPerWeek" class="timely-select">
-              <option v-for="count in timeOptions" :key="count" :value="count">{{ count }}</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label" for="onb-hours">Hours each time</label>
-            <select id="onb-hours" v-model.number="hoursEach" class="timely-select">
-              <option v-for="hours in hourOptions" :key="hours" :value="hours">{{ hours }}</option>
-            </select>
-          </div>
+          <p v-if="ambitionError" id="onb-ambition-error" class="field-error" role="alert">{{ ambitionError }}</p>
         </div>
 
         <div class="onb-actions">
-          <button type="submit" class="btn btn-primary">Build my week</button>
+          <button type="submit" class="btn btn-primary">Next</button>
           <button type="button" class="btn" @click="openWelcome">Back</button>
+        </div>
+      </form>
+
+      <form v-else class="onb-form" novalidate @submit.prevent="submitGoals">
+        <p class="onb-step">Step 2 of 5</p>
+        <h2 id="onb-title" class="onb-title" tabindex="-1">Goals and habits</h2>
+        <p class="onb-lede">Pick one or two life areas that matter most for that ambition, and a habit for each.</p>
+
+        <section v-for="(goal, index) in goals" :key="index" class="onb-goal" :aria-label="`Goal ${index + 1}`">
+          <div class="onb-goal-head">
+            <h3 class="onb-goal-title">Goal {{ index + 1 }}</h3>
+            <button v-if="index > 0" type="button" class="onb-link" @click="removeGoal">Remove</button>
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`onb-area-${index}`">Life area</label>
+            <input
+              :id="`onb-area-${index}`"
+              v-model="goal.areaName"
+              class="timely-input"
+              type="text"
+              placeholder="For example, Physical"
+              data-area
+              :data-autofocus="index === 0 ? '' : undefined"
+              :aria-invalid="goal.error.area ? 'true' : undefined"
+              :aria-describedby="goal.error.area ? `onb-area-error-${index}` : undefined"
+            >
+            <div class="onb-chips" role="group" :aria-label="`Suggested life areas for goal ${index + 1}`">
+              <button
+                v-for="name in suggestions"
+                :key="name"
+                type="button"
+                class="chip"
+                :data-active="goal.areaName === name"
+                :aria-pressed="goal.areaName === name"
+                :disabled="taken(name, index)"
+                @click="goal.areaName = name"
+              >{{ name }}</button>
+            </div>
+            <p v-if="goal.error.area" :id="`onb-area-error-${index}`" class="field-error" role="alert">{{ goal.error.area }}</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`onb-target-${index}`">What do you want there in 1 year? (optional)</label>
+            <input :id="`onb-target-${index}`" v-model="goal.target1y" class="timely-input" type="text" placeholder="For example, run a 10 km race">
+          </div>
+
+          <div class="field">
+            <label class="field-label" :for="`onb-habit-${index}`">One habit for it</label>
+            <input
+              :id="`onb-habit-${index}`"
+              v-model="goal.habitName"
+              class="timely-input"
+              type="text"
+              placeholder="For example, Run"
+              :aria-invalid="goal.error.habit ? 'true' : undefined"
+              :aria-describedby="goal.error.habit ? `onb-habit-error-${index}` : undefined"
+            >
+            <p v-if="goal.error.habit" :id="`onb-habit-error-${index}`" class="field-error" role="alert">{{ goal.error.habit }}</p>
+          </div>
+
+          <div class="onb-pair">
+            <div class="field">
+              <label class="field-label" :for="`onb-times-${index}`">How many times a week?</label>
+              <select :id="`onb-times-${index}`" v-model.number="goal.timesPerWeek" class="timely-select">
+                <option v-for="count in timeOptions" :key="count" :value="count">{{ count }}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label" :for="`onb-hours-${index}`">Hours each time</label>
+              <select :id="`onb-hours-${index}`" v-model.number="goal.hoursEach" class="timely-select">
+                <option v-for="hours in hourOptions" :key="hours" :value="hours">{{ hours }}</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <button v-if="goals.length < MAX_ONBOARDING_GOALS" type="button" class="onb-link onb-add" @click="addGoal">Add a second goal</button>
+
+        <div class="onb-actions">
+          <button type="submit" class="btn btn-primary">Build my week</button>
+          <button type="button" class="btn" @click="openAmbition">Back</button>
         </div>
       </form>
     </div>
