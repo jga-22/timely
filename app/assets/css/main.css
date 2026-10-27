@@ -502,6 +502,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .onb-intro-scene { opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s; }
 .onb-intro-scene[data-active="true"] { opacity: 1; visibility: visible; }
 .onb-intro-stage[data-paused="true"] * { animation-play-state: paused; }
+/* Before the first Play no animation runs, so scene 1 is drawn whole and readable at once */
+.onb-intro-stage[data-static="true"] * { animation: none !important; }
 .onb-intro-scene[data-active="true"] .onb-intro-fade { animation: onb-intro-fade 0.6s ease var(--d, 0s) both; }
 .onb-intro-scene[data-active="true"] .onb-intro-rise { animation: onb-intro-rise 0.6s ease var(--d, 0s) both; }
 .onb-intro-scene[data-active="true"] .onb-intro-slide { animation: onb-intro-slide 0.6s ease var(--d, 0s) both; }
@@ -592,8 +594,33 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin-top: var(--space-4);
 }
 
+/* Play overlay: a round button over the centre of the stage, shown until the first Play. Its own target is large (64px, 72px on phones) */
+.onb-intro-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0 0 0 4px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.onb-intro-play svg { width: 28px; height: 28px; fill: currentColor; }
+.onb-intro-play:hover { background: var(--accent-deep); }
+.onb-intro-play:focus-visible { outline: none; box-shadow: var(--focus-ring), var(--shadow); }
+
 @media (max-width: 768px) {
   /* Touch targets: the scene segments and the controls are 44px high */
+  .onb-intro-play { width: 72px; height: 72px; }
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
   .btn.login-action { height: 44px; }

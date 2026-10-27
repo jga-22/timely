@@ -5,9 +5,10 @@ import { DESIGN_COLORS } from '~/utils/planner'
  * The intro player (FR-ONB-9): five scenes of about 9 seconds each. Shared by the first-run dialog (OnboardingIntro.vue) and the
  * sign-in page (LoginGate.vue). Each caption is inside the stage in a band at the top (28 percent of the height); the graphics stay
  * below the band. The scenes are SVG and CSS only. One timer moves the scene and the progress bar; the CSS animations pause with it.
- * Autoplay starts after mount, so server and client render the same first scene. The timer also holds while the tab is hidden or the
- * stage is out of view. `loop` restarts at the first scene after the last one; without it the last scene holds with the end slot.
- * Reduced motion: no timer and no autoplay, each scene is shown whole and Back and Next move between them.
+ * The player opens paused on scene 1, drawn whole (static, no animation), with a Play button over the stage. The first Play starts
+ * the timer from scene 1; a segment clicked before that jumps to its scene and leaves it paused. The timer also holds while the tab
+ * is hidden or the stage is out of view. `loop` restarts at the first scene after the last one; without it the last scene holds with
+ * the end slot. Reduced motion: no timer and no Play, each scene is shown whole and Back and Next move between them.
  */
 const props = withDefaults(defineProps<{ loop?: boolean, quiet?: boolean }>(), { loop: false, quiet: false })
 
@@ -83,6 +84,9 @@ const scene = ref(0)
 const elapsed = ref(0)
 /** The Play or Pause choice. The timer runs only while it is set and no hold applies */
 const playing = ref(false)
+/** Set by the first Play. Until then the stage is static: scene 1 is drawn whole, and the Play overlay shows */
+const started = ref(false)
+const controls = ref<HTMLElement | null>(null)
 const reduced = ref(false)
 /** Holds from outside the player: the tab is hidden, or the stage is scrolled out of view */
 const tabHidden = ref(false)
@@ -123,7 +127,17 @@ const tick = () => {
   if (elapsed.value >= SCENE_MS) show(scene.value + 1)
 }
 
+/** The first Play starts from scene 1 (the overlay does the same); after that Play and Pause keep the scene */
 const togglePlay = () => {
+  if (!started.value) {
+    started.value = true
+    show(0)
+    playing.value = true
+    // The overlay is gone: focus moves to the Pause button
+    nextTick(() => controls.value?.querySelector<HTMLElement>('button')?.focus())
+    return
+  }
+
   if (!playing.value && isLast.value && elapsed.value >= SCENE_MS) show(0)
   playing.value = !playing.value
 }
@@ -151,7 +165,6 @@ const onVisibility = () => {
 
 onMounted(() => {
   reduced.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  playing.value = !reduced.value
 
   document.addEventListener('visibilitychange', onVisibility)
   if (stage.value && 'IntersectionObserver' in window) {
@@ -171,9 +184,9 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="intro-player" :class="{ 'is-quiet': quiet }">
-    <div ref="stage" class="onb-intro-stage" :data-paused="String(!running)" aria-hidden="true">
-      <p :key="scene" class="onb-intro-caption">{{ current.caption }}</p>
-      <svg viewBox="0 0 640 360" focusable="false">
+    <div ref="stage" class="onb-intro-stage" :data-paused="String(!running)" :data-static="String(!started)">
+      <p :key="scene" class="onb-intro-caption" aria-hidden="true">{{ current.caption }}</p>
+      <svg viewBox="0 0 640 360" focusable="false" aria-hidden="true">
         <!-- Scene 1, Ambition: the ambition in the centre, the life areas fade in around it -->
         <g class="onb-intro-scene" :data-active="String(scene === 0)">
           <g class="onb-intro-fade" style="--d: 0s">
@@ -265,6 +278,9 @@ onBeforeUnmount(() => {
           </g>
         </g>
       </svg>
+      <button v-if="!started && !reduced" type="button" class="onb-intro-play" aria-label="Play the introduction" @click="togglePlay">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z" /></svg>
+      </button>
     </div>
 
     <p id="onb-intro-caption" class="sr-only" :aria-live="loop ? 'off' : 'polite'">{{ current.caption }}</p>
@@ -283,11 +299,11 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <div class="onb-intro-controls">
+    <div ref="controls" class="onb-intro-controls">
       <button v-if="!reduced" type="button" :class="controlClass" @click="togglePlay">{{ playing ? 'Pause' : 'Play' }}</button>
       <button type="button" :class="controlClass" :disabled="scene === 0" @click="back">Back</button>
       <button v-if="loop || !isLast" type="button" :class="controlClass" @click="next">Next</button>
-      <slot name="end" :last="isLast" />
+      <slot name="end" />
     </div>
   </section>
 </template>
