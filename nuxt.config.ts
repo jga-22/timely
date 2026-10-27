@@ -4,6 +4,14 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@pinia/nuxt', 'vuetify-nuxt-module'],
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    public: {
+      // 'local' (default) or 'supabase'. NUXT_PUBLIC_STORAGE, NUXT_PUBLIC_SUPABASE_URL and NUXT_PUBLIC_SUPABASE_ANON_KEY override these
+      storage: 'local',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+    },
+  },
   app: {
     head: {
       title: 'Timely',

@@ -15,7 +15,7 @@ The owner is a solo developer. The app is still in dev mode: no production users
 
 ## Stack and commands
 
-Nuxt 4, Vue 3, Pinia, Vuetify (neutralised, see the style spec), TypeScript. State persists in browser `localStorage`; there is no backend.
+Nuxt 4, Vue 3, Pinia, Vuetify (neutralised, see the style spec), TypeScript. State persists in browser `localStorage` by default; persistence is pluggable (Supabase is the optional remote mode, see below). There is no Timely backend.
 
 ```bash
 npm run dev                 # dev server (dev-only 404s for Vuetify/mdi @fs CSS are known and harmless)
@@ -41,7 +41,7 @@ Shell and shared code:
 - `app/composables/useNav.ts`: URL state (`tab`, `item`, `edit`, `add`, `category`) and the `go` / `link` / `setSelection` helpers. `app/composables/usePlannerYear.ts`: today and the selected year, client only. `app/composables/usePlannerMaps.ts`.
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea. `app/components/YearNav.vue`: shared year switcher.
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/stores/planner.ts`: Pinia store and actions.
-- `app/utils/storage/` and `app/plugins/planner-persistence.client.ts`: localStorage persistence.
+- Storage: `app/plugins/planner-persistence.client.ts` picks the mode from `resolveStorageMode` (`app/utils/storage/mode.ts`). `local` (default): `createPlannerStorage` (`app/utils/storage/index.ts`) gives `plannerLocalStorage.ts`, loaded, hydrated and saved synchronously as before. `supabase`: `app/utils/storage/session.ts` waits for a session (`useAuth`, `app/composables/useAuth.ts`; gate `app/components/auth/LoginGate.vue`, shown by `app.vue`), then loads, hydrates and saves that user's row (`supabase.ts`, dynamically imported: debounce, flush, status and the failed-load block inside it). Sign-out or a user switch stops saving and resets the store to the seed without writing. Shared: `bind.ts` (store watcher), `types.ts`, client `app/utils/supabase.ts`. Status for the topbar: `app/composables/useStorageStatus.ts`. Config: `nuxt.config.ts` `runtimeConfig.public` (`NUXT_PUBLIC_STORAGE`, `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_ANON_KEY`; template `.env.example`). Schema and setup: `spec/database/`.
 - `app/utils/palette.ts` and `app/composables/usePlannerFill.ts`: the one planned-fill rule (3:1 on the surface), used by the year grid, week grid, Home and Insights. Colour semantics: `spec/frontend-design.md` section 5.
 - `app/assets/css/main.css`: all design tokens and styles. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
 - `spec/`: specifications (below). `design/` is an old gitignored design export with the previous look; do not use it.
@@ -53,7 +53,7 @@ Shell and shared code:
 - `spec/weekly_planner_prd_and_design_doc.md`: the PRD (v3, requirement IDs and acceptance criteria, with each requirement's status and evidence). `spec/build-plan.md`: slice-by-slice build plan and status log.
 - `spec/screens/`: reference screenshots from the production build, named in the README.
 - `spec/references/grille-harada-meilleure-version.html`: the original Harada prototype; origin of the palette and the Goals layout.
-- `spec/database/`: draft design for a PostgreSQL or Supabase store (data model, `schema.sql`, ERD, effort evaluation). Not built; the storage decision is pending with the owner.
+- `spec/database/`: Supabase storage. `snapshot.sql` (the table the app uses today) plus the later normalised design (data model, `schema.sql`, ERD, effort evaluation).
 
 ## Model and decisions
 
@@ -94,6 +94,8 @@ Shell and shared code:
 
 ## Open items and ideas
 
+- **Supabase mode is not yet run against a real project.** Verified with supabase-js against a fake HTTP server (see the storage-adapter commits and the PRD FR-APP-9, 10). Owner to run the local quick start in `spec/database/README.md` and sign in by email link.
+
 - **Hydration warning:** "Hydration completed but contains mismatches" appears when the saved state differs from the seed (for example after a rename on Goals). Fresh loads are clean. The server renders the seed and the client restores storage before hydrating. A client-only wrapper is the fallback, but it changes server output; decide with the owner.
 - **Unused `timeGranularity` field** in `settings` (type and seed). Nothing reads it. Removing it changes the stored shape, so it needs a version bump that resets saved local data. Owner to decide.
 - **Possibly unused packages:** `@mdi/font` (loaded through the Vuetify icon config; no icon is rendered by Vuetify), `vuetify` (only `VApp` and `useTheme`), `vue-router` (Nuxt provides it; not imported directly). Not removed; ask first.
@@ -103,4 +105,4 @@ Shell and shared code:
 - Year and saves: a reload selects the current year again, and a save from an earlier year is never re-seeded, so a new year starts with unassigned weeks (paint them or accept the active template).
 - Annual and quarterly habits are approximated as monthly (frequency only supports day/week/month).
 - The owner runs Node v24.12.0, which predates several 2026 security releases; they plan to update to the latest 24.x LTS. Optionally add `.nvmrc` and `engines` to pin a minimum.
-- **Database storage evaluation pending owner decision:** the app stays on localStorage until the owner picks Supabase or plain PostgreSQL and the hosting; decisions and effort in `spec/database/effort-evaluation.md` (section 8).
+- **Storage decided: Supabase only** (27 October 2026). The app stays on localStorage unless configured; remaining decisions (hosting, offline level, ids, import) are in `spec/database/effort-evaluation.md` (section 8). Next ideas: Google sign-in button, normalised schema, server-side data loading to remove the hydration warning.

@@ -1,6 +1,6 @@
-# Database storage (draft)
+# Database storage
 
-This folder holds the design for storing Timely's data in PostgreSQL, either hosted through Supabase or plain PostgreSQL, instead of browser `localStorage`. **Nothing here is built into the app yet.** The owner has not decided on the storage; see the open item in `.claude/agent.md`. The app code is unchanged.
+This folder holds the design and the SQL for storing Timely's data in Supabase (Postgres with auth and row level security) instead of browser `localStorage`. The owner chose Supabase only (plain PostgreSQL is out of scope). The first step, the **snapshot** with email sign-in, is built into the app; the normalised schema below is the later path.
 
 ## Contents
 
@@ -8,6 +8,7 @@ This folder holds the design for storing Timely's data in PostgreSQL, either hos
 | --- | --- |
 | `README.md` | This index, how to open the diagram, how to apply the schema, and the summary. |
 | `data-model.md` | The data model: each table with columns, types, constraints, keys, delete rules, the mapping from the TypeScript model, the invariants the database must keep, and sample queries (planned hours, needed against allocated time). |
+| `snapshot.sql` | The snapshot table used by the app today: `planner_state` with a foreign key to `auth.users` and four own-row RLS policies. |
 | `schema.sql` | Runnable PostgreSQL / Supabase DDL: extensions, enum, tables, constraints, indexes, `updated_at` trigger, the invariant triggers, row level security, and an optional seed function that mirrors the app seed. |
 | `erd.drawio` | Entity relationship diagram, uncompressed draw.io (diagrams.net) file. |
 | `erd.mmd` | The same entities and foreign keys in Mermaid (renders on GitHub, see below). |
@@ -86,8 +87,59 @@ The seed block in `schema.sql` was generated from the app's seed (`createInitial
 
 ## Status and next steps
 
-1. Owner decision: Supabase or plain PostgreSQL, and hosted or local (`effort-evaluation.md` section 8).
+1. Owner decisions that remain are in `effort-evaluation.md` section 8 (hosting, offline level, ids, import of existing data).
 2. Phase 0 spike: apply `schema.sql` on a local Supabase, read the seed from the app, measure a 168-slot paint.
 3. Then the phases in `effort-evaluation.md`.
 
 Related: `../weekly_planner_prd_and_design_doc.md` (product requirements), `../../app/types/planner.ts` (the model this schema mirrors), `../../app/utils/planner.ts` (seed and validation).
+
+
+Two designs exist. The **snapshot** (this step) stores the whole `PlannerState` as one JSON document per user, using the same versioning rule as localStorage: a version mismatch or invalid data is discarded and replaced by the seed. The **normalised schema** (`schema.sql` with its ERD and data model) is the later path: one table per entity with constraints. Moving to it means a one-off import of the snapshot. The snapshot is the first step because it reuses the existing store and validation unchanged.
+
+## Choosing the storage
+
+| Mode | `NUXT_PUBLIC_STORAGE` | Where data lives | Needs |
+| --- | --- | --- | --- |
+| Local (default) | unset or `local` | This browser's localStorage | Nothing. No network calls, no auth code loaded. |
+| Supabase | `supabase` | `public.planner_state`, one row per signed-in user | `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_ANON_KEY`, the auth setup below |
+
+Set the variables in `.env` (see `.env.example` at the repository root) and restart the dev server. A Supabase mode with missing settings falls back to local storage.
+
+In Supabase mode:
+
+- Nothing is loaded or written before a signed-in session exists. The page shows a sign-in card instead.
+- Sign-in is by email link. The session is kept by supabase-js in the browser, so a reload stays signed in.
+- The topbar shows the save status (Loading, Saving, Saved, Not saved) and an Account menu with the email and Sign out.
+- Sign-out returns the screen to the seed without writing it to the database. Another user signing in on the same browser never sees the previous user's data.
+- Saves are debounced by 600 ms and sent when the page is hidden. If the first load fails, nothing is written, so the remote copy is never overwritten; reload to try again.
+
+Only the anon key goes to the browser. Row level security limits every request to the signed-in user's own row.
+
+### Supabase, local quick start
+
+Requires Docker and the Supabase CLI. Run these in a scratch folder outside the repository, because `supabase init` creates a `supabase/` folder.
+
+```bash
+mkdir ~/scratch/timely-db && cd ~/scratch/timely-db
+supabase init                                   # creates supabase/config.toml
+supabase start                                  # starts the local stack
+cp <repo>/spec/database/snapshot.sql supabase/migrations/20261027000000_planner_state.sql
+supabase db reset                               # applies the migration to the local database
+supabase status                                 # prints the API URL and the anon key
+```
+
+Then in `.env` at the repository root:
+
+```bash
+NUXT_PUBLIC_STORAGE=supabase
+NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NUXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase status>
+```
+
+### Auth setup (email magic link)
+
+1. **Authentication, Sign In / Providers, Email:** enabled (the default).
+2. **Authentication, URL configuration:** Site URL `http://localhost:3000` (the Nuxt dev port). Under Redirect URLs add `http://localhost:3000/**`. Use your deployed URL for production.
+3. **Local stack:** the local stack does not send real mail. Open Inbucket at `http://localhost:54324`, find the message and click the link. For the Site URL and redirects in the local stack, set them in `supabase/config.toml` (`site_url`, `additional_redirect_urls` under `[auth]`) and run `supabase stop && supabase start`.
+
+Anonymous sign-in is not used. A user who signs in on a new browser sees only the data of that account.

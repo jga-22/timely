@@ -344,6 +344,8 @@ New in v3:
 | FR-APP-6 | Clean console on load. | Done | Dev-server probe (fresh load, reloads after edits and an invalid tab): no console warnings or hydration messages. Production console clean at 1280 and 400 px. *Evidence (slice 1).* |
 | FR-APP-7 | Four tabs in order Home, Goals, Planner, Insights, numbered 01 to 04; Home default **(decided)**. | Done | Tabs fit at 400 px without scrolling; `app/app.vue` has no Insights or Configuration entry. *Evidence (slice 1):* Home, Goals, Planner and Insights are numbered 01 to 04 with Home default (browser run). Configuration is a transitional fifth tab. At 400 px the five tabs scroll inside `.tabs` (42 px overflow) until slice 3 removes Configuration. *Evidence (slice 3):* Four tabs in order Home, Goals, Planner, Insights, numbered 01 to 04; Configuration removed; `?tab=configuration` falls back to Home. |
 | FR-APP-8 | Remove the Insights and Configuration views and code only they use. | Done | `InsightsView.vue` and `LegendView.vue` are gone or reduced to reused parts; build and typecheck clean. *Evidence (slice 1):* `InsightsView.vue` removed; the projection horizon moved from `LegendView.vue` to Visualization. `LegendView.vue` stays until slice 3. *Evidence (slice 3):* `LegendView.vue` and its CSS removed in slice 3; no Configuration code is left. |
+| FR-APP-9 | Storage modes: local (default, localStorage) or Supabase (`NUXT_PUBLIC_STORAGE=supabase`). Supabase keeps one JSON snapshot row per user (`spec/database/snapshot.sql`), with the same version rule as local storage. | Done (snapshot, not normalised) | `app/utils/storage/`. Local mode loads no Supabase code (separate chunk, dynamic import). Verified in a browser against a fake Supabase server; **not yet run against a real Supabase project**. |
+| FR-APP-10 | Supabase mode: email magic-link sign-in; no data loaded or written before a session; sign-out resets the screen to the seed without writing; users on the same browser never see each other's data; a failed load blocks writes. | Done (not yet real) | `app/composables/useAuth.ts`, `app/utils/storage/session.ts`, `app/components/auth/LoginGate.vue`. Browser run against a fake Supabase: gate, error and confirmation states, first-login row creation, edit and reload, sign-out, user switch, load failure. Screenshots in `spec/screens/login-gate-*`. |
 
 ---
 
@@ -384,8 +386,8 @@ Deviation: available time counts the days of whole ISO weeks, not calendar days,
 
 | Area | Requirement | Status |
 | --- | --- | --- |
-| Local-first | No backend data store or API; the only external request is the Google Fonts stylesheet. | Met |
-| Privacy | No personal data leaves the browser. Journal text stays local like everything else. | Met |
+| Local-first | Default mode: no backend data store or API; the only external request is the Google Fonts stylesheet. Optional Supabase mode (FR-APP-9, 10) stores the snapshot in the owner's Supabase project. | Met (default) |
+| Privacy | Default mode: no personal data leaves the browser; journal text stays local. In Supabase mode the planner state (journal included) and the account email are stored in the Supabase project under row level security. | Met (default) |
 | Performance | Derived values recomputed in memory. Home Month walks at most 31 days; the year chart at most 53 weeks. | Met (not benchmarked) |
 | Build quality | `npm run build` clean; `npx nuxi typecheck` at 0 errors. | Required on every change |
 | Responsive | Usable at 400 px; no page-level horizontal scroll. Only the year grid and charts may scroll, each in its own container. The activity grid must fit 400 px. | Met today; required for v3 |
@@ -821,6 +823,7 @@ v2 gaps and where they went: weekday view (Later); week status UI (Q5); grid key
 | --- | --- |
 | 2026-04-15 | Original PRD and design document (v1 plan). |
 | 2026-10-25 | v2: rewritten to describe the built product (Goals, Planner, Insights, Configuration) with requirement IDs and statuses. |
+| 2026-10-27 | Storage adapter: optional Supabase snapshot mode with email magic-link sign-in (FR-APP-9 and 10); NFR Local-first and Privacy qualified for the optional mode. |
 | 2026-10-26 | Slice 6 (journal experiment): `journal` map in the state (version 7), Journal card last on Home with the key message and a Readings placeholder. FR-HOME-11 to 13 Done as an experiment; FR-HOME-1 Done. Deviations are listed in each row. Node checks and browser checks passed (see build-plan status log). |
 | 2026-10-26 | Slice 4 (Home): period selector (Day, Week, Month), Day blocks, Week and Month activity rows, time per category, totals, goals signal, empty states. FR-HOME-1 to 10 with evidence (FR-HOME-1 and 10 Partial, 2 to 9 Done); journal items 11 to 13 stay for slice 6. |
 | 2026-10-25 | v3: structure Home, Goals, Planner, Visualization; Insights and Configuration removed; UX rules (FR-UX); dates and years (FR-DATE); Home with a journal experiment, Goals with vision, Harada map and category detail, Planner activity grid with explicit reassignment, Visualization; see-only-once matrix; Insights mapping; impact and slices; assumptions and open questions. |
