@@ -45,14 +45,19 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Step 3 of 5 on Planner: "Timely placed 3 h for Physical" and the week the build placed |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
-| `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the product line and headline, the intro player (scene 1 of 5, looping, frameless), the Google sign-in block, the consent line and the footer |
+| `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the headline and its supporting line, the intro player (scene 1 of 5, paused behind a Play button, frameless), the Google sign-in button and the consent line |
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in page, dark, the same layout |
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in page, light, one column: the copy, the intro player, the sign-in button, the consent line |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in page, dark, one column |
 | `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Ambition: the caption band at the top, the ambition in the centre of the grid and the life areas around it (stage only) |
 | `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
 | `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
-| `onboarding-intro-dialog-mobile-dark-scene-2.png` | 400 px wide, dark | The intro dialog at phone width in dark mode, scene 2 of 5, Habits |
+| `onboarding-intro-dialog-mobile-{light,dark}-scene-{1..5}.png` | 390 by 700 px | The intro dialog at a phone size, light and dark, every scene: the stage and its caption band whole, the controls inside the dialog |
+| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, a category with the "+ Add habit" form open (name, times and period, minutes each, linked activity) |
+| `goals-add-habit-mobile-light.png` | 390 px wide | The same add form at phone width |
+| `onboarding-ambition-long-desktop-light.png` | 1280 px wide | Guided step 1 with a 228-character ambition: the field wraps and grows, nothing is cut |
+| `goals-vision-long-desktop-light.png` | 1280 px wide, full page | Goals with the long ambition in the vision and the Harada map centre |
+| `goals-vision-long-mobile-light.png` | 400 px wide, full page | The same at phone width |
 | `onboarding-tour-last-mobile-light.png` | 400 px wide | Step 5 of 5, Daily follow-up, with "Watch the intro again" at phone width |
 | `reset-confirm-desktop-light.png` | 1280 px wide | Reset my data confirmation over the sample data: "Reset my data?", the exact copy, Cancel focused and Delete my data |
 
@@ -85,6 +90,14 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Polish v4 (2026-10-27, branch `feat/polish-v4`)
+
+- One commit per item, from `origin/main` (fe5082c). The sign-in headline has no product label above it (the topbar shows the name).
+- "+ Add habit" is in the category detail in view mode too; it opens the same fields as a habit's edit form (`HabitForm.vue`). Save adds the habit; Cancel and Escape leave nothing behind.
+- The 5-year ambition is written in full: step 1 is an auto-growing textarea (Enter is Next), and the Goals vision and the map centre do not clip it.
+- The intro dialog fits a phone (360 to 430 px, 390 by 700 px), in light and dark: 16 px padding on phones, the caption band grows instead of clipping its text, the caption fades in without moving up.
+- The intro does not autoplay. It opens on scene 1 (static, with a Play button over the stage); the first Play starts it. The sign-in page loops once started. "Start with my ambition" is always in the dialog.
 
 ### Sign-in page with the intro (2026-10-27, branch `feat/onboarding-flow-v2`)
 
