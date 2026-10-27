@@ -19,7 +19,7 @@ useHead({
     <ul>
       <li><strong>Without an account</strong>, your planner stays in your browser. Nothing is sent to us.</li>
       <li><strong>With an account</strong>, your planner is stored in the operator's Supabase database, one row per user.</li>
-      <li>There is <strong>no analytics, no advertising, no tracking, and no selling of data</strong>. This is not planned for now.</li>
+      <li>The operator measures <strong>anonymous page visits</strong> with Vercel Web Analytics (no cookies, no profile of you, nothing from inside your planner). There is <strong>no advertising and no selling of data</strong>.</li>
     </ul>
 
     <h2>Who is responsible</h2>
@@ -69,14 +69,23 @@ useHead({
     <h2>Browser storage</h2>
     <p>
       Timely uses your browser's local storage for things it needs to work: your planner in local mode, your sign-in session
-      in account mode, and your light or dark theme. These are strictly necessary. Timely sets no tracking cookies and
-      loads no third-party trackers, so no cookie banner is shown.
+      in account mode, and your light or dark theme. These are strictly necessary. Timely sets no tracking cookies, so no cookie banner is shown.
+    </p>
+
+    <h2>Visit statistics</h2>
+    <p>
+      Timely uses Vercel Web Analytics to count visits and see which pages are used. It sets no cookie and stores nothing in your
+      browser. For each page view it receives the page address, the referrer, your country, and your browser, device and operating
+      system type. It does not receive your name, email or IP address in readable form, and it never sees what you write in your
+      planner. A visitor cannot be followed across days or across other websites. The legal basis is the operator's legitimate
+      interest in knowing whether the app is used and how to improve it (Article 6(1)(f) GDPR); the data is anonymous in practice. If you
+      would rather not be counted, a browser or extension that blocks analytics requests is enough.
     </p>
 
     <h2>Who receives your data</h2>
     <ul>
       <li><strong>Supabase</strong> provides the database and sign-in, in the region above.</li>
-      <li><strong>Vercel</strong> hosts the app. It may keep technical server logs, which can include IP addresses.</li>
+      <li><strong>Vercel</strong> hosts the app and provides the visit statistics above. It may keep technical server logs, which can include IP addresses.</li>
       <li><strong>Google</strong> receives the sign-in only if you choose Google sign-in. Google Fonts also serves the Timely typeface to every visitor's browser, so Google receives your IP address when the font loads.</li>
     </ul>
     <p>
@@ -130,8 +139,8 @@ useHead({
 
     <h2>Changes to this policy</h2>
     <p>
-      If the operator later wants to collect usage statistics, this policy will be updated first, and the "last updated"
-      date will change. Where the law requires it, consent will be asked before any such collection.
+      If the operator later wants to collect more than the anonymous visit statistics above, this policy will be updated first,
+      and the "last updated" date will change. Where the law requires it, consent will be asked before any such collection.
     </p>
   </LegalPage>
 </template>
