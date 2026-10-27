@@ -34,24 +34,26 @@ Screenshots in `screens/` (regenerated on 26 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 
-Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh user):
+Onboarding screens (feat/onboarding-flow-v2, 27 October 2026, local storage, a fresh user):
 
 | File | Size | Notes |
 | --- | --- | --- |
 | `onboarding-welcome-desktop-light.png` | 1280 px wide | Welcome dialog over the empty Home: the idea, Guide me, Start empty, Explore with sample data |
-| `onboarding-form-desktop-light.png` | 1280 px wide | The first-run form filled in: ambition, the Physical chip, Run, three times a week, one hour |
-| `onboarding-tour-goals-desktop-light.png` | 1280 px wide | Tour step 1 of 5 on Goals: the new life area and its habit, needed against planned hours |
-| `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Tour step 3 of 5 on Insights: the planned-time bars of the new week |
-| `onboarding-tour-goals-mobile-light.png` | 400 px wide | Tour step 1 of 5 on Goals at 400 px: the card at the bottom |
+| `onboarding-ambition-desktop-light.png` | 1280 px wide | Step 1 of 5, Your 5-year ambition: the framing text and the one field, filled in |
+| `onboarding-goals-desktop-light.png` | 1280 px wide | Step 2 of 5, Goals and habits with one goal: the Physical chip, the habit Run, "Add a second goal" |
+| `onboarding-goals-two-desktop-light.png` | 1280 px wide | Step 2 of 5 with two goals: the chip the first goal uses is disabled in the second; Remove on goal 2 |
+| `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Step 3 of 5 on Planner: "Timely placed 3 h for Physical" and the week the build placed |
+| `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
+| `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
 | `login-gate-desktop-light.png` | 1280 px wide | Sign-in gate in Supabase mode, signed out, light: title and the Continue with Google button only |
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
-| `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Why: the ambition in the centre of the 3x3 grid and the life areas around it (stage only) |
-| `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Time: the week grid, the three planned hours fill in (stage only) |
-| `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, See: the year's stacked bars and the share of each life area (stage only) |
+| `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Ambition: the caption band at the top, the ambition in the centre of the grid and the life areas around it (stage only) |
+| `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
+| `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
 | `onboarding-intro-dialog-mobile-dark-scene-2.png` | 400 px wide, dark | The intro dialog at phone width in dark mode, scene 2 of 5, Habits |
-| `onboarding-tour-last-mobile-light.png` | 400 px wide | Tour last card with "Watch the intro again" at phone width |
+| `onboarding-tour-last-mobile-light.png` | 400 px wide | Step 5 of 5, Daily follow-up, with "Watch the intro again" at phone width |
 | `reset-confirm-desktop-light.png` | 1280 px wide | Reset my data confirmation over the sample data: "Reset my data?", the exact copy, Cancel focused and Delete my data |
 
 Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
@@ -83,6 +85,12 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Guided path v2 (2026-10-27, branch `feat/onboarding-flow-v2`)
+
+- The guided path follows the owner's order: 1 Your ambition (one required field), 2 Goals and habits (one or two life areas, each with a habit, times a week and hours each time; a second goal is added on request), then the build, then three tour cards: 3 Plan your week (what the planner placed, and that Goals shows each area as on target), 4 Insights, 5 Daily follow-up. Goals has no tour card. Each step shows "Step N of 5". "Start with my ambition" leads from the intro to step 1. FR-ONB-4 to 7.
+- The intro scenes are about 9 seconds each (about 45 seconds). Each caption sits inside the stage in a band across its top 28 percent, and the graphics are laid out below it. A visually hidden live caption keeps the text for screen readers. FR-ONB-9.
+- Replay from the Tour button starts at step 3 when the user has an ambition and a life area.
 
 ### First-run intro (2026-10-27, branch `feat/reset-and-intro`)
 
