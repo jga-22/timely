@@ -1,53 +1,39 @@
 <script setup lang="ts">
-import { categoryAlignments, DAYS, hoursLabel } from '~/utils/planner'
-import { firstCategory } from '~/utils/onboarding'
+import { categoryAlignments, hoursLabel } from '~/utils/planner'
 
-/** Guided tour (FR-ONB-6): a compact card at the bottom of the screen. It never blocks the page and can be skipped at any step */
+/** Guided tour (FR-ONB-6): the cards 3 to 5 of the path, at the bottom of the screen. It never blocks the page and can be skipped at any step */
 const planner = usePlannerStore()
 const { phase, step, next, back, close, openIntro } = useOnboarding()
 const heading = ref<HTMLElement | null>(null)
 
-const category = computed(() => firstCategory(planner.$state))
-const habit = computed(() => planner.habits.find(item => item.categoryId === category.value?.id))
-const activity = computed(() => planner.activities.find(item => item.categoryId === category.value?.id))
-const alignment = computed(() => (category.value ? categoryAlignments(planner.$state).get(category.value.id) : undefined))
+const alignments = computed(() => categoryAlignments(planner.$state))
+const lifeAreas = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 
-/** The weekdays the activity holds in the active template, as "Mon, Wed, Fri" */
-const activityDays = computed(() => {
-  const template = planner.activeTemplate
-  if (!template || !activity.value) return ''
-
-  return DAYS.filter((_, day) => template.slots.slice(day * 24, day * 24 + 24).includes(activity.value!.id)).join(', ')
-})
+/** The hours the planner holds for each of the first two life areas, as "3 h for Physical and 2 h for Spiritual" */
+const placed = computed(() => lifeAreas.value
+  .slice(0, 2)
+  .map(area => `${hoursLabel(alignments.value.get(area.id)?.allocatedMinutes ?? 0)} for ${area.name}`)
+  .join(' and '))
 
 const steps = computed(() => {
-  const name = category.value?.name ?? 'your life area'
-  const habitName = habit.value?.name ?? 'your habit'
+  const count = lifeAreas.value.length
 
   return [
     {
-      title: 'Your goal and its habit',
-      body: alignment.value
-        ? `Goals compares the time a habit asks for with the time your planner holds. ${habitName} asks for ${hoursLabel(alignment.value.neededMinutes)} a week, and the planner holds ${hoursLabel(alignment.value.allocatedMinutes)} for ${name}.`
-        : `Each life area has goals and habits. Goals compares the time they ask for with the time your planner holds.`
-    },
-    {
-      title: 'Your time in the week',
-      body: activity.value
-        ? `${activity.value.name} (${activity.value.shortCode}) is in your week on ${activityDays.value || 'no day yet'}. Select an hour in the grid, then apply or clear it.`
+      title: 'Plan your week',
+      body: count
+        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals shows each area as on target when its habits and hours match.`
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.'
     },
     {
-      title: 'Where your hours go',
-      body: `Insights shows the planned hours of your year, stacked by life area. With ${name} alone the chart has one colour; add more life areas and activities and it shows where the rest of your time goes.`
+      title: 'Insights',
+      body: count > 1
+        ? `Insights shows where the planned hours of your year go, stacked by life area. The chart has ${count} life areas, and the share of each is listed below it.`
+        : `Insights shows where the planned hours of your year go, stacked by life area. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Goals and it fills.` : 'Add a life area in Goals and it fills the chart.'}`
     },
     {
-      title: 'Today',
-      body: 'Home shows today as a timeline and a list of its activities. Use the note under it for a daily follow-up of what you did.'
-    },
-    {
-      title: 'What next',
-      body: 'Add another life area in Goals, and activities for the rest of your week in Planner. The Tour button in the top bar plays this walk-through again.'
+      title: 'Daily follow-up',
+      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: add more life areas in Goals, and the activities for the rest of your week in Planner.'
     }
   ]
 })
@@ -70,7 +56,7 @@ watch([phase, step], ([value]) => {
     aria-describedby="onb-tour-body"
     @keydown.esc.stop="close"
   >
-    <p class="onb-step" aria-live="polite">{{ step + 1 }} of {{ steps.length }}</p>
+    <p class="onb-step" aria-live="polite">Step {{ TOUR_FIRST_STEP + step }} of {{ ONBOARDING_STEP_COUNT }}</p>
     <h2 id="onb-tour-title" ref="heading" class="onb-tour-title" tabindex="-1">{{ current.title }}</h2>
     <p id="onb-tour-body" class="onb-tour-body">{{ current.body }}</p>
     <div class="onb-tour-actions">

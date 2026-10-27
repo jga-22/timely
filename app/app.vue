@@ -17,9 +17,9 @@ const onboarding = useOnboarding()
 const accountOpen = ref(false)
 const resetOpen = ref(false)
 
-/** Replays the tour; without a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
+/** Replays the tour from Plan your week; without an ambition and a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
-  if (planner.categories.length) onboarding.startTour()
+  if (planner.ambition && planner.categories.length) onboarding.startTour()
   else onboarding.openWelcome()
 }
 
@@ -138,7 +138,8 @@ const toggleDark = () => {
       <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />
       <NuxtPage v-else-if="legalPage || auth.status !== 'loading'" />
 
-      <footer v-if="auth.status === 'off' || auth.status === 'signed-in'" class="app-footer">
+      <!-- Also on the sign-in gate and the legal pages; hidden only while the session is loading -->
+      <footer v-if="auth.status !== 'loading'" class="app-footer">
         <NuxtLink to="/terms">Terms</NuxtLink>
         <span aria-hidden="true">·</span>
         <NuxtLink to="/privacy">Privacy</NuxtLink>
