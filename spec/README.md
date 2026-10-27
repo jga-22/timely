@@ -45,10 +45,10 @@ Onboarding screens (feat/onboarding-flow-v2, 27 October 2026, local storage, a f
 | `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Step 3 of 5 on Planner: "Timely placed 3 h for Physical" and the week the build placed |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
-| `login-gate-desktop-light.png` | 1280 px wide | Sign-in gate in Supabase mode, signed out, light: title and the Continue with Google button only |
-| `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
-| `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
-| `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
+| `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: the product line and the Google card on the left, the intro player (scene 1 of 5, looping) on the right, the consent line and the footer |
+| `login-gate-desktop-dark.png` | 1280 px wide | Sign-in page, dark, the same layout |
+| `login-gate-mobile-light.png` | 400 px wide | Sign-in page, light, one column: the copy, the card, the consent line, then the intro player below |
+| `login-gate-mobile-dark.png` | 400 px wide | Sign-in page, dark, one column |
 | `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Ambition: the caption band at the top, the ambition in the centre of the grid and the life areas around it (stage only) |
 | `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
 | `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
@@ -62,8 +62,8 @@ Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with loca
 | --- | --- | --- |
 | `legal-privacy-desktop-light.png` | 1280 px wide | Privacy Policy: title, "Last updated", the short summary, the reading column, the footer |
 | `legal-terms-mobile-dark.png` | 400 px wide, dark | Terms of Use at phone width in dark mode, full page |
-| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in gate with the consent line under the card |
-| `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in gate at phone width in dark mode |
+| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in page with the consent line under the card (the current page, as in `login-gate-desktop-light.png`) |
+| `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in page at phone width in dark mode, with the consent line and the intro player below |
 
 `goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
@@ -85,6 +85,11 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Sign-in page with the intro (2026-10-27, branch `feat/onboarding-flow-v2`)
+
+- The sign-in page (Supabase mode, signed out) has a two-column hero from 900 px: the product line "Your goals decide your week", one sentence, the Google card and the consent line on the left; the intro player on the right, autoplay and looping, with the same Play or Pause, Back, Next and five segments. One column on phones (copy, card, then the player). The footer shows on the page too. FR-APP-11.
+- The intro player is one component (`IntroPlayer.vue`) shared with the first-run dialog. It pauses while the tab is hidden or the stage is out of view, and has no timer on reduced motion.
 
 ### Guided path v2 (2026-10-27, branch `feat/onboarding-flow-v2`)
 
