@@ -15,7 +15,7 @@ export interface AuthState {
 
 let initialised = false
 
-/** Sign-in state for Supabase mode: Google or email magic link, session restore and sign-out. Kept apart from the storage adapter */
+/** Sign-in state for Supabase mode: Google sign-in, session restore and sign-out. Kept apart from the storage adapter */
 export const useAuth = () => {
   const config = useRuntimeConfig().public as StorageConfig
   const enabled = resolveStorageMode(config) === 'supabase'
@@ -33,7 +33,7 @@ export const useAuth = () => {
     return getSupabaseClient(config.supabaseUrl, config.supabaseAnonKey)
   }
 
-  /** Restores the session (also after a magic-link redirect) and follows later changes */
+  /** Restores the session (also after the Google redirect) and follows later changes */
   const init = async () => {
     if (initialised) return
     initialised = true
@@ -43,17 +43,6 @@ export const useAuth = () => {
 
     const { data } = await supabase.auth.getSession()
     setSession(data.session)
-  }
-
-  /** Sends the magic link. Returns an error message, or null when the email was sent */
-  const signIn = async (email: string): Promise<string | null> => {
-    const supabase = await client()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin }
-    })
-
-    return error?.message ?? null
   }
 
   /** Starts the Google sign-in. The browser leaves for Google and returns to this origin; an error message is returned only if it could not start */
@@ -67,11 +56,12 @@ export const useAuth = () => {
     return error?.message ?? null
   }
 
+  /** Signs out and clears the signed-in state. The storage layer does not write after this */
   const signOut = async () => {
     const supabase = await client()
     await supabase.auth.signOut()
     setSession(null)
   }
 
-  return { state, init, signIn, signInWithGoogle, signOut }
+  return { state, init, signInWithGoogle, signOut }
 }
