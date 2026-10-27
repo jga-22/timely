@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The sign-in page (Supabase mode, signed out): the product line and the sign-in card on the left, the intro player on the right
- * (looping, autoplay; no sound). On phones the columns stack: copy and card first, then the player. Shown by app.vue.
+ * The sign-in page (Supabase mode, signed out): one centred column. The product line and the headline, then the intro player
+ * (looping, autoplay; no sound, frameless on the page surface), then the sign-in block and the consent line. Shown by app.vue.
  */
 const { signInWithGoogle } = useAuth()
 
@@ -30,7 +30,11 @@ const google = async () => {
         <p class="login-lede">Set a 5-year ambition, give your goals time in your week, and see where your hours go.</p>
       </div>
 
-      <div class="login-card">
+      <div class="login-showcase">
+        <OnboardingIntroPlayer loop quiet />
+      </div>
+
+      <div class="login-action-block">
         <h2 class="login-title">Sign in to Timely</h2>
         <button type="button" class="btn btn-primary login-action" :disabled="busy" @click="google">Continue with Google</button>
         <p v-if="error" class="field-error" role="alert">{{ error }}</p>
@@ -40,10 +44,6 @@ const google = async () => {
         By continuing you agree to the <NuxtLink to="/terms" class="legal-link">Terms of Use</NuxtLink> and the
         <NuxtLink to="/privacy" class="legal-link">Privacy Policy</NuxtLink>.
       </p>
-    </div>
-
-    <div class="login-showcase">
-      <OnboardingIntroPlayer loop />
     </div>
   </main>
 </template>

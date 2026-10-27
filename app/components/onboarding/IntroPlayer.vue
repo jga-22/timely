@@ -9,7 +9,10 @@ import { DESIGN_COLORS } from '~/utils/planner'
  * stage is out of view. `loop` restarts at the first scene after the last one; without it the last scene holds with the end slot.
  * Reduced motion: no timer and no autoplay, each scene is shown whole and Back and Next move between them.
  */
-const props = withDefaults(defineProps<{ loop?: boolean }>(), { loop: false })
+const props = withDefaults(defineProps<{ loop?: boolean, quiet?: boolean }>(), { loop: false, quiet: false })
+
+/** Quiet: the sign-in page's variant, text controls instead of buttons (the frame is set in CSS, see `.is-quiet`) */
+const controlClass = computed(() => props.quiet ? 'onb-link' : 'btn btn-sm')
 
 const { fill } = usePlannerFill()
 
@@ -167,7 +170,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="intro-player">
+  <section class="intro-player" :class="{ 'is-quiet': quiet }">
     <div ref="stage" class="onb-intro-stage" :data-paused="String(!running)" aria-hidden="true">
       <p :key="scene" class="onb-intro-caption">{{ current.caption }}</p>
       <svg viewBox="0 0 640 360" focusable="false">
@@ -281,9 +284,9 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="onb-intro-controls">
-      <button v-if="!reduced" type="button" class="btn btn-sm" @click="togglePlay">{{ playing ? 'Pause' : 'Play' }}</button>
-      <button type="button" class="btn btn-sm" :disabled="scene === 0" @click="back">Back</button>
-      <button v-if="loop || !isLast" type="button" class="btn btn-sm" @click="next">Next</button>
+      <button v-if="!reduced" type="button" :class="controlClass" @click="togglePlay">{{ playing ? 'Pause' : 'Play' }}</button>
+      <button type="button" :class="controlClass" :disabled="scene === 0" @click="back">Back</button>
+      <button v-if="loop || !isLast" type="button" :class="controlClass" @click="next">Next</button>
       <slot name="end" :last="isLast" />
     </div>
   </section>
