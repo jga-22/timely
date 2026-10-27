@@ -2,7 +2,7 @@
 import { createHaradaSeed } from '~/utils/planner'
 
 /** Welcome and the first-run form (FR-ONB-3, 4). A dialog: focus moves into it, Escape leaves it */
-const { phase, openWelcome, openForm, startEmpty, useSampleData, build } = useOnboarding()
+const { phase, openWelcome, openIntro, startEmpty, useSampleData, build } = useOnboarding()
 
 const suggestions = createHaradaSeed().categories.map(category => category.name)
 
@@ -70,7 +70,7 @@ const submit = () => {
         <h2 id="onb-title" class="onb-title" tabindex="-1" data-autofocus>Welcome to timely</h2>
         <p class="onb-lede">Your goals decide your week: set a goal, give it time in your week, see where your hours go.</p>
         <div class="onb-actions">
-          <button type="button" class="btn btn-primary" @click="openForm">Guide me</button>
+          <button type="button" class="btn btn-primary" @click="openIntro('welcome')">Guide me</button>
           <button type="button" class="btn btn-outline" @click="startEmpty">Start empty</button>
           <button type="button" class="onb-link" @click="useSampleData">Explore with sample data</button>
         </div>

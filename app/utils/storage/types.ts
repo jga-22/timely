@@ -13,8 +13,14 @@ export interface StorageConfig {
   supabaseAnonKey: string
 }
 
+/** Outcome of a save that must be known at once (a reset): ok, or the message to show */
+export type SaveResult = { ok: true } | { ok: false, message: string }
+
 /** One JSON document per user. Adapters return null when there is nothing valid to restore */
 export interface PlannerStorage {
   load(): Promise<PlannerState | null> | PlannerState | null
+  /** Debounced where the adapter is remote; the next change carries the full state */
   save(state: PlannerState): Promise<void> | void
+  /** Writes now and reports the result. Used by Reset my data, so the reset is not only pending */
+  saveNow(state: PlannerState): Promise<SaveResult>
 }

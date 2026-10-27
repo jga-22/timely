@@ -47,6 +47,12 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
+| `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Why: the ambition in the centre of the 3x3 grid and the life areas around it (stage only) |
+| `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Time: the week grid, the three planned hours fill in (stage only) |
+| `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, See: the year's stacked bars and the share of each life area (stage only) |
+| `onboarding-intro-dialog-mobile-dark-scene-2.png` | 400 px wide, dark | The intro dialog at phone width in dark mode, scene 2 of 5, Habits |
+| `onboarding-tour-last-mobile-light.png` | 400 px wide | Tour last card with "Watch the intro again" at phone width |
+| `reset-confirm-desktop-light.png` | 1280 px wide | Reset my data confirmation over the sample data: "Reset my data?", the exact copy, Cancel focused and Delete my data |
 
 Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
 
@@ -74,9 +80,17 @@ Desktop captures are 1280 px wide. The Planner captures and the phone captures a
 
 Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Not built yet: export, import and reset (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
+The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### First-run intro (2026-10-27, branch `feat/reset-and-intro`)
+
+- Guide me opens a short intro of five scenes (about 28 seconds) that explains the idea before the form: why, habits, time, compare and see. Play and Pause, Back and Next, a five-part progress bar and Skip intro; Escape goes to the form. On the tour's last card, "Watch the intro again" replays it and returns to the tour. Reduced motion shows the scenes still, with no timer. FR-ONB-9.
+
+### Reset my data (2026-10-27, branch `feat/reset-and-intro`)
+
+- An Account menu in the top bar (in local mode too) with "Reset my data": a confirmation dialog says what is deleted, and Delete replaces the planner with the empty first-run state, saves it at once (Supabase: the user's row; the sign-in stays) and opens Welcome. A failed save is shown and the data is kept. The Privacy Policy now says planner erasure is self-service. FR-ONB-10.
 
 ### Google-only sign-in (2026-10-27, branch `feat/remove-email-link`)
 

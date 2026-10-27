@@ -15,6 +15,7 @@ const { state: auth, signOut } = useAuth()
 const planner = usePlannerStore()
 const onboarding = useOnboarding()
 const accountOpen = ref(false)
+const resetOpen = ref(false)
 
 /** Replays the tour; without a life area there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
@@ -25,6 +26,11 @@ const replayTour = () => {
 const onSignOut = async () => {
   accountOpen.value = false
   await signOut()
+}
+
+const openReset = () => {
+  accountOpen.value = false
+  resetOpen.value = true
 }
 
 const storageLabels = { loading: 'Loading', saving: 'Saving', saved: 'Saved', error: 'Not saved' }
@@ -83,7 +89,7 @@ const toggleDark = () => {
           {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
         </span>
 
-        <div v-if="auth.status === 'signed-in'" class="account">
+        <div v-if="auth.status === 'off' || auth.status === 'signed-in'" class="account">
           <button
             type="button"
             class="account-button"
@@ -95,8 +101,9 @@ const toggleDark = () => {
             Account
           </button>
           <div v-if="accountOpen" class="account-menu">
-            <p class="account-email">{{ auth.user?.email }}</p>
-            <button type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
+            <p v-if="auth.status === 'signed-in'" class="account-email">{{ auth.user?.email }}</p>
+            <button v-if="auth.status === 'signed-in'" type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
+            <button type="button" class="btn btn-sm btn-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">Reset my data</button>
           </div>
         </div>
 
@@ -141,7 +148,9 @@ const toggleDark = () => {
     <!-- Hidden on the legal pages only: the state is kept, so Welcome or the tour shows again on Home -->
     <ClientOnly>
       <OnboardingFlow v-if="!legalPage" />
+      <OnboardingIntro v-if="!legalPage" />
       <OnboardingTour v-if="!legalPage" />
+      <AccountResetDataDialog v-if="resetOpen" @close="resetOpen = false" />
     </ClientOnly>
     <NuxtRouteAnnouncer />
   </VApp>

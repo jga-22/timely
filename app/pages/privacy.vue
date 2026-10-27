@@ -97,9 +97,9 @@ useHead({
 
     <h2>How long we keep it</h2>
     <p>
-      In account mode, your data is kept until you ask us to delete it or until the test phase ends. If the test phase ends,
-      we will tell you in advance what happens to stored data. In local mode, your data stays in your browser until you
-      clear the site data for Timely.
+      In account mode, your planner is kept until you reset it with Reset my data (see Your rights) or ask us to delete your
+      account, or until the test phase ends. If the test phase ends, we will tell you in advance what happens to stored data.
+      In local mode, your data stays in your browser until you reset it or clear the site data for Timely.
     </p>
 
     <h2>Your rights</h2>
@@ -107,7 +107,11 @@ useHead({
     <ul>
       <li>give you access to the personal data we hold about you;</li>
       <li>correct data that is wrong;</li>
-      <li>delete your data (erasure). There is no self-service delete button yet, so you ask by email and we act on the request;</li>
+      <li>
+        erase your data. In account mode you can erase your planner yourself: open <strong>Account</strong> in the top bar and
+        choose <strong>Reset my data</strong>. It deletes your goals, habits, activities, weeks and journal notes, and keeps your
+        sign-in. Deleting your sign-in account and your email address is still done on request by email;
+      </li>
       <li>restrict how we use your data;</li>
       <li>give you your data in a portable form;</li>
       <li>object to our processing.</li>
