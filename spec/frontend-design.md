@@ -463,6 +463,8 @@ Feature FR-ONB (PRD 9.13). Session state only (`useOnboarding`, Nuxt `useState`)
 - **Topbar "Tour"** (`.tour-button`): a 32px text button next to the theme toggle, `--ink-2`, hover `--bg-3`. Shown with the tabs and once storage has loaded.
 - **Touch:** at 768px and below the dialog buttons, tour buttons and the chips are 44px high.
 - **Scrim and motion:** no animation; the dialog appears at once.
+- **Reset confirm** (`app/components/account/ResetDataDialog.vue`, FR-ONB-10): the same scrim and dialog, `role="alertdialog"` with the title "Reset my data?" and the body text in `aria-describedby`. Cancel (`.btn-outline`) has focus on open; Delete my data is `.btn-danger-solid` (filled `--danger`, text `--bg`, 6.9:1 light, 9:1 dark). Tab stays between the two buttons; Escape cancels. A failed save shows `.field-error` with `role="alert"` and keeps the dialog open.
+- **Account menu** (`.account`, `.account-menu`): the "Account" button in the top bar, in both modes. Supabase shows the email and Sign out; local mode shows only "Reset my data" (`.btn-sm .btn-danger`).
 - Visual check: `spec/screens/onboarding-*`.
 
 Known gaps: the dialog has no focus trap; the tour card can cover the lower part of a short phone screen (it scrolls and is dismissible).

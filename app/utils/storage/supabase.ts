@@ -1,7 +1,7 @@
 import type { PlannerState } from '~/types/planner'
 import { isPlannerState } from '~/utils/planner'
 import { getSupabaseClient } from '~/utils/supabase'
-import type { PlannerStorage, StorageStatusHandler } from '~/utils/storage/types'
+import type { PlannerStorage, SaveResult, StorageStatusHandler } from '~/utils/storage/types'
 
 /** Trailing debounce for saves; the whole state is written each time, so only the latest matters */
 const SAVE_DELAY_MS = 600
@@ -16,9 +16,9 @@ export const createSupabaseStorage = (url: string, anonKey: string, userId: stri
   let loadFailed = false
   let timer: ReturnType<typeof setTimeout> | undefined
   let pending: PlannerState | null = null
-  let queue: Promise<void> = Promise.resolve()
+  let queue: Promise<unknown> = Promise.resolve()
 
-  const write = async (state: PlannerState) => {
+  const write = async (state: PlannerState): Promise<SaveResult> => {
     onStatus('saving')
 
     try {
@@ -33,11 +33,21 @@ export const createSupabaseStorage = (url: string, anonKey: string, userId: stri
 
       if (error) throw error
       onStatus('saved')
+      return { ok: true }
     } catch (error) {
       console.warn('Unable to save planner state to Supabase.', error)
+      const message = error instanceof Error ? error.message : 'Save failed.'
       // The next change carries the full state again, so the next save retries
-      onStatus('error', error instanceof Error ? error.message : 'Save failed.')
+      onStatus('error', message)
+      return { ok: false, message }
     }
+  }
+
+  // Writes run one after the other, so an older write never lands after a newer one
+  const run = (state: PlannerState): Promise<SaveResult> => {
+    const done = queue.then(() => write(state))
+    queue = done
+    return done
   }
 
   const flush = () => {
@@ -47,11 +57,7 @@ export const createSupabaseStorage = (url: string, anonKey: string, userId: stri
     const state = pending
     pending = null
 
-    if (state) {
-      queue = queue.then(() => write(state))
-    }
-
-    return queue
+    return state ? run(state) : queue
   }
 
   // Start the request when the page is hidden, so the last change is not lost on navigation or tab close
@@ -94,6 +100,18 @@ export const createSupabaseStorage = (url: string, anonKey: string, userId: stri
       pending = JSON.parse(JSON.stringify(state)) as PlannerState
       clearTimeout(timer)
       timer = setTimeout(flush, SAVE_DELAY_MS)
+    },
+    async saveNow(state: PlannerState): Promise<SaveResult> {
+      if (loadFailed) {
+        return { ok: false, message: 'Your saved planner could not be loaded, so it cannot be reset. Reload the page and try again.' }
+      }
+
+      // The explicit write replaces any debounced one, which would only repeat the same state
+      clearTimeout(timer)
+      timer = undefined
+      pending = null
+
+      return run(JSON.parse(JSON.stringify(state)) as PlannerState)
     }
   }
 }

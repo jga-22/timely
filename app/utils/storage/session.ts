@@ -2,6 +2,7 @@ import type { usePlannerStore } from '~/stores/planner'
 import { needsOnboarding } from '~/utils/onboarding'
 import { createPlannerStorage } from '~/utils/storage'
 import { bindPlannerStorage } from '~/utils/storage/bind'
+import { setActivePlannerStorage } from '~/utils/storage/active'
 import type { StorageConfig, StorageStatusHandler } from '~/utils/storage/types'
 
 /**
@@ -23,6 +24,7 @@ export const syncPlannerWithSession = (planner: ReturnType<typeof usePlannerStor
     // Back to the empty onboarding state, and any Welcome or tour from the previous user closes
     planner.$reset()
     onboarding.close()
+    setActivePlannerStorage(null)
 
     if (!userId) return
 
@@ -37,6 +39,7 @@ export const syncPlannerWithSession = (planner: ReturnType<typeof usePlannerStor
     // Store the restored or default state at once, so a discarded save is overwritten
     storage.save(planner.$state)
     unbind = bindPlannerStorage(planner, storage)
+    setActivePlannerStorage(storage)
 
     // A failed load is not a new user: its empty state must not be onboarded (and nothing is saved over the row)
     if (needsOnboarding(restored) && storageStatus.value.state !== 'error') onboarding.openWelcome()

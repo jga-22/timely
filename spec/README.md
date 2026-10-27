@@ -47,6 +47,7 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
+| `reset-confirm-desktop-light.png` | 1280 px wide | Reset my data confirmation over the sample data: "Reset my data?", the exact copy, Cancel focused and Delete my data |
 
 Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
 
@@ -74,9 +75,13 @@ Desktop captures are 1280 px wide. The Planner captures and the phone captures a
 
 Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
-The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Not built yet: export, import and reset (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
+The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Reset my data (2026-10-27, branch `feat/reset-and-intro`)
+
+- An Account menu in the top bar (in local mode too) with "Reset my data": a confirmation dialog says what is deleted, and Delete replaces the planner with the empty first-run state, saves it at once (Supabase: the user's row; the sign-in stays) and opens Welcome. A failed save is shown and the data is kept. The Privacy Policy now says planner erasure is self-service. FR-ONB-10.
 
 ### Google-only sign-in (2026-10-27, branch `feat/remove-email-link`)
 

@@ -21,5 +21,10 @@ export const usePlannerYear = () => {
     if (year.value !== null) selectedYear.value = year.value + step
   }
 
-  return { today, year, currentYear, weeks, currentWeekIndex, shiftYear }
+  /** Back to the current ISO year, as on a fresh load (used by Reset my data) */
+  const resetYear = () => {
+    selectedYear.value = null
+  }
+
+  return { today, year, currentYear, weeks, currentWeekIndex, shiftYear, resetYear }
 }

@@ -1,6 +1,7 @@
 import { usePlannerStore } from '~/stores/planner'
 import { createPlannerStorage } from '~/utils/storage'
 import { bindPlannerStorage } from '~/utils/storage/bind'
+import { setActivePlannerStorage } from '~/utils/storage/active'
 import { resolveStorageMode } from '~/utils/storage/mode'
 import { needsOnboarding } from '~/utils/onboarding'
 import type { StorageConfig } from '~/utils/storage/types'
@@ -26,6 +27,7 @@ export default defineNuxtPlugin(async () => {
   // Store the restored or default state at once, so a discarded save is overwritten
   storage.save(planner.$state)
   bindPlannerStorage(planner, storage)
+  setActivePlannerStorage(storage)
 
   if (needsOnboarding(restored)) onboarding.openWelcome()
 })
