@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { useTheme } from 'vuetify'
 import { localDateKey } from '~/utils/dates'
+import { LEGAL_ROUTES } from '~/utils/legal'
 
+const router = useRouter()
 const { tab, go } = useNav()
+// Terms and Privacy render with or without a session, so the sign-in gate never hides them (no planner data is loaded for them)
+const legalPage = computed(() => LEGAL_ROUTES.includes(router.currentRoute.value.path))
 const dark = useState('dark', () => false)
 const theme = useTheme()
 const { today } = usePlannerYear()
@@ -124,13 +128,20 @@ const toggleDark = () => {
         </button>
       </header>
 
-      <AuthLoginGate v-if="auth.status === 'signed-out'" />
-      <NuxtPage v-else-if="auth.status !== 'loading'" />
+      <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />
+      <NuxtPage v-else-if="legalPage || auth.status !== 'loading'" />
+
+      <footer v-if="auth.status === 'off' || auth.status === 'signed-in'" class="app-footer">
+        <NuxtLink to="/terms">Terms</NuxtLink>
+        <span aria-hidden="true">·</span>
+        <NuxtLink to="/privacy">Privacy</NuxtLink>
+      </footer>
     </div>
     <!-- Client only: the first-run state is set before hydration, so the server markup must not contain it -->
+    <!-- Hidden on the legal pages only: the state is kept, so Welcome or the tour shows again on Home -->
     <ClientOnly>
-      <OnboardingFlow />
-      <OnboardingTour />
+      <OnboardingFlow v-if="!legalPage" />
+      <OnboardingTour v-if="!legalPage" />
     </ClientOnly>
     <NuxtRouteAnnouncer />
   </VApp>

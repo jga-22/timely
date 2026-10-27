@@ -48,6 +48,15 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
 
+Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
+
+| File | Size | Notes |
+| --- | --- | --- |
+| `legal-privacy-desktop-light.png` | 1280 px wide | Privacy Policy: title, "Last updated", the short summary, the reading column, the footer |
+| `legal-terms-mobile-dark.png` | 400 px wide, dark | Terms of Use at phone width in dark mode, full page |
+| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in gate with the consent line under the card |
+| `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in gate at phone width in dark mode |
+
 `goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
@@ -72,6 +81,10 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 ### Google-only sign-in (2026-10-27, branch `feat/remove-email-link`)
 
 - The email magic-link sign-in is removed; Google is the only sign-in method in Supabase mode. The sign-in card shows the title and the Continue with Google button, with the error text when the start fails. Supabase's built-in email sender allows about 2 emails an hour and delivers only to team addresses, so the link was not usable for friends. Storage version unchanged (8). Setup is in `spec/database/README.md`.
+
+### Legal pages (2026-10-27, branch `feat/legal-pages`)
+
+- Terms of Use (`/terms`) and Privacy Policy (`/privacy`, GDPR), both reachable without a session in Supabase mode. The sign-in card gets a consent line with both links; a quiet "Terms · Privacy" footer appears in local mode and for signed-in users (FR-LEGAL-1 to 6, PRD 9.14). The operator details (name, contact, country, Supabase region, governing law) are filled in `app/utils/legal.ts`.
 
 ### First-run onboarding (2026-10-27, branch `feat/onboarding`)
 
