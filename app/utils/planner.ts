@@ -153,108 +153,59 @@ const createSeedAppliedWeeks = (year: number): AppliedWeek[] => {
 export const PLANNER_STATE_VERSION = 8
 
 const HARADA_AMBITION_ID = 'ambition-harada'
-const HARADA_AMBITION_STATEMENT = 'Best father, husband, son and brother — CDO / CIO within 5 years'
+const HARADA_AMBITION_STATEMENT = 'Live a healthy, balanced and fulfilling life'
 
 type HaradaHabitSeed = [string, number, HabitPeriod, string?, number?]
 
 /** Life categories around the ambition, in grid order: [id, name, colour, goal5y, target1y, targetTbd, habits] */
 const HARADA_CATEGORIES: Array<[string, string, string, string, string, boolean, HaradaHabitSeed[]]> = [
   ['physique', 'Physical', '#7a9471',
-    'Optimal fitness, stable energy, zero sleep debt.',
-    'To define — e.g. 3 workouts a week kept up all year, full medical check-up done.', true, [
-      ['Regular exercise (frequency and type to set)', 6, 'week', 'training', 60],
-      ['Structured eating, no improvised meals', 1, 'day'],
-      ['Organised sleep and recovery', 1, 'day'],
-      ['Tracking simple indicators (weight, fitness)', 1, 'week'],
-      ['Annual medical check-up', 1, 'month'],
-      ['Limit screens before bed', 1, 'day'],
-      ['Daily hydration', 1, 'day'],
-      ['Stretching and mobility', 3, 'week']
+    'Feel strong, rested and energetic.',
+    'Exercise at least three times a week all year.', false, [
+      ['Exercise', 6, 'week', 'training', 60],
+      ['Sleep at a regular time', 1, 'day'],
+      ['Drink enough water', 1, 'day']
     ]],
   ['spirituelle', 'Spiritual', '#6e5c7c',
-    'Inner clarity, calm in the face of professional pressure.',
-    'To define — e.g. 10 minutes of daily meditation kept, weekly journaling kept up.', true, [
-      ['Regular meditation', 1, 'day'],
-      ['Reflection time / journal', 3, 'week'],
-      ['Inspiring reading', 3, 'week', 'reading', 30],
-      ['Moments of screen-free silence', 1, 'day'],
-      ['Clarify personal values', 1, 'month'],
-      ['Daily gratitude', 1, 'day'],
-      ['Retreat or extended time once a year', 1, 'month'],
-      ['Align actions with values', 1, 'week']
+    'Keep a calm, clear mind and clear values.',
+    'Read something inspiring at least three times a week.', false, [
+      ['Read for inspiration', 3, 'week', 'reading', 30],
+      ['Quiet time to reflect', 1, 'day']
     ]],
   ['relationnelle', 'Relational & emotional', '#c4767f',
-    'To be recognised by my family as a present, reliable father, husband, son and brother.',
-    'Weekly ritual with my wife and a monthly one-on-one ritual with each child, kept at 90% over the year.', false, [
-      ['Time dedicated to my wife (couple ritual)', 1, 'week', 'family', 90],
-      ['Time dedicated to my children, one-on-one', 1, 'month'],
-      ['Regular calls and visits to my parents', 1, 'week'],
-      ['Active connection with my brother / sister', 1, 'week'],
-      ['Family ritual (e.g. Sunday together)', 1, 'week', 'family', 180],
-      ['Close circle of friends maintained', 1, 'month'],
-      ['Recognise, express and regulate my emotions', 1, 'day'],
-      ['Resolve tensions quickly, let nothing linger', 1, 'day']
+    'Be present for the people I love.',
+    'A regular time together with family and friends, every week.', false, [
+      ['Call a friend or relative', 2, 'week'],
+      ['Plan a family activity', 1, 'week']
     ]],
   ['economique', 'Economic', '#c19a3e',
-    'Financial independence, target net worth.',
-    'To define — e.g. target savings rate reached, exact amount invested over the year.', true, [
-      ['Monthly budget tracking', 1, 'month'],
-      ['Structured savings / investment plan', 1, 'month'],
-      ['Annual net-worth review', 1, 'month'],
-      ['Diversify income sources', 1, 'month'],
-      ['Family protection (insurance, provident cover)', 1, 'month'],
-      ['Quantified goals per deadline', 1, 'month'],
-      ['Reduce spending not aligned with my values', 1, 'week'],
-      ['Continuing education in personal finance', 1, 'month']
+    'Manage money with confidence and calm.',
+    'Save a fixed share of my income every month.', false, [
+      ['Review the monthly budget', 1, 'month'],
+      ['Set money aside for savings', 1, 'month']
     ]],
   ['cognitive', 'Cognitive', '#4a8683',
-    'Stay at the leading edge of AI and enterprise architecture, able to lead a project of my own.',
-    'AI / enterprise architecture certification obtained and a personal project launched — personal dev app or enterprise architecture app (to be decided).', false, [
-      ['Active watch on AI / enterprise architecture', 3, 'week'],
-      ['Decide, then launch the personal project (personal dev app or EA app)', 2, 'week', 'projects', 60],
-      ['Regular technical reading', 3, 'week', 'learning', 45],
-      ['Targeted certification course', 2, 'week'],
-      ['Concrete experimentation (prototypes, personal POCs)', 1, 'week'],
-      ['Share knowledge (articles, talks)', 1, 'month'],
-      ['Learn a new domain each year', 1, 'month'],
-      ['Regularly challenge what I know', 1, 'month']
+    'Keep learning and growing in my field.',
+    'Finish one course and share what I learn.', false, [
+      ['Study a new topic', 3, 'week', 'learning', 45],
+      ['Work on a personal project', 2, 'week', 'projects', 60]
     ]],
   ['sociale', 'Social', '#e09070',
-    'An active role in a professional or entrepreneurial community.',
-    'To define — e.g. join an active community, start a mentoring relationship over the year.', true, [
-      ['Active participation in one or more communities', 1, 'week'],
-      ['Mentoring, helping others', 1, 'week'],
-      ['Association or entrepreneurial commitment', 1, 'month'],
-      ['Contribution to a collective or network', 1, 'month'],
-      ['Organising events or meetups', 1, 'month'],
-      ['Visibility (content, speaking)', 1, 'week'],
-      ['Maintain the existing network', 1, 'week'],
-      ['New qualified connections each quarter', 1, 'month']
+    'Be part of a community I care about.',
+    'Join one group and help it regularly.', false, [
+      ['Attend a community meeting', 1, 'month'],
+      ['Help someone in my network', 1, 'week']
     ]],
   ['professionnelle', 'Professional', '#3c4b63',
-    'Land a CDO or CIO role within five years.',
-    'Take on an expanded role (e.g. Lead Enterprise Architect) covering IT and data, with 3 strategic initiatives delivered and visible to the executive committee.', false, [
-      ['Targeted networking with IT / data leaders', 1, 'week'],
-      ['Develop an executive posture and communication', 1, 'week'],
-      ['High-impact assignments on the digital roadmap', 1, 'day'],
-      ['Executive education / strategic certification', 1, 'month'],
-      ['Identify an internal mentor or sponsor', 1, 'month'],
-      ['Widen the scope: from EA to global IT/data governance', 1, 'month'],
-      ['Showcase value created with quantified results', 1, 'month'],
-      ['Publish professional articles to build my personal brand', 1, 'month'],
-      ['Plan the week around professional priorities', 1, 'week', 'planning', 120]
+    'Grow in my role and take on more responsibility.',
+    'Lead one visible project from start to finish.', false, [
+      ['Plan the week around priorities', 1, 'week', 'planning', 120],
+      ['Learn from a mentor', 1, 'month']
     ]],
   ['environnement', 'Environment', '#5c7248',
-    'A sustainable lifestyle, consistent with my values.',
-    'To define — e.g. fixed Sunday ritual kept all year, footprint reduced in one identified area.', true, [
-      ['Reduce my daily footprint', 1, 'day'],
-      ['Sunday rituals: rest, nature, family', 1, 'week'],
-      ['Aligned consumption choices', 1, 'day'],
-      ['Optimise living and working environment', 1, 'month'],
-      ['Point to define', 1, 'week'],
-      ['Raise awareness among my circle', 1, 'month'],
-      ['Simple annual review of my choices', 1, 'month'],
-      ['Consistency between professional discourse (sustainable transformation) and personal life', 1, 'month']
+    'Live in line with my values, with less waste.',
+    'Reduce waste in one area of daily life.', false, [
+      ['Run errands with a plan', 1, 'week', 'errands']
     ]]
 ]
 
@@ -338,15 +289,15 @@ export const createInitialState = (year: number = isoWeekOf(localDateKey()).year
     }
   },
   activities: [
-    { id: 'deep-work', name: 'Deep Work',      shortCode: 'WRK', categoryId: 'professionnelle', color: '#3c4b63' },
-    { id: 'training',  name: 'Training',        shortCode: 'TRN', categoryId: 'physique',        color: '#7a9471' },
-    { id: 'family',    name: 'Family Time',     shortCode: 'FAM', categoryId: 'relationnelle',   color: '#c19a3e' },
-    { id: 'learning',  name: 'Learning',        shortCode: 'LRN', categoryId: 'cognitive',       color: '#8a5a7a' },
-    { id: 'projects',  name: 'Projects',        shortCode: 'PRJ', categoryId: 'cognitive',       color: '#a04e3e' },
-    { id: 'reading',   name: 'Reading',         shortCode: 'RDG', categoryId: 'cognitive',       alsoCategoryIds: ['spirituelle'], color: '#6e5c7c' },
-    { id: 'planning',  name: 'Weekly Planning', shortCode: 'PLN', categoryId: 'professionnelle', color: '#c19a3e' },
-    { id: 'errands',   name: 'Errands',         shortCode: 'ERR', categoryId: 'environnement',   color: '#d97757' },
-    { id: 'sleep',     name: 'Sleep',           shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
+    { id: 'deep-work', name: 'Focused work',     shortCode: 'WRK', categoryId: 'professionnelle', color: '#3c4b63' },
+    { id: 'training',  name: 'Exercise',         shortCode: 'TRN', categoryId: 'physique',        color: '#7a9471' },
+    { id: 'family',    name: 'Family time',      shortCode: 'FAM', categoryId: 'relationnelle',   color: '#c19a3e' },
+    { id: 'learning',  name: 'Learning',         shortCode: 'LRN', categoryId: 'cognitive',       color: '#8a5a7a' },
+    { id: 'projects',  name: 'Personal project', shortCode: 'PRJ', categoryId: 'cognitive',       color: '#a04e3e' },
+    { id: 'reading',   name: 'Reading',          shortCode: 'RDG', categoryId: 'cognitive',       alsoCategoryIds: ['spirituelle'], color: '#6e5c7c' },
+    { id: 'planning',  name: 'Weekly planning',  shortCode: 'PLN', categoryId: 'professionnelle', color: '#c19a3e' },
+    { id: 'errands',   name: 'Errands',          shortCode: 'ERR', categoryId: 'environnement',   color: '#d97757' },
+    { id: 'sleep',     name: 'Sleep',            shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
   ],
   templates: [createSeedTemplate(), createDeepWorkTemplate(), createVacationTemplate()],
   appliedWeeks: createSeedAppliedWeeks(year)
