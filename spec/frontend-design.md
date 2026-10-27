@@ -495,6 +495,17 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - Date output renders after mount (FR-DATE-6). Changing the day while editing saves the note under the date it was started on and leaves edit mode.
 - Phones: the same stack in one column; the card needs no layout change at 400 px.
 
+### 4.19 Legal pages, consent line and footer (`app/components/legal/LegalPage.vue`, `app/pages/terms.vue`, `privacy.vue`)
+
+- Routes `/terms` and `/privacy`. `LegalPage` is the shell: `main.view.legal` with `.page-head` (title `h1.page-title`, `p.page-meta` "Last updated 27 October 2026"), the slot in `.legal-body`, and a "Back to Timely" link (`.legal-back`) to `/`.
+- Reading column: `.legal-body` is 70ch wide, the rest of the `.view` is empty. Section headings are `h2` at 18px 600 (`--fs-lg`), 32px above and 8px below. Body text is 15px `--ink-2` at line height 1.6; bullet lists use 24px indent with 8px between items; `strong` is `--ink` 600.
+- Links in running text use `.legal-link` (`--accent`, underlined 1px, 2px offset; `--accent-deep` on hover). The same class is used for the consent line.
+- Consent line (`.login-consent`, under the sign-in card): 13px `--ink-3`, centred, max 380px. Its two links carry `white-space: nowrap`, so each link wraps as a unit.
+- Footer (`footer.app-footer`): "Terms · Privacy" in 13px `--ink-3` (hover `--ink`, underline), 1px `--rule-2` top border, padding 24px top and bottom, and sides that follow the page gutter (40px, 32px at 1280px, 28px at 1024px, 16px at 768px and below). Shown in local mode and for signed-in users only, not on the sign-in gate. It wraps without causing overflow.
+- Legal pages are shown without a session: `app/app.vue` renders them instead of the gate, and the planner tabs stay hidden for a signed-out user.
+- Onboarding overlays (Welcome, tour) are not rendered on the legal pages, so they do not cover the text. The state is kept, so they appear again on Home.
+- Verified in headless Edge on the production build: 1280 and 400 px, light and dark, no horizontal overflow, no console errors; in dev no hydration warnings (only the known dev-only 404s for Vuetify and MDI CSS). Screenshots `spec/screens/legal-*`.
+
 ## 5. Colour handling: one palette for planned time
 
 One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Insights bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.

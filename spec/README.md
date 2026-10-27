@@ -44,6 +44,15 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Tour step 3 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-goals-mobile-light.png` | 400 px wide | Tour step 1 of 5 on Goals at 400 px: the card at the bottom |
 
+Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
+
+| File | Size | Notes |
+| --- | --- | --- |
+| `legal-privacy-desktop-light.png` | 1280 px wide | Privacy Policy: title, "Last updated", the short summary, the reading column, the footer |
+| `legal-terms-mobile-dark.png` | 400 px wide, dark | Terms of Use at phone width in dark mode, full page |
+| `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in gate with the consent line under the card |
+| `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in gate at phone width in dark mode |
+
 `goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
@@ -64,6 +73,10 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Not built yet: export, import and reset (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Legal pages (2026-10-27, branch `feat/legal-pages`)
+
+- Terms of Use (`/terms`) and Privacy Policy (`/privacy`, GDPR), both reachable without a session in Supabase mode. The sign-in card gets a consent line with both links; a quiet "Terms · Privacy" footer appears in local mode and for signed-in users (FR-LEGAL-1 to 6, PRD 9.14). The operator details (name, contact, country, Supabase region, governing law) are placeholders in `app/utils/legal.ts` until the owner fills them in.
 
 ### First-run onboarding (2026-10-27, branch `feat/onboarding`)
 
