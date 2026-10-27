@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * The sign-in page (Supabase mode, signed out): the product line and the sign-in card on the left, the intro player on the right
+ * (looping, autoplay; no sound). On phones the columns stack: copy and card first, then the player. Shown by app.vue.
+ */
 const { signInWithGoogle } = useAuth()
 
 const error = ref('')
@@ -19,15 +23,27 @@ const google = async () => {
 
 <template>
   <main class="login-gate">
-    <div class="login-card">
-      <h1 class="login-title">Sign in to Timely</h1>
-      <button type="button" class="btn btn-primary login-action" :disabled="busy" @click="google">Continue with Google</button>
-      <p v-if="error" class="field-error" role="alert">{{ error }}</p>
+    <div class="login-main">
+      <div class="login-intro">
+        <p class="login-mark">Timely</p>
+        <h1 class="login-heading">Your goals decide your week</h1>
+        <p class="login-lede">Set a 5-year ambition, give your goals time in your week, and see where your hours go.</p>
+      </div>
+
+      <div class="login-card">
+        <h2 class="login-title">Sign in to Timely</h2>
+        <button type="button" class="btn btn-primary login-action" :disabled="busy" @click="google">Continue with Google</button>
+        <p v-if="error" class="field-error" role="alert">{{ error }}</p>
+      </div>
+
+      <p class="login-consent">
+        By continuing you agree to the <NuxtLink to="/terms" class="legal-link">Terms of Use</NuxtLink> and the
+        <NuxtLink to="/privacy" class="legal-link">Privacy Policy</NuxtLink>.
+      </p>
     </div>
 
-    <p class="login-consent">
-      By continuing you agree to the <NuxtLink to="/terms" class="legal-link">Terms of Use</NuxtLink> and the
-      <NuxtLink to="/privacy" class="legal-link">Privacy Policy</NuxtLink>.
-    </p>
+    <div class="login-showcase">
+      <OnboardingIntroPlayer loop />
+    </div>
   </main>
 </template>

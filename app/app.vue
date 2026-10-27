@@ -138,7 +138,8 @@ const toggleDark = () => {
       <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />
       <NuxtPage v-else-if="legalPage || auth.status !== 'loading'" />
 
-      <footer v-if="auth.status === 'off' || auth.status === 'signed-in'" class="app-footer">
+      <!-- Also on the sign-in gate and the legal pages; hidden only while the session is loading -->
+      <footer v-if="auth.status !== 'loading'" class="app-footer">
         <NuxtLink to="/terms">Terms</NuxtLink>
         <span aria-hidden="true">·</span>
         <NuxtLink to="/privacy">Privacy</NuxtLink>

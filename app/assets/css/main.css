@@ -244,19 +244,40 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .account-email { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
 
-/* Sign-in gate (Supabase mode, signed out): one centred card and the consent line under it, no helper prose */
+/* Sign-in page (LoginGate.vue, Supabase mode, signed out): the copy and the card on the left, the intro player on the right from 900px.
+   On phones one column: copy, card, consent line, then the player. No helper prose beyond the one sentence */
 .login-gate {
+  display: grid;
+  align-items: center;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-5);
+}
+@media (min-width: 900px) {
+  .login-gate {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: var(--space-7);
+    padding: var(--space-7) 40px var(--space-6);
+  }
+}
+.login-main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  min-height: calc(100vh - 64px);
-  padding: var(--space-5) var(--space-4);
-}
-.login-consent {
+  gap: var(--space-5);
   width: 100%;
   max-width: 380px;
+  margin: 0 auto;
+}
+@media (min-width: 900px) { .login-main { margin: 0; } }
+.login-intro { display: flex; flex-direction: column; gap: var(--space-3); }
+.login-mark { margin: 0; font-size: var(--fs-sm); font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
+.login-heading { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 600; line-height: 1.2; color: var(--ink); }
+.login-lede { margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
+.login-showcase { min-width: 0; }
+.login-consent {
+  width: 100%;
   margin: 0;
   font-size: var(--fs-sm);
   line-height: 1.5;
@@ -268,7 +289,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   flex-direction: column;
   gap: var(--space-4);
   width: 100%;
-  max-width: 380px;
   margin: 0;
   padding: var(--space-6);
   background: var(--bg);
@@ -590,6 +610,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   /* Touch targets: the scene segments and the controls are 44px high */
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
+  .btn.login-action { height: 44px; }
 }
 
 /* ── View and page header ── */
