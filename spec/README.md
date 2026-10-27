@@ -43,6 +43,10 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `onboarding-tour-goals-desktop-light.png` | 1280 px wide | Tour step 1 of 5 on Goals: the new life area and its habit, needed against planned hours |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Tour step 3 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-goals-mobile-light.png` | 400 px wide | Tour step 1 of 5 on Goals at 400 px: the card at the bottom |
+| `login-gate-desktop-light.png` | 1280 px wide | Sign-in gate in Supabase mode, signed out, light: title and the Continue with Google button only |
+| `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
+| `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
+| `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
 
 Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
 
@@ -74,9 +78,13 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Google-only sign-in (2026-10-27, branch `feat/remove-email-link`)
+
+- The email magic-link sign-in is removed; Google is the only sign-in method in Supabase mode. The sign-in card shows the title and the Continue with Google button, with the error text when the start fails. Supabase's built-in email sender allows about 2 emails an hour and delivers only to team addresses, so the link was not usable for friends. Storage version unchanged (8). Setup is in `spec/database/README.md`.
+
 ### Legal pages (2026-10-27, branch `feat/legal-pages`)
 
-- Terms of Use (`/terms`) and Privacy Policy (`/privacy`, GDPR), both reachable without a session in Supabase mode. The sign-in card gets a consent line with both links; a quiet "Terms · Privacy" footer appears in local mode and for signed-in users (FR-LEGAL-1 to 6, PRD 9.14). The operator details (name, contact, country, Supabase region, governing law) are placeholders in `app/utils/legal.ts` until the owner fills them in.
+- Terms of Use (`/terms`) and Privacy Policy (`/privacy`, GDPR), both reachable without a session in Supabase mode. The sign-in card gets a consent line with both links; a quiet "Terms · Privacy" footer appears in local mode and for signed-in users (FR-LEGAL-1 to 6, PRD 9.14). The operator details (name, contact, country, Supabase region, governing law) are filled in `app/utils/legal.ts`.
 
 ### First-run onboarding (2026-10-27, branch `feat/onboarding`)
 
@@ -85,7 +93,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Storage adapter (2026-10-27, branch `feat/storage-adapter`)
 
-- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD has FR-APP-9 (storage modes) and FR-APP-10 (email sign-in in Supabase mode). Browser checks used a fake Supabase server; a real project run is still open.
+- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD has FR-APP-9 (storage modes) and FR-APP-10 (Google sign-in in Supabase mode; the email link was removed on 27 October 2026). Browser checks used a fake Supabase server; a real project run is still open.
 
 ### UX polish (2026-10-26, branch `feat/ux-polish`, on PR #10)
 
