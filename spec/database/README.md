@@ -1,6 +1,6 @@
 # Database storage
 
-This folder holds the design and the SQL for storing Timely's data in Supabase (Postgres with auth and row level security) instead of browser `localStorage`. The owner chose Supabase only (plain PostgreSQL is out of scope). The first step, the **snapshot** with email sign-in, is built into the app; the normalised schema below is the later path.
+This folder holds the design and the SQL for storing Timely's data in Supabase (Postgres with auth and row level security) instead of browser `localStorage`. The owner chose Supabase only (plain PostgreSQL is out of scope). The first step, the **snapshot** with Google sign-in, is built into the app; the normalised schema below is the later path.
 
 ## Contents
 
@@ -108,7 +108,7 @@ Set the variables in `.env` (see `.env.example` at the repository root) and rest
 In Supabase mode:
 
 - Nothing is loaded or written before a signed-in session exists. The page shows a sign-in card instead.
-- Sign-in is by email link. The session is kept by supabase-js in the browser, so a reload stays signed in.
+- Sign-in is with Google. The session is kept by supabase-js in the browser, so a reload stays signed in.
 - The topbar shows the save status (Loading, Saving, Saved, Not saved) and an Account menu with the email and Sign out.
 - Sign-out returns the screen to the seed without writing it to the database. Another user signing in on the same browser never sees the previous user's data.
 - Saves are debounced by 600 ms and sent when the page is hidden. If the first load fails, nothing is written, so the remote copy is never overwritten; reload to try again.
@@ -138,17 +138,11 @@ NUXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase status>
 
 ### Auth setup (Google)
 
-The sign-in screen offers **Continue with Google** first and the email link second. Google needs no email sending, so the built-in email rate limit does not apply.
+The sign-in screen offers only **Continue with Google**. There is no email link: Supabase's built-in email sender allows about 2 emails an hour and delivers only to team addresses, so email sign-in was removed (custom SMTP would be the later path).
 
 1. In Google Cloud Console create an OAuth client of type Web application. Authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`. Authorized JavaScript origins: `http://localhost:3000` and the deployed origin.
 2. Set the consent screen audience to External and publish it, otherwise only listed test users can sign in.
 3. In Supabase, **Authentication, Sign In / Providers, Google:** enable it and paste the Client ID and Client Secret there. The secret stays in the Supabase dashboard; it never goes in `.env` or Vercel.
-4. The Site URL and Redirect URLs are the same as for the email link (below). The app sends `redirectTo = window.location.origin`.
-
-### Auth setup (email magic link)
-
-1. **Authentication, Sign In / Providers, Email:** enabled (the default).
-2. **Authentication, URL configuration:** Site URL `http://localhost:3000` (the Nuxt dev port). Under Redirect URLs add `http://localhost:3000/**`. Use your deployed URL for production.
-3. **Local stack:** the local stack does not send real mail. Open Inbucket at `http://localhost:54324`, find the message and click the link. For the Site URL and redirects in the local stack, set them in `supabase/config.toml` (`site_url`, `additional_redirect_urls` under `[auth]`) and run `supabase stop && supabase start`.
+4. **Authentication, URL configuration:** Site URL `http://localhost:3000` (the Nuxt dev port). Under Redirect URLs add `http://localhost:3000/**`. Use your deployed URL for production. The app sends `redirectTo = window.location.origin`, so every origin it runs on must be listed. For the local stack, set the same values in `supabase/config.toml` (`site_url`, `additional_redirect_urls` under `[auth]`) and run `supabase stop && supabase start`.
 
 Anonymous sign-in is not used. A user who signs in on a new browser sees only the data of that account.

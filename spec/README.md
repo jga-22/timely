@@ -43,6 +43,10 @@ Onboarding screens (feat/onboarding, 27 October 2026, local storage, a fresh use
 | `onboarding-tour-goals-desktop-light.png` | 1280 px wide | Tour step 1 of 5 on Goals: the new life area and its habit, needed against planned hours |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Tour step 3 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-goals-mobile-light.png` | 400 px wide | Tour step 1 of 5 on Goals at 400 px: the card at the bottom |
+| `login-gate-desktop-light.png` | 1280 px wide | Sign-in gate in Supabase mode, signed out, light: title and the Continue with Google button only |
+| `login-gate-desktop-dark.png` | 1280 px wide | Sign-in gate, dark |
+| `login-gate-mobile-light.png` | 400 px wide | Sign-in gate, light, at 400 px |
+| `login-gate-mobile-dark.png` | 400 px wide | Sign-in gate, dark, at 400 px |
 
 `goals-detail-mobile-light.png` predates this batch and was not regenerated (see the open items in `.claude/agent.md`).
 
@@ -65,6 +69,10 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Google-only sign-in (2026-10-27, branch `feat/remove-email-link`)
+
+- The email magic-link sign-in is removed; Google is the only sign-in method in Supabase mode. The sign-in card shows the title and the Continue with Google button, with the error text when the start fails. Supabase's built-in email sender allows about 2 emails an hour and delivers only to team addresses, so the link was not usable for friends. Storage version unchanged (8). Setup is in `spec/database/README.md`.
+
 ### First-run onboarding (2026-10-27, branch `feat/onboarding`)
 
 - A new user (nothing valid saved) sees Welcome over an empty app: Guide me, Start empty or Explore with sample data. Guide me asks four short questions (5-year ambition, first life area, one habit, times a week and hours each time) and builds one life area, habit, activity and week from them, then a five-step tour walks Goals, Planner, Insights and Home with that data. The tour is skippable; a Tour button in the topbar replays it (FR-ONB-1 to 8, PRD 9.13).
@@ -72,7 +80,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Storage adapter (2026-10-27, branch `feat/storage-adapter`)
 
-- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD has FR-APP-9 (storage modes) and FR-APP-10 (email sign-in in Supabase mode). Browser checks used a fake Supabase server; a real project run is still open.
+- Persistence is pluggable: `app/utils/storage/` picks `local` (default, localStorage, unchanged) or `supabase` (one `planner_state` row per user, debounced saves, status in the topbar) from `NUXT_PUBLIC_STORAGE`. The snapshot SQL is `spec/database/snapshot.sql`; setup in `spec/database/README.md`. The PRD has FR-APP-9 (storage modes) and FR-APP-10 (Google sign-in in Supabase mode; the email link was removed on 27 October 2026). Browser checks used a fake Supabase server; a real project run is still open.
 
 ### UX polish (2026-10-26, branch `feat/ux-polish`, on PR #10)
 
