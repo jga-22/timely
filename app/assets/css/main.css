@@ -1124,7 +1124,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .wk-block-name {
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   padding-right: 24px;
   font-weight: 600;
@@ -1326,12 +1325,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .wk-menu-item:hover,
 .wk-menu-item:focus-visible { background: var(--bg-3); }
 .wk-menu-item.is-clear { color: var(--ink-2); }
+/* The menu keeps the full activity name: it wraps rather than being cut off */
 .wk-menu-name {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .wk-menu-hrs {
   font-size: var(--fs-xs);

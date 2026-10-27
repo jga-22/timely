@@ -73,6 +73,8 @@ const blockAt = (cell: Cell): Range | null => {
 const singleCell = (cell: Cell): Range => ({ day: cell.day, start: cell.hour, end: cell.hour + 1 })
 const { fill } = usePlannerFill()
 const blockColor = (block: TimeBlock) => fill(activityMap.value.get(block.activityId)?.color ?? '#999999')
+/** A block prints the activity's short code (1 to 3 letters), so no name is cut off; the full name is in the block's title */
+const blockCode = (block: TimeBlock) => activityMap.value.get(block.activityId)?.shortCode ?? ''
 const isCursor = (day: number, hour: number) => cursor.value.day === day && cursor.value.hour === hour
 const setCursor = (cell: Cell) => {
   cursor.value = { day: cell.day, hour: cell.hour }
@@ -438,7 +440,7 @@ onBeforeUnmount(() => {
                   color: inkOn(blockColor(block)),
                 }"
               >
-                <span class="wk-block-name">{{ activityMap.get(block.activityId)?.name }}</span>
+                <span class="wk-block-name" :title="activityMap.get(block.activityId)?.name">{{ blockCode(block) }}</span>
                 <span class="wk-block-time">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</span>
                 <button
                   type="button"
