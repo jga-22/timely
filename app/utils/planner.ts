@@ -295,6 +295,8 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   const state = value as Partial<Record<keyof PlannerState, unknown>>
 
   if (state.version !== PLANNER_STATE_VERSION || !state.settings || typeof state.settings !== 'object') return false
+  // Optional, added without a version bump: absent in older saves, otherwise one of the two values
+  if (state.onboarding !== undefined && state.onboarding !== 'pending' && state.onboarding !== 'done') return false
   if (![state.categories, state.activities, state.templates, state.appliedWeeks, state.habits].every(Array.isArray)) return false
 
   const categories = state.categories as Array<Partial<Category> | null>
@@ -348,6 +350,29 @@ export const createInitialState = (year: number = isoWeekOf(localDateKey()).year
   ],
   templates: [createSeedTemplate(), createDeepWorkTemplate(), createVacationTemplate()],
   appliedWeeks: createSeedAppliedWeeks(year)
+})
+
+/** The one template a new user starts with (FR-ONB-2); the onboarding build fills it */
+export const ONBOARDING_TEMPLATE_ID = 'my-week'
+
+/** Empty state for a brand-new user (FR-ONB-2): no data, one empty hourly template, onboarding pending. The rich seed stays the test dataset */
+export const createOnboardingState = (): PlannerState => ({
+  version: PLANNER_STATE_VERSION,
+  journal: {},
+  ambition: null,
+  categories: [],
+  activities: [],
+  habits: [],
+  templates: [{ id: ONBOARDING_TEMPLATE_ID, name: 'My week', granularityMinutes: 60, slots: createEmptySlots(60) }],
+  appliedWeeks: [],
+  settings: {
+    timeGranularity: 60,
+    activeTemplateId: ONBOARDING_TEMPLATE_ID,
+    projectionDefaults: {
+      years: 5
+    }
+  },
+  onboarding: 'pending'
 })
 
 export const getTemplateById = (state: PlannerState, templateId: string) =>

@@ -76,4 +76,6 @@ export interface PlannerState {
   habits: Habit[]
   /** Journal experiment (FR-HOME-11): one plain-text note per local date key (YYYY-MM-DD); empty notes are removed */
   journal: Record<string, string>
+  /** First-run onboarding (FR-ONB). Absent in saves made before it existed, which are never onboarded. 'pending' shows Welcome again on load */
+  onboarding?: 'pending' | 'done'
 }

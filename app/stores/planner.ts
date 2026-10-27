@@ -5,7 +5,7 @@ import {
   cleanAlsoCategoryIds,
   createEmptySlots,
   createHaradaSeed,
-  createInitialState,
+  createOnboardingState,
   getActiveTemplate,
   getTemplateById,
   rangeConflicts,
@@ -20,16 +20,28 @@ const numberCategories = (categories: Category[]): Category[] =>
   [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
 
 export const usePlannerStore = defineStore('planner', {
-  state: (): PlannerState => createInitialState(),
+  /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
+  state: (): PlannerState => createOnboardingState(),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
   },
   actions: {
     hydrate(state: PlannerState | null) {
       if (state) {
-        this.$patch(state)
+        this.replaceState(state)
         this.ensureActiveTemplate()
       }
+    },
+    /** Replaces the whole state in one step, so nothing of the previous state (a journal, a stale onboarding flag) carries over */
+    replaceState(next: PlannerState) {
+      this.$patch(current => {
+        Object.assign(current, next)
+        if (next.onboarding === undefined) delete current.onboarding
+      })
+    },
+    /** Ends the first-run onboarding without creating data (FR-ONB-3, Start empty) */
+    finishOnboarding() {
+      this.onboarding = 'done'
     },
     ensureActiveTemplate() {
       const template = this.activeTemplate
