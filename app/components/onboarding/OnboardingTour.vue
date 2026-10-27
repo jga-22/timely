@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { categoryAlignments, hoursLabel } from '~/utils/planner'
+import { onboardedCategories } from '~/utils/onboarding'
 
 /** Guided tour (FR-ONB-6): the cards 3 to 5 of the path, at the bottom of the screen. It never blocks the page and can be skipped at any step */
 const planner = usePlannerStore()
@@ -7,9 +8,10 @@ const { phase, step, next, back, close, openIntro } = useOnboarding()
 const heading = ref<HTMLElement | null>(null)
 
 const alignments = computed(() => categoryAlignments(planner.$state))
-const lifeAreas = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
+/** The life areas the build filled (the chosen ones); the other default areas are not named in the tour */
+const lifeAreas = computed(() => onboardedCategories(planner.$state))
 
-/** The hours the planner holds for each of the first two life areas, as "3 h for Physical and 2 h for Spiritual" */
+/** The hours the planner holds for each chosen life area, as "3 h for Physical and 2 h for Spiritual" */
 const placed = computed(() => lifeAreas.value
   .slice(0, 2)
   .map(area => `${hoursLabel(alignments.value.get(area.id)?.allocatedMinutes ?? 0)} for ${area.name}`)
@@ -33,7 +35,7 @@ const steps = computed(() => {
     },
     {
       title: 'Daily follow-up',
-      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: add more life areas in Goals, and the activities for the rest of your week in Planner.'
+      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: the other life areas are already in Goals for you to complete, edit, rename or remove, and you can add the activities for the rest of your week in Planner.'
     }
   ]
 })

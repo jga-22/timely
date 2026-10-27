@@ -1,10 +1,11 @@
 import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
 import { isoWeekStarts } from '~/utils/dates'
-import { applyActivityCells, createOnboardingState, DESIGN_COLORS, getTemplateById, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { applyActivityCells, createOnboardingState, getTemplateById, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
 
-/** One goal of the guided path (FR-ONB-4): a life area, an optional 1-year target and one habit with its time */
+/** One goal of the guided path (FR-ONB-4): one of the eight life areas, an optional 1-year target and one habit with its time */
 export interface OnboardingGoal {
-  areaName: string
+  /** The id of a default life area (FR-ONB-2); the build fills that category */
+  categoryId: string
   /** Optional: what the life area should be in one year */
   target1y: string
   habitName: string
@@ -45,42 +46,52 @@ export const shortCodeFor = (name: string): string => {
   return word.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'ACT'
 }
 
-/** The first category by order: the one the first-run build creates */
-export const firstCategory = (state: PlannerState): Category | undefined =>
-  [...state.categories].sort((a, b) => a.order - b.order)[0]
+/** The life areas with a habit or an activity: the ones the first-run build filled. The other default areas stay empty */
+export const onboardedCategories = (state: PlannerState): Category[] => {
+  const filled = new Set([...state.habits.map(habit => habit.categoryId), ...state.activities.map(activity => activity.categoryId)])
+
+  return [...state.categories].filter(category => filled.has(category.id)).sort((a, b) => a.order - b.order)
+}
+
+/** The first onboarded life area by order: the tour's first card points at its activity */
+export const firstCategory = (state: PlannerState): Category | undefined => onboardedCategories(state)[0]
 
 /** A saved state that still needs onboarding: nothing valid was loaded, or the last session ended before the tour */
 export const needsOnboarding = (saved: PlannerState | null): boolean => !saved || saved.onboarding === 'pending'
 
 /**
- * Builds the ambition, one life area per goal (order 1 and 2, distinct colours), a habit and an activity for each, and the
- * template with every goal's sessions (FR-ONB-5). A habit asks for the chosen hours each time and its activity fills the same
- * hours in the template, so Goals compares equal times. The template is assigned to every ISO week of `year`.
- * `stamp` makes the ids; pass a fixed one in tests.
+ * Builds the ambition, the chosen life areas (the default categories, filled in place: a 1-year target, an activity and a habit each),
+ * and the template with every goal's sessions (FR-ONB-5). A habit asks for the chosen hours each time and its activity fills the
+ * same hours in the template, so Goals compares equal times. The other default areas stay empty. The template is assigned to every
+ * ISO week of `year`. `stamp` makes the ids; pass a fixed one in tests.
  */
 export const buildOnboardingState = (answers: OnboardingAnswers, year: number, stamp: number = Date.now()): PlannerState => {
   const base = createOnboardingState()
   const template = getTemplateById(base, ONBOARDING_TEMPLATE_ID)!
-  const categories: Category[] = []
+  const categories: Category[] = base.categories.map(category => ({ ...category }))
   const activities: Activity[] = []
   const habits: Habit[] = []
   let slots = template.slots
 
-  answers.goals.slice(0, MAX_ONBOARDING_GOALS).forEach((goal, index) => {
+  // One goal per life area that exists, the first one chosen: a duplicate area is ignored
+  const goals = answers.goals
+    .filter((goal, index, all) => categories.some(category => category.id === goal.categoryId) && all.findIndex(other => other.categoryId === goal.categoryId) === index)
+    .slice(0, MAX_ONBOARDING_GOALS)
+
+  goals.forEach((goal, index) => {
     const number = index + 1
+    const category = categories.find(item => item.id === goal.categoryId)!
     const timesPerWeek = clamp(goal.timesPerWeek, 1, 7)
     const hoursEach = clamp(goal.hoursEach, 1, 3)
     const habitName = goal.habitName.trim()
     const target1y = goal.target1y.trim()
-    const categoryId = `category-${stamp}-${number}`
     const activityId = `activity-${stamp}-${number}`
-    const color = DESIGN_COLORS[index]!.bg
 
-    categories.push({ id: categoryId, name: goal.areaName.trim(), color, order: number, ...(target1y ? { target1y } : {}) })
-    activities.push({ id: activityId, name: habitName, shortCode: shortCodeFor(habitName), categoryId, color })
+    if (target1y) category.target1y = target1y
+    activities.push({ id: activityId, name: habitName, shortCode: shortCodeFor(habitName), categoryId: category.id, color: category.color ?? '#888' })
     habits.push({
       id: `habit-${stamp}-${number}`,
-      categoryId,
+      categoryId: category.id,
       name: habitName,
       frequency: { count: timesPerWeek, period: 'week' },
       activityId,

@@ -355,12 +355,16 @@ export const createInitialState = (year: number = isoWeekOf(localDateKey()).year
 /** The one template a new user starts with (FR-ONB-2); the onboarding build fills it */
 export const ONBOARDING_TEMPLATE_ID = 'my-week'
 
-/** Empty state for a brand-new user (FR-ONB-2): no data, one empty hourly template, onboarding pending. The rich seed stays the test dataset */
+/** The eight Harada life areas by name and colour only, no goal text and no habits: the default categories of a new user (FR-ONB-2) */
+export const createLifeAreas = (): Category[] =>
+  createHaradaSeed().categories.map(({ id, name, color, order }) => ({ id, name, color, order }))
+
+/** Empty state for a brand-new user (FR-ONB-2): the eight life areas, no habits or activities, one empty hourly template, onboarding pending. The rich seed stays the test dataset */
 export const createOnboardingState = (): PlannerState => ({
   version: PLANNER_STATE_VERSION,
   journal: {},
   ambition: null,
-  categories: [],
+  categories: createLifeAreas(),
   activities: [],
   habits: [],
   templates: [{ id: ONBOARDING_TEMPLATE_ID, name: 'My week', granularityMinutes: 60, slots: createEmptySlots(60) }],

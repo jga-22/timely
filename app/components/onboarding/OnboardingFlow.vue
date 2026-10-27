@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { createHaradaSeed } from '~/utils/planner'
+import { createLifeAreas } from '~/utils/planner'
 import { MAX_ONBOARDING_GOALS } from '~/utils/onboarding'
 
 /** Welcome, then the two guided dialogs: 1 Your ambition and 2 Goals and habits (FR-ONB-3, 4). Focus moves into them, Escape goes back */
 const { phase, openWelcome, openIntro, openAmbition, openGoals, startEmpty, useSampleData, build } = useOnboarding()
 
-const suggestions = createHaradaSeed().categories.map(category => category.name)
+/** The eight default life areas (FR-ONB-2): a goal picks one of them */
+const lifeAreas = createLifeAreas()
 
 interface GoalDraft {
-  areaName: string
+  /** The id of the chosen life area, empty until one is picked */
+  categoryId: string
   target1y: string
   habitName: string
   timesPerWeek: number
@@ -16,7 +18,7 @@ interface GoalDraft {
   error: { area: string, habit: string }
 }
 
-const draft = (): GoalDraft => ({ areaName: '', target1y: '', habitName: '', timesPerWeek: 3, hoursEach: 1, error: { area: '', habit: '' } })
+const draft = (): GoalDraft => ({ categoryId: '', target1y: '', habitName: '', timesPerWeek: 3, hoursEach: 1, error: { area: '', habit: '' } })
 
 const dialog = ref<HTMLElement | null>(null)
 const ambition = ref('')
@@ -56,7 +58,7 @@ const onEscape = () => {
 }
 
 /** A life area the other goal already has cannot be chosen again */
-const taken = (name: string, index: number) => goals.value.some((goal, other) => other !== index && goal.areaName.trim() === name)
+const taken = (id: string, index: number) => goals.value.some((goal, other) => other !== index && goal.categoryId === id)
 
 const submitAmbition = () => {
   ambitionError.value = ambition.value.trim() ? '' : 'Write your 5-year ambition in a sentence.'
@@ -66,14 +68,10 @@ const submitAmbition = () => {
 }
 
 const submitGoals = () => {
-  const first = goals.value[0]!.areaName.trim().toLowerCase()
-
   goals.value.forEach((goal, index) => {
-    const name = goal.areaName.trim().toLowerCase()
-
-    goal.error.area = !name
-      ? 'Name a life area, for example Physical.'
-      : index > 0 && name === first ? 'Pick a different life area for the second goal.' : ''
+    goal.error.area = !goal.categoryId
+      ? 'Choose one of the life areas.'
+      : index > 0 && goal.categoryId === goals.value[0]!.categoryId ? 'Pick a different life area for the second goal.' : ''
     goal.error.habit = goal.habitName.trim() ? '' : 'Name one habit, for example Run or Read.'
   })
 
@@ -84,13 +82,13 @@ const submitGoals = () => {
 
   build({
     ambition: ambition.value,
-    goals: goals.value.map(({ areaName, target1y, habitName, timesPerWeek, hoursEach }) => ({ areaName, target1y, habitName, timesPerWeek, hoursEach }))
+    goals: goals.value.map(({ categoryId, target1y, habitName, timesPerWeek, hoursEach }) => ({ categoryId, target1y, habitName, timesPerWeek, hoursEach }))
   })
 }
 
 const addGoal = () => {
   goals.value.push(draft())
-  nextTick(() => dialog.value?.querySelectorAll<HTMLElement>('[data-area]')[1]?.focus())
+  nextTick(() => dialog.value?.querySelectorAll<HTMLElement>('.onb-goal')[1]?.querySelector<HTMLElement>('.chip:not(:disabled)')?.focus())
 }
 
 const removeGoal = () => {
@@ -149,7 +147,7 @@ const removeGoal = () => {
       <form v-else class="onb-form" novalidate @submit.prevent="submitGoals">
         <p class="onb-step">Step 2 of 5</p>
         <h2 id="onb-title" class="onb-title" tabindex="-1">Goals and habits</h2>
-        <p class="onb-lede">Pick one or two life areas that matter most for that ambition, and a habit for each.</p>
+        <p class="onb-lede">Pick one or two of the eight life areas that matter most for that ambition, and a habit for each.</p>
 
         <section v-for="(goal, index) in goals" :key="index" class="onb-goal" :aria-label="`Goal ${index + 1}`">
           <div class="onb-goal-head">
@@ -158,29 +156,24 @@ const removeGoal = () => {
           </div>
 
           <div class="field">
-            <label class="field-label" :for="`onb-area-${index}`">Life area</label>
-            <input
-              :id="`onb-area-${index}`"
-              v-model="goal.areaName"
-              class="timely-input"
-              type="text"
-              placeholder="For example, Physical"
-              data-area
-              :data-autofocus="index === 0 ? '' : undefined"
-              :aria-invalid="goal.error.area ? 'true' : undefined"
+            <span :id="`onb-area-label-${index}`" class="field-label">Life area</span>
+            <div
+              class="onb-chips"
+              role="group"
+              :aria-labelledby="`onb-area-label-${index}`"
               :aria-describedby="goal.error.area ? `onb-area-error-${index}` : undefined"
             >
-            <div class="onb-chips" role="group" :aria-label="`Suggested life areas for goal ${index + 1}`">
               <button
-                v-for="name in suggestions"
-                :key="name"
+                v-for="(area, position) in lifeAreas"
+                :key="area.id"
                 type="button"
                 class="chip"
-                :data-active="goal.areaName === name"
-                :aria-pressed="goal.areaName === name"
-                :disabled="taken(name, index)"
-                @click="goal.areaName = name"
-              >{{ name }}</button>
+                :data-active="goal.categoryId === area.id"
+                :aria-pressed="goal.categoryId === area.id"
+                :disabled="taken(area.id, index)"
+                :data-autofocus="index === 0 && position === 0 ? '' : undefined"
+                @click="goal.categoryId = area.id"
+              >{{ area.name }}</button>
             </div>
             <p v-if="goal.error.area" :id="`onb-area-error-${index}`" class="field-error" role="alert">{{ goal.error.area }}</p>
           </div>
