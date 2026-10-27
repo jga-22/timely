@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { signIn } = useAuth()
+const { signIn, signInWithGoogle } = useAuth()
 
 const email = ref('')
 const sentTo = ref<string | null>(null)
@@ -23,6 +23,18 @@ const send = async (address: string) => {
   sentTo.value = clean
 }
 
+const google = async () => {
+  busy.value = true
+  error.value = ''
+
+  const message = await signInWithGoogle()
+
+  if (message) {
+    busy.value = false
+    error.value = message
+  }
+}
+
 const changeEmail = () => {
   sentTo.value = null
   error.value = ''
@@ -33,6 +45,8 @@ const changeEmail = () => {
   <main class="login-gate">
     <form v-if="sentTo === null" class="login-card" @submit.prevent="send(email)">
       <h1 class="login-title">Sign in to Timely</h1>
+      <button type="button" class="btn btn-primary login-action" :disabled="busy" @click="google">Continue with Google</button>
+      <p class="login-or">or use an email link</p>
       <div class="field">
         <label class="field-label" for="login-email">Email</label>
         <input
@@ -46,7 +60,7 @@ const changeEmail = () => {
         >
       </div>
       <p v-if="error" class="field-error" role="alert">{{ error }}</p>
-      <button type="submit" class="btn btn-primary login-action" :disabled="busy || !email.trim()">Send link</button>
+      <button type="submit" class="btn btn-outline login-action" :disabled="busy || !email.trim()">Send link</button>
     </form>
 
     <div v-else class="login-card" role="status">

@@ -136,6 +136,15 @@ NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NUXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase status>
 ```
 
+### Auth setup (Google)
+
+The sign-in screen offers **Continue with Google** first and the email link second. Google needs no email sending, so the built-in email rate limit does not apply.
+
+1. In Google Cloud Console create an OAuth client of type Web application. Authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`. Authorized JavaScript origins: `http://localhost:3000` and the deployed origin.
+2. Set the consent screen audience to External and publish it, otherwise only listed test users can sign in.
+3. In Supabase, **Authentication, Sign In / Providers, Google:** enable it and paste the Client ID and Client Secret there. The secret stays in the Supabase dashboard; it never goes in `.env` or Vercel.
+4. The Site URL and Redirect URLs are the same as for the email link (below). The app sends `redirectTo = window.location.origin`.
+
 ### Auth setup (email magic link)
 
 1. **Authentication, Sign In / Providers, Email:** enabled (the default).

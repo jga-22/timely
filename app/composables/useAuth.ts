@@ -15,7 +15,7 @@ export interface AuthState {
 
 let initialised = false
 
-/** Sign-in state for Supabase mode: email magic link, session restore and sign-out. Kept apart from the storage adapter */
+/** Sign-in state for Supabase mode: Google or email magic link, session restore and sign-out. Kept apart from the storage adapter */
 export const useAuth = () => {
   const config = useRuntimeConfig().public as StorageConfig
   const enabled = resolveStorageMode(config) === 'supabase'
@@ -56,11 +56,22 @@ export const useAuth = () => {
     return error?.message ?? null
   }
 
+  /** Starts the Google sign-in. The browser leaves for Google and returns to this origin; an error message is returned only if it could not start */
+  const signInWithGoogle = async (): Promise<string | null> => {
+    const supabase = await client()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    })
+
+    return error?.message ?? null
+  }
+
   const signOut = async () => {
     const supabase = await client()
     await supabase.auth.signOut()
     setSession(null)
   }
 
-  return { state, init, signIn, signOut }
+  return { state, init, signIn, signInWithGoogle, signOut }
 }
