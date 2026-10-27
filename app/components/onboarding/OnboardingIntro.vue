@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
- * The first-run intro dialog (FR-ONB-9): the title, focus and the dialog's own end actions around IntroPlayer. The last scene holds
- * and offers "Start with my ambition"; Skip intro and Escape leave. Client only (ClientOnly in app.vue), so the server markup has no intro.
+ * The first-run intro dialog (FR-ONB-9): the title, focus and the dialog's own end actions around IntroPlayer. "Start with my ambition"
+ * is always there, so the video is optional; Skip intro and Escape leave. Client only (ClientOnly in app.vue), so the server markup has no
+ * intro.
  */
 const { phase, finishIntro } = useOnboarding()
 const title = ref<HTMLElement | null>(null)
@@ -25,8 +26,8 @@ watch(() => phase.value === 'intro', (open) => {
       <h2 id="onb-intro-title" ref="title" class="onb-title" tabindex="-1">How Timely works</h2>
 
       <OnboardingIntroPlayer>
-        <template #end="{ last }">
-          <button v-if="last" type="button" class="btn btn-sm btn-primary" @click="finishIntro">Start with my ambition</button>
+        <template #end>
+          <button type="button" class="btn btn-sm btn-primary" @click="finishIntro">Start with my ambition</button>
           <button type="button" class="onb-link" @click="finishIntro">Skip intro</button>
         </template>
       </OnboardingIntroPlayer>

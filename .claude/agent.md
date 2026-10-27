@@ -30,10 +30,10 @@ If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @
 Four screens, one page component that switches on the `tab` query:
 
 - **Home** (`app/components/home/HomeView.vue`, pure calculations in `app/utils/home.ts`): Today only. Title and date, the hour timeline (24 segments, axis labels 9h, 12h, 18h, 22h), today's activities with Edit links, then the journal card (`app/components/home/JournalCard.vue`, one note per day).
-- **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, category list, the Harada map from 1100px only), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows), `NeededPlannedBar.vue` (the needed and planned bar with its status icon and text, used by the list rows and the category detail).
+- **Goals** (`app/components/harada/`): `HaradaView.vue` (vision, category list, the Harada map from 1100px only), `CategoryDetail.vue` (category detail, view and edit, "+ Add activity"), `HabitList.vue` (habit rows and "+ Add habit"), `HabitForm.vue` (the habit fields, shared by the add form and each edit form), `NeededPlannedBar.vue` (the needed and planned bar with its status icon and text, used by the list rows and the category detail).
 - **Planner** (`app/components/planner/`): `PlannerView.vue` (template bar, the week grid, the Activities list with detail and the add form, the year grid), `ActivityGrid.vue` (the week grid: range select, action bar, activity menu, edit handles, undo; client only).
 - **First run** (`app/components/onboarding/`): `OnboardingFlow.vue` (Welcome, then the two dialogs of the guided path: 1 Your ambition, 2 Goals and habits), `OnboardingIntro.vue` (the first-run intro dialog, FR-ONB-9, around the shared `IntroPlayer.vue`: five scenes, SVG and CSS only, `.onb-intro-*`, captions in the stage; the sign-in page reuses the player with `loop`), `OnboardingTour.vue` (the tour cards 3 to 5: Plan your week, Insights, Daily follow-up). Phases and steps are in `app/composables/useOnboarding.ts`; Guide me goes to the intro, the intro to step 1, and the tour's last card can replay the intro.
-- **Edit control:** `app/components/EditButton.vue` is the only pencil. Habit rows edit in place (`HabitList.vue`). Template edit is the panel under the template bar in Planner.
+- **Edit control:** `app/components/EditButton.vue` is the only pencil. Habit rows edit in place (`HabitList.vue`), and "+ Add habit" opens a draft form there in view and edit mode. Template edit is the panel under the template bar in Planner.
 - **Insights** (`app/components/insights/InsightsView.vue`, pure calculations in `app/utils/insights.ts`): one planned-hours bar chart stacked by category, granularity Year, Quarter, Month or Week, range one year or several (the shared year plus the projection horizon), then the categories in hours or weeks with their share of the total. Read-only.
 
 Shell and shared code:
@@ -91,12 +91,14 @@ Shell and shared code:
 
 ## Current state
 
+- Branch `feat/polish-v4` from `origin/main` (fe5082c), one commit per item, not pushed: sign-in label removed; "+ Add habit" in view mode (draft form); the ambition wraps in full; intro dialog fits phones; the intro starts only on Play (`IntroPlayer.vue`, `data-static`, `.onb-intro-play`). Storage version unchanged (8).
 - Branch `feat/polish-v3` (from `origin/main` at 7e1f307), not pushed: sign-in page as one centred column with the frameless intro; eight default life areas for new users and Start empty, guided step 2 picks one of them; week grid prints activity codes; Goals rows wrap targets and show the needed-and-planned bar (outline and legend removed); "Not linked" is quiet; generic sample data. Storage version unchanged (8).
 - `main` has PRs up to #15 (Google sign-in, `feat/google-signin`). Branch `feat/onboarding` (from `origin/main`) adds first-run onboarding (FR-ONB, PRD 9.13): Welcome, a five-question form that builds a life area, habit, activity and week, and a skippable guided tour with the owner's own data. Nothing pushed.
 - Earlier batches (the week grid restore, Batch 3, the UX polish, the journal experiment) are logged in `spec/build-plan.md` and the PRD changelog. The remaining and later ideas are at the end of `spec/build-plan.md`.
 
 ## Open items and ideas
 
+- The intro Play button covers the centre cell of scene 1 (the Ambition cell) on phones (56px). By design, centred as asked; the owner may prefer another spot.
 - **Account deletion is still by email.** Reset my data empties the planner only; the Supabase sign-in user is kept, because deleting it needs a server key. The Privacy Policy says so.
 
 - **Supabase mode runs against the owner's real project** (Google sign-in tested locally and on Vercel, 27 October 2026). The owner's `.env` is gitignored; the agent session keeps `NUXT_PUBLIC_STORAGE=local` because it cannot sign in. Sign-in is Google only. The email link was removed on 27 October 2026: Supabase's built-in sender allows about 2 emails an hour and delivers only to team addresses. Sign-in screen: `LoginGate.vue`. Custom SMTP is the later path if email sign-in returns.

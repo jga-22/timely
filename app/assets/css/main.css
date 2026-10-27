@@ -264,7 +264,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin: 0 auto;
 }
 .login-intro { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
-.login-mark { margin: 0; font-size: var(--fs-sm); font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
 .login-heading { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 600; line-height: 1.2; color: var(--ink); }
 .login-lede { max-width: 520px; margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
 .login-showcase { min-width: 0; }
@@ -368,6 +367,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .onb-dialog {
   width: 100%;
+  margin: auto;
   max-width: 460px;
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
@@ -502,6 +502,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .onb-intro-scene { opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s; }
 .onb-intro-scene[data-active="true"] { opacity: 1; visibility: visible; }
 .onb-intro-stage[data-paused="true"] * { animation-play-state: paused; }
+/* Before the first Play no animation runs, so scene 1 is drawn whole and readable at once */
+.onb-intro-stage[data-static="true"] * { animation: none !important; }
 .onb-intro-scene[data-active="true"] .onb-intro-fade { animation: onb-intro-fade 0.6s ease var(--d, 0s) both; }
 .onb-intro-scene[data-active="true"] .onb-intro-rise { animation: onb-intro-rise 0.6s ease var(--d, 0s) both; }
 .onb-intro-scene[data-active="true"] .onb-intro-slide { animation: onb-intro-slide 0.6s ease var(--d, 0s) both; }
@@ -520,7 +522,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 @keyframes onb-intro-grow-x { from { transform: scaleX(0); } }
 @keyframes onb-intro-grow-y { from { transform: scaleY(0); } }
 @keyframes onb-intro-draw { from { stroke-dashoffset: 1; } }
-@keyframes onb-intro-caption { from { opacity: 0; transform: translateY(-10px); } }
+@keyframes onb-intro-caption { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .onb-intro-scene,
   .onb-intro-scene *,
@@ -549,9 +551,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28%;
+  min-height: 28%;
   margin: 0;
-  padding: 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
   background: var(--bg);
   border-bottom: 1px solid var(--rule);
   font-size: clamp(0.875rem, 2.4vw, 1.3rem);
@@ -592,12 +594,44 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin-top: var(--space-4);
 }
 
+/* Play overlay: a round button over the centre of the stage, shown until the first Play. Large target (64px, 56px on phones, above 44px) */
+.onb-intro-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0 0 0 4px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.onb-intro-play svg { width: 28px; height: 28px; fill: currentColor; }
+.onb-intro-play:hover { background: var(--accent-deep); }
+.onb-intro-play:focus-visible { outline: none; box-shadow: var(--focus-ring), var(--shadow); }
+
 @media (max-width: 768px) {
   /* Touch targets: the scene segments and the controls are 44px high */
+  .onb-intro-play { width: 56px; height: 56px; }
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
   .btn.login-action { height: 44px; }
   .is-quiet .onb-intro-controls .onb-link { height: 44px; }
+}
+
+/* Phones: less padding in the dialog, and a caption size that keeps the first caption to two lines in its band. The band grows
+   when a caption needs a third line, and it never moves above the stage, so no text is clipped */
+@media (max-width: 480px) {
+  .onb-dialog { padding: var(--space-4); }
+  .onb-intro-caption { font-size: 0.8125rem; }
 }
 
 /* ── View and page header ── */
@@ -700,6 +734,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .btn-xs { height: 26px; padding: 0 var(--space-2); font-size: var(--fs-xs); }
 
 /* ── Form fields ── */
+.habit-form { display: flex; flex-direction: column; gap: var(--space-3); }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
 .field {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The sign-in page (Supabase mode, signed out): one centred column. The product line and the headline, then the intro player
+ * The sign-in page (Supabase mode, signed out): one centred column. The headline and its supporting line, then the intro player
  * (looping, autoplay; no sound, frameless on the page surface), then the sign-in block and the consent line. Shown by app.vue.
  */
 const { signInWithGoogle } = useAuth()
@@ -25,7 +25,6 @@ const google = async () => {
   <main class="login-gate">
     <div class="login-main">
       <div class="login-intro">
-        <p class="login-mark">Timely</p>
         <h1 class="login-heading">Your goals decide your week</h1>
         <p class="login-lede">Set a 5-year ambition, give your goals time in your week, and see where your hours go.</p>
       </div>

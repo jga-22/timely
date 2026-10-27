@@ -3,7 +3,10 @@
  * Multi-line text box that grows with its content: no resize handle and no inner scrollbar.
  * The height is recomputed on input, on programmatic changes, when the box gets a new width
  * (window resize, or a collapsed panel being shown) and once fonts have loaded.
+ * Attributes (ids, aria, listeners such as keydown, data-autofocus) go to the textarea, not the wrapper.
  */
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<{
   modelValue: string
   label?: string
@@ -69,6 +72,7 @@ onBeforeUnmount(() => {
   <div class="auto-field">
     <label v-if="label" class="auto-label" :for="inputId">{{ label }}</label>
     <textarea
+      v-bind="$attrs"
       :id="inputId"
       ref="field"
       v-model="text"

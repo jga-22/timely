@@ -5,6 +5,9 @@ import { habitAlignment, hoursLabel } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 
+/** What a habit form can change (see HabitForm.vue) */
+type HabitChange = Partial<Pick<Habit, 'name' | 'frequency' | 'minutesPerOccurrence'>> & { activityId?: string | null }
+
 const planner = usePlannerStore()
 
 const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
@@ -35,38 +38,79 @@ const linkedLabel = (habit: Habit) => {
   return neededMinutes ? `${name}, ${allocated} of ${hoursLabel(neededMinutes)} a week` : `${name}, ${allocated} a week`
 }
 
-// Activity picker: the habit's own category first, then the others in order, each as a group
-const activityGroups = (habit: Habit) => [
-  ...sortedCategories.value.filter(category => category.id === habit.categoryId),
-  ...sortedCategories.value.filter(category => category.id !== habit.categoryId)
+// Activity picker: the category's own activities first, then the others in order, each as a group
+const activityGroups = computed(() => [
+  ...sortedCategories.value.filter(category => category.id === props.categoryId),
+  ...sortedCategories.value.filter(category => category.id !== props.categoryId)
 ]
   .map(category => ({ category, activities: planner.activities.filter(activity => activity.categoryId === category.id) }))
-  .filter(group => group.activities.length)
+  .filter(group => group.activities.length))
 
-// Edit mode: one habit's form is open at a time; Remove asks first
+// One item is open at a time: a habit's edit form or the add form (a draft, saved only by Save habit)
 const openId = ref<string | null>(null)
 const confirmRemoveId = ref<string | null>(null)
+const draft = ref<Habit | null>(null)
+const draftError = ref('')
+const draftEl = ref<HTMLElement | null>(null)
+const addButton = ref<HTMLButtonElement | null>(null)
 
 watch(
   () => [props.categoryId, props.editing] as const,
   () => {
     openId.value = null
     confirmRemoveId.value = null
+    draft.value = null
   }
 )
 
 function toggleOpen(habitId: string) {
   confirmRemoveId.value = null
+  draft.value = null
   openId.value = openId.value === habitId ? null : habitId
 }
 
-// A new habit gets a placeholder name and opens its form, so it can be renamed at once
-function addHabit() {
-  const id = planner.addHabit(props.categoryId, 'New habit')
+function applyChange(habitId: string, changes: HabitChange) {
+  if (changes.name !== undefined) planner.updateHabit(habitId, { name: changes.name })
+  if (changes.frequency) planner.setHabitFrequency(habitId, changes.frequency.count, changes.frequency.period)
+  if ('minutesPerOccurrence' in changes) planner.updateHabit(habitId, { minutesPerOccurrence: changes.minutesPerOccurrence })
+  if ('activityId' in changes) planner.setHabitActivity(habitId, changes.activityId ?? null)
+}
+
+// Add habit: available in view and edit mode. Cancel and Escape leave nothing behind; Save habit adds the habit with the store's action
+function openAdd() {
+  openId.value = null
+  confirmRemoveId.value = null
+  draftError.value = ''
+  draft.value = { id: '', categoryId: props.categoryId, name: '', frequency: { count: 1, period: 'week' } }
+  nextTick(() => draftEl.value?.querySelector<HTMLElement>('textarea')?.focus())
+}
+
+function closeAdd() {
+  draft.value = null
+  nextTick(() => addButton.value?.focus())
+}
+
+function onDraftChange(changes: HabitChange) {
+  if (!draft.value) return
+  Object.assign(draft.value, changes)
+  if (changes.name?.trim()) draftError.value = ''
+}
+
+function saveDraft() {
+  if (!draft.value) return
+
+  const { name, frequency, minutesPerOccurrence, activityId } = draft.value
+  if (!name.trim()) {
+    draftError.value = 'Name the habit, for example Run or Read.'
+    nextTick(() => draftEl.value?.querySelector<HTMLElement>('textarea')?.focus())
+    return
+  }
+
+  const id = planner.addHabit(props.categoryId, name)
   if (!id) return
 
-  confirmRemoveId.value = null
-  openId.value = id
+  applyChange(id, { frequency, minutesPerOccurrence, activityId: activityId ?? null })
+  closeAdd()
 }
 
 function removeHabit(habitId: string) {
@@ -74,8 +118,6 @@ function removeHabit(habitId: string) {
   confirmRemoveId.value = null
   planner.removeHabit(habitId)
 }
-
-const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, Number(value) || 0))
 </script>
 
 <template>
@@ -93,68 +135,7 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
         <EditButton :label="`Edit habit ${habit.name}`" :expanded="openId === habit.id" @click="toggleOpen(habit.id)" />
       </div>
 
-      <div v-if="openId === habit.id" class="habit-form form-stack">
-        <AutoTextarea
-          :model-value="habit.name"
-          label="Habit name"
-          @update:model-value="planner.updateHabit(habit.id, { name: $event })"
-        />
-
-        <div class="form-row-3">
-          <div class="field">
-            <label class="field-label" :for="`habit-count-${habit.id}`">Times</label>
-            <input
-              :id="`habit-count-${habit.id}`"
-              class="timely-input"
-              type="number"
-              min="0"
-              :value="habit.frequency.count"
-              @input="planner.setHabitFrequency(habit.id, Number(($event.target as HTMLInputElement).value) || 0, habit.frequency.period)"
-            />
-          </div>
-
-          <div class="field">
-            <label class="field-label" :for="`habit-period-${habit.id}`">Period</label>
-            <select
-              :id="`habit-period-${habit.id}`"
-              class="timely-select"
-              :value="habit.frequency.period"
-              @change="planner.setHabitFrequency(habit.id, habit.frequency.count, ($event.target as HTMLSelectElement).value as HabitPeriod)"
-            >
-              <option value="day">per day</option>
-              <option value="week">per week</option>
-              <option value="month">per month</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label class="field-label" :for="`habit-minutes-${habit.id}`">Minutes each</label>
-            <input
-              :id="`habit-minutes-${habit.id}`"
-              class="timely-input"
-              type="number"
-              min="0"
-              :value="habit.minutesPerOccurrence ?? ''"
-              @input="planner.updateHabit(habit.id, { minutesPerOccurrence: minutesFrom(($event.target as HTMLInputElement).value) })"
-            />
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="field-label" :for="`habit-activity-${habit.id}`">Linked activity</label>
-          <select
-            :id="`habit-activity-${habit.id}`"
-            class="timely-select"
-            :value="habit.activityId ?? ''"
-            @change="planner.setHabitActivity(habit.id, ($event.target as HTMLSelectElement).value || null)"
-          >
-            <option value="">None</option>
-            <optgroup v-for="group in activityGroups(habit)" :key="group.category.id" :label="group.category.name">
-              <option v-for="activity in group.activities" :key="activity.id" :value="activity.id">{{ activity.name }}</option>
-            </optgroup>
-          </select>
-        </div>
-
+      <HaradaHabitForm v-if="openId === habit.id" :habit="habit" :groups="activityGroups" @change="applyChange(habit.id, $event)">
         <div v-if="confirmRemoveId === habit.id" class="inline-confirm" role="group" aria-label="Confirm remove habit">
           <p class="inline-confirm-text">Remove {{ habit.name }}? This cannot be undone.</p>
           <div class="form-actions">
@@ -164,13 +145,23 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
         </div>
         <div v-else class="form-actions">
           <button type="button" class="btn btn-sm btn-danger" @click="confirmRemoveId = habit.id">Remove habit</button>
-          <button v-if="habit.activityId" type="button" class="btn btn-sm" @click="planner.setHabitActivity(habit.id, null)">Unlink activity</button>
+          <button v-if="habit.activityId" type="button" class="btn btn-sm" @click="applyChange(habit.id, { activityId: null })">Unlink activity</button>
           <button type="button" class="btn btn-sm btn-primary" @click="toggleOpen(habit.id)">Done</button>
         </div>
-      </div>
+      </HaradaHabitForm>
     </div>
 
-    <button v-if="editing" type="button" class="chip-add habit-add" @click="addHabit">+ Add habit</button>
+    <!-- The add form: Escape cancels it here, so the category's own Escape (leave edit mode) does not run -->
+    <div v-if="draft" ref="draftEl" class="habit-edit is-open" @keydown.esc.stop="closeAdd">
+      <HaradaHabitForm :habit="draft" :groups="activityGroups" :name-error="draftError" @change="onDraftChange">
+        <div class="form-actions">
+          <button type="button" class="btn btn-sm btn-primary" @click="saveDraft">Save habit</button>
+          <button type="button" class="btn btn-sm" @click="closeAdd">Cancel</button>
+        </div>
+      </HaradaHabitForm>
+    </div>
+
+    <button v-else ref="addButton" type="button" class="chip-add habit-add" @click="openAdd">+ Add habit</button>
   </div>
 </template>
 
