@@ -72,5 +72,10 @@ const changeEmail = () => {
         <button type="button" class="btn" :disabled="busy" @click="changeEmail">Use a different email</button>
       </div>
     </div>
+
+    <p class="login-consent">
+      By continuing you agree to the <NuxtLink to="/terms" class="legal-link">Terms of Use</NuxtLink> and the
+      <NuxtLink to="/privacy" class="legal-link">Privacy Policy</NuxtLink>.
+    </p>
   </main>
 </template>
