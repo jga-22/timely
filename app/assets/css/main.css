@@ -264,7 +264,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin: 0 auto;
 }
 .login-intro { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
-.login-mark { margin: 0; font-size: var(--fs-sm); font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
 .login-heading { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 600; line-height: 1.2; color: var(--ink); }
 .login-lede { max-width: 520px; margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
 .login-showcase { min-width: 0; }
