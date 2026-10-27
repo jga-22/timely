@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerYear } from '~/composables/usePlannerYear'
+import { addDays } from '~/utils/dates'
 
 /**
- * Journal (FR-HOME-11 to 13): today's note, one plain-text entry per local date.
+ * Journal (FR-HOME-11 to 13): one plain-text entry per local date. It opens on today; the previous and next buttons, the
+ * date field (a calendar) and Today move to another day, and that day's note can be read or changed (never a future day).
  * View mode shows it; Edit opens an AutoTextarea that saves as you type (debounced) and Done returns to view.
  * Everything date-dependent waits for mount (FR-DATE-6).
  */
@@ -12,6 +14,15 @@ const SAVED_VISIBLE_MS = 2000
 
 const planner = usePlannerStore()
 const { today } = usePlannerYear()
+
+// The day shown; follows today until the user picks another day
+const selected = ref('')
+const isToday = computed(() => !!today.value && selected.value === today.value)
+const label = computed(() => (isToday.value ? 'today' : dayText.value))
+const dayText = computed(() => {
+  const [y, m, d] = selected.value.split('-').map(Number)
+  return new Date(y!, m! - 1, d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+})
 
 const editing = ref(false)
 const draft = ref('')
@@ -24,7 +35,16 @@ let editDate = ''
 let saveTimer: number | undefined
 let statusTimer: number | undefined
 
-const note = computed(() => (today.value ? planner.journal[today.value] ?? '' : ''))
+const note = computed(() => (selected.value ? planner.journal[selected.value] ?? '' : ''))
+
+// Moves to another day: the open note is saved under its own date first; a future day is never selected
+const selectDay = (key: string) => {
+  if (!today.value || !key || key > today.value || key === selected.value) return
+
+  finishEdit(false)
+  selected.value = key
+}
+const onPick = (event: Event) => selectDay((event.target as HTMLInputElement).value)
 
 const clearTimers = () => {
   window.clearTimeout(saveTimer)
@@ -53,9 +73,9 @@ const onInput = (value: string) => {
 }
 
 const startEdit = () => {
-  if (!today.value) return
+  if (!selected.value) return
 
-  editDate = today.value
+  editDate = selected.value
   draft.value = note.value
   editing.value = true
   nextTick(() => editor.value?.querySelector('textarea')?.focus())
@@ -72,8 +92,12 @@ const finishEdit = (refocus = true) => {
   if (refocus) nextTick(() => editButton.value?.focus())
 }
 
-// A new day while a note is open: keep what was typed under the old date and leave edit mode
-watch(today, () => finishEdit(false))
+// A new day while a note is open: keep what was typed under the old date and leave edit mode.
+// Following today only when the user was on it; a past day stays selected.
+watch(today, (next, prev) => {
+  finishEdit(false)
+  if (!selected.value || selected.value === prev) selected.value = next
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   if (editing.value) save()
@@ -85,18 +109,32 @@ onBeforeUnmount(() => {
   <section class="section journal" aria-labelledby="journal-title">
     <h2 id="journal-title" class="section-title">Journal</h2>
 
-    <template v-if="today">
+    <template v-if="today && selected">
+      <div class="journal-nav">
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" @click="selectDay(addDays(selected, -1))">‹</button>
+        <input
+          type="date"
+          class="timely-input journal-date"
+          aria-label="Journal day"
+          :value="selected"
+          :max="today"
+          @change="onPick"
+        >
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Next day" :disabled="isToday" @click="selectDay(addDays(selected, 1))">›</button>
+        <button v-if="!isToday" type="button" class="btn btn-sm btn-outline" @click="selectDay(today)">Today</button>
+      </div>
+
       <div v-if="!editing" class="journal-view">
         <p v-if="note" class="journal-text">{{ note }}</p>
-        <p v-else class="journal-empty">No note for today yet.</p>
-        <EditButton v-if="note" ref="editButton" label="Edit today's note" @click="startEdit" />
-        <button v-else ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">Write today's note</button>
+        <p v-else class="journal-empty">No note for {{ label }} yet.</p>
+        <EditButton v-if="note" ref="editButton" :label="isToday ? 'Edit today’s note' : `Edit the note for ${dayText}`" @click="startEdit" />
+        <button v-else ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">Write {{ isToday ? 'today’s note' : 'a note for this day' }}</button>
       </div>
 
       <div v-else ref="editor" class="journal-edit" @keydown.esc="finishEdit()">
         <AutoTextarea
           :model-value="draft"
-          label="Today's note"
+          :label="isToday ? 'Today’s note' : `Note for ${dayText}`"
           @update:model-value="onInput"
         />
         <div class="journal-actions">

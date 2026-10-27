@@ -1916,6 +1916,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .journal-view,
 .journal-edit { display: grid; gap: var(--space-3); justify-items: start; }
 .journal-edit { justify-items: stretch; }
+.journal-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.journal-date { width: auto; min-width: 0; height: 32px; }
 .journal-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
 .journal-text {
   margin: 0;
