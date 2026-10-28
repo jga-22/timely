@@ -8,10 +8,10 @@ Reference screenshots (current build, headless Edge, light unless noted):
 
 | Screen | Desktop 1280 | Mobile 400 |
 | --- | --- | --- |
-| Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
+| Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (empty life areas folded: [goals-list-collapsed-desktop-light.png](screens/goals-list-collapsed-desktop-light.png); Grid view: [goals-grid-desktop-light.png](screens/goals-grid-desktop-light.png); category detail: [goals-detail-desktop-light.png](screens/goals-detail-desktop-light.png); category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | The week grid is the original range-select grid (`ActivityGrid.vue`, section 4.12): a 52 px hour gutter, seven day columns, 28 px hour rows and a frame of at least 540 px that scrolls sideways inside `.wk-scroll` on phones (the page does not). The Activities list (section 4.17) is a row of chips under the grid. The year grid is full width (13 week columns, 32 px cells, a quarter label per row) and collapsible. Measured in the 2026-10-26 run (section 11). |
 | Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
-| Insights | [insights-desktop-light.png](screens/insights-desktop-light.png) | [insights-mobile-light.png](screens/insights-mobile-light.png) |
+| Insights | [insights-desktop-light.png](screens/insights-desktop-light.png) (More options open: [insights-more-options-desktop-light.png](screens/insights-more-options-desktop-light.png)) | [insights-mobile-light.png](screens/insights-mobile-light.png) |
 
 ---
 
@@ -193,7 +193,7 @@ The side gutter is 16px at 400px, which meets the minimum.
 | 1280px | `main.css` | `.view` padding |
 | 1024px | `main.css` | `.view` padding |
 | 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; Insights defaults to monthly chart (JS, `window.innerWidth < 768`) |
-| 1100px | `HaradaView.vue` (scoped) | The Harada matrix is shown from here up and hidden (`display: none`) below; the category list is the primary view at every size |
+| 1100px | `HaradaView.vue` (scoped) | The List / Grid toggle (`.goals-view-toggle`) shows from here up; the Harada matrix is the Grid view (opt-in) and hidden (`display: none`) below. The list is the default view and the only one below 1100px |
 | 480px | `main.css` | Home: period selector full width, Day rows put the time on its own line |
 | `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
 
@@ -351,7 +351,7 @@ One category's time against its need, in hours a week (FR-GOALS-16). Used in eve
 
 Superseded in part by section 12. This section describes the former Visualization screen: the goals-vs-planned block and the key-insights text are removed, and the charts are one planned-hours chart with granularity and range.
 
-Counting (PRD 23.1): only weeks assigned on the year grid count planned hours; unassigned weeks count zero. With no assigned week in the range, the view shows the empty state: heading "No weeks assigned yet", one line of explanation, and a `.btn-outline` link "Assign weeks in Planner" to the Planner year grid.
+Counting (PRD 23.1, FR-INS-P3, since 2026-10-28): every week counts the week type that governs it (its assigned one, else the active one), as Home and Planner do. With nothing planned in the range, the view shows the headline "Nothing planned yet in <year>" with a `.btn-outline` link "Open Planner" (section 13).
 
 Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
@@ -717,3 +717,18 @@ These are facts about the code as it is today. They are not requirements for new
 
 - The capacity line of Insights is a 2px `--attention` bar per period at its available hours (`.insights-cap`), and its label (`.insights-cap-label`, 12px, weight 600) sits at the right end, on the surface colour so it stays legible over a bar. The same token as the attention outline: a red line here means the available-time marker, not an error.
 - The unit selector is a `.segmented` group (Hours, Days, Weeks) next to the granularity group.
+
+## 13. Goals and Insights simplify (feat/goals-insights-simplify)
+
+Owner UX review, 2026-10-28: fewer concepts on screen, less to fill in, the power opt-in. Requirements in PRD 9.15.
+
+- **List / Grid toggle** (`.goals-view-toggle`, in `HaradaView.vue`): a `.segmented` group, "List" and "Grid" as buttons with `aria-pressed`, label "Life areas view". Hidden below 1100px (`display: none`); shown from 1100px as a flex row with 16px below. The choice is session state (`useState`), not saved.
+- **Grid view**: the Harada map (section 4.9) sits under the ambition, and the list is hidden (`.browse.is-grid .cat-list`). The selected life area's detail shows below the map at full width. The "+ Add life area" control stays under the browse area, so new life areas can still be added in Grid view.
+- **Empty life areas** (`.cat-empty`, `.cat-add-goal`): a row with the name only and a `.chip-add` "Add a goal" control at its right end (aria-label "Add a goal to <name>"), on one hairline. It opens the detail in edit mode with the name focused. No target line, bar or "No time target yet" text.
+- **Collapsed row** (`button.cat-more`): full width, 44px high, 13px `--ink-2` text, "N more life areas · add a goal" (or "area" for one), `aria-expanded`, a bottom hairline and a `--bg-3` hover. Opened, the empty areas show in list order with the empty row style. The open state is session state.
+- **Category detail, view mode**: the 1-year target, the habits (`HabitList`), the "Hours a week" bar with "Compared with <week type>", the 5-year goal, then "More activities" (`.row-list`, name and "XX · N h a week" only, with Edit to Planner; Add activity). Notes and Unlink are edit mode only.
+- **Habit form, linked activity**: the first option is "Add '<name>' to my week" (shown when the name is set), then None, then the activities by life area. Its error (`.field-error`, role alert) sits under the select.
+- **Insights, first row**: the year switcher, Month or Week (`.segmented`), and a "More options" button (`.btn-sm`, `aria-expanded`, `aria-controls="insights-more"`). The button adds ": <setting>" in `--ink-3` while closed when a setting is not the default.
+- **Insights, More options panel** (`#insights-more`, `.insights-more`): a 1px `--rule-2` frame with 6px radius and 16px padding, holding three `.segmented` groups: Year or Quarter, One year or Several years (with the horizon select), and "Show in" with Hours, Days (24 h), Weeks (168 h).
+- **Headline** (`.insights-headline`): 18px 500, line height 1.45, above the chart; the answer first, e.g. "2026: 48% Physical, 27% Professional, 19% Relational & emotional", or "Nothing planned yet in 2026" with the empty state beneath (a line and an `.btn-outline` "Open Planner").
+- Colour and contrast: no new tokens. The "Add a goal" and "More options" controls use the existing chip and button styles; state is never colour alone (aria-pressed, aria-expanded and the text).
