@@ -11,9 +11,12 @@ import {
   slotsToBlocks,
   type TimeBlock
 } from '~/utils/planner'
+import { clockLabel, isSleepActivity, sleepActivityId } from '~/utils/sleep'
 
 /** Height of one hour row in px, as in the original week grid */
 const HOUR_PX = 28
+/** Height of the thin band that stands for a run of collapsed hours between two shown rows (FR-SLEEP-5) */
+const GAP_PX = 14
 /** A touch that moves further than this (px) is a scroll, not a tap */
 const TOUCH_SLOP = 8
 /** The undo line stays this long (ms) */
@@ -30,15 +33,118 @@ interface Undo { text: string; templateId: string; slots: string[] }
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
 
+// Sleep (FR-SLEEP-3 to 5): while hidden it reads as empty, is not counted, and its rows collapse. The real slots stay the undo's source
+const { showSleep, setShowSleep } = useShowSleep()
+const sleepId = computed(() => sleepActivityId(planner.$state))
+const sleepHidden = computed(() => !!sleepId.value && !showSleep.value)
 const slots = computed(() => activeTemplate.value?.slots ?? [])
+const shownSlots = computed(() => (sleepHidden.value ? slots.value.map(holder => (holder === sleepId.value ? '' : holder)) : slots.value))
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
 const templateName = computed(() => activeTemplate.value?.name ?? 'no week type')
-const plannedHours = computed(() => slots.value.filter(Boolean).length)
-const hoursPerDay = computed(() => DAYS.map((_, day) => slots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length))
-const blocksByDay = computed(() => DAYS.map((_, day) => slotsToBlocks(slots.value, day)))
+const plannedHours = computed(() => shownSlots.value.filter(Boolean).length)
+const metaText = computed(() => (sleepHidden.value ? `${plannedHours.value} h planned, sleep hidden` : `${plannedHours.value} of 168 h planned`))
+const hoursPerDay = computed(() => DAYS.map((_, day) => shownSlots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length))
+const blocksByDay = computed(() => DAYS.map((_, day) => slotsToBlocks(shownSlots.value, day)))
+const menuActivities = computed(() => planner.activities.filter(activity => showSleep.value || !isSleepActivity(activity)))
 const activityMap = computed(() => new Map(planner.activities.map(activity => [activity.id, activity])))
 const activityHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
 const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
+
+/**
+ * Hours that are sleep on all seven days while sleep is hidden: their rows collapse, so the grid is shorter (FR-SLEEP-5).
+ * Never all 24: with nothing shown there would be no grid to edit
+ */
+const collapsed = computed<boolean[]>(() => {
+  const none = HOURS.map(() => false)
+  if (!sleepHidden.value) return none
+
+  const hidden = HOURS.map(hour => DAYS.every((_, day) => slots.value[day * 24 + hour] === sleepId.value))
+  return hidden.every(Boolean) ? none : hidden
+})
+const isCollapsed = (hour: number) => collapsed.value[hour] === true
+const shownHours = computed(() => HOURS.filter(hour => !isCollapsed(hour)))
+const firstShown = computed(() => shownHours.value[0] ?? 0)
+const lastShown = computed(() => shownHours.value[shownHours.value.length - 1] ?? 23)
+
+/** The rows of the grid in order: each shown hour, and one thin band for each run of collapsed hours between shown ones. The leading and trailing runs sit in the bands above and below */
+type FlowRow = { kind: 'hour'; hour: number } | { kind: 'gap'; from: number; to: number }
+const flow = computed<FlowRow[]>(() => {
+  const rows: FlowRow[] = []
+
+  for (const hour of HOURS) {
+    if (!isCollapsed(hour)) {
+      rows.push({ kind: 'hour', hour })
+      continue
+    }
+
+    const last = rows[rows.length - 1]
+    if (!last) continue
+
+    if (last.kind === 'gap') last.to = hour + 1
+    else rows.push({ kind: 'gap', from: hour, to: hour + 1 })
+  }
+
+  if (rows[rows.length - 1]?.kind === 'gap') rows.pop()
+  return rows
+})
+
+/** Top of each shown hour inside the day columns, in px; collapsed hours have none */
+const hourTop = computed<number[]>(() => {
+  const tops: number[] = []
+  let y = 0
+
+  for (const row of flow.value) {
+    if (row.kind === 'hour') {
+      tops[row.hour] = y
+      y += HOUR_PX
+    } else {
+      y += GAP_PX
+    }
+  }
+
+  return tops
+})
+
+/** The run of shown hours that holds an hour: a selection, a drag and an edge never cross a collapsed run */
+const bandOf = (hour: number) => {
+  let start = hour
+  while (start > 0 && !isCollapsed(start - 1)) start -= 1
+
+  let end = hour + 1
+  while (end < 24 && !isCollapsed(end)) end += 1
+
+  return { start, end }
+}
+
+/** The shown hour at a y offset in the day columns; a gap maps to the hour above it; null above the first row */
+const hourAtY = (y: number): number | null => {
+  let found: number | null = null
+
+  for (const hour of HOURS) {
+    const top = hourTop.value[hour]
+    if (top !== undefined && top <= y) found = hour
+  }
+
+  return found
+}
+
+/** The shown hour nearest to an hour (a collapsed hour moves to a shown neighbour) */
+const nearestShown = (hour: number) => shownHours.value.reduce((best, item) => (Math.abs(item - hour) < Math.abs(best - hour) ? item : best), firstShown.value)
+
+/** The next shown hour one step up or down, or the same hour at the grid's edge */
+const stepHour = (hour: number, direction: -1 | 1): number => {
+  let next = hour + direction
+  while (next >= 0 && next < 24 && isCollapsed(next)) next += direction
+
+  return next >= 0 && next < 24 ? next : hour
+}
+
+// The bands above and below the rows say which hours are collapsed; clicking one shows sleep
+const topBand = computed(() => (firstShown.value > 0 ? `${clockLabel(0)} to ${clockLabel(firstShown.value)}` : ''))
+const bottomBand = computed(() => (lastShown.value < 23 ? `${clockLabel(lastShown.value + 1)} to ${clockLabel(24)}` : ''))
+
+/** The cells a clear takes out: while sleep is hidden its hours stay (sleep is edited in its own editor) */
+const clearableCells = (range: Range) => cellsOf(range).filter(index => showSleep.value || slots.value[index] !== sleepId.value)
 
 // Selection: one run of hours in one day column, set by drag, click, tap or the keyboard
 const selection = ref<Range | null>(null)
@@ -66,8 +172,8 @@ let resizeSide: 'top' | 'bottom' | null = null
 
 const cellsOf = (range: Range) => Array.from({ length: range.end - range.start }, (_, offset) => range.day * 24 + range.start + offset)
 const rangeLabel = (range: Range) => `${DAYS[range.day]} ${formatHour(range.start)} – ${formatHour(range.end)}`
-const selectionHasActivity = computed(() => !!selection.value && cellsOf(selection.value).some(index => slots.value[index]))
-const firstActivityIn = (range: Range) => cellsOf(range).map(index => slots.value[index]).find(Boolean) ?? null
+const selectionHasActivity = computed(() => !!selection.value && cellsOf(selection.value).some(index => shownSlots.value[index]))
+const firstActivityIn = (range: Range) => cellsOf(range).map(index => shownSlots.value[index]).find(Boolean) ?? null
 const blockAt = (cell: Cell): Range | null => {
   const block = blocksByDay.value[cell.day]?.find((item: TimeBlock) => cell.hour >= item.start && cell.hour < item.end)
   return block ? { day: cell.day, start: block.start, end: block.end } : null
@@ -176,7 +282,9 @@ const applyActivity = (activityId: string) => {
   const name = activityMap.value.get(activityId)?.name ?? 'Activity'
   // Applying the activity that already fills the whole run changes nothing: the bar closes as it always did
   const changes = cellsOf(range).some(index => slots.value[index] !== activityId)
-  commit(`${name} set on ${rangeLabel(range)}`, () => {
+  // Hidden sleep in the run is replaced, and the result says so (FR-SLEEP-5)
+  const replacedSleep = sleepHidden.value ? cellsOf(range).filter(index => slots.value[index] === sleepId.value).length : 0
+  commit(`${name} set on ${rangeLabel(range)}${replacedSleep ? `. Replaced ${replacedSleep} h of Sleep` : ''}`, () => {
     planner.paintCells(template.id, cellsOf(range), activityId)
   })
 
@@ -205,7 +313,7 @@ const clearRange = (range: Range) => {
   if (editing.value) closeAll()
 
   commit(`Cleared ${rangeLabel(range)}`, () => {
-    planner.paintCells(template.id, cellsOf(range), null)
+    planner.paintCells(template.id, clearableCells(range), null)
   })
 }
 
@@ -251,7 +359,7 @@ const saveEdit = () => {
   if (snapshot && range && template) {
     const moved = range.day !== snapshot.day || range.start !== snapshot.start || range.end !== snapshot.end
     const move = () => {
-      planner.paintCells(template.id, cellsOf(snapshot), null)
+      planner.paintCells(template.id, clearableCells(snapshot), null)
       if (activityId) planner.paintCells(template.id, cellsOf(range), activityId)
     }
 
@@ -269,14 +377,37 @@ const saveEdit = () => {
   closeAll()
 }
 
-/** Moves one edge of the selection to an hour line (0 to 24); the run keeps at least one hour */
+/** Moves one edge of the selection to an hour line (0 to 24); the run keeps at least one hour and stays in its shown run (FR-SLEEP-5) */
 const setEdge = (side: 'top' | 'bottom', hour: number) => {
   const range = selection.value
   if (!range) return
 
+  const band = bandOf(range.start)
+
   selection.value = side === 'top'
-    ? { ...range, start: Math.max(0, Math.min(hour, range.end - 1)) }
-    : { ...range, end: Math.min(24, Math.max(hour, range.start + 1)) }
+    ? { ...range, start: Math.max(band.start, Math.min(hour, range.end - 1)) }
+    : { ...range, end: Math.min(band.end, Math.max(hour, range.start + 1)) }
+}
+
+/** The hour line of one edge nearest to a y offset in the day columns, among the lines its shown run allows */
+const edgeHourAt = (side: 'top' | 'bottom', y: number, range: Range): number => {
+  const band = bandOf(range.start)
+  const lines = side === 'top'
+    ? Array.from({ length: range.end - band.start }, (_, offset) => band.start + offset).map(hour => ({ hour, px: hourTop.value[hour] ?? 0 }))
+    : Array.from({ length: band.end - range.start }, (_, offset) => range.start + 1 + offset).map(hour => ({ hour, px: (hourTop.value[hour - 1] ?? 0) + HOUR_PX }))
+
+  let best = side === 'top' ? range.start : range.end
+  let bestDistance = Infinity
+
+  for (const line of lines) {
+    const distance = Math.abs(y - line.px)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      best = line.hour
+    }
+  }
+
+  return best
 }
 
 const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
@@ -292,7 +423,8 @@ const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
 const onResizeMove = (event: PointerEvent) => {
   if (!resizeDay || !resizeSide || !selection.value) return
 
-  setEdge(resizeSide, Math.max(0, Math.min(24, Math.round((event.clientY - resizeDay.getBoundingClientRect().top) / HOUR_PX))))
+  const y = event.clientY - resizeDay.getBoundingClientRect().top
+  setEdge(resizeSide, edgeHourAt(resizeSide, y, selection.value))
 }
 
 const endResize = () => {
@@ -321,7 +453,10 @@ const cellAt = (x: number, y: number): { cell: Cell; block: Range | null } | nul
   if (!column) return null
 
   const rect = column.getBoundingClientRect()
-  const cell = { day: Number(column.dataset.day), hour: Math.min(23, Math.max(0, Math.floor((y - rect.top) / HOUR_PX))) }
+  const hour = hourAtY(y - rect.top)
+  if (hour === null) return null
+
+  const cell = { day: Number(column.dataset.day), hour }
   return { cell, block: blockAt(cell) }
 }
 
@@ -358,8 +493,10 @@ const onPointerMove = (event: PointerEvent) => {
   const hit = cellAt(event.clientX, event.clientY)
   if (!hit || hit.cell.day !== press.cell.day) return
 
-  const start = Math.min(press.cell.hour, hit.cell.hour)
-  const end = Math.max(press.cell.hour, hit.cell.hour) + 1
+  // A drag stops at the edge of its shown run: it never selects across a collapsed run
+  const band = bandOf(press.cell.hour)
+  const start = Math.max(band.start, Math.min(press.cell.hour, hit.cell.hour))
+  const end = Math.min(band.end, Math.max(press.cell.hour, hit.cell.hour) + 1)
 
   if (!selection.value || selection.value.start !== start || selection.value.end !== end) {
     selection.value = { day: press.cell.day, start, end }
@@ -396,8 +533,8 @@ const stepFor = (key: string, cell: Cell): Cell | null => {
   switch (key) {
     case 'ArrowLeft': return { day: Math.max(0, cell.day - 1), hour: cell.hour }
     case 'ArrowRight': return { day: Math.min(6, cell.day + 1), hour: cell.hour }
-    case 'ArrowUp': return { day: cell.day, hour: Math.max(0, cell.hour - 1) }
-    case 'ArrowDown': return { day: cell.day, hour: Math.min(23, cell.hour + 1) }
+    case 'ArrowUp': return { day: cell.day, hour: stepHour(cell.hour, -1) }
+    case 'ArrowDown': return { day: cell.day, hour: stepHour(cell.hour, 1) }
     default: return null
   }
 }
@@ -412,7 +549,7 @@ const onKeydown = (event: KeyboardEvent) => {
     event.preventDefault()
     const from = event.shiftKey ? (anchor.value ?? cursor.value) : null
     anchor.value = from ? { ...from } : null
-    selection.value = from && from.day === step.day
+    selection.value = from && from.day === step.day && bandOf(from.hour).start === bandOf(step.hour).start
       ? { day: step.day, start: Math.min(from.hour, step.hour), end: Math.max(from.hour, step.hour) + 1 }
       : null
     setCursor(step)
@@ -439,6 +576,15 @@ watch(() => activeTemplate.value?.id, () => {
   if (barOpen.value || menuOpen.value || editing.value) closeAll()
 })
 
+// Rows collapse or come back with Show sleep: the cursor moves to a shown hour; a selection that now covers a collapsed hour is dropped.
+// Showing sleep again restores every row and keeps the selection
+watch(collapsed, () => {
+  if (isCollapsed(cursor.value.hour)) setCursor({ day: cursor.value.day, hour: nearestShown(cursor.value.hour) })
+
+  const range = selection.value
+  if (range && HOURS.some(hour => hour >= range.start && hour < range.end && isCollapsed(hour))) closeAll()
+})
+
 onMounted(() => {
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('pointercancel', onPointerCancel)
@@ -458,7 +604,8 @@ onBeforeUnmount(() => {
   <section class="section wk-section" aria-labelledby="week-title">
     <div class="wk-head-line">
       <h2 id="week-title" class="section-title">Week</h2>
-      <p class="wk-meta">{{ templateName }} · {{ plannedHours }} of 168 h planned</p>
+      <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
+      <SleepToggle v-if="sleepId" />
     </div>
 
     <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
@@ -481,6 +628,12 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
+          <!-- The band above the rows: the leading run of collapsed hours (sleep hidden), clicking it shows sleep -->
+          <button v-if="topBand" type="button" class="wk-band is-top" @click="setShowSleep(true)">
+            <span>Sleep hidden: {{ topBand }}</span>
+            <span class="wk-band-action">Show sleep</span>
+          </button>
+
           <div
             ref="gridEl"
             class="wk-body"
@@ -489,23 +642,32 @@ onBeforeUnmount(() => {
             @keydown="onKeydown"
           >
             <div class="wk-hours" aria-hidden="true">
-              <div v-for="hour in HOURS" :key="hour" class="wk-hour" :class="{ 'is-major': hour % 3 === 0 }">{{ hour % 3 === 0 ? formatHour(hour) : '' }}</div>
+              <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
+                <div v-if="row.kind === 'gap'" class="wk-gap" />
+                <div v-else class="wk-hour" :class="{ 'is-major': row.hour % 3 === 0 }">{{ row.hour % 3 === 0 ? formatHour(row.hour) : '' }}</div>
+              </template>
             </div>
 
             <div v-for="(day, dayIndex) in DAYS" :key="day" class="wk-day" :data-day="dayIndex">
-              <!-- Slots: the interaction layer, one focus stop at a time -->
-              <div
-                v-for="hour in HOURS"
-                :key="hour"
-                class="wk-slot"
-                :class="{ 'is-major': hour % 3 === 0 }"
-                role="button"
-                :tabindex="isCursor(dayIndex, hour) ? 0 : -1"
-                :data-day="dayIndex"
-                :data-hour="hour"
-                :aria-label="`${DAY_NAMES[dayIndex]} ${formatHour(hour)}, ${slots[dayIndex * 24 + hour] ? activityMap.get(slots[dayIndex * 24 + hour]!)?.name : 'free'}`"
-                @focus="setCursor({ day: dayIndex, hour })"
-              />
+              <!-- Slots: the interaction layer, one focus stop at a time; a collapsed run is a thin band between them -->
+              <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
+                <div
+                  v-if="row.kind === 'gap'"
+                  class="wk-gap"
+                  :title="`Sleep hidden: ${clockLabel(row.from)} to ${clockLabel(row.to)}`"
+                />
+                <div
+                  v-else
+                  class="wk-slot"
+                  :class="{ 'is-major': row.hour % 3 === 0 }"
+                  role="button"
+                  :tabindex="isCursor(dayIndex, row.hour) ? 0 : -1"
+                  :data-day="dayIndex"
+                  :data-hour="row.hour"
+                  :aria-label="`${DAY_NAMES[dayIndex]} ${formatHour(row.hour)}, ${shownSlots[dayIndex * 24 + row.hour] ? activityMap.get(shownSlots[dayIndex * 24 + row.hour]!)?.name : 'free'}`"
+                  @focus="setCursor({ day: dayIndex, hour: row.hour })"
+                />
+              </template>
 
               <!-- Blocks: the painted hours, drawn over the slots; hover shows the delete button -->
               <div
@@ -514,7 +676,7 @@ onBeforeUnmount(() => {
                 class="wk-block"
                 :class="{ 'is-short': block.end - block.start === 1 }"
                 :style="{
-                  top: `${block.start * HOUR_PX}px`,
+                  top: `${hourTop[block.start] ?? 0}px`,
                   height: `${(block.end - block.start) * HOUR_PX - 2}px`,
                   background: blockColor(block),
                   color: inkOn(blockColor(block)),
@@ -536,7 +698,7 @@ onBeforeUnmount(() => {
                 v-if="selection && selection.day === dayIndex"
                 class="wk-sel"
                 :style="{
-                  top: `${selection.start * HOUR_PX}px`,
+                  top: `${hourTop[selection.start] ?? 0}px`,
                   height: `${(selection.end - selection.start) * HOUR_PX}px`,
                 }"
               >
@@ -578,6 +740,12 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+
+      <!-- The band below the rows: the trailing run of collapsed hours -->
+      <button v-if="bottomBand" type="button" class="wk-band is-bottom" @click="setShowSleep(true)">
+        <span>Sleep hidden: {{ bottomBand }}</span>
+        <span class="wk-band-action">Show sleep</span>
+      </button>
 
       <p v-if="undo" class="wk-undo" role="status">
         <span>{{ undo.text }}</span>
@@ -629,7 +797,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="wk-menu-list">
           <button
-            v-for="activity in planner.activities"
+            v-for="activity in menuActivities"
             :key="activity.id"
             type="button"
             class="wk-menu-item"

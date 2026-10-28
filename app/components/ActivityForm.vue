@@ -13,6 +13,7 @@ import {
 } from '~/utils/entries'
 import { focusEditField } from '~/utils/focus'
 import { shortCodeFor } from '~/utils/onboarding'
+import { isSleepActivity } from '~/utils/sleep'
 
 /**
  * The one form for an entry (FR-ITEM-3): a habit, its linked activity, or an activity no habit links to. The Week tab and a life
@@ -36,6 +37,9 @@ const emit = defineEmits<{
 const planner = usePlannerStore()
 const uid = useId()
 const isNew = !props.habitId && !props.activityId
+// Sleep (FR-SLEEP-2): its form has no days, duration or start; the Sleep editor sets its nights, it cannot be deleted, and its code is locked
+const isSleep = computed(() => !isNew && isSleepActivity(planner.activities.find(activity => activity.id === props.activityId)))
+const sleepEditor = ref<{ isValid: () => boolean; apply: () => { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null } | null>(null)
 
 const categories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 const hourlyTemplates = computed(() => planner.templates.filter(template => isHourlyTemplate(template)))
@@ -88,7 +92,7 @@ const snapshot = (): EntryDraft => ({
 // Repaint: a timed entry whose schedule changed repaints its hours on Save (never a name, colour, code or life-area change alone)
 const repaints = computed(() => !isNew && timed.value && scheduleChanged(snapshot(), saved))
 // Switching to No time removes the activity: Save asks first
-const removesActivity = computed(() => !isNew && !!saved.activityId && !timed.value)
+const removesActivity = computed(() => !isNew && !isSleep.value && !!saved.activityId && !timed.value)
 
 const removalText = computed(() => {
   const impact = removalImpact(planner.$state, saved.activityId ?? '', saved.habitId)
@@ -120,7 +124,30 @@ const toggleTemplate = (templateId: string, checked: boolean) => {
     : draft.templateIds.filter(id => id !== templateId)
 }
 
+// Sleep saves its name, life area and colour, and the nights in the Sleep editor, in one step; a refused window keeps the form open
+function saveSleep() {
+  const editor = sleepEditor.value
+  if (!editor || !editor.isValid() || !props.activityId) return
+
+  const fieldErrors = planner.updateActivity(props.activityId, { name: draft.name, categoryId: draft.categoryId, color: draft.color })
+  if (Object.keys(fieldErrors).length) {
+    errors.value = fieldErrors
+    return
+  }
+
+  const result = editor.apply()
+  if (!result) return
+
+  emit('saved', { text: result.text, undo: result.undo })
+  emit('close')
+}
+
 function save(confirmed = false) {
+  if (isSleep.value) {
+    saveSleep()
+    return
+  }
+
   if (removesActivity.value && !confirmed) {
     confirmingRemoval.value = true
     return
@@ -183,7 +210,7 @@ function onEscape(event: KeyboardEvent) {
           <p v-if="errors.categoryId" class="field-error" role="alert">{{ errors.categoryId }}</p>
         </div>
 
-        <div class="field">
+        <div v-if="!isSleep" class="field">
           <label class="field-label" :for="`${uid}-duration`">Duration</label>
           <select
             :id="`${uid}-duration`"
@@ -200,7 +227,10 @@ function onEscape(event: KeyboardEvent) {
         Hours are painted whole: {{ draft.durationMinutes }} min takes {{ hours }} h in each week type.
       </p>
 
-      <fieldset class="sched-days">
+      <!-- Sleep: its nights, set per week type (FR-SLEEP-2, 5) -->
+      <PlannerSleepEditor v-if="isSleep" ref="sleepEditor" />
+
+      <fieldset v-if="!isSleep" class="sched-days">
         <legend class="field-label">Days</legend>
         <div class="sched-day-row">
           <button
@@ -217,7 +247,7 @@ function onEscape(event: KeyboardEvent) {
       </fieldset>
 
       <!-- Times a week or a month: only for a habit with no day chosen (its frequency); a timed entry takes its frequency from its days -->
-      <div v-if="!draft.days.length && !timed" class="form-row">
+      <div v-if="!isSleep && !draft.days.length && !timed" class="form-row">
         <div class="field">
           <label class="field-label" :for="`${uid}-count`">Or: times</label>
           <input
@@ -241,7 +271,7 @@ function onEscape(event: KeyboardEvent) {
       </div>
 
       <!-- Start and week types: only for a timed entry, painted from the start for its whole hours -->
-      <template v-if="timed">
+      <template v-if="timed && !isSleep">
         <div class="field">
           <label class="field-label" :for="`${uid}-start`">Start</label>
           <select :id="`${uid}-start`" v-model.number="draft.start" class="timely-select" :aria-invalid="!!errors.start">
@@ -273,7 +303,7 @@ function onEscape(event: KeyboardEvent) {
       <details class="entry-more">
         <summary class="btn btn-sm">More options</summary>
         <div class="form-stack entry-more-body">
-          <template v-if="timed">
+          <template v-if="timed || isSleep">
             <div class="field">
               <label class="field-label" :for="`${uid}-code`">Short code</label>
               <input
@@ -281,11 +311,13 @@ function onEscape(event: KeyboardEvent) {
                 v-model="draft.shortCode"
                 class="timely-input"
                 maxlength="3"
+                :disabled="isSleep"
                 :placeholder="draft.name.trim() ? shortCodeFor(draft.name) : 'ABC'"
                 :aria-invalid="!!errors.shortCode"
                 :aria-describedby="errors.shortCode ? `${uid}-code-error` : undefined"
                 @keydown.enter.prevent="save()"
               />
+              <p v-if="isSleep" class="form-hint">Sleep keeps the code SLP: it is how Timely knows this activity.</p>
               <p v-if="errors.shortCode" :id="`${uid}-code-error`" class="field-error" role="alert">{{ errors.shortCode }}</p>
             </div>
 
@@ -304,7 +336,7 @@ function onEscape(event: KeyboardEvent) {
               </div>
             </div>
 
-            <PlannerAlsoCategories v-model="draft.alsoCategoryIds" :categories="categories" :primary-id="draft.categoryId" />
+            <PlannerAlsoCategories v-if="!isSleep" v-model="draft.alsoCategoryIds" :categories="categories" :primary-id="draft.categoryId" />
           </template>
           <p v-else class="form-hint">The short code, colour and "also counts toward" belong to a timed item.</p>
         </div>
@@ -324,7 +356,9 @@ function onEscape(event: KeyboardEvent) {
       <button type="button" class="btn btn-sm" @click="emit('close')">Cancel</button>
     </div>
 
-    <div v-if="!isNew" class="act-delete">
+    <p v-if="isSleep" class="form-hint">Sleep is built in; hide it instead.</p>
+
+    <div v-if="!isNew && !isSleep" class="act-delete">
       <button v-if="!confirmingDelete" type="button" class="btn btn-sm btn-danger" @click="confirmingDelete = true">Delete</button>
       <div v-else class="act-confirm" role="group" aria-label="Confirm delete">
         <p class="act-confirm-text">{{ deleteText }}</p>

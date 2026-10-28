@@ -1167,6 +1167,37 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .wk-day:last-child { border-right: 0; }
 
+/* Collapsed sleep (FR-SLEEP-5): a thin quiet band stands for hours hidden in every day; the top and bottom bands sit outside the rows */
+.wk-gap {
+  height: 14px;
+  background: var(--bg-2);
+  border-top: 1px dashed var(--rule-2);
+}
+.wk-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 4px var(--space-3);
+  border: 0;
+  background: var(--bg-2);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-align: left;
+  cursor: pointer;
+}
+.wk-band.is-top { border-bottom: 1px solid var(--rule); }
+.wk-band.is-bottom { border-top: 1px solid var(--rule); }
+.wk-band:hover { color: var(--ink); }
+.wk-band:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+.wk-band-action {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Slots: the interaction layer, 28px per hour; a hairline marks each three-hour line */
 .wk-slot {
   position: relative;
@@ -1914,6 +1945,28 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 /* ── Home: timeline with hour axis, activity rows, journal ── */
 .home-timeline { margin: var(--space-4) 0 var(--space-6); }
+.home-sleep-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.home-sleep-line + .home-timeline { margin-top: var(--space-2); }
+/* Sleep row above the activity chips (FR-SLEEP-2): the chip shows the nights of the active week type */
+.sleep-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.sleep-row-when {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
 /* Thin colour-only bar: one flex segment per hour, no text inside */
 .home-timeline-bar {
   display: flex;
