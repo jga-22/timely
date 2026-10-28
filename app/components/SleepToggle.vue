@@ -4,7 +4,7 @@ const { showSleep, toggleShowSleep } = useShowSleep()
 </script>
 
 <template>
-  <button type="button" class="btn btn-sm sleep-toggle" :aria-pressed="showSleep" @click="toggleShowSleep">
+  <button type="button" class="btn btn-sm btn-outline sleep-toggle" :aria-pressed="showSleep" @click="toggleShowSleep">
     {{ showSleep ? 'Hide sleep' : 'Show sleep' }}
   </button>
 </template>
