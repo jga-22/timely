@@ -191,37 +191,43 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .tab[aria-selected="true"]::after { transform: scaleX(1); }
 
 
-/* Remote storage only (hidden in 'local' mode): a quiet dot and label */
-.storage-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-.storage-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ink-4);
-}
-.storage-status[data-state="saved"] .storage-status-dot { background: var(--ok); }
-.storage-status[data-state="error"] { color: var(--danger); }
-.storage-status[data-state="error"] .storage-status-dot { background: var(--danger); }
-
-/* Supabase mode: account menu next to the save status */
+/* Account (topbar, both modes): one round avatar button; its menu holds the account, the save status, the theme switch and the actions */
 .account { position: relative; flex: none; }
 .account-button {
-  height: 32px;
-  padding: 0 var(--space-2);
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
   font-size: var(--fs-sm);
-  color: var(--ink-2);
-  border-radius: var(--radius);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
+/* Phones: a 44px touch target around the 36px circle, without changing the layout */
+.account-button::before { content: ""; position: absolute; inset: -4px; }
 .account-button:hover,
-.account-button[aria-expanded="true"] { background: var(--bg-3); color: var(--ink); }
+.account-button[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
+.account-glyph { width: 20px; height: 20px; }
+/* Save state on the avatar: a quiet pulsing dot while saving, a danger dot when not saved; nothing when saved */
+.account-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.account-dot[data-state="error"] { background: var(--danger); }
+.account-dot[data-state="saving"] { animation: account-pulse 1.4s ease-in-out infinite; }
+@keyframes account-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .account-dot[data-state="saving"] { animation: none; } }
 .account-menu {
   position: absolute;
   right: 0;
@@ -230,7 +236,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-width: 220px;
+  min-width: 240px;
   max-width: calc(100vw - 32px);
   padding: var(--space-3);
   background: var(--bg);
@@ -238,6 +244,58 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+.account-menu:focus { outline: none; }
+.account-head { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--space-3); border-bottom: 1px solid var(--rule-2); }
+.account-name { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.account-save { display: flex; flex-direction: column; gap: var(--space-1); }
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.account-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex: none; }
+.account-status[data-state="saved"] .account-status-dot { background: var(--ok); }
+.account-status[data-state="error"] { color: var(--danger); }
+.account-status[data-state="error"] .account-status-dot { background: var(--danger); }
+.account-status-note { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); overflow-wrap: anywhere; }
+/* Dark mode switch: the whole row is the button; the track is the visible state (text and aria-checked too) */
+.account-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.account-switch:hover { background: var(--bg-3); color: var(--ink); }
+.account-track {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--control-border);
+  transition: background 0.18s ease;
+}
+.account-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  transition: transform 0.18s ease;
+}
+.account-switch[aria-checked="true"] .account-track { background: var(--accent); }
+.account-switch[aria-checked="true"] .account-knob { transform: translateX(14px); }
 .account-email { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
 
 /* Sign-in page (LoginGate.vue, Supabase mode, signed out): one centred column, 640px at most, full width minus the gutters on phones.
@@ -329,18 +387,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 @media (max-width: 1280px) { .app-footer { padding-left: 32px; padding-right: 32px; } }
 @media (max-width: 1024px) { .app-footer { padding-left: 28px; padding-right: 28px; } }
 @media (max-width: 768px) { .app-footer { padding-left: var(--space-4); padding-right: var(--space-4); } }
-
-.theme-toggle {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius);
-  color: var(--ink-3);
-}
-.theme-toggle:hover { background: var(--bg-3); color: var(--ink); }
-.theme-toggle svg { width: 18px; height: 18px; }
 
 /* ── First-run onboarding (FR-ONB): welcome and form dialog, guided tour card ── */
 .onb-overlay {
@@ -1842,7 +1888,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
     padding: var(--space-3) var(--space-4) 0;
   }
   .brand { flex: 1; }
-  .theme-toggle { order: 2; }
   .tabs {
     order: 3;
     flex-basis: 100%;
