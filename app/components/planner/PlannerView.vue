@@ -947,8 +947,8 @@ function undoSchedule() {
       <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd()">+ Add activity</button>
     </section>
 
-    <!-- Year painter: full width, collapsible, closed by default. Shown only with two or more week types (otherwise the line below) -->
-    <section v-if="templates.length > 1" class="section year-section" aria-labelledby="year-title">
+    <!-- Year: full width, collapsible, closed by default with any number of week types. With one week type a line says which one the year uses -->
+    <section class="section year-section" aria-labelledby="year-title">
       <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="year-summary">
           <h2 id="year-title" class="section-title">Year</h2>
@@ -956,6 +956,8 @@ function undoSchedule() {
         </summary>
 
         <div class="year-body">
+          <p v-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
+
           <div class="year-paint-head">
             <div class="year-controls">
               <YearNav />
@@ -1049,8 +1051,5 @@ function undoSchedule() {
         </div>
       </details>
     </section>
-
-    <!-- One week type: nothing to paint, so one line says which week type the year uses -->
-    <p v-else-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
   </div>
 </template>
