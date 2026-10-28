@@ -4,11 +4,15 @@ import type { Activity, Category, Habit, HabitPeriod } from '~/types/planner'
 /**
  * The fields of one habit: name, times and period, minutes each, linked activity. Shared by the add form and each habit's edit form
  * (HabitList.vue). It only emits the changes; the caller applies them to the store (or to the add draft). Actions go in the default slot.
+ * The first option of the activity select, "Add '<name>' to my week", links the habit to its own activity (FR-GOALS-24): it emits 'new'.
  */
 const props = defineProps<{
   habit: Habit
+  /** The select's current value: an activity id, '' for None, or 'new' for the habit's own activity */
+  linkValue: string
   groups: { category: Category; activities: Activity[] }[]
   nameError?: string
+  activityError?: string
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +21,8 @@ const emit = defineEmits<{
 
 /** Field ids: a new habit has no id yet, so its fields use `new` */
 const key = computed(() => props.habit.id || 'new')
+
+const newActivityLabel = computed(() => `Add '${props.habit.name.trim()}' to my week`)
 
 const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, Number(value) || 0))
 </script>
@@ -75,14 +81,17 @@ const minutesFrom = (value: string) => (value === '' ? undefined : Math.max(0, N
       <select
         :id="`habit-activity-${key}`"
         class="timely-select"
-        :value="habit.activityId ?? ''"
+        :value="linkValue"
+        :aria-invalid="!!activityError"
         @change="emit('change', { activityId: ($event.target as HTMLSelectElement).value || null })"
       >
+        <option v-if="habit.name.trim()" value="new">{{ newActivityLabel }}</option>
         <option value="">None</option>
         <optgroup v-for="group in groups" :key="group.category.id" :label="group.category.name">
           <option v-for="activity in group.activities" :key="activity.id" :value="activity.id">{{ activity.name }}</option>
         </optgroup>
       </select>
+      <p v-if="activityError" class="field-error" role="alert">{{ activityError }}</p>
     </div>
 
     <slot />

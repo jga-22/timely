@@ -10,6 +10,7 @@ import {
   getActiveTemplate,
   getTemplateById,
   nextTemplateColor,
+  SHORT_CODE_PATTERN,
   rangeConflicts,
   validateActivityFields,
   type ActivityFieldErrors,
@@ -30,6 +31,19 @@ import {
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
 const numberCategories = (categories: Category[]): Category[] =>
   [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
+
+/** Short code for a new activity named `name`: the default one from its first word, else one cut from its letters. Null when none is free (FR-GOALS-24) */
+const freeShortCode = (state: PlannerState, name: string): string | null => {
+  const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase()
+  const taken = new Set(state.activities.map(activity => activity.shortCode.toUpperCase()))
+  const candidates = [shortCodeFor(name)]
+
+  for (const size of [3, 2, 1]) {
+    for (let start = 0; start + size <= letters.length; start += 1) candidates.push(letters.slice(start, start + size))
+  }
+
+  return candidates.find(code => SHORT_CODE_PATTERN.test(code) && !taken.has(code)) ?? null
+}
 
 /** The life area a preset's activity goes to: Physical for sleep and exercise, Professional for work, else the first area (FR-TPL-8) */
 const presetCategoryId = (categories: Category[], role: PresetRole): string | undefined => {
@@ -399,6 +413,27 @@ export const usePlannerStore = defineStore('planner', {
       })
 
       return id
+    },
+    /**
+     * The activity a habit gets from its name (FR-GOALS-24): the activity of that name in the life area when there is one, else a new
+     * activity with the life area colour and a free short code. Returns its id, or the error; nothing is added on error
+     */
+    ownActivityFor(categoryId: string, name: string): { id: string } | { error: string } {
+      const trimmed = name.trim()
+      const existing = this.activities.find(activity => activity.categoryId === categoryId && activity.name.trim().toLowerCase() === trimmed.toLowerCase())
+
+      if (existing) {
+        return { id: existing.id }
+      }
+
+      const shortCode = freeShortCode(this.$state, trimmed)
+
+      if (!shortCode) {
+        return { error: 'No short code is free for this name. Link an existing activity instead.' }
+      }
+
+      const id = this.addActivity(trimmed, shortCode, categoryId)
+      return id ? { id } : { error: 'The activity could not be added. Check the life area.' }
     },
     /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
     updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>): ActivityFieldErrors {
