@@ -1519,21 +1519,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .act-panel .act-actions { margin-top: var(--space-3); }
 .act-add-trigger { margin-top: var(--space-3); }
 
-/* Schedule in the week: a panel under the activity detail (FR-PLAN-25) */
-.act-schedule { display: flex; flex-direction: column; gap: var(--space-3); }
-.act-schedule .act-panel-head { margin-bottom: 0; }
-.act-schedule-lede { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
-.act-schedule-hint { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
-.act-schedule .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
-.act-schedule .act-actions { margin-top: 0; }
 .sched-days { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .sched-days .field-label { padding: 0; margin-bottom: 0; }
 .sched-day-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-/* The schedule toggle sits under the activity detail; the result line stays under it after the form closes */
-.act-schedule-toggle {
-  max-width: 560px;
-  margin-top: var(--space-3);
-}
+/* The result line stays under the list after the form closes, so its Undo is still there */
 .sched-result {
   display: flex;
   flex-wrap: wrap;
@@ -2086,3 +2075,18 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .edit-btn:disabled { opacity: 0.45; cursor: default; }
 .edit-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .edit-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* List rows of the Week tab (Habits) and the Goals life area: one entry per row, its pencil at the end (FR-ITEM-4) */
+.entry-habits { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); max-width: 560px; }
+.entry-habits-title { margin: 0; font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
+.row-list { margin: 0; padding: 0; list-style: none; }
+.row-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule-2);
+}
+.row-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.row-name { font-size: var(--fs-md); font-weight: 500; overflow-wrap: anywhere; }
+.row-meta { font-size: var(--fs-sm); color: var(--ink-3); font-variant-numeric: tabular-nums; }
