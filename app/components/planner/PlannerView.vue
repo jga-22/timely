@@ -12,6 +12,7 @@ import {
   validateActivityFields,
   type ActivityFieldErrors
 } from '~/utils/planner'
+import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { shortCodeFor } from '~/utils/onboarding'
 import type { Activity } from '~/types/planner'
@@ -87,12 +88,114 @@ const cellStyle = (startDate: string) => {
 }
 
 // ── Template management ──
-function handleNewTemplate() {
-  if (!newTemplateName.value.trim()) return
-  planner.createTemplate()
-  planner.renameActiveTemplate(newTemplateName.value.trim())
-  newTemplateName.value = ''
+// New week type (FR-TPL-2, 6, 8): a panel with a Start from choice: empty, a copy of a week type, or a preset
+const newTemplateInput = ref<HTMLInputElement | null>(null)
+const newTemplateTrigger = ref<HTMLButtonElement | null>(null)
+const newFrom = ref('empty')
+const keepHabits = ref(true)
+// Role mapping for a preset: an activity id, 'create' (a new activity) or '' (leave the role's hours empty)
+const roleChoice = reactive<Record<PresetRole, string>>({ sleep: '', work: '', exercise: '' })
+const newPreset = computed(() => (newFrom.value.startsWith('preset:') ? getPreset(newFrom.value.slice(7)) ?? null : null))
+// Only the roles the preset paints get a mapping row: Vacation maps Sleep alone
+const newPresetRoles = computed(() => PRESET_ROLES.filter(role => newPreset.value?.blocks.some(block => block.role === role)))
+
+// Presets start from the activities they match by name; a role with no match is created (Sleep, Work) or left empty (Exercise)
+watch(newFrom, (value) => {
+  const preset = value.startsWith('preset:') ? getPreset(value.slice(7)) : undefined
+  if (!preset) return
+
+  keepHabits.value = preset.keepHabitsDefault
+  for (const role of PRESET_ROLES) {
+    roleChoice[role] = matchRole(planner.$state, role) ?? (role === 'exercise' ? '' : 'create')
+  }
+})
+
+function openNewTemplate() {
+  newTemplateOpen.value = true
+  nextTick(() => newTemplateInput.value?.focus())
+}
+
+function closeNewTemplate() {
   newTemplateOpen.value = false
+  newTemplateName.value = ''
+  newFrom.value = 'empty'
+  nextTick(() => newTemplateTrigger.value?.focus())
+}
+
+function handleNewTemplate() {
+  const name = newTemplateName.value.trim()
+  const from = newFrom.value
+  const preset = newPreset.value
+  let templateId: string | null = null
+
+  if (from === 'empty') {
+    planner.createTemplate()
+    if (name) planner.renameActiveTemplate(name)
+    templateId = activeTemplate.value?.id ?? null
+  } else if (from.startsWith('copy:')) {
+    templateId = planner.duplicateTemplate(from.slice(5), name)
+  } else if (preset) {
+    // Roles the preset does not paint are sent as null, so no activity is created for them
+    const mapping = Object.fromEntries(PRESET_ROLES.map(role => [role, newPresetRoles.value.includes(role) && roleChoice[role] !== '' ? roleChoice[role] : null])) as Record<PresetRole, string | 'create' | null>
+    templateId = planner.createTemplateFromPreset(name, preset.id, mapping, keepHabits.value)
+  }
+
+  if (!templateId) return
+
+  newTemplateName.value = ''
+  newFrom.value = 'empty'
+  newTemplateOpen.value = false
+
+  // A time-off week type is usually applied to weeks next: open the year with it chosen and the first week field focused
+  if (preset?.kind === 'break') openYearFor(templateId)
+}
+
+// ── Year: the Weeks row applies one week type to a range of weeks (FR-YEAR-7); the choice defaults to the active one ──
+const weekRangeTemplate = ref<string | null>(null)
+const weekRangeChoice = computed({
+  get: () => weekRangeTemplate.value ?? activeTemplate.value?.id ?? '',
+  set: (value: string) => {
+    weekRangeTemplate.value = value
+  }
+})
+const weekFrom = ref(1)
+const weekTo = ref(1)
+const weekFromInput = ref<HTMLInputElement | null>(null)
+const weekRangeError = ref('')
+const weekRangeResult = ref('')
+const weekCount = computed(() => weeks.value.length)
+
+function openYearFor(templateId: string) {
+  weekRangeTemplate.value = templateId
+  yearOpen.value = true
+  nextTick(() => weekFromInput.value?.focus())
+}
+
+function applyWeekRange() {
+  const count = weekCount.value
+  const from = weekFrom.value
+  const to = weekTo.value
+
+  if (!count) return
+
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > count) {
+    weekRangeError.value = `Enter week numbers from 1 to ${count}.`
+    weekRangeResult.value = ''
+    return
+  }
+
+  if (from > to) {
+    weekRangeError.value = 'The first week must not come after the last one.'
+    weekRangeResult.value = ''
+    return
+  }
+
+  weekRangeError.value = ''
+  const templateId = weekRangeChoice.value || null
+  planner.setWeeksTemplate(weeks.value.slice(from - 1, to), templateId)
+
+  const name = templateId ? (templateById.value.get(templateId)?.name ?? '') : ''
+  weekRangeResult.value = templateId ? `Weeks ${from} to ${to} use ${name}.` : `Weeks ${from} to ${to} have no week type.`
 }
 
 // Inline confirmation (FR-TPL-5, FR-UX-7): nothing is deleted before the second button
@@ -466,20 +569,63 @@ function undoSchedule() {
         </div>
       </div>
 
-      <div v-if="newTemplateOpen" class="new-template-form">
-        <input
-          v-model="newTemplateName"
-          class="pill-input"
-          autofocus
-          placeholder="e.g. Launch week"
-          @keydown.enter="handleNewTemplate"
-          @keydown.escape="newTemplateOpen = false; newTemplateName = ''"
-        />
-        <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
-      </div>
-      <button v-else class="chip-add" @click="newTemplateOpen = true">+ New week type</button>
+      <button v-if="!newTemplateOpen" ref="newTemplateTrigger" class="chip-add" @click="openNewTemplate">+ New week type</button>
 
       <EditButton v-if="activeTemplate" label="Edit week type" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
+    </div>
+
+    <!-- New week type: a name and a Start from choice (empty, a copy, or a preset with its role mapping) -->
+    <div v-if="newTemplateOpen" class="act-panel new-template-panel" @keydown.escape.stop="closeNewTemplate">
+      <div class="act-panel-head">
+        <h3 class="act-panel-title">New week type</h3>
+      </div>
+      <div class="form-stack">
+        <div class="field">
+          <label class="field-label" for="new-template-name">Name</label>
+          <input
+            id="new-template-name"
+            ref="newTemplateInput"
+            v-model="newTemplateName"
+            class="timely-input"
+            placeholder="e.g. Launch week"
+            @keydown.enter.prevent="handleNewTemplate"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="new-template-from">Start from</label>
+          <select id="new-template-from" v-model="newFrom" class="timely-select">
+            <option value="empty">Empty</option>
+            <option v-for="t in templates" :key="t.id" :value="`copy:${t.id}`">Copy of {{ t.name }}</option>
+            <option v-for="p in PRESETS" :key="p.id" :value="`preset:${p.id}`">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <template v-if="newPreset">
+          <p class="new-template-lede">{{ newPreset.description }}</p>
+
+          <div class="role-rows">
+            <div v-for="role in newPresetRoles" :key="role" class="role-row">
+              <label class="field-label role-label" :for="`role-${role}`">{{ ROLE_LABELS[role] }}</label>
+              <select :id="`role-${role}`" v-model="roleChoice[role]" class="timely-select">
+                <option v-for="act in planner.activities" :key="act.id" :value="act.id">{{ act.name }}</option>
+                <option value="create">Create "{{ ROLE_LABELS[role] }}"</option>
+                <option value="">Leave empty</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="check">
+            <input v-model="keepHabits" type="checkbox" />
+            Keep my habit sessions
+          </label>
+        </template>
+      </div>
+
+      <div class="act-actions">
+        <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add week type</button>
+        <button class="btn btn-sm" @click="closeNewTemplate">Cancel</button>
+      </div>
     </div>
 
     <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
@@ -511,6 +657,16 @@ function undoSchedule() {
               @click="planner.setTemplateColor(activeTemplate.id, col.bg)"
             />
           </div>
+        </div>
+        <div class="field">
+          <label class="check">
+            <input
+              type="checkbox"
+              :checked="activeTemplate.kind === 'break'"
+              @change="planner.setTemplateKind(activeTemplate.id, ($event.target as HTMLInputElement).checked ? 'break' : undefined)"
+            />
+            Time off: Goals does not compare against this week type
+          </label>
         </div>
         <div v-if="templates.length > 1" class="form-actions">
           <button ref="deleteTemplateTrigger" type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete week type</button>
@@ -822,6 +978,46 @@ function undoSchedule() {
               <span class="dot dot-erase" />
               Erase
             </button>
+          </div>
+
+          <!-- Weeks: one week type for a range of weeks, typed rather than painted (FR-YEAR-7) -->
+          <div class="weeks-row" role="group" aria-labelledby="weeks-row-title">
+            <span id="weeks-row-title" class="field-label">Weeks</span>
+            <div class="weeks-row-line">
+              <label class="weeks-part" for="weeks-template">Use</label>
+              <select id="weeks-template" v-model="weekRangeChoice" class="timely-select weeks-select">
+                <option value="">No week type</option>
+                <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select>
+              <label class="weeks-part" for="weeks-from">for weeks</label>
+              <input
+                id="weeks-from"
+                ref="weekFromInput"
+                v-model.number="weekFrom"
+                class="timely-input weeks-num"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                :max="weekCount"
+                :aria-invalid="!!weekRangeError"
+                aria-describedby="weeks-error"
+              />
+              <label class="weeks-part" for="weeks-to">to</label>
+              <input
+                id="weeks-to"
+                v-model.number="weekTo"
+                class="timely-input weeks-num"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                :max="weekCount"
+                :aria-invalid="!!weekRangeError"
+                aria-describedby="weeks-error"
+              />
+              <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
+            </div>
+            <p v-if="weekRangeError" id="weeks-error" class="field-error" role="alert">{{ weekRangeError }}</p>
+            <p v-else-if="weekRangeResult" class="weeks-result" role="status">{{ weekRangeResult }}</p>
           </div>
 
           <div v-if="weeks.length" class="year-grid-scroll">
