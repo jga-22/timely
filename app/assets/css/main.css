@@ -1707,14 +1707,31 @@ a { color: var(--accent); text-underline-offset: 3px; }
   font-weight: 400;
   color: var(--ink-3);
 }
-/* The one sentence over the chart: the answer first, larger than the labels */
-.insights-headline {
-  margin: 0 0 var(--space-4);
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--ink);
-  overflow-wrap: anywhere;
+/* The chart header: the key of the red available-time lines (its label), and the Show sleep toggle */
+.insights-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.insights-cap-key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--attention);
+  font-variant-numeric: tabular-nums;
+}
+.insights-cap-swatch {
+  flex: none;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--attention);
 }
 
 /* Bars are flex columns scaled to the largest total; hour labels are HTML so they keep the 12px minimum */
@@ -1775,19 +1792,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   height: 2px;
   border-radius: 1px;
   background: var(--attention);
-  pointer-events: none;
-}
-.insights-cap-label {
-  position: absolute;
-  right: 0;
-  padding: 0 4px;
-  transform: translateY(-100%);
-  background: var(--bg);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--attention);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 .insights-ticks {

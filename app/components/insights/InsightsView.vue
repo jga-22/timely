@@ -5,10 +5,10 @@ import { usePlannerFill } from '~/composables/usePlannerFill'
 import {
   GRANULARITIES,
   UNITS,
+  capacityLabel,
   categoryShares,
   chartScale,
   formatInUnit,
-  headlineSentence,
   insightsBars,
   rangeYears,
   type InsightsBar,
@@ -56,12 +56,6 @@ const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShor
 const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
-// One sentence over the chart: the top three life areas by planned hours (FR-INS-6)
-const headline = computed(() => headlineSentence(
-  rangeLabel.value,
-  shares.value.rows.map(row => ({ name: nameOf(row.categoryId), share: row.share }))
-))
-
 // The disclosure's button names the settings it hides when they are not the defaults, so they are not lost from view
 const moreSummary = computed(() => [
   granularity.value === 'quarter' || granularity.value === 'year' ? GRANULARITIES.find(option => option.id === granularity.value)!.label : '',
@@ -71,8 +65,8 @@ const moreSummary = computed(() => [
 
 const heightPct = (hours: number) => `${(hours / scale.value) * 100}%`
 
-// The capacity label sits at the right end, with the last bar's available time
-const lastCapacity = computed(() => bars.value[bars.value.length - 1]?.capacity ?? 0)
+// The chart header: what the red lines are, for the granularity (FR-INS-4)
+const capacityText = computed(() => capacityLabel(granularity.value, bars.value, unit.value))
 
 // Week numbers label every fourth week (1, 5, 9 ...); the other granularities label every bar
 const tickLabel = (bar: InsightsBar) => {
@@ -120,7 +114,6 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
               @click="granularity = option.id"
             >{{ option.label }}</button>
           </div>
-          <SleepToggle />
           <button
             type="button"
             class="btn btn-sm insights-more-toggle"
@@ -172,10 +165,10 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
       </div>
 
       <section v-if="shares.total" class="section">
-        <div class="section-head">
-          <h2 class="section-title">Planned time</h2>
+        <div class="insights-chart-head">
+          <p class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
+          <SleepToggle />
         </div>
-        <p class="insights-headline">{{ headline }}</p>
         <div class="insights-chart" role="img" :aria-label="chartLabel">
           <div class="insights-axis" aria-hidden="true">
             <span class="insights-axis-top">{{ formatInUnit(scale, unit) }}</span>
@@ -195,9 +188,6 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
                 </div>
                 <span class="insights-cap" :style="{ bottom: heightPct(bar.capacity) }" />
               </div>
-              <span v-if="bars.length" class="insights-cap-label" :style="{ bottom: heightPct(lastCapacity) }">
-                Available {{ amount(lastCapacity) }}
-              </span>
             </div>
             <div class="insights-ticks" aria-hidden="true">
               <span v-for="bar in bars" :key="bar.key" class="insights-tick">{{ tickLabel(bar) }}</span>
@@ -207,9 +197,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </div>
           </div>
         </div>
-        <p class="page-meta insights-sleep-note">
-          {{ showSleep ? 'Sleep is counted under Physical.' : 'Sleep is left out: not counted, and not in the available time.' }}
-        </p>
+        <p v-if="showSleep" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
       </section>
 
       <section v-if="shares.total" class="section">
@@ -233,7 +221,6 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
       </section>
 
       <section v-else class="section insights-empty-state">
-        <p class="insights-headline">{{ headline }}</p>
         <p class="insights-empty">Plan the week in Planner and the hours show here.</p>
         <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Planner</NuxtLink>
       </section>
