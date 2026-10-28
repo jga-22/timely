@@ -1601,6 +1601,27 @@ a { color: var(--accent); text-underline-offset: 3px; }
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
+/* More options: a quiet panel under the first row; the summary after the button says what it hides when closed */
+.insights-more {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--radius);
+}
+.insights-more-summary {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+/* The one sentence over the chart: the answer first, larger than the labels */
+.insights-headline {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
 
 /* Bars are flex columns scaled to the largest total; hour labels are HTML so they keep the 12px minimum */
 .insights-chart {
