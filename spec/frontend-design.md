@@ -344,6 +344,7 @@ One category's time against its need, in hours a week (FR-GOALS-16). Used in eve
   - Habits: one row per habit with Edit (`aria-label` "Edit {name}", `aria-expanded`) that opens its form inline; one form open at a time. The form: name (`AutoTextarea`), times (number), period (`.timely-select`), minutes each (number), linked activity (`.timely-select` with an `optgroup` per category: the habit's own category first, then the others in order, categories without activities omitted). "Remove habit" opens an inline confirmation (`.inline-confirm`) and removes nothing before "Remove". "+ Add habit" (`.chip-add`, below the list) is in view mode, in edit mode and in the empty state. It opens a draft form with the same fields (`HabitForm.vue`, shared with each habit's edit form). Save habit adds the habit through the store; Cancel and Escape discard the draft; a missing name is refused with a message; focus moves into the name.
   - Activities: the read-only rows above.
   - Move up and Move down (`.btn-sm`, disabled at the ends); Remove life area (`.btn-danger`) opens an inline confirmation (`.inline-confirm`) that names the impact: "Its N activities and M habits must move to another category before X is removed." with a select of the other categories and "Move and remove"; with no content, "Remove X? It has no activities or habits." Without another category: "Add another category first, then remove X." Removal selects nothing afterwards.
+- Under the hours bar: `.detail-compare` (13px, ink-3), "Compared with {week type}", the week type the comparison reads (FR-GOALS-16). Quiet: no icon, no colour.
 - Shared classes (`main.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
 
 ### 4.11 Insights (`app/components/insights/InsightsView.vue`)
@@ -462,6 +463,16 @@ Restored on 2026-10-26 (FR-PLAN-24). The Activities list is a compact section un
 - Add: "+ Add activity" (`.chip-add.act-add-trigger`) reveals an `.act-panel` form: name, short code, category, colour, primary "Add activity" (disabled until a name and a code are typed) and quiet "Cancel". Enter submits; Escape closes. Opening from Goals (`add=1&category=`) opens it with that category preselected (FR-GOALS-20).
 - Empty list: "No activities yet. Add one to plan when it happens." (`.acts-empty`).
 - Phones: chips wrap; the editor and the form take the full width, and their two-column rows stack under 480px.
+
+### 4.17b Week type panels and schedule (`PlannerView.vue`, `.act-schedule`, `.sched-*`, `.new-template-panel`, `.role-*`, `.weeks-*` in `main.css`)
+
+Added 2026-10-28 (FR-PLAN-25, FR-TPL-8, FR-YEAR-7). All three use existing tokens and the `.act-panel` surface.
+
+- Schedule in the week (`.act-panel.act-schedule`, under the activity detail in view mode): a title, a lede that names the active week type ("Paints {activity} in **{week type}**. Hours it replaces belong to other activities."), an optional habit hint, then Days (`fieldset.sched-days`, legend "Days": seven `.chip` toggles with `aria-pressed`), Duration and Start (`.form-row` as a two-column grid here, one column under 480px; `.timely-select`, "1 h" to "12 h", "12AM" to "11PM"), the inline error (`.field-error`, role alert), "Add to my week" (`.btn-primary`, disabled when the week type is not hourly), and the result line (`.sched-result`, role status): "Added 3 x 2 h. Replaced 6 h of Deep Work." with "Undo" (`.btn-sm`) for about 8 s.
+- New week type (`.act-panel.new-template-panel`, below the week type bar): the name field, Start from (`#new-template-from`: Empty, "Copy of <name>", then the four presets), the preset's lede in `.new-template-lede`, one `.role-row` per role the preset paints (a 96px label column beside a `.timely-select`, one column under 480px; the options are the activities, "Create \"Sleep\"", "Leave empty"), "Keep my habit sessions" (`.check`), and "Add week type" and "Cancel". Escape cancels; Enter in the name adds.
+- Time off: a `.check` in the week type edit panel, "Time off: Goals does not compare against this week type".
+- Weeks row (`.weeks-row`, in the year body under the paint tools, two or more week types): the label "Weeks", then one line of `.weeks-part` text and controls, "Use [week type] for weeks [from] to [to] [Apply]" (`.timely-select`, two `.timely-input.weeks-num` number fields, 72px). It wraps under 400px; errors are `.field-error` (role alert), the result is `.weeks-result` (role status).
+- Keyboard and touch: every control is a native control with its label; no drag. Focus moves to the new week type's Weeks "from" field after a Vacation preset.
 
 ### 4.18 First-run onboarding (`app/components/onboarding/`, `.onb-*` in `main.css`)
 
