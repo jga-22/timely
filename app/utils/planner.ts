@@ -1,5 +1,6 @@
 import type { Activity, AppliedWeek, Category, Habit, HabitPeriod, PlannerState, WeekTemplate } from '~/types/planner'
 import { isoWeekOf, isoWeekStarts, localDateKey, mondayOf } from '~/utils/dates'
+import { SLEEP_CODE, SLEEP_COLOR, SLEEP_ID, SLEEP_NAME, isSleepActivity, paintDefaultSleep } from '~/utils/sleep'
 
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -63,7 +64,8 @@ export const createEmptySlots = (granularityMinutes: 60 | 30) =>
 
 export const createSeedTemplate = (): WeekTemplate => {
   const granularityMinutes = 60
-  const slots = createEmptySlots(granularityMinutes)
+  // Sleep first: the default night (10 PM to 7 AM, every night), then the other hours
+  const slots = paintDefaultSleep(createEmptySlots(granularityMinutes), SLEEP_ID)
 
   const fill = (day: number, startHour: number, endHour: number, activityId: string) => {
     for (let hour = startHour; hour < endHour; hour += 1) {
@@ -73,27 +75,21 @@ export const createSeedTemplate = (): WeekTemplate => {
   }
 
   for (let day = 0; day < 5; day += 1) {
-    fill(day, 0, 7, 'sleep')
     fill(day, 8, 12, 'deep-work')
     fill(day, 13, 17, 'deep-work')
     fill(day, 18, 19, 'training')
     fill(day, 20, 22, 'family')
-    fill(day, 22, 24, 'sleep')
   }
 
-  fill(5, 0, 8, 'sleep')
   fill(5, 9, 11, 'errands')
   fill(5, 11, 13, 'family')
   fill(5, 14, 16, 'learning')
   fill(5, 17, 19, 'projects')
-  fill(5, 22, 24, 'sleep')
 
-  fill(6, 0, 8, 'sleep')
   fill(6, 9, 11, 'reading')
   fill(6, 11, 14, 'family')
   fill(6, 15, 17, 'planning')
   fill(6, 17, 19, 'projects')
-  fill(6, 22, 24, 'sleep')
 
   return {
     id: 'standard-week',
@@ -107,31 +103,31 @@ export const createSeedTemplate = (): WeekTemplate => {
 
 const createDeepWorkTemplate = (): WeekTemplate => {
   const granularityMinutes = 60
-  const slots = createEmptySlots(granularityMinutes)
+  const slots = paintDefaultSleep(createEmptySlots(granularityMinutes), SLEEP_ID)
   const fill = (day: number, s: number, e: number, id: string) => {
     for (let h = s; h < e; h++) slots[day * 24 + h] = id
   }
   for (let d = 0; d < 5; d++) {
-    fill(d, 0, 7, 'sleep'); fill(d, 7, 8, 'training')
+    fill(d, 7, 8, 'training')
     fill(d, 8, 12, 'deep-work'); fill(d, 12, 13, 'family')
     fill(d, 13, 17, 'deep-work'); fill(d, 18, 19, 'training')
-    fill(d, 19, 22, 'family'); fill(d, 23, 24, 'sleep')
+    fill(d, 19, 22, 'family')
   }
-  fill(5, 0, 8, 'sleep'); fill(5, 8, 12, 'deep-work')
-  fill(5, 12, 23, 'family'); fill(6, 0, 8, 'sleep')
-  fill(6, 8, 23, 'family')
+  fill(5, 8, 12, 'deep-work')
+  fill(5, 12, 22, 'family')
+  fill(6, 8, 22, 'family')
   return { id: 'deep-work-week', name: 'Deep Work Week', granularityMinutes, color: '#2a2a2a', slots }
 }
 
 const createVacationTemplate = (): WeekTemplate => {
   const granularityMinutes = 60
-  const slots = createEmptySlots(granularityMinutes)
+  const slots = paintDefaultSleep(createEmptySlots(granularityMinutes), SLEEP_ID)
   const fill = (day: number, s: number, e: number, id: string) => {
     for (let h = s; h < e; h++) slots[day * 24 + h] = id
   }
   for (let d = 0; d < 7; d++) {
-    fill(d, 0, 8, 'sleep'); fill(d, 8, 10, 'errands')
-    fill(d, 10, 12, 'training'); fill(d, 12, 23, 'family')
+    fill(d, 8, 10, 'errands')
+    fill(d, 10, 12, 'training'); fill(d, 12, 22, 'family')
   }
   return { id: 'vacation-week', name: 'Vacation', granularityMinutes, color: '#c19a3e', slots }
 }
@@ -312,15 +308,15 @@ export const ONBOARDING_TEMPLATE_ID = 'my-week'
 export const createLifeAreas = (): Category[] =>
   createHaradaSeed().categories.map(({ id, name, color, order }) => ({ id, name, color, order }))
 
-/** Empty state for a brand-new user (FR-ONB-2): the eight life areas, no habits or activities, one empty hourly template, onboarding pending. The rich seed stays the test dataset */
+/** Empty state for a brand-new user (FR-ONB-2): the eight life areas, the Sleep activity with its default night (FR-SLEEP-2), no habits, one hourly template, onboarding pending. The rich seed stays the test dataset */
 export const createOnboardingState = (): PlannerState => ({
   version: PLANNER_STATE_VERSION,
   journal: {},
   ambition: null,
   categories: createLifeAreas(),
-  activities: [],
+  activities: [{ id: SLEEP_ID, name: SLEEP_NAME, shortCode: SLEEP_CODE, categoryId: 'physique', color: SLEEP_COLOR }],
   habits: [],
-  templates: [{ id: ONBOARDING_TEMPLATE_ID, name: 'My week', granularityMinutes: 60, slots: createEmptySlots(60) }],
+  templates: [{ id: ONBOARDING_TEMPLATE_ID, name: 'My week', granularityMinutes: 60, slots: paintDefaultSleep(createEmptySlots(60), SLEEP_ID) }],
   appliedWeeks: [],
   settings: {
     timeGranularity: 60,
@@ -376,9 +372,15 @@ export const validateActivityFields = (
   if (fields.shortCode !== undefined) {
     const code = fields.shortCode.trim().toUpperCase()
     const clash = state.activities.find(activity => activity.id !== ignoreId && activity.shortCode === code)
+    // The Sleep activity keeps SLP as its key (FR-SLEEP-1); no other activity may take it
+    const sleepTarget = isSleepActivity(state.activities.find(activity => activity.id === ignoreId))
 
     if (!SHORT_CODE_PATTERN.test(code)) {
       errors.shortCode = 'Use 1 to 3 letters'
+    } else if (sleepTarget && code !== SLEEP_CODE) {
+      errors.shortCode = `Sleep keeps the code ${SLEEP_CODE}`
+    } else if (!sleepTarget && code === SLEEP_CODE) {
+      errors.shortCode = `${SLEEP_CODE} is kept for Sleep`
     } else if (clash) {
       errors.shortCode = `${code} is already used by ${clash.name}`
     }
@@ -483,13 +485,15 @@ export const cleanAlsoCategoryIds = (categories: Category[], primaryId: string, 
  */
 export const comparedActivityIds = (state: PlannerState, categoryId: string): Set<string> => {
   const ids = new Set<string>()
+  // Sleep is not compared against any life area (FR-SLEEP-7)
+  const isSleepId = (id: string) => isSleepActivity(state.activities.find(activity => activity.id === id))
 
   for (const habit of state.habits) {
-    if (habit.categoryId === categoryId && habit.activityId) ids.add(habit.activityId)
+    if (habit.categoryId === categoryId && habit.activityId && !isSleepId(habit.activityId)) ids.add(habit.activityId)
   }
 
   for (const activity of state.activities) {
-    if (activity.alsoCategoryIds?.includes(categoryId)) ids.add(activity.id)
+    if (activity.alsoCategoryIds?.includes(categoryId) && !isSleepActivity(activity)) ids.add(activity.id)
   }
 
   return ids
@@ -571,10 +575,15 @@ export interface HabitAlignment {
   allocatedMinutes: number | null
 }
 
-export const habitAlignment = (state: PlannerState, habit: Habit): HabitAlignment => ({
-  neededMinutes: habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0,
-  allocatedMinutes: habit.activityId ? scheduledWeeklyMinutesForActivity(state, habit.activityId) : null
-})
+export const habitAlignment = (state: PlannerState, habit: Habit): HabitAlignment => {
+  // A habit linked to Sleep is not linked for Goals: Sleep does not count (FR-SLEEP-7)
+  const linked = !!habit.activityId && !isSleepActivity(state.activities.find(activity => activity.id === habit.activityId))
+
+  return {
+    neededMinutes: habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0,
+    allocatedMinutes: linked ? scheduledWeeklyMinutesForActivity(state, habit.activityId!) : null
+  }
+}
 
 /* ── Activity grid (FR-PLAN-17 to 19): hourly cells of one template ── */
 

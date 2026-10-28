@@ -8,6 +8,7 @@ import { dayText, durationText, entryDraftOf, frequencyText } from '~/utils/entr
 import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
+import { clockLabel, isSleepActivity, readSleep, sleepActivityId, sleepSummary } from '~/utils/sleep'
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
@@ -278,6 +279,23 @@ const selected = computed<{ habitId: string | null; activityId: string | null } 
 const selectedDraft = computed(() => (selected.value ? entryDraftOf(planner.$state, selected.value.habitId, selected.value.activityId) : null))
 const editing = computed(() => !!selected.value && edit.value)
 
+// ── Sleep (FR-SLEEP-2 to 4): its own row above the chips, which opens its editor; the chips list every other activity
+const sleepId = computed(() => sleepActivityId(planner.$state))
+const plannerActivities = computed(() => planner.activities.filter(activity => !isSleepActivity(activity)))
+const sleepColor = computed(() => planner.activities.find(activity => activity.id === sleepId.value)?.color ?? '#6e5c7c')
+/** The Sleep row's time: from the active week type's painted nights (10 PM to 7 AM) */
+const sleepWhen = computed(() => {
+  if (!sleepId.value || !activeTemplate.value) return ''
+
+  return sleepSummary(readSleep(activeTemplate.value.slots, sleepId.value))
+})
+
+/** A save with no Sleep activity gets the default night in the active week type (FR-SLEEP-2) */
+function setUpSleep() {
+  const result = planner.setupSleep()
+  if (result) showResult(result.text, result.undo)
+}
+
 /** Habits with no activity (no time): the Habits list. Every activity is a timed entry (a chip) */
 const habitOnly = computed(() => planner.habits.filter(habit => !planner.activities.some(activity => activity.id === habit.activityId)))
 
@@ -530,8 +548,25 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
         <h2 id="activities-title" class="section-title">Activities and habits</h2>
       </div>
 
+      <div class="sleep-row">
+        <button
+          v-if="sleepId"
+          type="button"
+          class="chip"
+          :data-active="selected?.activityId === sleepId"
+          :aria-pressed="selected?.activityId === sleepId"
+          @click="editEntry(sleepId)"
+        >
+          <span class="dot" :style="{ background: sleepColor }" />
+          <span class="t-name">Sleep</span>
+          <span class="sleep-row-when">{{ sleepWhen }}</span>
+          <span class="pill-count">{{ hoursText(activeHours.get(sleepId) ?? 0) }}h</span>
+        </button>
+        <button v-else type="button" class="chip-add" @click="setUpSleep">Set up sleep</button>
+      </div>
+
       <ul class="act-list">
-        <li v-for="activity in planner.activities" :key="activity.id">
+        <li v-for="activity in plannerActivities" :key="activity.id">
           <button
             type="button"
             class="chip"

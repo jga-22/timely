@@ -1,5 +1,6 @@
 import type { Activity, PlannerState, WeekTemplate } from '~/types/planner'
 import { createEmptySlots, goalsTemplate } from '~/utils/planner'
+import { sleepActivityId } from '~/utils/sleep'
 
 /** The three roles a preset paints. Free time and meals are never painted (FR-TPL-6) */
 export type PresetRole = 'sleep' | 'work' | 'exercise'
@@ -12,9 +13,9 @@ export const ROLE_LABELS: Record<PresetRole, string> = {
   exercise: 'Exercise'
 }
 
-/** Names an existing activity may carry for each role (matched case-insensitively) */
+/** Names an existing activity may carry for each role (matched case-insensitively). Sleep has no name: only its SLP code matches (FR-SLEEP-2) */
 const ROLE_ALIASES: Record<PresetRole, string[]> = {
-  sleep: ['sleep'],
+  sleep: [],
   work: ['work', 'focused work', 'deep work', 'job'],
   exercise: ['exercise', 'training', 'sport', 'gym']
 }
@@ -42,14 +43,17 @@ export interface Preset {
 }
 
 const WEEKDAYS = [0, 1, 2, 3, 4]
-const WEEKEND = [5, 6]
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6]
 
 /** Standard: sleep, work and three exercise sessions a week. Deep work and Light change only the work blocks */
+/** The default night (FR-SLEEP-2): 10 PM to 7 AM every night, as the Sleep activity's default in every week type */
+const SLEEP_BLOCKS: PresetBlock[] = [
+  { role: 'sleep', start: 0, end: 7, days: EVERY_DAY },
+  { role: 'sleep', start: 22, end: 24, days: EVERY_DAY }
+]
+
 const STANDARD_BLOCKS: PresetBlock[] = [
-  { role: 'sleep', start: 0, end: 7, days: WEEKDAYS },
-  { role: 'sleep', start: 0, end: 8, days: WEEKEND },
-  { role: 'sleep', start: 23, end: 24, days: EVERY_DAY },
+  ...SLEEP_BLOCKS,
   { role: 'work', start: 9, end: 12, days: WEEKDAYS },
   { role: 'work', start: 13, end: 17, days: WEEKDAYS },
   { role: 'exercise', start: 18, end: 19, days: [0, 2, 4] }
@@ -91,10 +95,7 @@ export const PRESETS: Preset[] = [
     description: 'Sleep only. Goals does not compare against time off.',
     kind: 'break',
     keepHabitsDefault: false,
-    blocks: [
-      { role: 'sleep', start: 0, end: 8, days: EVERY_DAY },
-      { role: 'sleep', start: 23, end: 24, days: EVERY_DAY }
-    ]
+    blocks: SLEEP_BLOCKS
   }
 ]
 
@@ -105,6 +106,8 @@ export const getPreset = (presetId: string): Preset | undefined => PRESETS.find(
  * The match is by name only, so a renamed activity is not found
  */
 export const matchRole = (state: Pick<PlannerState, 'activities'>, role: PresetRole): string | null => {
+  if (role === 'sleep') return sleepActivityId(state)
+
   const aliases = ROLE_ALIASES[role]
   const match: Activity | undefined = state.activities.find(activity => aliases.includes(activity.name.trim().toLowerCase()))
 

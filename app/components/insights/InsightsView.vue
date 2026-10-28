@@ -23,6 +23,8 @@ const { year } = usePlannerYear()
 const { link } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
+// Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4, 7): hidden, it is neither planned nor available time
+const { showSleep } = useShowSleep()
 
 const granularity = ref<InsightsGranularity>('month')
 const span = ref<'one' | 'several'>('one')
@@ -43,7 +45,7 @@ const HORIZON_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 const years = computed(() => (year.value === null ? [] : rangeYears(year.value, span.value === 'several' ? horizon.value : 1)))
 const rangeLabel = computed(() => (years.value.length > 1 ? `${years.value[0]} to ${years.value[years.value.length - 1]}` : `${year.value ?? ''}`))
 
-const bars = computed(() => (years.value.length ? insightsBars(planner.$state, granularity.value, years.value) : []))
+const bars = computed(() => (years.value.length ? insightsBars(planner.$state, granularity.value, years.value, showSleep.value) : []))
 const shares = computed(() => categoryShares(bars.value))
 
 // The axis top covers the largest planned or available value, so the capacity line is always on the chart
@@ -118,6 +120,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
               @click="granularity = option.id"
             >{{ option.label }}</button>
           </div>
+          <SleepToggle />
           <button
             type="button"
             class="btn btn-sm insights-more-toggle"
@@ -204,6 +207,9 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </div>
           </div>
         </div>
+        <p class="page-meta insights-sleep-note">
+          {{ showSleep ? 'Sleep is counted under Physical.' : 'Sleep is left out: not counted, and not in the available time.' }}
+        </p>
       </section>
 
       <section v-if="shares.total" class="section">

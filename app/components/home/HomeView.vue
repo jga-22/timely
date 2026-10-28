@@ -12,6 +12,8 @@ const { today } = usePlannerYear()
 const { link } = useNav()
 const { categoryMap, getActivityColor } = usePlannerMaps()
 const { fill } = usePlannerFill()
+// Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4): its hours then count as unplanned, and its rows are left out
+const { showSleep } = useShowSleep()
 
 // Hour of day for the "Now" mark; null until mounted (FR-DATE-6)
 const nowHour = ref<number | null>(null)
@@ -41,7 +43,7 @@ const headerLine = computed(() => {
 const dayRows = computed(() => {
   if (!today.value) return []
 
-  return dayBlocks(planner.$state, today.value).map(block => {
+  return dayBlocks(planner.$state, today.value, showSleep.value).map(block => {
     const activity = planner.activities.find(item => item.id === block.activityId)!
 
     return {
@@ -63,7 +65,7 @@ interface TimelineSegment {
 const timeline = computed<TimelineSegment[]>(() => {
   if (!today.value) return []
 
-  return dayHours(planner.$state, today.value).map((activityId, hour) => {
+  return dayHours(planner.$state, today.value, showSleep.value).map((activityId, hour) => {
     const name = activityId ? planner.activities.find(item => item.id === activityId)?.name ?? '' : ''
 
     return {
@@ -88,6 +90,11 @@ const axisLeft = (hour: number) => `${(hour / 24) * 100}%`
 
     <template v-if="today">
       <!-- Timeline directly below the title: coloured hours only; the text is in each segment's title and aria-label -->
+      <div class="home-sleep-line">
+        <p v-if="!showSleep" class="page-meta">Sleep is hidden: those hours count as unplanned.</p>
+        <SleepToggle />
+      </div>
+
       <div class="home-timeline" role="group" aria-label="Hours today by activity">
         <div class="home-timeline-bar">
           <span

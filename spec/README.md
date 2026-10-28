@@ -95,6 +95,8 @@ Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with loca
 | `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in page with the consent line under the sign-in button (the current page, as in `login-gate-desktop-light.png`) |
 | `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in page at phone width in dark mode, with the consent line and the intro player below |
 
+Sleep screens (feat/sleep-default, 2026-10-28, generic seed, light unless named): `sleep-week-1280-hidden.png` (the Week grid with sleep hidden: 15 rows and the two bands), `sleep-week-1280-shown.png` (all 24 rows), `sleep-week-1280-split.png` (a weekend nap in the split editor), `sleep-week-400-hidden.png` (phone), `sleep-editor-1280.png` (the Sleep form), `sleep-home-400-dark.png` (Home, phone, dark), `sleep-insights-1280-hidden.png` and `sleep-insights-1280-shown.png`.
+
 Onboarding and sign-in screens use the names above; the Goals and Planner screens are regenerated on the same date with the generic seed.
 
 Desktop captures are 1280 px wide. The Planner captures and the phone captures are full page. Regenerate with the scratchpad capture script (not in the repo) after a UI change.
@@ -115,6 +117,10 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Sleep as a default (2026-10-28, branch `feat/sleep-default`, not pushed)
+
+Sleep is the activity whose code is SLP (FR-SLEEP-1 to 8). It is built in (not deletable, code locked), set to 10 PM to 7 AM every night in every new planner, new week type and preset, and set up in existing saves with "Set up sleep". The Week tab's Sleep row opens the editor per week type (every night, or weekdays and weekend). A "Show sleep" button (Home, Week, Insights; default off, remembered in this browser) hides it: Home leaves it out of the timeline and the day rows, the Week grid collapses the hour rows that are sleep on all seven days, and Insights and Goals leave it out of the planned hours and the available time. No data model change: storage version unchanged (8), no new field, no migration. Screens: `sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-1280-split.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-home-400-dark.png`, `sleep-insights-1280-hidden.png`, `sleep-insights-1280-shown.png`.
 
 ### Unified item form (2026-10-28, branch `feat/unified-item-form`, not pushed)
 

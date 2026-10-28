@@ -43,6 +43,8 @@ const alignments = computed(() => categoryAlignments(planner.$state))
 const view = useState<'list' | 'grid'>('goals-view', () => 'list')
 const gridView = computed(() => view.value === 'grid')
 
+import { isSleepActivity } from '~/utils/sleep'
+
 // ── Empty life areas (FR-GOALS-25): an area with a goal, a target, habits or activities is listed in full. The others collapse into one
 // row that opens them for the session (useState). With no content at all, every area is listed as an empty one (a new user)
 const emptyOpen = useState('goals-empty-open', () => false)
@@ -51,7 +53,7 @@ const hasContentArea = (category: Category) => !!(
   || category.target1y?.trim()
   || category.targetTbd
   || planner.habits.some(habit => habit.categoryId === category.id)
-  || planner.activities.some(activity => activity.categoryId === category.id)
+  || planner.activities.some(activity => activity.categoryId === category.id && !isSleepActivity(activity))
 )
 const filledCount = computed(() => sortedCategories.value.filter(hasContentArea).length)
 const emptyCount = computed(() => sortedCategories.value.length - filledCount.value)
