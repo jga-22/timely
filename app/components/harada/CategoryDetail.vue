@@ -55,6 +55,9 @@ const confirmUnlink = (activityId: string) => {
   unlinkId.value = null
 }
 
+// View mode lists the activities no habit links: a habit's activity shows under its habit (FR-GOALS-16)
+const viewRows = computed(() => categoryActivities.value.filter(activity => !linkedByHabit(activity.id)))
+
 // ── Activities: hours a week in the week type the comparison reads (goalsTemplate, FR-GOALS-16), so the figures add up to the bar
 const goalsWeek = computed(() => goalsTemplate(planner.$state) ?? null)
 const activeHours = computed(() =>
@@ -174,17 +177,17 @@ function confirmRemove() {
       </div>
     </div>
 
-    <!-- View mode: read-only; the comparison bars are the primary signal -->
+    <!-- View mode: read-only. Target first, then the habits and the hours they need, the 5-year goal, and the activities no habit links -->
     <template v-if="!editing">
-      <section class="detail-block">
-        <h4 class="detail-label">5-year goal</h4>
-        <p class="detail-text" :class="{ 'is-empty': !category.goal5y }">{{ category.goal5y || 'Not written yet.' }}</p>
-      </section>
-
       <section class="detail-block">
         <h4 class="detail-label">1-year target</h4>
         <p v-if="category.targetTbd" class="detail-flag">To define</p>
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
+      </section>
+
+      <section class="detail-block">
+        <h4 class="detail-label">Habits</h4>
+        <HaradaHabitList :category-id="category.id" :editing="false" />
       </section>
 
       <section v-if="mounted" class="detail-block detail-goal">
@@ -198,35 +201,22 @@ function confirmRemove() {
       </section>
 
       <section class="detail-block">
-        <h4 class="detail-label">Habits</h4>
-        <HaradaHabitList :category-id="category.id" :editing="false" />
+        <h4 class="detail-label">5-year goal</h4>
+        <p class="detail-text" :class="{ 'is-empty': !category.goal5y }">{{ category.goal5y || 'Not written yet.' }}</p>
       </section>
 
       <section class="detail-block">
-        <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryRows.length" class="row-list">
-          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
+        <h4 class="detail-label">More activities</h4>
+        <ul v-if="viewRows.length" class="row-list">
+          <li v-for="activity in viewRows" :key="activity.id" class="row-item">
             <span class="row-main">
               <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
+              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
             </span>
-            <template v-if="isSecondary(activity)">
-              <span v-if="unlinkId === activity.id" class="row-confirm">
-                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
-                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
-              </span>
-              <button
-                v-else
-                type="button"
-                class="btn btn-xs btn-outline"
-                :aria-label="`Unlink ${activity.name} from ${category.name}`"
-                @click="unlinkId = activity.id"
-              >Unlink</button>
-            </template>
             <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
-        <p v-else class="detail-empty">No activities in this life area yet. Add one in Planner.</p>
+        <p v-else class="detail-text is-empty">No other activities yet.</p>
         <p class="detail-action">
           <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
         </p>
