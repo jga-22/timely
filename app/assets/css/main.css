@@ -1472,13 +1472,18 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .sched-days { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .sched-days .field-label { padding: 0; margin-bottom: 0; }
 .sched-day-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* The schedule toggle sits under the activity detail; the result line stays under it after the form closes */
+.act-schedule-toggle {
+  max-width: 560px;
+  margin-top: var(--space-3);
+}
 .sched-result {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--rule-2);
+  max-width: 560px;
+  margin-top: var(--space-3);
   font-size: var(--fs-sm);
   color: var(--ink-2);
 }
