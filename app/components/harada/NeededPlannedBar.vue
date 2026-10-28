@@ -3,7 +3,7 @@ import { alignmentStatus, hoursLabel, type AlignmentStatus } from '~/utils/plann
 
 /**
  * One category's time against its need, in hours a week (FR-GOALS-16): the needed time as an outlined bar and the planned time as a
- * filled bar, each with a small caption ("Needed", "Planned"), both on one scale (the larger of the two), then one line of text with a status icon. The status is never colour only:
+ * filled bar, each with a small caption to its left ("Needed", "Planned"), both on one scale (the larger of the two), then one line of text with a status icon. The status is never colour only:
  * the icon shape and the words say it. Shown in the Goals list rows and the category detail. The bars are decoration (aria-hidden),
  * the text is the reading.
  */
@@ -32,7 +32,7 @@ const text = computed(() => {
 
 <template>
   <div class="nbp" :data-status="status">
-    <div class="nbp-bars" aria-hidden="true">
+    <div v-if="neededMinutes > 0 || plannedMinutes > 0" class="nbp-bars" aria-hidden="true">
       <span class="nbp-line">
         <span class="nbp-cap">Needed</span>
         <span class="nbp-row">
@@ -78,7 +78,8 @@ const text = computed(() => {
   max-width: 100%;
 }
 
-/* One scale: each row is the full scale, the bar inside it is its value. Each bar has a small caption above it, left aligned */
+/* One scale: each row is the full scale, the bar inside it is its value. Each bar has a small caption to its left (no extra height).
+   With no need and nothing planned the bars and captions are left out: only the status text shows */
 .nbp-bars {
   display: flex;
   flex-direction: column;
@@ -86,10 +87,12 @@ const text = computed(() => {
 }
 .nbp-line {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--space-2);
 }
 .nbp-cap {
+  flex: none;
+  width: 48px;
   font-size: var(--fs-xs);
   line-height: 1.2;
   color: var(--ink-3);
@@ -97,6 +100,8 @@ const text = computed(() => {
 .nbp-row {
   position: relative;
   display: block;
+  flex: 1;
+  min-width: 0;
   height: 8px;
   border-radius: 3px;
   background: var(--bg-3);
