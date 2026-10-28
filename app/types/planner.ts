@@ -28,6 +28,8 @@ export interface WeekTemplate {
   granularityMinutes: 60 | 30
   slots: string[]
   color?: string
+  /** 'break': time off. Goals does not compare against it (FR-TPL-8); Home, Planner and Insights still show it */
+  kind?: 'break'
 }
 
 export interface AppliedWeek {
