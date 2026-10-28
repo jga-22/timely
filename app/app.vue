@@ -33,6 +33,11 @@ const openReset = () => {
   resetOpen.value = true
 }
 
+const onReplayTour = () => {
+  accountOpen.value = false
+  replayTour()
+}
+
 const storageLabels = { loading: 'Loading', saving: 'Saving', saved: 'Saved', error: 'Not saved' }
 
 // Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
@@ -72,7 +77,6 @@ const toggleDark = () => {
             :aria-selected="tab === entry.id"
             @click="go(entry.id)"
           >
-            <span v-if="entry.num" class="tab-num" aria-hidden="true">{{ entry.num }}</span>
             {{ entry.label }}
           </button>
         </nav>
@@ -102,19 +106,11 @@ const toggleDark = () => {
           </button>
           <div v-if="accountOpen" class="account-menu">
             <p v-if="auth.status === 'signed-in'" class="account-email">{{ auth.user?.email }}</p>
+            <button v-if="storageStatus.state !== 'loading'" type="button" class="btn btn-sm" @click="onReplayTour">Replay tour</button>
             <button v-if="auth.status === 'signed-in'" type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
             <button type="button" class="btn btn-sm btn-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">Reset my data</button>
           </div>
         </div>
-
-        <button
-          v-if="(auth.status === 'off' || auth.status === 'signed-in') && storageStatus.state !== 'loading'"
-          type="button"
-          class="tour-button"
-          @click="replayTour"
-        >
-          Tour
-        </button>
 
         <button
           class="theme-toggle"

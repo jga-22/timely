@@ -9,10 +9,10 @@
  * Within a screen, `setSelection` changes item and edit and keeps the tab.
  */
 export const TABS = [
-  { id: 'home', label: 'Home', num: '01' },
-  { id: 'goals', label: 'Goals', num: '02' },
-  { id: 'planner', label: 'Planner', num: '03' },
-  { id: 'insights', label: 'Insights', num: '04' }
+  { id: 'home', label: 'Home' },
+  { id: 'goals', label: 'Goals' },
+  { id: 'planner', label: 'Week' },
+  { id: 'insights', label: 'Insights' }
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
