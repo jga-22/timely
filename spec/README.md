@@ -35,6 +35,8 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
 | `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section collapsed (closed by default, FR-YEAR-7) |
 | `planner-one-type-year-open-desktop-light.png` | 1280 px wide | The same with the Year section open: the one line "Every week of 2026 uses My week.", the year nav, the painter, and the Weeks row |
+| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: Reading in the activity editor, with Done in the panel head (Escape and Done close it and return focus to Edit, FR-PLAN-26) |
+| `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
 | `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
 | `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
@@ -97,6 +99,12 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Year and close (2026-10-28, branch `fix/week-year-and-close`)
+
+- Year (FR-YEAR-7): the Year section exists with one week type as well, collapsed by default. Its body starts with "Every week of <year> uses <name>."; the Weeks row and the painter work as with two or more week types.
+- Closing (FR-PLAN-26, FR-TPL-9): the activity editor, the Add activity form, Edit week type and New week type close with Done, Cancel or Escape, and focus returns to the control that opened them. Focus after Done in the activity editor was lost before (it looked for a class that did not exist). Opening Edit week type leaves an open activity editor.
+- Screens: `planner-one-type-desktop-light.png` is the collapsed Year section; `planner-one-type-year-open-desktop-light.png` is it open.
 
 ### Week types (2026-10-28, branch `feat/week-types`, stacked on `feat/ux-simplify`)
 

@@ -27,6 +27,7 @@ const { fill } = usePlannerFill()
 // ── Template switcher ──
 const renamingId = ref<string | null>(null)
 const templateEditOpen = ref(false)
+const templateEditButton = ref<{ focus: () => void } | null>(null)
 const colorPickerFor = ref<string | null>(null)
 const newTemplateOpen = ref(false)
 const newTemplateName = ref('')
@@ -108,6 +109,17 @@ watch(newFrom, (value) => {
   for (const role of PRESET_ROLES) {
     roleChoice[role] = matchRole(planner.$state, role) ?? (role === 'exercise' ? '' : 'create')
   }
+})
+
+// Done and Escape close the week type edit panel; focus returns to its Edit button (FR-UX-2)
+function closeTemplateEdit() {
+  templateEditOpen.value = false
+  nextTick(() => templateEditButton.value?.focus())
+}
+
+// One item in edit mode per screen (PRD 11.2): opening the week type editor leaves an open activity editor
+watch(templateEditOpen, (open) => {
+  if (open && edit.value) setSelection({ item: item.value ?? undefined }, true)
 })
 
 function openNewTemplate() {
@@ -276,16 +288,20 @@ function selectActivity(activityId: string) {
 function startEdit() {
   if (!selectedActivity.value) return
 
+  // One item in edit mode per screen: the week type editor closes
+  templateEditOpen.value = false
   // Focus moves into the form once the route shows it, so Escape reaches the panel
   setSelection({ item: selectedActivity.value.id, edit: true }).then(() => nextTick(() => document.getElementById('act-edit-name')?.focus()))
 }
+
+const activityEditButton = ref<{ focus: () => void } | null>(null)
 
 function finishEdit() {
   confirmingDelete.value = false
   if (!selectedActivity.value) return
 
-  // Focus waits for the route to update, so the Edit button is rendered again
-  setSelection({ item: selectedActivity.value.id }, true).then(() => nextTick(() => document.querySelector<HTMLButtonElement>('.act-edit-btn')?.focus()))
+  // Focus waits for the route to update, so the Edit button is rendered again and focus returns to it
+  setSelection({ item: selectedActivity.value.id }, true).then(() => nextTick(() => activityEditButton.value?.focus()))
 }
 
 // Edit drafts: edits apply at once (FR-UX-6); a rejected entry keeps its message until the next valid one
@@ -428,6 +444,7 @@ function submitAdd() {
 
   const id = planner.addActivity(addDraft.name, shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
   addOpen.value = false
+  nextTick(() => addTrigger.value?.focus())
   if (id) selectActivity(id)
 }
 
@@ -571,7 +588,7 @@ function undoSchedule() {
 
       <button v-if="!newTemplateOpen" ref="newTemplateTrigger" class="chip-add" @click="openNewTemplate">+ New week type</button>
 
-      <EditButton v-if="activeTemplate" label="Edit week type" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
+      <EditButton v-if="activeTemplate" ref="templateEditButton" label="Edit week type" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
     </div>
 
     <!-- New week type: a name and a Start from choice (empty, a copy, or a preset with its role mapping) -->
@@ -629,10 +646,10 @@ function undoSchedule() {
     </div>
 
     <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
-    <div v-if="templateEditOpen && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="templateEditOpen = false">
+    <div v-if="templateEditOpen && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="closeTemplateEdit">
       <div class="act-panel-head">
         <h3 class="act-panel-title">Edit week type</h3>
-        <button type="button" class="btn btn-sm btn-primary" @click="templateEditOpen = false">Done</button>
+        <button type="button" class="btn btn-sm btn-primary" @click="closeTemplateEdit">Done</button>
       </div>
       <div class="form-stack">
         <div class="field">
@@ -724,7 +741,7 @@ function undoSchedule() {
           <span class="act-detail-name">{{ selectedActivity.name }}</span>
           <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }}<template v-if="selectedActivity.alsoCategoryIds?.length"> · also {{ selectedActivity.alsoCategoryIds.map(categoryName).join(', ') }}</template> · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
         </div>
-        <EditButton :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
+        <EditButton ref="activityEditButton" :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
       </div>
 
       <!-- Schedule in the week (FR-PLAN-25): the active week type, replacing other activities in the hours painted -->
@@ -874,7 +891,7 @@ function undoSchedule() {
       </div>
 
       <!-- New activity: a quiet link reveals the form -->
-      <div v-if="addOpen" class="act-panel">
+      <div v-if="addOpen" class="act-panel" @keydown.escape="closeAdd">
         <div class="form-stack">
           <div class="field">
             <label class="field-label" for="add-act-name">Name</label>
@@ -887,7 +904,6 @@ function undoSchedule() {
               :aria-invalid="!!addErrors.name"
               aria-describedby="add-act-name-error"
               @keydown.enter.prevent="submitAdd"
-              @keydown.escape="closeAdd"
             />
             <p v-if="addErrors.name" id="add-act-name-error" class="field-error">{{ addErrors.name }}</p>
           </div>
@@ -905,7 +921,6 @@ function undoSchedule() {
                 :aria-invalid="!!addErrors.shortCode"
                 aria-describedby="add-act-code-error"
                 @keydown.enter.prevent="submitAdd"
-                @keydown.escape="closeAdd"
               />
               <p v-if="addErrors.shortCode" id="add-act-code-error" class="field-error">{{ addErrors.shortCode }}</p>
             </div>
