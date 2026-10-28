@@ -253,7 +253,7 @@ export const paintResultText = (input: {
 }
 
 /** Day names of a draft: "every day" for all seven */
-export const dayText = (days: number[]): string => (days.length === 7 ? 'every day' : days.map(day => DAYS[day]).join(', '))
+export const dayText = (days: number[]): string => (days.length === 7 ? 'Every day' : days.map(day => DAYS[day]).join(', '))
 
 /** A block's length as it reads: "45 min", "2 h" */
 export const durationText = (minutes: number): string => (minutes % 60 ? `${minutes} min` : `${minutes / 60} h`)

@@ -338,6 +338,12 @@ function onEscape(event: KeyboardEvent) {
 </template>
 
 <style scoped>
+.entry-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
 .entry-form .form-hint {
   margin: 0;
   font-size: var(--fs-sm);
