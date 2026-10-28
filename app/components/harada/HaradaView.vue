@@ -37,6 +37,30 @@ const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value =
 
 const alignments = computed(() => categoryAlignments(planner.$state))
 
+// ── List or Grid (FR-GOALS-26): the Harada map is an opt-in view from 1100px; the list is the default and the only view below it.
+// The choice lasts for the session (useState), not the saved state
+const view = useState<'list' | 'grid'>('goals-view', () => 'list')
+const gridView = computed(() => view.value === 'grid')
+
+// ── Empty life areas (FR-GOALS-25): an area with a goal, a target, habits or activities is listed in full. The others collapse into one
+// row that opens them for the session (useState). With no content at all, every area is listed as an empty one (a new user)
+const emptyOpen = useState('goals-empty-open', () => false)
+const hasContentArea = (category: Category) => !!(
+  category.goal5y?.trim()
+  || category.target1y?.trim()
+  || category.targetTbd
+  || planner.habits.some(habit => habit.categoryId === category.id)
+  || planner.activities.some(activity => activity.categoryId === category.id)
+)
+const filledCount = computed(() => sortedCategories.value.filter(hasContentArea).length)
+const emptyCount = computed(() => sortedCategories.value.length - filledCount.value)
+const showAll = computed(() => emptyOpen.value || filledCount.value === 0)
+const listCategories = computed(() => showAll.value ? sortedCategories.value : sortedCategories.value.filter(hasContentArea))
+
+function toggleEmpty() {
+  emptyOpen.value = !emptyOpen.value
+}
+
 // The needed-and-planned bar of each row waits for mount: the saved state is not known on the server, so the first client render
 // matches the server, and the next render patches the bars (a reload with a saved state that differs from the seed)
 const mounted = ref(false)
@@ -96,11 +120,18 @@ function openCategory(categoryId: string) {
   setSelection({ item: categoryId })
 }
 
+// "Add a goal" on an empty life area opens its detail in edit mode, with the name field focused (as Edit does)
+function addGoal(categoryId: string) {
+  lastOpened = categoryId
+  listScroll = window.scrollY
+  setSelection({ item: categoryId, edit: true }).then(() => nextTick(() => document.getElementById('cat-edit-name')?.focus()))
+}
+
 // The list is laid out after the route changes, so the scroll waits for the next frame
 function backToList() {
   setSelection({}).then(() => nextTick(() => requestAnimationFrame(() => {
     window.scrollTo({ top: listScroll })
-    document.querySelector<HTMLElement>(`[data-category-id="${lastOpened}"]`)?.focus({ preventScroll: true })
+    document.querySelector<HTMLElement>(`[data-category-id="${lastOpened}"], [data-map-id="${lastOpened}"]`)?.focus({ preventScroll: true })
   })))
 }
 
@@ -233,12 +264,16 @@ function submitAdd() {
         />
       </section>
 
-      <!-- Harada map: read-only, the ambition in the centre; a cell selects its category -->
-      <section v-if="categories.length" class="section harada-map">
-        <div class="section-head">
-          <h2 class="section-title">Life areas</h2>
+      <!-- List or Grid: the toggle shows from 1100px only; below it the list is the only view -->
+      <div v-if="categories.length" class="goals-view-toggle">
+        <div class="segmented" role="group" aria-label="Life areas view">
+          <button type="button" :data-active="!gridView" :aria-pressed="!gridView" @click="view = 'list'">List</button>
+          <button type="button" :data-active="gridView" :aria-pressed="gridView" @click="view = 'grid'">Grid</button>
         </div>
+      </div>
 
+      <!-- Harada map (Grid view, from 1100px): read-only, the ambition in the centre; a cell selects its life area -->
+      <section v-if="categories.length && gridView" class="section harada-map">
         <div class="harada-grid">
           <template v-for="(cell, position) in mapCells" :key="position">
             <div v-if="cell === 'centre'" class="harada-cell harada-centre">
@@ -253,6 +288,7 @@ function submitAdd() {
               :class="{ 'is-active': selected?.id === cell.id }"
               :aria-pressed="selected?.id === cell.id"
               :data-map-position="position"
+              :data-map-id="cell.id"
               @click="openCategory(cell.id)"
               @keydown="onMapKeydown($event, position)"
             >
@@ -276,14 +312,12 @@ function submitAdd() {
     </div>
 
     <!-- Categories: list on the left, the selected category's detail beside it (stacked on phones) -->
-    <section v-else class="section browse">
+    <section v-else class="section browse" :class="{ 'is-grid': gridView }">
       <div class="browse-list">
-        <div class="section-head">
-          <h2 class="section-title">Life areas</h2>
-        </div>
         <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
-          <li v-for="category in sortedCategories" :key="category.id">
+          <li v-for="category in listCategories" :key="category.id">
             <button
+              v-if="hasContentArea(category)"
               type="button"
               class="cat-row"
               :data-category-id="category.id"
@@ -301,6 +335,28 @@ function submitAdd() {
                   :color="category.color"
                 />
               </span>
+            </button>
+
+            <!-- An empty life area: its name and a quiet way to add the goal, nothing to compare yet -->
+            <div v-else class="cat-empty">
+              <button
+                type="button"
+                class="cat-row"
+                :data-category-id="category.id"
+                :aria-current="selected?.id === category.id ? 'true' : undefined"
+                @click="openCategory(category.id)"
+              >
+                <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
+                <span class="cat-main">
+                  <span class="cat-row-name">{{ category.name }}</span>
+                </span>
+              </button>
+              <button type="button" class="chip-add cat-add-goal" :aria-label="`Add a goal to ${category.name}`" @click="addGoal(category.id)">Add a goal</button>
+            </div>
+          </li>
+          <li v-if="filledCount && emptyCount">
+            <button type="button" class="cat-more" :aria-expanded="showAll" @click="toggleEmpty">
+              {{ emptyCount }} more life {{ emptyCount === 1 ? 'area' : 'areas' }} · add a goal
             </button>
           </li>
         </ul>
@@ -400,8 +456,29 @@ function submitAdd() {
 /* 3x3 map separated by hairlines, as in the prototype; read-only. Large screens only: hidden, not squeezed, below 1100px */
 .harada-map { display: none; }
 
+.goals-view-toggle {
+  display: none;
+  margin-bottom: var(--space-4);
+}
+
+/* Grid view: the map above, the selected life area's detail below it, the list hidden (the list stays below 1100px) */
 @media (min-width: 1100px) {
   .harada-map { display: block; }
+
+  .goals-view-toggle { display: flex; }
+
+  .browse.is-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .browse.is-grid .cat-list {
+    display: none;
+  }
+
+  .browse.is-grid .browse-detail {
+    padding-left: 0;
+    border-left: none;
+  }
 }
 
 .harada-grid {
@@ -554,6 +631,40 @@ button.harada-cell:focus-visible {
 }
 
 /* Names and targets wrap: the list row grows with its text, nothing is cut off */
+/* An empty life area: the name row and the quiet Add a goal control share one hairline */
+.cat-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-right: var(--space-3);
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.cat-empty .cat-row {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;
+}
+
+.cat-add-goal {
+  flex-shrink: 0;
+}
+
+.cat-more {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--rule-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  text-align: left;
+}
+
+.cat-more:hover {
+  background: var(--bg-3);
+}
+
 .cat-row-name {
   overflow-wrap: anywhere;
   font-size: var(--fs-md);
