@@ -118,7 +118,7 @@ useHead({
       <li>correct data that is wrong;</li>
       <li>
         erase your data. In account mode you can erase your planner yourself: open <strong>Account</strong> in the top bar and
-        choose <strong>Reset my data</strong>. It deletes your goals, habits, activities, weeks and journal notes, and keeps your
+        choose <strong>Reset my data</strong>. It deletes your goals, activities and habits, weeks and journal notes, and keeps your
         sign-in. Deleting your sign-in account and your email address is still done on request by email;
       </li>
       <li>restrict how we use your data;</li>

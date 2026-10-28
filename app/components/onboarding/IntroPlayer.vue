@@ -25,8 +25,8 @@ const TICK_MS = 100
 
 const scenes = [
   { title: 'Ambition', caption: 'Start with the why: your 5-year ambition and a few life areas around it.' },
-  { title: 'Goals and habits', caption: 'Pick one or two life areas, each with a habit you can measure.' },
-  { title: 'Plan the week', caption: 'Place each habit in your week: the hours you really have.' },
+  { title: 'Goals and habits', caption: 'Pick one or two life areas, each with an activity or habit you can measure.' },
+  { title: 'Plan the week', caption: 'Place each activity in your week: the hours you really have.' },
   { title: 'Compare', caption: 'Compare the time your habits need with the time you planned.' },
   { title: 'Insights and daily follow-up', caption: 'See where your hours go over the year, then follow each day.' }
 ]
