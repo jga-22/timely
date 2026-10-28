@@ -99,8 +99,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 - Start empty creates no data but assigns the empty week type to every week of the year, so Insights and the Planner have weeks. A new user with no ambition gets the prompt in Goals; typing one saves it.
 - Planner: the red delete in the bar is gone (delete stays in the week type edit panel); the year section is closed by default; with one week type it is one line, "Every week of <year> uses <name>.". The add-activity short code is derived from the name until it is typed by hand; it is not required to enable Add.
 - Topbar: no tab numerals; Tour is "Replay tour" in the Account menu (both modes). Home header: date and ISO week, no template name.
-- Onboarding: Guide me goes straight to step 1; "Watch the 30-second intro" is a link on Welcome and returns to Welcome. The form steps read "Step n of 2"; the tour cards have no counter.
-- Open: the link says "30-second", as the owner asked, but the intro runs about 45 seconds (five scenes of about 9 seconds). Owner to decide the label. The onboarding screenshots above still show the earlier labels.
+- Onboarding: Guide me goes straight to step 1; "Watch the short intro" is a link on Welcome and returns to Welcome. The form steps read "Step n of 2"; the tour cards have no counter.
 
 ### Polish v4 (2026-10-27, branch `feat/polish-v4`)
 

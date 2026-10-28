@@ -96,7 +96,7 @@ const finishEdit = (refocus = true) => {
 // Following today only when the user was on it; a past day stays selected.
 watch(today, (next, prev) => {
   finishEdit(false)
-  if (!selected.value || selected.value === prev) selected.value = next
+  if (!selected.value || selected.value === prev) selected.value = next ?? ''
 }, { immediate: true })
 
 onBeforeUnmount(() => {

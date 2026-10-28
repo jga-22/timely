@@ -330,7 +330,7 @@ function submitAdd() {
   <div class="view" @click="colorPickerFor = null">
     <!-- Page header -->
     <header class="page-head">
-      <h1 class="page-title">Planner</h1>
+      <h1 class="page-title">Week</h1>
     </header>
 
     <!-- Template switcher -->

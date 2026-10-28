@@ -124,7 +124,7 @@ const removeGoal = () => {
           <button type="button" class="btn btn-outline" @click="startEmpty">Start empty</button>
           <button type="button" class="onb-link" @click="useSampleData">Explore with sample data</button>
         </div>
-        <button type="button" class="onb-link onb-intro-link" @click="openIntro('welcome')">Watch the 30-second intro</button>
+        <button type="button" class="onb-link onb-intro-link" @click="openIntro('welcome')">Watch the short intro</button>
       </template>
 
       <form v-else-if="phase === 'ambition'" class="onb-form" novalidate @submit.prevent="submitAmbition">
