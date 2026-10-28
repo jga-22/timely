@@ -1,6 +1,7 @@
 import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
 import { isoWeekStarts } from '~/utils/dates'
 import { applyActivityCells, createOnboardingState, getTemplateById, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { SLEEP_CODE, isSleepActivity } from '~/utils/sleep'
 
 /** One goal of the guided path (FR-ONB-4): one of the eight life areas, an optional 1-year target and one habit with its time */
 export interface OnboardingGoal {
@@ -43,12 +44,17 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 /** The first letters of the first word, upper-cased: "Run" gives RUN. Falls back to ACT when there are no Latin letters */
 export const shortCodeFor = (name: string): string => {
   const word = name.trim().split(/\s+/)[0] ?? ''
-  return word.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'ACT'
+  const code = word.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'ACT'
+  // SLP is the Sleep activity's key (FR-SLEEP-1): a name that would make it gets a two-letter code instead
+  return code === SLEEP_CODE ? code.slice(0, 2) : code
 }
 
-/** The life areas with a habit or an activity: the ones the first-run build filled. The other default areas stay empty */
+/** The life areas with a habit or an activity: the ones the first-run build filled. The other default areas stay empty. Sleep does not count */
 export const onboardedCategories = (state: PlannerState): Category[] => {
-  const filled = new Set([...state.habits.map(habit => habit.categoryId), ...state.activities.map(activity => activity.categoryId)])
+  const filled = new Set([
+    ...state.habits.map(habit => habit.categoryId),
+    ...state.activities.filter(activity => !isSleepActivity(activity)).map(activity => activity.categoryId)
+  ])
 
   return [...state.categories].filter(category => filled.has(category.id)).sort((a, b) => a.order - b.order)
 }
@@ -69,7 +75,8 @@ export const buildOnboardingState = (answers: OnboardingAnswers, year: number, s
   const base = createOnboardingState()
   const template = getTemplateById(base, ONBOARDING_TEMPLATE_ID)!
   const categories: Category[] = base.categories.map(category => ({ ...category }))
-  const activities: Activity[] = []
+  // The base keeps the Sleep activity and its default night; the chosen goals add their own activities
+  const activities: Activity[] = [...base.activities]
   const habits: Habit[] = []
   let slots = template.slots
 

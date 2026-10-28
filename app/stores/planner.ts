@@ -20,6 +20,21 @@ import {
 } from '~/utils/planner'
 import { shortCodeFor } from '~/utils/onboarding'
 import {
+  ALL_NIGHTS,
+  DEFAULT_SLEEP,
+  SLEEP_CODE,
+  SLEEP_COLOR,
+  SLEEP_ID,
+  SLEEP_NAME,
+  isSleepActivity,
+  paintDefaultSleep,
+  paintSleep,
+  sleepActivityId,
+  sleepWindowError,
+  windowLabel,
+  type SleepGroup
+} from '~/utils/sleep'
+import {
   blockHours,
   entryDraftOf,
   entryErrors,
@@ -44,10 +59,26 @@ import {
 const numberCategories = (categories: Category[]): Category[] =>
   [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
 
-/** Short code for a new activity named `name`: the default one from its first word, else one cut from its letters. Null when none is free (FR-GOALS-24) */
+/** Empty slots of a new week type. In an hourly planner that has a Sleep activity, the default night is painted (FR-SLEEP-2) */
+const newWeekSlots = (state: PlannerState, granularityMinutes: 60 | 30): string[] => {
+  const slots = createEmptySlots(granularityMinutes)
+  const sleepId = sleepActivityId(state)
+
+  return sleepId && granularityMinutes === 60 ? paintDefaultSleep(slots, sleepId) : slots
+}
+
+/** " Replaced 1 h of Focused work and 2 h of Exercise." after a paint over other hours; empty when none were replaced */
+const replacedText = (replaced: Array<{ activityId: string; hours: number }>, activities: Activity[]): string => {
+  if (!replaced.length) return ''
+
+  const parts = replaced.map(item => `${item.hours} h of ${activities.find(activity => activity.id === item.activityId)?.name ?? 'another activity'}`)
+  return ` Replaced ${parts.join(' and ')}.`
+}
+
+/** Short code for a new activity named `name`: the default one from its first word, else one cut from its letters. Null when none is free (FR-GOALS-24). SLP is kept for Sleep */
 const freeShortCode = (state: PlannerState, name: string): string | null => {
   const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase()
-  const taken = new Set(state.activities.map(activity => activity.shortCode.toUpperCase()))
+  const taken = new Set([...state.activities.map(activity => activity.shortCode.toUpperCase()), SLEEP_CODE])
   const candidates = [shortCodeFor(name)]
 
   for (const size of [3, 2, 1]) {
@@ -114,7 +145,7 @@ export const usePlannerStore = defineStore('planner', {
         description: 'Empty week type — paint your ideal week.',
         granularityMinutes: granularity,
         color: source?.color,
-        slots: createEmptySlots(granularity)
+        slots: newWeekSlots(this.$state, granularity)
       })
       this.settings.activeTemplateId = templateId
     },
@@ -174,6 +205,9 @@ export const usePlannerStore = defineStore('planner', {
     },
     /** An activity for a preset role: the existing one with the same name, else a new one. Null when it cannot be created */
     createRoleActivity(role: PresetRole, index: number): string | null {
+      // Sleep is the one activity with a key: it is found by its code, or created with it (FR-SLEEP-1, 2)
+      if (role === 'sleep') return this.ensureSleepActivity()
+
       const label = ROLE_LABELS[role]
       const existing = this.activities.find(activity => activity.name.trim().toLowerCase() === label.toLowerCase())
 
@@ -476,7 +510,63 @@ export const usePlannerStore = defineStore('planner', {
 
       return {}
     },
+    /** The Sleep activity, created when the planner has none: Sleep, SLP, the quiet purple, in Physical (FR-SLEEP-2). Null when there is no life area */
+    ensureSleepActivity(): string | null {
+      const existing = sleepActivityId(this.$state)
+      if (existing) return existing
+
+      const area = presetCategoryId(this.categories, 'sleep')
+      if (!area) return null
+
+      const id = this.activities.some(activity => activity.id === SLEEP_ID) ? `activity-${Date.now()}` : SLEEP_ID
+      this.activities.push({ id, name: SLEEP_NAME, shortCode: SLEEP_CODE, categoryId: area, color: SLEEP_COLOR })
+
+      return id
+    },
+    /**
+     * Paints the Sleep activity's nights in the given hourly week type (FR-SLEEP-5): its old hours go, and the groups' nights are painted
+     * over whatever holds them. Returns the result text and the undo, or null when a window is refused or there is no Sleep activity
+     */
+    setSleep(templateId: string, groups: SleepGroup[]): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
+      const template = getTemplateById(this.$state, templateId)
+      const sleepId = sleepActivityId(this.$state)
+
+      if (!template || !sleepId || !isHourlyTemplate(template) || groups.some(group => sleepWindowError(group.window))) return null
+
+      const before = [...template.slots]
+      const { slots, replaced } = paintSleep(template.slots, sleepId, groups)
+      template.slots = slots
+
+      const text = groups.length === 1
+        ? `Sleep set to ${windowLabel(groups[0]!.window)}.`
+        : `Sleep set to ${windowLabel(groups[0]!.window)} on weekdays and ${windowLabel(groups[1]!.window)} at weekends.`
+
+      return { text: `${text}${replacedText(replaced, this.activities)}`, undo: [{ templateId, slots: before }] }
+    },
+    /**
+     * Sets up Sleep in a save that has none (FR-SLEEP-2): creates the Sleep activity, then paints the default night in the active week
+     * type. Null when there is no life area or the active week type is not hourly. The undo puts the hours back; the activity stays
+     */
+    setupSleep(): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
+      const template = this.activeTemplate
+      if (!template || !isHourlyTemplate(template)) return null
+
+      const sleepId = this.ensureSleepActivity()
+      if (!sleepId) return null
+
+      const before = [...template.slots]
+      const { slots, replaced } = paintSleep(template.slots, sleepId, [{ days: ALL_NIGHTS, window: DEFAULT_SLEEP }])
+      template.slots = slots
+
+      return {
+        text: `Sleep set up: ${windowLabel(DEFAULT_SLEEP)} every night in ${template.name}.${replacedText(replaced, this.activities)}`,
+        undo: [{ templateId: template.id, slots: before }]
+      }
+    },
     removeActivity(activityId: string) {
+      // The Sleep activity cannot be deleted: it is built in, and hiding it is the way to keep it out of view (FR-SLEEP-3)
+      if (isSleepActivity(this.activities.find(activity => activity.id === activityId))) return
+
       const nextActivities = this.activities.filter(activity => activity.id !== activityId)
 
       if (nextActivities.length === this.activities.length) {
