@@ -18,6 +18,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 
 | File | Size | Notes |
 | --- | --- | --- |
+| `topbar-account-closed-desktop-light.png` | 1280 px wide | Topbar, Supabase mode, signed in: the avatar with the initials "JG" (Google name), no dot |
+| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name and email, "Saved", the Dark mode switch, Replay tour, Reset my data, Sign out last |
+| `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark |
+| `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
+| `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
+| `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
 | `home-desktop-light.png` | 1280 px wide | Today, light: title and date, the hour timeline with 9h, 12h, 18h and 22h, the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
@@ -109,6 +115,15 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Account avatar (2026-10-28, branch `fix/ux-batch-5`, not pushed)
+
+- The topbar shows one round avatar button instead of the "Account" text button, the save status and the theme toggle. Initials come from the Google name or the email (`app/utils/account.ts`); local mode shows a person glyph.
+- A dot on the avatar shows while saving (quiet, still with reduced motion) and when not saved (danger). The menu says the same in text ("Saving...", "Not saved", "Saved", "Loading...").
+- The Account menu: the name or email (or "Local mode, saved in this browser"), the save status, a Dark mode switch (`role="switch"`, the same `timely.dark` key), Replay tour, Reset my data, and Sign out last (Supabase mode).
+- Focus: a desktop focuses the first control on open; a phone focuses the panel (FR-UX-9). Escape closes and returns focus to the avatar; a click outside closes.
+- Checks: typecheck 0 errors; build clean; the initials function (17 cases, `npx tsx`); headless Edge on the production build, 104 browser checks in local mode and against the fake Supabase server (names, initials, the dot states, the error and recovery, the theme persisting on reload, Escape, outside click, sign out) at 1280 and 400 px, light and dark. Not run against the real Supabase project, and not on a real phone.
+- Storage version unchanged (8). Screenshots `topbar-account-*.png`.
 
 ### UX batch 5 (2026-10-28, branch `fix/ux-batch-5`, from `main`, not pushed)
 

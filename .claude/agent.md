@@ -38,7 +38,7 @@ Four screens, one page component that switches on the `tab` query:
 
 Shell and shared code:
 
-- `app/app.vue`: app shell, topbar (tab labels only, no numerals), theme toggle, Account menu (email and Sign out in Supabase mode; Replay tour and Reset my data in both modes, opening `app/components/account/ResetDataDialog.vue`, which calls `app/composables/useResetData.ts`). `app/pages/index.vue`: switches the view by the `tab` route query.
+- `app/app.vue`: app shell, topbar (tab labels only, no numerals) with one account avatar (`app/utils/account.ts` for its initials). Its Account menu holds the name or email, the save status, the Dark mode switch, Replay tour and Reset my data (both modes), and Sign out (Supabase mode). Reset my data opens `app/components/account/ResetDataDialog.vue`, which calls `app/composables/useResetData.ts`). `app/pages/index.vue`: switches the view by the `tab` route query.
 - `app/composables/useNav.ts`: URL state (`tab`, `item`, `edit`, `add`, `category`) and the `go` / `link` / `setSelection` helpers. `app/composables/usePlannerYear.ts`: today and the selected year, client only. `app/composables/usePlannerMaps.ts`.
 - `app/components/AutoTextarea.vue`: shared auto-growing textarea. `app/components/YearNav.vue`: shared year switcher.
 - `app/types/planner.ts`: data model. `app/utils/planner.ts`: seed data, state validation, pure calculations, effective template. `app/utils/dates.ts`: calendar helpers (local today, ISO weeks, Monday of a date). `app/stores/planner.ts`: Pinia store and actions.
