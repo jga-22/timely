@@ -327,6 +327,7 @@ One category's time against its need, in hours a week (FR-GOALS-16). Used in eve
 
 - Two bars on one scale, the larger of the needed and the planned time: each row is a full-width track (`--bg-3`, 8px, 3px radius) and the bar inside it is its value. The needed bar is an outline (1.5px `--control-border`), the target as a frame. The planned bar is solid, in the category colour through the planned fill rule (section 5.2), and `--accent` without a colour. A zero value draws no bar.
 - One text line under the bars (13px, `--ink-2`, 1.35), with a 16px status icon in the same line: "3 h planned of 3 h needed" with a check in a filled circle (`--ok`), "Needs 2 h more" with a plus in a ring and "1 h over" with a minus in a ring (both `--warn`), and "No time target yet" with a dashed ring (`--ink-3`). The status is never colour only: the icon shape and the words say it.
+- Captions: "Needed" above the outline bar and "Planned" above the filled bar, 12px `--ink-3`, left aligned (2026-10-28). They name the bars, so there is no legend.
 - The bars and icon are `aria-hidden`; the text is the reading. The Goals list renders the bar after mount only (the saved state is not known on the server), like the rest of the status cues.
 - Status comes from `alignmentStatus` and `categoryAlignments` (section 4.10 and `agent.md`): unchanged.
 
@@ -354,7 +355,7 @@ One category's time against its need, in hours a week (FR-GOALS-16). Used in eve
 
 Superseded in part by section 12. This section describes the former Visualization screen: the goals-vs-planned block and the key-insights text are removed, and the charts are one planned-hours chart with granularity and range.
 
-Counting (PRD 23.1, FR-INS-P3, since 2026-10-28): every week counts the week type that governs it (its assigned one, else the active one), as Home and Planner do. With nothing planned in the range, the view shows the headline "Nothing planned yet in <year>" with a `.btn-outline` link "Open Planner" (section 13).
+Counting (PRD 23.1, FR-INS-P3, since 2026-10-28): every week counts the week type that governs it (its assigned one, else the active one), as Home and Planner do. With nothing planned in the range, the view shows "Plan the week in Planner and the hours show here." with a `.btn-outline` link "Open Planner" (section 13).
 
 Read-only (FR-VIZ-1). Replaces the Insights view in slice 1. The only controls are the year (`YearNav`, the same selected year as the Planner grid), the projection horizon (a select stored in `settings.projectionDefaults.years`), Weekly or Monthly, and the category focus chips.
 
@@ -545,7 +546,7 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - **Result line:** `.sched-result` under the list, role status, with its Undo button, for 8 s (`useEntryResult`).
 ### 4.21 Sleep: the Show sleep button, the Sleep row, the editor and the hidden grid (`app/components/SleepToggle.vue`, `planner/SleepEditor.vue`, `.sleep-*`, `.wk-band`, `.wk-gap`, `.home-sleep-line` in `main.css`)
 
-- **Show sleep button.** `SleepToggle.vue`: a `.btn.btn-sm` with `aria-pressed`, labelled "Show sleep" while hidden and "Hide sleep" while shown. It sits in the Week header line, the Home line above the timeline and the Insights toolbar. The state is one shared value (`useShowSleep`). Home says "Sleep is hidden: those hours count as unplanned." in `.page-meta` beside it; Insights says under the chart "Sleep is left out: not counted, and not in the available time." or "Sleep is counted under Physical."
+- **Show sleep button.** `SleepToggle.vue`: a `.btn.btn-sm.btn-outline` with `aria-pressed` (an outline since 2026-10-28, so Hide reads as a control), labelled "Show sleep" while hidden and "Hide sleep" while shown. It sits in the Week header line, the Home line above the timeline and the Insights chart header. The state is one shared value (`useShowSleep`). Home says "Sleep is hidden: its hours are left off the bar, and a nap counts as unplanned." in `.page-meta` beside it; Insights says "Sleep is counted under Physical." under the chart while shown, and nothing while hidden.
 - **Sleep row (Week).** A chip-like button "Sleep", the summary in `.sleep-row-when` ("10 PM to 7 AM", or "... on weekdays, ... at weekends"), and the hours a week, above the other chips. Without a Sleep activity it is a "Set up sleep" `.chip-add`.
 - **Sleep editor.** In the Sleep form (`ActivityForm.vue`, which has no days, duration or start for Sleep): a `.segmented` choice (Same every night / Weekdays and weekend), one or two rows of bedtime and wake-up selects (12 AM to 11 PM), the total and the nights in `.form-hint`. The short code is disabled with a note; Delete is replaced by "Sleep is built in; hide it instead."
 - **Hidden grid.** Rows that are sleep on all seven days collapse. A leading or trailing run is a full-width button band above or below the grid (`.wk-band`, "Sleep hidden: 12 AM to 7 AM" and "Show sleep" in `--accent`, the whole band clickable). A run between shown rows is a 14 px band (`.wk-gap`, quiet `--bg-2` with a dashed top rule). The hour labels follow the shown rows.
@@ -724,7 +725,7 @@ These are facts about the code as it is today. They are not requirements for new
 
 - **Attention token.** `--attention` is the outline of a category under or over its time target: `#a33a3a` on light and `#ee9a9a` on dark (6.9:1 and 9:1 on the surfaces). It is a 2px outline set inside the box (the grid frame clips outside outlines). The legend swatch uses the same token, plus a neutral 1px swatch for on track or no target. **Superseded:** the outline and the legend are gone from Goals; the status is the needed-and-planned bar with its icon and text (section 4.9a). The token stays for the Insights capacity line.
 - **Comparison bars.** Needed and Allocated share one scale in the category detail; Needed is `--ink-4`, Allocated `--accent`. The verdict colours: Missing `--warn`, over `--accent`, On track `--ok`, No time target `--ink-3`. The verdict is text, so colour is never the only signal.
-- **Hour timeline.** 24 colour-only segments under the Today title, 10px tall. Axis labels 9h, 12h, 18h and 22h sit at their hour on a 24-hour scale, 12px, with a 4px tick above each. Labels are HTML, not SVG, so they keep the 12px minimum.
+- **Hour timeline.** 24 colour-only segments under the Today title, 10px tall. Axis labels 9h, 12h, 18h and 22h sit at their hour on a 24-hour scale, 12px, with a 4px tick above each. Labels are HTML, not SVG, so they keep the 12px minimum. While sleep is hidden, the bar spans only the hours between the day's leading and trailing sleep (`dayRange`, 2026-10-28): the axis labels sit on that span and its two ends are labelled (`.home-axis-tick.is-start` and `.is-end`).
 - **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The categories list uses a 6px share bar under the name row. The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
 - **Copy rules.** No intro paragraphs, subtitles or instructional sentences under titles, section titles or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints can live in `title` tooltips or `aria-label`s, not in visible text.
 - **Removed.** `.page-lede`, `.section-lede`, `.detail-lede`, `.browse-note`, `.wk-pop-hint`, the Visualization classes (`.viz-*`, `.metric*`, `.goal-*`) and the journal experiment classes.
@@ -736,7 +737,7 @@ These are facts about the code as it is today. They are not requirements for new
 
 ### 12.2 Available-time line (batch 3)
 
-- The capacity line of Insights is a 2px `--attention` bar per period at its available hours (`.insights-cap`), and its label (`.insights-cap-label`, 12px, weight 600) sits at the right end, on the surface colour so it stays legible over a bar. The same token as the attention outline: a red line here means the available-time marker, not an error.
+- The capacity line of Insights is a 2px `--attention` bar per period at its available hours (`.insights-cap`), and its label is a key in the chart header (`.insights-cap-key`, 12px, weight 600, `--attention`, with a 14 by 2px swatch), e.g. "Available per month: 525 h", or "up to 840 h" when the periods differ (`capacityLabel`, 2026-10-28). The label is not drawn on the chart. The same token as the attention outline: a red line here means the available-time marker, not an error.
 - The unit selector is a `.segmented` group (Hours, Days, Weeks) next to the granularity group.
 
 ## 13. Goals and Insights simplify (feat/goals-insights-simplify)
@@ -751,7 +752,7 @@ Owner UX review, 2026-10-28: fewer concepts on screen, less to fill in, the powe
 - **Habit form, linked activity**: the first option is "Add '<name>' to my week" (shown when the name is set), then None, then the activities by life area. Its error (`.field-error`, role alert) sits under the select.
 - **Insights, first row**: the year switcher, Month or Week (`.segmented`), and a "More options" button (`.btn-sm`, `aria-expanded`, `aria-controls="insights-more"`). The button adds ": <setting>" in `--ink-3` while closed when a setting is not the default.
 - **Insights, More options panel** (`#insights-more`, `.insights-more`): a 1px `--rule-2` frame with 6px radius and 16px padding, holding three `.segmented` groups: Year or Quarter, One year or Several years (with the horizon select), and "Show in" with Hours, Days (24 h), Weeks (168 h).
-- **Headline** (`.insights-headline`): 18px 500, line height 1.45, above the chart; the answer first, e.g. "2026: 48% Physical, 27% Professional, 19% Relational & emotional", or "Nothing planned yet in 2026" with the empty state beneath (a line and an `.btn-outline` "Open Planner").
+- No headline sentence above the chart (removed 2026-10-28): the life areas list below carries the shares. The chart header holds the available-time key and the Show sleep toggle.
 - Colour and contrast: no new tokens. The "Add a goal" and "More options" controls use the existing chip and button styles; state is never colour alone (aria-pressed, aria-expanded and the text).
 
 ### 12.3 UX batch 5 (fix/ux-batch-5)
