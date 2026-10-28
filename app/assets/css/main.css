@@ -1287,6 +1287,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   position: fixed;
   inset: 0;
   z-index: 29;
+  touch-action: none;
 }
 .wk-pop {
   position: fixed;
@@ -1314,18 +1315,29 @@ a { color: var(--accent); text-underline-offset: 3px; }
   flex-wrap: wrap;
   gap: var(--space-2);
 }
-.wk-menu { overflow: hidden; }
+/* The menu fits the screen (fitMenu in ActivityGrid): its list is the part that scrolls, and a scroll stops at its ends */
+.wk-menu {
+  display: flex;
+  flex-direction: column;
+  max-height: min(400px, calc(100vh - 16px));
+  max-height: min(400px, calc(100dvh - 16px));
+  overflow: hidden;
+}
 .wk-menu .wk-pop-head {
+  flex: none;
   padding: var(--space-2) var(--space-4);
   background: var(--bg-2);
   border-bottom: 1px solid var(--rule-2);
 }
 .wk-menu-list {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  max-height: 340px;
+  min-height: 0;
   padding: var(--space-1);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .wk-menu-item {
   display: flex;
