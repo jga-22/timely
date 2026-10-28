@@ -194,7 +194,7 @@ export const categoryShares = (bars: InsightsBar[]): { total: number; rows: Cate
 }
 
 /**
- * The headline over the chart (FR-INS-6): the top three life areas by planned hours with their rounded shares, e.g.
+ * The headline over the chart (FR-INS-P1): the top three life areas by planned hours with their rounded shares, e.g.
  * "2026: 48% Physical, 27% Professional, 19% Relational". Nothing planned gives "Nothing planned yet in 2026"
  */
 export const headlineSentence = (rangeLabel: string, rows: Array<{ name: string; share: number }>): string => {

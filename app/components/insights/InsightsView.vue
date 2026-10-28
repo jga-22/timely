@@ -17,7 +17,7 @@ import {
 } from '~/utils/insights'
 
 // Read-only (PRD FR-INS). The controls only change this view: the shared year, the granularity, the range and the unit.
-// Month and Week are on the first row; Quarter, Year, the range and the unit sit behind More options (FR-INS-7)
+// Month and Week are on the first row; Quarter, Year, the range and the unit sit behind More options (FR-INS-P2)
 const planner = usePlannerStore()
 const { year } = usePlannerYear()
 const { link } = useNav()
