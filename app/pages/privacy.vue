@@ -40,7 +40,7 @@ useHead({
       </li>
       <li>
         <strong>Your planner</strong>: everything you type into Timely, such as your ambition, life areas, goals, habits,
-        activities, weekly templates and journal notes. This can be personal, and sometimes sensitive, depending on what
+        activities, week types and journal notes. This can be personal, and sometimes sensitive, depending on what
         you write. Only enter what you are comfortable storing.
       </li>
       <li>

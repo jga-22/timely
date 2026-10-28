@@ -24,7 +24,7 @@ useHead({
 
     <h2>Your content</h2>
     <p>
-      You own what you write in Timely: your ambition, life areas, goals, habits, activities, templates and notes.
+      You own what you write in Timely: your ambition, life areas, goals, habits, activities, week types and notes.
       You are responsible for it. The operator needs only enough access to store it, show it to you and run the service,
       as the Privacy Policy describes.
     </p>

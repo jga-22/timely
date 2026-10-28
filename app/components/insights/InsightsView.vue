@@ -167,7 +167,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
 
       <section v-if="assignedWeeks" class="section">
         <div class="section-head">
-          <h2 class="section-title">Categories</h2>
+          <h2 class="section-title">Life areas</h2>
         </div>
 
         <ul v-if="shares.rows.length" class="share-list">
