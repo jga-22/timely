@@ -44,6 +44,26 @@ export const dayHours = (state: PlannerState, date: string, showSleep = false): 
   return hours
 }
 
+/**
+ * The hours the Home bar spans on one date (FR-SLEEP-4, 5): all 24 with sleep shown. With sleep hidden, the sleep at the start of
+ * the day and the sleep at its end are left off the bar (the edges only); sleep between them, such as a nap, stays in the range
+ * and counts as unplanned. A day that is all sleep keeps all 24 hours
+ */
+export const dayRange = (state: PlannerState, date: string, showSleep = false): { start: number; end: number } => {
+  const template = effectiveTemplate(state, date)
+  const sleepId = showSleep ? null : sleepActivityId(state)
+
+  if (!template || !sleepId) return { start: 0, end: HOURS_PER_DAY }
+
+  const day = weekdayOf(date)
+  const awake = Array.from({ length: HOURS_PER_DAY }, (_, hour) => template.slots[day * HOURS_PER_DAY + hour] !== sleepId)
+  const start = awake.indexOf(true)
+
+  if (start < 0) return { start: 0, end: HOURS_PER_DAY }
+
+  return { start, end: awake.lastIndexOf(true) + 1 }
+}
+
 /** "Sunday 25 October 2026" */
 export const formatDayLabel = (key: string): string => {
   const [year, month, day] = key.split('-').map(Number)

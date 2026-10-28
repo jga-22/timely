@@ -2008,6 +2008,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
   height: 4px;
   background: var(--ink-3);
 }
+/* The range's own ends, when sleep is hidden: the label hangs off the bar's edge so it stays inside the column */
+.home-axis-tick.is-start { transform: none; }
+.home-axis-tick.is-start::before { left: 0; }
+.home-axis-tick.is-end { transform: translateX(-100%); }
+.home-axis-tick.is-end::before { left: auto; right: 0; }
 .home-rows {
   margin: 0;
   padding: 0;
