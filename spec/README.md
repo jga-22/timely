@@ -36,7 +36,10 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
-| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type: the "Week type" bar with no delete, the week grid, and the one line "Every week of 2026 uses My week." in place of the year section |
+| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section collapsed (closed by default, FR-YEAR-7) |
+| `planner-one-type-year-open-desktop-light.png` | 1280 px wide | The same with the Year section open: the one line "Every week of 2026 uses My week.", the year nav, the painter, and the Weeks row |
+| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: Reading in the activity editor, with Done in the panel head (Escape and Done close it and return focus to Edit, FR-PLAN-26) |
+| `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
 | `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
 | `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
@@ -102,6 +105,12 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Year and close (2026-10-28, branch `fix/week-year-and-close`)
+
+- Year (FR-YEAR-7): the Year section exists with one week type as well, collapsed by default. Its body starts with "Every week of <year> uses <name>."; the Weeks row and the painter work as with two or more week types.
+- Closing (FR-PLAN-26, FR-TPL-9): the activity editor, the Add activity form, Edit week type and New week type close with Done, Cancel or Escape, and focus returns to the control that opened them. Focus after Done in the activity editor was lost before (it looked for a class that did not exist). Opening Edit week type leaves an open activity editor.
+- Screens: `planner-one-type-desktop-light.png` is the collapsed Year section; `planner-one-type-year-open-desktop-light.png` is it open.
+
 ### Goals and Insights simplify (2026-10-28, branch `feat/goals-insights-simplify`, from `main`, not pushed)
 
 Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PRD 9.15 and `frontend-design.md` section 13.
@@ -117,7 +126,7 @@ Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PR
 
 - Presets (FR-TPL-8): New week type has a "Start from" choice: Empty, a copy of a week type (FR-TPL-6, Duplicate), or Standard, Deep work, Light or Vacation. A preset maps its sleep, work and exercise blocks to activities: the one with the same name, a new one, or none. "Keep my habit sessions" keeps the hours of habit-linked activities (on for the working presets, off for Vacation).
 - Time off: a week type can be marked "Time off" in its edit panel. Goals then compares against the working week type (`goalsTemplate`), with a quiet "Compared with <week type>" line under the category's hours bar (FR-GOALS-16). Home, Planner and Insights are unchanged.
-- Year (FR-YEAR-7): a Weeks row applies a week type, or none, to a range of weeks; shown with two or more week types.
+- Year (FR-YEAR-7): a Weeks row applies a week type, or none, to a range of weeks; shown in the Year section with any number of week types, which is collapsed by default (fix/week-year-and-close).
 - Planner (FR-PLAN-25): "Schedule in the week" in the activity detail paints the activity on chosen days at a chosen start and duration, replacing other activities as the grid does, with a replaced-hours message and Undo.
 - Storage: `kind` on a week type is optional; the version stays 8.
 - Known: on returning saves the "+ New week type" button can take the EditButton's class after hydration (see `.claude/agent.md`, hydration warning).
