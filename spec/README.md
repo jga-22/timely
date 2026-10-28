@@ -25,7 +25,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the bars, full page |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: Physical with its 1-year target, habits, the hours comparison, the 5-year goal and More activities (feat/goals-insights-simplify) |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data, scrolled to the sections: the 5-year goal, the 1-year target, the hours comparison ("Needs 1 h more", "Compared with Standard Week"), the habits and More activities (fix/ux-batch-5; the order was changed on purpose) |
+| `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
+| `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
+| `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
+| `week-schedule-open-mobile-light.png` | 400 px wide | Week, light: the activity detail with "Schedule in the week" open, its Close button (fix/ux-batch-5) |
+| `week-schedule-open-desktop-light.png` | 1280 px wide | Week, light: the same at 1280 px (fix/ux-batch-5) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `goals-list-collapsed-desktop-light.png` | 1280 px wide, full page | Goals, light, two life areas with content: the full rows, "6 more life areas · add a goal" collapsed (feat/goals-insights-simplify) |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
@@ -104,6 +109,15 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### UX batch 5 (2026-10-28, branch `fix/ux-batch-5`, from `main`, not pushed)
+
+- Goals (FR-GOALS-27): the category detail reads 5-year goal, 1-year target, the hours comparison, the habits, then More activities. Edit mode is unchanged.
+- Week grid (FR-PLAN-23): Apply on a run that changes hours opens Edit range on the new block at once, so its start and end change without selecting it again. Save extends the Apply's one undo step; Cancel and Escape keep the block as applied. The handles take touch without scrolling the page and move one hour with Up and Down.
+- Apply menu: it fits the screen (it moves up when it would run past the bottom, and its height is capped at the viewport); its list scrolls inside it, and the overlay takes no touch scroll. It was partly off screen on phones and short desktops before.
+- Schedule in the week (FR-PLAN-25): a collapsible under the activity detail, closed by default, with a Close button and Escape. The result line and its Undo stay after it closes.
+- Focus on phones (FR-UX-9, `app/utils/focus.ts`): an edit or add panel no longer focuses a text field on a phone or touch screen, so the keyboard stays down; the panel takes focus instead. Desktop unchanged. Covers the life area, habit, activity, add activity, new and renamed week type, week range, journal note and the first-run dialogs.
+- Checks: typecheck 0 errors; build clean; headless Edge on the production build, 74 browser checks (`ux5-check.cjs`, scratchpad, not committed) at 1280 by 800, 1280 by 500 and 400 by 800 with touch emulation, all passing. Storage version unchanged (8). Not run on a real phone.
 
 ### Year and close (2026-10-28, branch `fix/week-year-and-close`)
 
