@@ -28,6 +28,10 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, the needed-and-planned bar with "2 h planned of 1.5 h needed", and the quiet "Not linked" habit |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
+| `planner-schedule-desktop-light.png` | 1280 px wide | Week, light: the "Schedule in the week" block under Training, three days at 6PM for 1 h, with the result line and Undo (FR-PLAN-25) |
+| `planner-schedule-mobile-light.png` | 400 px wide | The same block at 400 px: one column of days, duration and start |
+| `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
+| `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
 | `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type: the "Week type" bar with no delete, the week grid, and the one line "Every week of 2026 uses My week." in place of the year section |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
@@ -92,6 +96,15 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Week types (2026-10-28, branch `feat/week-types`, stacked on `feat/ux-simplify`)
+
+- Presets (FR-TPL-8): New week type has a "Start from" choice: Empty, a copy of a week type (FR-TPL-6, Duplicate), or Standard, Deep work, Light or Vacation. A preset maps its sleep, work and exercise blocks to activities: the one with the same name, a new one, or none. "Keep my habit sessions" keeps the hours of habit-linked activities (on for the working presets, off for Vacation).
+- Time off: a week type can be marked "Time off" in its edit panel. Goals then compares against the working week type (`goalsTemplate`), with a quiet "Compared with <week type>" line under the category's hours bar (FR-GOALS-16). Home, Planner and Insights are unchanged.
+- Year (FR-YEAR-7): a Weeks row applies a week type, or none, to a range of weeks; shown with two or more week types.
+- Planner (FR-PLAN-25): "Schedule in the week" in the activity detail paints the activity on chosen days at a chosen start and duration, replacing other activities as the grid does, with a replaced-hours message and Undo.
+- Storage: `kind` on a week type is optional; the version stays 8.
+- Known: on returning saves the "+ New week type" button can take the EditButton's class after hydration (see `.claude/agent.md`, hydration warning).
 
 ### UX simplify (2026-10-28, branch `feat/ux-simplify`)
 

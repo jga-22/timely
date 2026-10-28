@@ -4,11 +4,15 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import {
+  DAYS,
   DESIGN_COLORS,
   aggregateTemplate,
+  formatHour,
+  isHourlyTemplate,
   validateActivityFields,
   type ActivityFieldErrors
 } from '~/utils/planner'
+import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { shortCodeFor } from '~/utils/onboarding'
 import type { Activity } from '~/types/planner'
@@ -84,12 +88,114 @@ const cellStyle = (startDate: string) => {
 }
 
 // ── Template management ──
-function handleNewTemplate() {
-  if (!newTemplateName.value.trim()) return
-  planner.createTemplate()
-  planner.renameActiveTemplate(newTemplateName.value.trim())
-  newTemplateName.value = ''
+// New week type (FR-TPL-2, 6, 8): a panel with a Start from choice: empty, a copy of a week type, or a preset
+const newTemplateInput = ref<HTMLInputElement | null>(null)
+const newTemplateTrigger = ref<HTMLButtonElement | null>(null)
+const newFrom = ref('empty')
+const keepHabits = ref(true)
+// Role mapping for a preset: an activity id, 'create' (a new activity) or '' (leave the role's hours empty)
+const roleChoice = reactive<Record<PresetRole, string>>({ sleep: '', work: '', exercise: '' })
+const newPreset = computed(() => (newFrom.value.startsWith('preset:') ? getPreset(newFrom.value.slice(7)) ?? null : null))
+// Only the roles the preset paints get a mapping row: Vacation maps Sleep alone
+const newPresetRoles = computed(() => PRESET_ROLES.filter(role => newPreset.value?.blocks.some(block => block.role === role)))
+
+// Presets start from the activities they match by name; a role with no match is created (Sleep, Work) or left empty (Exercise)
+watch(newFrom, (value) => {
+  const preset = value.startsWith('preset:') ? getPreset(value.slice(7)) : undefined
+  if (!preset) return
+
+  keepHabits.value = preset.keepHabitsDefault
+  for (const role of PRESET_ROLES) {
+    roleChoice[role] = matchRole(planner.$state, role) ?? (role === 'exercise' ? '' : 'create')
+  }
+})
+
+function openNewTemplate() {
+  newTemplateOpen.value = true
+  nextTick(() => newTemplateInput.value?.focus())
+}
+
+function closeNewTemplate() {
   newTemplateOpen.value = false
+  newTemplateName.value = ''
+  newFrom.value = 'empty'
+  nextTick(() => newTemplateTrigger.value?.focus())
+}
+
+function handleNewTemplate() {
+  const name = newTemplateName.value.trim()
+  const from = newFrom.value
+  const preset = newPreset.value
+  let templateId: string | null = null
+
+  if (from === 'empty') {
+    planner.createTemplate()
+    if (name) planner.renameActiveTemplate(name)
+    templateId = activeTemplate.value?.id ?? null
+  } else if (from.startsWith('copy:')) {
+    templateId = planner.duplicateTemplate(from.slice(5), name)
+  } else if (preset) {
+    // Roles the preset does not paint are sent as null, so no activity is created for them
+    const mapping = Object.fromEntries(PRESET_ROLES.map(role => [role, newPresetRoles.value.includes(role) && roleChoice[role] !== '' ? roleChoice[role] : null])) as Record<PresetRole, string | 'create' | null>
+    templateId = planner.createTemplateFromPreset(name, preset.id, mapping, keepHabits.value)
+  }
+
+  if (!templateId) return
+
+  newTemplateName.value = ''
+  newFrom.value = 'empty'
+  newTemplateOpen.value = false
+
+  // A time-off week type is usually applied to weeks next: open the year with it chosen and the first week field focused
+  if (preset?.kind === 'break') openYearFor(templateId)
+}
+
+// ── Year: the Weeks row applies one week type to a range of weeks (FR-YEAR-7); the choice defaults to the active one ──
+const weekRangeTemplate = ref<string | null>(null)
+const weekRangeChoice = computed({
+  get: () => weekRangeTemplate.value ?? activeTemplate.value?.id ?? '',
+  set: (value: string) => {
+    weekRangeTemplate.value = value
+  }
+})
+const weekFrom = ref(1)
+const weekTo = ref(1)
+const weekFromInput = ref<HTMLInputElement | null>(null)
+const weekRangeError = ref('')
+const weekRangeResult = ref('')
+const weekCount = computed(() => weeks.value.length)
+
+function openYearFor(templateId: string) {
+  weekRangeTemplate.value = templateId
+  yearOpen.value = true
+  nextTick(() => weekFromInput.value?.focus())
+}
+
+function applyWeekRange() {
+  const count = weekCount.value
+  const from = weekFrom.value
+  const to = weekTo.value
+
+  if (!count) return
+
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > count) {
+    weekRangeError.value = `Enter week numbers from 1 to ${count}.`
+    weekRangeResult.value = ''
+    return
+  }
+
+  if (from > to) {
+    weekRangeError.value = 'The first week must not come after the last one.'
+    weekRangeResult.value = ''
+    return
+  }
+
+  weekRangeError.value = ''
+  const templateId = weekRangeChoice.value || null
+  planner.setWeeksTemplate(weeks.value.slice(from - 1, to), templateId)
+
+  const name = templateId ? (templateById.value.get(templateId)?.name ?? '') : ''
+  weekRangeResult.value = templateId ? `Weeks ${from} to ${to} use ${name}.` : `Weeks ${from} to ${to} have no week type.`
 }
 
 // Inline confirmation (FR-TPL-5, FR-UX-7): nothing is deleted before the second button
@@ -324,6 +430,92 @@ function submitAdd() {
   addOpen.value = false
   if (id) selectActivity(id)
 }
+
+// ── Schedule in the week (FR-PLAN-25): paints the selected activity into the active week type, as the grid does ──
+const SCHEDULE_UNDO_MS = 8000
+const scheduleDays = ref<number[]>([])
+const scheduleDuration = ref(1)
+const scheduleStart = ref(9)
+const scheduleError = ref('')
+const scheduleResult = ref<{ text: string; templateId: string; slots: string[] } | null>(null)
+let scheduleUndoTimer: ReturnType<typeof setTimeout> | undefined
+const scheduleHourly = computed(() => isHourlyTemplate(activeTemplate.value))
+const hourOptions = Array.from({ length: 24 }, (_, hour) => hour)
+const durationOptions = Array.from({ length: 12 }, (_, index) => index + 1)
+
+// Default duration: the first linked habit's time per occurrence, rounded up to whole hours (1 to 12); otherwise 1 hour
+const scheduleDefaultDuration = (activityId: string) => {
+  const minutes = planner.habits.find(habit => habit.activityId === activityId && habit.minutesPerOccurrence)?.minutesPerOccurrence
+  return minutes ? Math.min(12, Math.max(1, Math.ceil(minutes / 60))) : 1
+}
+
+// Hint only, no preselection: a linked habit with a weekly count says how many days to pick
+const scheduleHabitHint = computed(() => {
+  const habit = linkedHabits.value.find(item => item.frequency.period === 'week' && item.frequency.count > 0)
+  return habit ? `Habit "${habit.name}" asks for ${habit.frequency.count} a week. Pick the days you want.` : ''
+})
+
+const dismissScheduleResult = () => {
+  scheduleResult.value = null
+  clearTimeout(scheduleUndoTimer)
+}
+
+const resetSchedule = () => {
+  scheduleDays.value = []
+  scheduleDuration.value = selectedActivity.value ? scheduleDefaultDuration(selectedActivity.value.id) : 1
+  scheduleStart.value = 9
+  scheduleError.value = ''
+  dismissScheduleResult()
+}
+
+watch(() => selectedActivity.value?.id ?? null, resetSchedule, { immediate: true })
+
+function toggleScheduleDay(day: number) {
+  scheduleDays.value = scheduleDays.value.includes(day)
+    ? scheduleDays.value.filter(item => item !== day)
+    : [...scheduleDays.value, day]
+  scheduleError.value = ''
+}
+
+function addToWeek() {
+  const activity = selectedActivity.value
+  const template = activeTemplate.value
+  if (!activity || !template || !scheduleHourly.value) return
+
+  const duration = scheduleDuration.value
+  const start = scheduleStart.value
+
+  if (!scheduleDays.value.length) {
+    scheduleError.value = 'Choose at least one day.'
+    return
+  }
+
+  if (start + duration > 24) {
+    scheduleError.value = `A ${duration} h block from ${formatHour(start)} would run past midnight. Choose an earlier start or a shorter block.`
+    return
+  }
+
+  scheduleError.value = ''
+  const days = [...scheduleDays.value].sort((a, b) => a - b)
+  const cells = days.flatMap(day => Array.from({ length: duration }, (_, offset) => day * 24 + start + offset))
+  const before = [...template.slots]
+  const taken = planner.paintCells(template.id, cells, activity.id)
+
+  const replaced = taken.map(item => `${hoursText(item.hours)} h of ${planner.activities.find(a => a.id === item.activityId)?.name ?? 'another activity'}`)
+  const text = `Added ${days.length} x ${duration} h.${replaced.length ? ` Replaced ${replaced.join(' and ')}.` : ''}`
+
+  scheduleResult.value = { text, templateId: template.id, slots: before }
+  clearTimeout(scheduleUndoTimer)
+  scheduleUndoTimer = setTimeout(dismissScheduleResult, SCHEDULE_UNDO_MS)
+}
+
+function undoSchedule() {
+  const last = scheduleResult.value
+  if (!last) return
+
+  planner.restoreSlots(last.templateId, last.slots)
+  dismissScheduleResult()
+}
 </script>
 
 <template>
@@ -377,20 +569,63 @@ function submitAdd() {
         </div>
       </div>
 
-      <div v-if="newTemplateOpen" class="new-template-form">
-        <input
-          v-model="newTemplateName"
-          class="pill-input"
-          autofocus
-          placeholder="e.g. Launch week"
-          @keydown.enter="handleNewTemplate"
-          @keydown.escape="newTemplateOpen = false; newTemplateName = ''"
-        />
-        <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
-      </div>
-      <button v-else class="chip-add" @click="newTemplateOpen = true">+ New week type</button>
+      <button v-if="!newTemplateOpen" ref="newTemplateTrigger" class="chip-add" @click="openNewTemplate">+ New week type</button>
 
       <EditButton v-if="activeTemplate" label="Edit week type" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
+    </div>
+
+    <!-- New week type: a name and a Start from choice (empty, a copy, or a preset with its role mapping) -->
+    <div v-if="newTemplateOpen" class="act-panel new-template-panel" @keydown.escape.stop="closeNewTemplate">
+      <div class="act-panel-head">
+        <h3 class="act-panel-title">New week type</h3>
+      </div>
+      <div class="form-stack">
+        <div class="field">
+          <label class="field-label" for="new-template-name">Name</label>
+          <input
+            id="new-template-name"
+            ref="newTemplateInput"
+            v-model="newTemplateName"
+            class="timely-input"
+            placeholder="e.g. Launch week"
+            @keydown.enter.prevent="handleNewTemplate"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="new-template-from">Start from</label>
+          <select id="new-template-from" v-model="newFrom" class="timely-select">
+            <option value="empty">Empty</option>
+            <option v-for="t in templates" :key="t.id" :value="`copy:${t.id}`">Copy of {{ t.name }}</option>
+            <option v-for="p in PRESETS" :key="p.id" :value="`preset:${p.id}`">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <template v-if="newPreset">
+          <p class="new-template-lede">{{ newPreset.description }}</p>
+
+          <div class="role-rows">
+            <div v-for="role in newPresetRoles" :key="role" class="role-row">
+              <label class="field-label role-label" :for="`role-${role}`">{{ ROLE_LABELS[role] }}</label>
+              <select :id="`role-${role}`" v-model="roleChoice[role]" class="timely-select">
+                <option v-for="act in planner.activities" :key="act.id" :value="act.id">{{ act.name }}</option>
+                <option value="create">Create "{{ ROLE_LABELS[role] }}"</option>
+                <option value="">Leave empty</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="check">
+            <input v-model="keepHabits" type="checkbox" />
+            Keep my habit sessions
+          </label>
+        </template>
+      </div>
+
+      <div class="act-actions">
+        <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add week type</button>
+        <button class="btn btn-sm" @click="closeNewTemplate">Cancel</button>
+      </div>
     </div>
 
     <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
@@ -422,6 +657,16 @@ function submitAdd() {
               @click="planner.setTemplateColor(activeTemplate.id, col.bg)"
             />
           </div>
+        </div>
+        <div class="field">
+          <label class="check">
+            <input
+              type="checkbox"
+              :checked="activeTemplate.kind === 'break'"
+              @change="planner.setTemplateKind(activeTemplate.id, ($event.target as HTMLInputElement).checked ? 'break' : undefined)"
+            />
+            Time off: Goals does not compare against this week type
+          </label>
         </div>
         <div v-if="templates.length > 1" class="form-actions">
           <button ref="deleteTemplateTrigger" type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete week type</button>
@@ -481,6 +726,59 @@ function submitAdd() {
         </div>
         <EditButton :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
       </div>
+
+      <!-- Schedule in the week (FR-PLAN-25): the active week type, replacing other activities in the hours painted -->
+      <section v-if="selectedActivity && !editing" class="act-panel act-schedule" aria-labelledby="act-schedule-title">
+        <div class="act-panel-head">
+          <h3 id="act-schedule-title" class="act-panel-title">Schedule in the week</h3>
+        </div>
+        <p class="act-schedule-lede">
+          Paints {{ selectedActivity.name }} in <strong>{{ activeTemplate?.name ?? 'no week type' }}</strong>. Hours it replaces belong to other activities.
+        </p>
+        <p v-if="scheduleHabitHint" class="act-schedule-hint">{{ scheduleHabitHint }}</p>
+
+        <fieldset class="sched-days">
+          <legend class="field-label">Days</legend>
+          <div class="sched-day-row">
+            <button
+              v-for="(day, index) in DAYS"
+              :key="day"
+              type="button"
+              class="chip"
+              :data-active="scheduleDays.includes(index)"
+              :aria-pressed="scheduleDays.includes(index)"
+              @click="toggleScheduleDay(index)"
+            >{{ day }}</button>
+          </div>
+        </fieldset>
+
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="sched-duration">Duration</label>
+            <select id="sched-duration" v-model.number="scheduleDuration" class="timely-select" @change="scheduleError = ''">
+              <option v-for="hours in durationOptions" :key="hours" :value="hours">{{ hours }} h</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="sched-start">Start</label>
+            <select id="sched-start" v-model.number="scheduleStart" class="timely-select" @change="scheduleError = ''">
+              <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ formatHour(hour) }}</option>
+            </select>
+          </div>
+        </div>
+
+        <p v-if="scheduleError" id="sched-error" class="field-error" role="alert">{{ scheduleError }}</p>
+        <p v-if="!scheduleHourly" class="act-schedule-hint">This week type is not hourly, so hours cannot be painted here.</p>
+
+        <div class="act-actions">
+          <button type="button" class="btn btn-sm btn-primary" :disabled="!scheduleHourly" @click="addToWeek">Add to my week</button>
+        </div>
+
+        <div v-if="scheduleResult" class="sched-result" role="status">
+          <span>{{ scheduleResult.text }}</span>
+          <button type="button" class="btn btn-sm" @click="undoSchedule">Undo</button>
+        </div>
+      </section>
 
       <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
       <div v-if="editing && selectedActivity" class="act-panel" @keydown="onEditKeydown">
@@ -680,6 +978,46 @@ function submitAdd() {
               <span class="dot dot-erase" />
               Erase
             </button>
+          </div>
+
+          <!-- Weeks: one week type for a range of weeks, typed rather than painted (FR-YEAR-7) -->
+          <div class="weeks-row" role="group" aria-labelledby="weeks-row-title">
+            <span id="weeks-row-title" class="field-label">Weeks</span>
+            <div class="weeks-row-line">
+              <label class="weeks-part" for="weeks-template">Use</label>
+              <select id="weeks-template" v-model="weekRangeChoice" class="timely-select weeks-select">
+                <option value="">No week type</option>
+                <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select>
+              <label class="weeks-part" for="weeks-from">for weeks</label>
+              <input
+                id="weeks-from"
+                ref="weekFromInput"
+                v-model.number="weekFrom"
+                class="timely-input weeks-num"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                :max="weekCount"
+                :aria-invalid="!!weekRangeError"
+                aria-describedby="weeks-error"
+              />
+              <label class="weeks-part" for="weeks-to">to</label>
+              <input
+                id="weeks-to"
+                v-model.number="weekTo"
+                class="timely-input weeks-num"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                :max="weekCount"
+                :aria-invalid="!!weekRangeError"
+                aria-describedby="weeks-error"
+              />
+              <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
+            </div>
+            <p v-if="weekRangeError" id="weeks-error" class="field-error" role="alert">{{ weekRangeError }}</p>
+            <p v-else-if="weekRangeResult" class="weeks-result" role="status">{{ weekRangeResult }}</p>
           </div>
 
           <div v-if="weeks.length" class="year-grid-scroll">

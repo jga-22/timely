@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
+  DESIGN_COLORS,
   applyActivityCells,
   cleanAlsoCategoryIds,
   createEmptySlots,
@@ -8,16 +9,36 @@ import {
   createOnboardingState,
   getActiveTemplate,
   getTemplateById,
+  nextTemplateColor,
   rangeConflicts,
   validateActivityFields,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
 } from '~/utils/planner'
+import { shortCodeFor } from '~/utils/onboarding'
+import {
+  PRESET_ROLES,
+  ROLE_LABELS,
+  buildPresetSlots,
+  getPreset,
+  presetTemplateFields,
+  type PresetRole,
+  type RoleMap
+} from '~/utils/presets'
 
 /** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
 const numberCategories = (categories: Category[]): Category[] =>
   [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
+
+/** The life area a preset's activity goes to: Physical for sleep and exercise, Professional for work, else the first area (FR-TPL-8) */
+const presetCategoryId = (categories: Category[], role: PresetRole): string | undefined => {
+  const byId = role === 'work' ? 'professionnelle' : 'physique'
+  const byName = role === 'work' ? /professional/i : /physical/i
+  const match = categories.find(category => category.id === byId) ?? categories.find(category => byName.test(category.name))
+
+  return (match ?? [...categories].sort((a, b) => a.order - b.order)[0])?.id
+}
 
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
@@ -70,6 +91,98 @@ export const usePlannerStore = defineStore('planner', {
         slots: createEmptySlots(granularity)
       })
       this.settings.activeTemplateId = templateId
+    },
+    /** Copies a week type's hours into a new one with the next unused colour, and makes it active (FR-TPL-6). Returns its id, or null when the source is unknown */
+    duplicateTemplate(sourceId: string, name: string): string | null {
+      const source = getTemplateById(this.$state, sourceId)
+
+      if (!source) {
+        return null
+      }
+
+      const templateId = `template-${Date.now()}`
+
+      this.templates.unshift({
+        id: templateId,
+        name: name.trim() || `Copy of ${source.name}`,
+        granularityMinutes: source.granularityMinutes,
+        color: nextTemplateColor(this.templates) ?? source.color,
+        slots: [...source.slots]
+      })
+      this.settings.activeTemplateId = templateId
+
+      return templateId
+    },
+    /**
+     * Creates a week type from a preset (FR-TPL-8) and makes it active. A role set to 'create' gets a new activity, unless one
+     * already has its name (then that one is used) or its short code is taken (then the role is left empty). Returns the id, or null for an unknown preset
+     */
+    createTemplateFromPreset(name: string, presetId: string, roleMap: Partial<Record<PresetRole, string | 'create' | null>>, keepHabits: boolean): string | null {
+      const preset = getPreset(presetId)
+
+      if (!preset) {
+        return null
+      }
+
+      const resolved: RoleMap = {}
+
+      PRESET_ROLES.forEach((role, index) => {
+        const choice = roleMap[role]
+        resolved[role] = choice === 'create' ? this.createRoleActivity(role, index) : (choice ?? null)
+      })
+
+      // Built before the new week type exists, so the habit hours come from the week type Goals reads now
+      const slots = buildPresetSlots(this.$state, preset, resolved, keepHabits)
+      const templateId = `template-${Date.now()}`
+
+      this.templates.unshift({
+        id: templateId,
+        name: name.trim() || preset.name,
+        color: nextTemplateColor(this.templates) ?? DESIGN_COLORS[0]!.bg,
+        slots,
+        ...presetTemplateFields(preset)
+      })
+      this.settings.activeTemplateId = templateId
+
+      return templateId
+    },
+    /** An activity for a preset role: the existing one with the same name, else a new one. Null when it cannot be created */
+    createRoleActivity(role: PresetRole, index: number): string | null {
+      const label = ROLE_LABELS[role]
+      const existing = this.activities.find(activity => activity.name.trim().toLowerCase() === label.toLowerCase())
+
+      if (existing) {
+        return existing.id
+      }
+
+      const categoryId = presetCategoryId(this.categories, role)
+      const shortCode = shortCodeFor(label)
+
+      if (!categoryId || Object.keys(validateActivityFields(this.$state, { name: label, shortCode, categoryId })).length) {
+        return null
+      }
+
+      const usedColors = new Set(this.activities.map(activity => activity.color.toLowerCase()))
+      const id = `activity-${Date.now()}-${index}`
+
+      this.activities.push({
+        id,
+        name: label,
+        shortCode,
+        categoryId,
+        color: DESIGN_COLORS.find(color => !usedColors.has(color.bg.toLowerCase()))?.bg ?? DESIGN_COLORS[0]!.bg
+      })
+
+      return id
+    },
+    /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals does not compare against time off */
+    setTemplateKind(templateId: string, kind: 'break' | undefined) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template) return
+
+      if (kind) template.kind = kind
+      else delete template.kind
     },
     deleteTemplate(templateId: string) {
       const templateIndex = this.templates.findIndex(template => template.id === templateId)
@@ -346,6 +459,10 @@ export const usePlannerStore = defineStore('planner', {
           templateId
         })
       }
+    },
+    /** Applies one week type (or none, with null) to a range of weeks, such as a vacation (FR-YEAR-7) */
+    setWeeksTemplate(startDates: string[], templateId: string | null) {
+      for (const startDate of startDates) this.setWeekTemplate(startDate, templateId)
     },
     /** Starter grid for an empty planner; existing categories and activities are never replaced */
     seedHaradaGoals() {

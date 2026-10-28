@@ -900,7 +900,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   outline: none;
   box-shadow: var(--focus-ring);
 }
-.new-template-form { display: flex; gap: var(--space-1); }
 
 .unit {
   margin-left: 2px;
@@ -1450,6 +1449,51 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .act-panel .act-delete { margin-top: var(--space-4); }
 .act-panel .act-actions { margin-top: var(--space-3); }
 .act-add-trigger { margin-top: var(--space-3); }
+
+/* Schedule in the week: a panel under the activity detail (FR-PLAN-25) */
+.act-schedule { display: flex; flex-direction: column; gap: var(--space-3); }
+.act-schedule .act-panel-head { margin-bottom: 0; }
+.act-schedule-lede { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.act-schedule-hint { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.act-schedule .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.act-schedule .act-actions { margin-top: 0; }
+.sched-days { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.sched-days .field-label { padding: 0; margin-bottom: 0; }
+.sched-day-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sched-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+/* New week type panel: Start from, then one line per preset role (FR-TPL-8) */
+.new-template-panel { margin-top: var(--space-3); max-width: 560px; }
+.new-template-lede { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.role-rows { display: flex; flex-direction: column; gap: var(--space-2); }
+.role-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+.role-label { margin: 0; }
+.role-row .timely-select { width: 100%; }
+@media (max-width: 480px) {
+  .role-row { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+}
+
+/* Weeks row under the year paint tools: one week type for a range of weeks (FR-YEAR-7) */
+.weeks-row { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+.weeks-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.weeks-part { font-size: var(--fs-sm); color: var(--ink-2); }
+.weeks-select { width: auto; max-width: 100%; min-width: 0; }
+.weeks-num { width: 72px; }
+.weeks-result { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
 @media (max-width: 480px) {
   .act-panel .form-row { grid-template-columns: minmax(0, 1fr); }
 }

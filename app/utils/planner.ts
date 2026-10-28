@@ -261,6 +261,8 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   if (!journal || typeof journal !== 'object' || Array.isArray(journal)) return false
   if (!Object.values(journal).every(text => typeof text === 'string')) return false
   if (!templates.every(template => Array.isArray(template?.slots))) return false
+  // Optional, added without a version bump (FR-TPL-8): absent in older saves, otherwise the time-off mark
+  if (!templates.every(template => template?.kind === undefined || template.kind === 'break')) return false
   if (!(state.appliedWeeks as Array<Partial<AppliedWeek> | null>).every(week => typeof week?.startDate === 'string' && typeof week.templateId === 'string')) return false
 
   const categoryIds = new Set(categories.map(category => category!.id))
@@ -329,6 +331,12 @@ export const createOnboardingState = (): PlannerState => ({
   },
   onboarding: 'pending'
 })
+
+/** The first palette colour no week type uses yet, so new week types stand apart on the year grid; undefined when all are used */
+export const nextTemplateColor = (templates: WeekTemplate[]): string | undefined => {
+  const used = new Set(templates.map(template => template.color?.toLowerCase()))
+  return DESIGN_COLORS.find(color => !used.has(color.bg.toLowerCase()))?.bg
+}
 
 export const getTemplateById = (state: PlannerState, templateId: string) =>
   state.templates.find(template => template.id === templateId)
@@ -432,9 +440,31 @@ export const habitWeeklyOccurrences = (habit: Habit): number => {
   return (count * 12) / 52
 }
 
-/** Scheduled minutes per week for one activity, from the active template */
+/**
+ * The week type the Goals comparison reads (FR-GOALS-16, FR-TPL-8): the active one unless it is time off; otherwise the
+ * working week type with the most assigned weeks (the first one when none is assigned); otherwise the active one.
+ * Home, Planner and Insights do not use it.
+ */
+export const goalsTemplate = (state: PlannerState): WeekTemplate | undefined => {
+  const active = getActiveTemplate(state)
+
+  if (!active || active.kind !== 'break') return active
+
+  const assigned = new Map<string, number>()
+  for (const week of state.appliedWeeks) assigned.set(week.templateId, (assigned.get(week.templateId) ?? 0) + 1)
+
+  let best: WeekTemplate | undefined
+  for (const template of state.templates) {
+    if (template.kind === 'break') continue
+    if (!best || (assigned.get(template.id) ?? 0) > (assigned.get(best.id) ?? 0)) best = template
+  }
+
+  return best ?? active
+}
+
+/** Scheduled minutes per week for one activity, from the Goals week type (goalsTemplate) */
 export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityId: string): number => {
-  const template = getActiveTemplate(state)
+  const template = goalsTemplate(state)
 
   if (!template) {
     return 0
@@ -465,9 +495,9 @@ export const comparedActivityIds = (state: PlannerState, categoryId: string): Se
   return ids
 }
 
-/** Scheduled minutes per week for one category, from the active template: the hours of its comparedActivityIds */
+/** Scheduled minutes per week for one category, from the Goals week type (goalsTemplate): the hours of its comparedActivityIds */
 export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
-  const template = getActiveTemplate(state)
+  const template = goalsTemplate(state)
 
   if (!template) {
     return 0
@@ -493,7 +523,7 @@ export type AlignmentStatus = 'under' | 'over' | 'ok' | 'none'
 export interface CategoryAlignment {
   /** Minutes a week the habits of the category ask for (habits with a time per occurrence) */
   neededMinutes: number
-  /** Minutes a week scheduled in the active template through the activities of the category */
+  /** Minutes a week scheduled in the Goals week type (goalsTemplate) through the activities of the category */
   allocatedMinutes: number
   /** Allocated minus needed: negative when time is missing */
   gapMinutes: number
