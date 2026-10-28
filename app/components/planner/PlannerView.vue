@@ -4,8 +4,11 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import {
+  DAYS,
   DESIGN_COLORS,
   aggregateTemplate,
+  formatHour,
+  isHourlyTemplate,
   validateActivityFields,
   type ActivityFieldErrors
 } from '~/utils/planner'
@@ -324,6 +327,92 @@ function submitAdd() {
   addOpen.value = false
   if (id) selectActivity(id)
 }
+
+// ── Schedule in the week (FR-PLAN-25): paints the selected activity into the active week type, as the grid does ──
+const SCHEDULE_UNDO_MS = 8000
+const scheduleDays = ref<number[]>([])
+const scheduleDuration = ref(1)
+const scheduleStart = ref(9)
+const scheduleError = ref('')
+const scheduleResult = ref<{ text: string; templateId: string; slots: string[] } | null>(null)
+let scheduleUndoTimer: ReturnType<typeof setTimeout> | undefined
+const scheduleHourly = computed(() => isHourlyTemplate(activeTemplate.value))
+const hourOptions = Array.from({ length: 24 }, (_, hour) => hour)
+const durationOptions = Array.from({ length: 12 }, (_, index) => index + 1)
+
+// Default duration: the first linked habit's time per occurrence, rounded up to whole hours (1 to 12); otherwise 1 hour
+const scheduleDefaultDuration = (activityId: string) => {
+  const minutes = planner.habits.find(habit => habit.activityId === activityId && habit.minutesPerOccurrence)?.minutesPerOccurrence
+  return minutes ? Math.min(12, Math.max(1, Math.ceil(minutes / 60))) : 1
+}
+
+// Hint only, no preselection: a linked habit with a weekly count says how many days to pick
+const scheduleHabitHint = computed(() => {
+  const habit = linkedHabits.value.find(item => item.frequency.period === 'week' && item.frequency.count > 0)
+  return habit ? `Habit "${habit.name}" asks for ${habit.frequency.count} a week. Pick the days you want.` : ''
+})
+
+const dismissScheduleResult = () => {
+  scheduleResult.value = null
+  clearTimeout(scheduleUndoTimer)
+}
+
+const resetSchedule = () => {
+  scheduleDays.value = []
+  scheduleDuration.value = selectedActivity.value ? scheduleDefaultDuration(selectedActivity.value.id) : 1
+  scheduleStart.value = 9
+  scheduleError.value = ''
+  dismissScheduleResult()
+}
+
+watch(() => selectedActivity.value?.id ?? null, resetSchedule, { immediate: true })
+
+function toggleScheduleDay(day: number) {
+  scheduleDays.value = scheduleDays.value.includes(day)
+    ? scheduleDays.value.filter(item => item !== day)
+    : [...scheduleDays.value, day]
+  scheduleError.value = ''
+}
+
+function addToWeek() {
+  const activity = selectedActivity.value
+  const template = activeTemplate.value
+  if (!activity || !template || !scheduleHourly.value) return
+
+  const duration = scheduleDuration.value
+  const start = scheduleStart.value
+
+  if (!scheduleDays.value.length) {
+    scheduleError.value = 'Choose at least one day.'
+    return
+  }
+
+  if (start + duration > 24) {
+    scheduleError.value = `A ${duration} h block from ${formatHour(start)} would run past midnight. Choose an earlier start or a shorter block.`
+    return
+  }
+
+  scheduleError.value = ''
+  const days = [...scheduleDays.value].sort((a, b) => a - b)
+  const cells = days.flatMap(day => Array.from({ length: duration }, (_, offset) => day * 24 + start + offset))
+  const before = [...template.slots]
+  const taken = planner.paintCells(template.id, cells, activity.id)
+
+  const replaced = taken.map(item => `${hoursText(item.hours)} h of ${planner.activities.find(a => a.id === item.activityId)?.name ?? 'another activity'}`)
+  const text = `Added ${days.length} x ${duration} h.${replaced.length ? ` Replaced ${replaced.join(' and ')}.` : ''}`
+
+  scheduleResult.value = { text, templateId: template.id, slots: before }
+  clearTimeout(scheduleUndoTimer)
+  scheduleUndoTimer = setTimeout(dismissScheduleResult, SCHEDULE_UNDO_MS)
+}
+
+function undoSchedule() {
+  const last = scheduleResult.value
+  if (!last) return
+
+  planner.restoreSlots(last.templateId, last.slots)
+  dismissScheduleResult()
+}
 </script>
 
 <template>
@@ -481,6 +570,59 @@ function submitAdd() {
         </div>
         <EditButton :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
       </div>
+
+      <!-- Schedule in the week (FR-PLAN-25): the active week type, replacing other activities in the hours painted -->
+      <section v-if="selectedActivity && !editing" class="act-panel act-schedule" aria-labelledby="act-schedule-title">
+        <div class="act-panel-head">
+          <h3 id="act-schedule-title" class="act-panel-title">Schedule in the week</h3>
+        </div>
+        <p class="act-schedule-lede">
+          Paints {{ selectedActivity.name }} in <strong>{{ activeTemplate?.name ?? 'no week type' }}</strong>. Hours it replaces belong to other activities.
+        </p>
+        <p v-if="scheduleHabitHint" class="act-schedule-hint">{{ scheduleHabitHint }}</p>
+
+        <fieldset class="sched-days">
+          <legend class="field-label">Days</legend>
+          <div class="sched-day-row">
+            <button
+              v-for="(day, index) in DAYS"
+              :key="day"
+              type="button"
+              class="chip"
+              :data-active="scheduleDays.includes(index)"
+              :aria-pressed="scheduleDays.includes(index)"
+              @click="toggleScheduleDay(index)"
+            >{{ day }}</button>
+          </div>
+        </fieldset>
+
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="sched-duration">Duration</label>
+            <select id="sched-duration" v-model.number="scheduleDuration" class="timely-select" @change="scheduleError = ''">
+              <option v-for="hours in durationOptions" :key="hours" :value="hours">{{ hours }} h</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="sched-start">Start</label>
+            <select id="sched-start" v-model.number="scheduleStart" class="timely-select" @change="scheduleError = ''">
+              <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ formatHour(hour) }}</option>
+            </select>
+          </div>
+        </div>
+
+        <p v-if="scheduleError" id="sched-error" class="field-error" role="alert">{{ scheduleError }}</p>
+        <p v-if="!scheduleHourly" class="act-schedule-hint">This week type is not hourly, so hours cannot be painted here.</p>
+
+        <div class="act-actions">
+          <button type="button" class="btn btn-sm btn-primary" :disabled="!scheduleHourly" @click="addToWeek">Add to my week</button>
+        </div>
+
+        <div v-if="scheduleResult" class="sched-result" role="status">
+          <span>{{ scheduleResult.text }}</span>
+          <button type="button" class="btn btn-sm" @click="undoSchedule">Undo</button>
+        </div>
+      </section>
 
       <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
       <div v-if="editing && selectedActivity" class="act-panel" @keydown="onEditKeydown">
