@@ -142,36 +142,44 @@ const toggleDark = () => {
           </button>
           <div v-if="accountOpen" ref="menuRef" class="account-menu" tabindex="-1">
             <div class="account-head">
-              <template v-if="auth.status === 'signed-in'">
-                <p v-if="auth.user?.name" class="account-name">{{ auth.user.name }}</p>
-                <p class="account-email">{{ auth.user?.email }}</p>
+              <p class="account-name">{{ auth.status === 'signed-in' ? (auth.user?.name || 'My account') : 'Local mode' }}</p>
+              <p v-if="auth.status !== 'signed-in'" class="account-sub">Saved in this browser</p>
+              <template v-if="storageStatus.state !== 'local'">
+                <p class="account-status" :data-state="storageStatus.state" aria-live="polite">
+                  <span class="account-status-dot" aria-hidden="true" />
+                  {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
+                </p>
+                <p v-if="storageStatus.message" class="account-status-note">{{ storageStatus.message }}</p>
               </template>
-              <p v-else class="account-email">Local mode, saved in this browser</p>
             </div>
 
-            <div v-if="storageStatus.state !== 'local'" class="account-save">
-              <p class="account-status" :data-state="storageStatus.state" aria-live="polite">
-                <span class="account-status-dot" aria-hidden="true" />
-                {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
-              </p>
-              <p v-if="storageStatus.message" class="account-status-note">{{ storageStatus.message }}</p>
+            <div class="account-items">
+              <button
+                ref="themeRef"
+                type="button"
+                class="account-item account-switch"
+                role="switch"
+                :aria-checked="dark ? 'true' : 'false'"
+                @click="toggleDark"
+              >
+                <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" /></svg>
+                <span class="account-label">Dark mode</span>
+                <span class="account-track" aria-hidden="true"><span class="account-knob" /></span>
+              </button>
+
+              <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayTour">
+                <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" /></svg>
+                <span class="account-label">Replay tour</span>
+              </button>
+              <button type="button" class="account-item account-item-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">
+                <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" /></svg>
+                <span class="account-label">Reset my data</span>
+              </button>
+              <button v-if="auth.status === 'signed-in'" type="button" class="account-item" @click="onSignOut">
+                <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9" /></svg>
+                <span class="account-label">Sign out</span>
+              </button>
             </div>
-
-            <button
-              ref="themeRef"
-              type="button"
-              class="account-switch"
-              role="switch"
-              :aria-checked="dark ? 'true' : 'false'"
-              @click="toggleDark"
-            >
-              <span>Dark mode</span>
-              <span class="account-track" aria-hidden="true"><span class="account-knob" /></span>
-            </button>
-
-            <button v-if="storageStatus.state !== 'loading'" type="button" class="btn btn-sm" @click="onReplayTour">Replay tour</button>
-            <button type="button" class="btn btn-sm btn-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">Reset my data</button>
-            <button v-if="auth.status === 'signed-in'" type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
           </div>
         </div>
       </header>
