@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel } from '~/utils/planner'
+import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
-const { categories, activities, activeTemplate } = storeToRefs(planner)
+const { categories, activities } = storeToRefs(planner)
 const { link, setSelection } = useNav()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
@@ -55,9 +55,10 @@ const confirmUnlink = (activityId: string) => {
   unlinkId.value = null
 }
 
-// ── Activities: hours a week in the active template
+// ── Activities: hours a week in the week type the comparison reads (goalsTemplate, FR-GOALS-16), so the figures add up to the bar
+const goalsWeek = computed(() => goalsTemplate(planner.$state) ?? null)
 const activeHours = computed(() =>
-  activeTemplate.value ? aggregateTemplate(activeTemplate.value, activities.value) : new Map<string, number>()
+  goalsWeek.value ? aggregateTemplate(goalsWeek.value, activities.value) : new Map<string, number>()
 )
 const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
 
@@ -193,6 +194,7 @@ function confirmRemove() {
           :planned-minutes="alignment?.allocatedMinutes ?? 0"
           :color="category.color"
         />
+        <p v-if="goalsWeek" class="detail-compare">Compared with {{ goalsWeek.name }}</p>
       </section>
 
       <section class="detail-block">
@@ -428,6 +430,13 @@ function confirmRemove() {
 }
 
 .detail-text.is-empty {
+  color: var(--ink-3);
+}
+
+/* Quiet line under the hours bar: which week type the comparison reads */
+.detail-compare {
+  margin: 0;
+  font-size: var(--fs-sm);
   color: var(--ink-3);
 }
 
