@@ -2,6 +2,7 @@
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerYear } from '~/composables/usePlannerYear'
 import { addDays } from '~/utils/dates'
+import { focusEditField } from '~/utils/focus'
 
 /**
  * Journal (FR-HOME-11 to 13): one plain-text entry per local date. It opens on today; the previous and next buttons, the
@@ -78,7 +79,7 @@ const startEdit = () => {
   editDate = selected.value
   draft.value = note.value
   editing.value = true
-  nextTick(() => editor.value?.querySelector('textarea')?.focus())
+  nextTick(() => focusEditField(editor.value?.querySelector<HTMLElement>('textarea'), editor.value))
 }
 
 const finishEdit = (refocus = true) => {
@@ -131,7 +132,7 @@ onBeforeUnmount(() => {
         <button v-else ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">Write {{ isToday ? 'today’s note' : 'a note for this day' }}</button>
       </div>
 
-      <div v-else ref="editor" class="journal-edit" @keydown.esc="finishEdit()">
+      <div v-else ref="editor" class="journal-edit" tabindex="-1" @keydown.esc="finishEdit()">
         <AutoTextarea
           :model-value="draft"
           :label="isToday ? 'Today’s note' : `Note for ${dayText}`"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { createLifeAreas } from '~/utils/planner'
 import { MAX_ONBOARDING_GOALS } from '~/utils/onboarding'
+import { focusEditField } from '~/utils/focus'
 
 /** Welcome, then the two guided dialogs: 1 Your ambition and 2 Goals and habits (FR-ONB-3, 4). Focus moves into them, Escape goes back */
 const { phase, openWelcome, openIntro, openAmbition, openGoals, startEmpty, useSampleData, build } = useOnboarding()
@@ -28,8 +29,8 @@ const goals = ref<GoalDraft[]>([draft()])
 const timeOptions = [1, 2, 3, 4, 5, 6, 7]
 const hourOptions = [1, 2, 3]
 
-/** Moves focus to the element marked for the current view, once it is rendered */
-const focusStart = () => nextTick(() => dialog.value?.querySelector<HTMLElement>('[data-autofocus]')?.focus())
+/** Moves focus to the element marked for the current view, once it is rendered. On a phone the dialog takes it instead of the field (FR-UX-9) */
+const focusStart = () => nextTick(() => focusEditField(dialog.value?.querySelector<HTMLElement>('[data-autofocus]'), dialog.value))
 
 /** Moves focus to the first field that is marked invalid */
 const focusInvalid = () => nextTick(() => dialog.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())

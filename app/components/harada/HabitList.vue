@@ -2,6 +2,7 @@
 import type { Activity, Habit, HabitPeriod } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { habitAlignment, hoursLabel } from '~/utils/planner'
+import { focusEditField } from '~/utils/focus'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 
@@ -110,7 +111,7 @@ function openAdd() {
   draftLink.value = ''
   draftLinkTouched = false
   draft.value = { id: '', categoryId: props.categoryId, name: '', frequency: { count: 1, period: 'week' } }
-  nextTick(() => draftEl.value?.querySelector<HTMLElement>('textarea')?.focus())
+  nextTick(() => focusEditField(draftEl.value?.querySelector<HTMLElement>('textarea'), draftEl.value))
 }
 
 function closeAdd() {
@@ -209,7 +210,7 @@ function removeHabit(habitId: string) {
     </div>
 
     <!-- The add form: Escape cancels it here, so the category's own Escape (leave edit mode) does not run -->
-    <div v-if="draft" ref="draftEl" class="habit-edit is-open" @keydown.esc.stop="closeAdd">
+    <div v-if="draft" ref="draftEl" class="habit-edit is-open" tabindex="-1" @keydown.esc.stop="closeAdd">
       <HaradaHabitForm
         :habit="draft"
         :link-value="draftLink"

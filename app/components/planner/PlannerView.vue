@@ -15,6 +15,7 @@ import {
 import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { shortCodeFor } from '~/utils/onboarding'
+import { focusEditById, focusEditField } from '~/utils/focus'
 import type { Activity } from '~/types/planner'
 
 const planner = usePlannerStore()
@@ -91,6 +92,7 @@ const cellStyle = (startDate: string) => {
 // ── Template management ──
 // New week type (FR-TPL-2, 6, 8): a panel with a Start from choice: empty, a copy of a week type, or a preset
 const newTemplateInput = ref<HTMLInputElement | null>(null)
+const newTemplatePanel = ref<HTMLElement | null>(null)
 const newTemplateTrigger = ref<HTMLButtonElement | null>(null)
 const newFrom = ref('empty')
 const keepHabits = ref(true)
@@ -124,7 +126,13 @@ watch(templateEditOpen, (open) => {
 
 function openNewTemplate() {
   newTemplateOpen.value = true
-  nextTick(() => newTemplateInput.value?.focus())
+  nextTick(() => focusEditField(newTemplateInput.value, newTemplatePanel.value))
+}
+
+// Double-click renames a week type; the name field takes focus on a desktop, a phone keeps the keyboard down
+function startRename(templateId: string) {
+  renamingId.value = templateId
+  nextTick(() => focusEditField(document.querySelector<HTMLElement>('.pill-input'), null))
 }
 
 function closeNewTemplate() {
@@ -180,7 +188,7 @@ const weekCount = computed(() => weeks.value.length)
 function openYearFor(templateId: string) {
   weekRangeTemplate.value = templateId
   yearOpen.value = true
-  nextTick(() => weekFromInput.value?.focus())
+  nextTick(() => focusEditField(weekFromInput.value, weekFromInput.value?.closest<HTMLElement>('.weeks-row')))
 }
 
 function applyWeekRange() {
@@ -291,7 +299,7 @@ function startEdit() {
   // One item in edit mode per screen: the week type editor closes
   templateEditOpen.value = false
   // Focus moves into the form once the route shows it, so Escape reaches the panel
-  setSelection({ item: selectedActivity.value.id, edit: true }).then(() => nextTick(() => document.getElementById('act-edit-name')?.focus()))
+  setSelection({ item: selectedActivity.value.id, edit: true }).then(() => nextTick(() => focusEditById('act-edit-name', 'act-edit-panel')))
 }
 
 const activityEditButton = ref<{ focus: () => void } | null>(null)
@@ -392,6 +400,7 @@ const addErrors = ref<ActivityFieldErrors>({})
 // The short code follows the name until it is typed by hand; a blank one is derived from the name when the form is submitted
 const shortCodeEdited = ref(false)
 const addNameInput = ref<HTMLInputElement | null>(null)
+const addPanel = ref<HTMLElement | null>(null)
 const addTrigger = ref<HTMLButtonElement | null>(null)
 
 watch(() => addDraft.name, (name) => {
@@ -416,7 +425,7 @@ function openAdd(categoryId?: string | null) {
   addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
   addErrors.value = {}
   addOpen.value = true
-  nextTick(() => addNameInput.value?.focus())
+  nextTick(() => focusEditField(addNameInput.value, addPanel.value))
 }
 
 function closeAdd() {
@@ -560,7 +569,6 @@ function undoSchedule() {
         <input
           v-if="renamingId === t.id"
           class="pill-input"
-          autofocus
           :value="t.name"
           @blur="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
           @keydown.enter="(e) => { planner.renameActiveTemplate((e.target as HTMLInputElement).value.trim() || t.name); renamingId = null }"
@@ -572,7 +580,7 @@ function undoSchedule() {
           :data-active="t.id === activeTemplate?.id"
           title="Click to select, double-click to rename"
           @click="planner.selectTemplate(t.id)"
-          @dblclick="renamingId = t.id"
+          @dblclick="startRename(t.id)"
         >
           <span
             class="dot dot-action"
@@ -602,7 +610,7 @@ function undoSchedule() {
     </div>
 
     <!-- New week type: a name and a Start from choice (empty, a copy, or a preset with its role mapping) -->
-    <div v-if="newTemplateOpen" class="act-panel new-template-panel" @keydown.escape.stop="closeNewTemplate">
+    <div v-if="newTemplateOpen" ref="newTemplatePanel" class="act-panel new-template-panel" tabindex="-1" @keydown.escape.stop="closeNewTemplate">
       <div class="act-panel-head">
         <h3 class="act-panel-title">New week type</h3>
       </div>
@@ -915,7 +923,7 @@ function undoSchedule() {
       </div>
 
       <!-- New activity: a quiet link reveals the form -->
-      <div v-if="addOpen" class="act-panel" @keydown.escape="closeAdd">
+      <div v-if="addOpen" ref="addPanel" class="act-panel" tabindex="-1" @keydown.escape="closeAdd">
         <div class="form-stack">
           <div class="field">
             <label class="field-label" for="add-act-name">Name</label>
@@ -1022,7 +1030,7 @@ function undoSchedule() {
           </div>
 
           <!-- Weeks: one week type for a range of weeks, typed rather than painted (FR-YEAR-7) -->
-          <div class="weeks-row" role="group" aria-labelledby="weeks-row-title">
+          <div class="weeks-row" role="group" aria-labelledby="weeks-row-title" tabindex="-1">
             <span id="weeks-row-title" class="field-label">Weeks</span>
             <div class="weeks-row-line">
               <label class="weeks-part" for="weeks-template">Use</label>

@@ -102,6 +102,8 @@ button, input, select, textarea {
 button { cursor: pointer; background: none; border: none; padding: 0; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* A panel that takes focus itself (FR-UX-9, focusEditField) shows no ring after a tap; a keyboard user still sees it */
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 a { color: var(--accent); text-underline-offset: 3px; }
 
 .muted { color: var(--ink-3); }
