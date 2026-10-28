@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS, categoryAlignments, hoursLabel } from '~/utils/planner'
+import { focusEditById, focusEditField } from '~/utils/focus'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
 const MAP_SIZE = 8
@@ -124,7 +125,7 @@ function openCategory(categoryId: string) {
 function addGoal(categoryId: string) {
   lastOpened = categoryId
   listScroll = window.scrollY
-  setSelection({ item: categoryId, edit: true }).then(() => nextTick(() => document.getElementById('cat-edit-name')?.focus()))
+  setSelection({ item: categoryId, edit: true }).then(() => nextTick(() => focusEditById('cat-edit-name', 'cat-detail')))
 }
 
 // The list is laid out after the route changes, so the scroll waits for the next frame
@@ -190,13 +191,14 @@ const addColor = ref(DESIGN_COLORS[0]!.bg)
 const addError = ref('')
 const addTrigger = ref<HTMLButtonElement | null>(null)
 const addNameInput = ref<HTMLInputElement | null>(null)
+const addPanel = ref<HTMLFormElement | null>(null)
 
 function openAdd() {
   addName.value = ''
   addColor.value = DESIGN_COLORS[0]!.bg
   addError.value = ''
   addOpen.value = true
-  nextTick(() => addNameInput.value?.focus())
+  nextTick(() => focusEditField(addNameInput.value, addPanel.value))
 }
 
 function closeAdd() {
@@ -215,7 +217,7 @@ function submitAdd() {
   if (!id) return
 
   addOpen.value = false
-  setSelection({ item: id, edit: true }).then(() => nextTick(() => document.getElementById('cat-edit-name')?.focus()))
+  setSelection({ item: id, edit: true }).then(() => nextTick(() => focusEditById('cat-edit-name', 'cat-detail')))
 }
 </script>
 
@@ -364,7 +366,7 @@ function submitAdd() {
         <div class="add-category">
           <button v-if="!addOpen" ref="addTrigger" type="button" class="chip-add" @click="openAdd">+ Add life area</button>
 
-          <form v-else class="form-stack" @submit.prevent="submitAdd" @keydown.escape="closeAdd">
+          <form v-else ref="addPanel" class="form-stack" tabindex="-1" @submit.prevent="submitAdd" @keydown.escape="closeAdd">
             <div class="field">
               <label class="field-label" for="new-category-name">Name</label>
               <input

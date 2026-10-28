@@ -2,6 +2,7 @@
 import { useTheme } from 'vuetify'
 import { localDateKey } from '~/utils/dates'
 import { LEGAL_ROUTES } from '~/utils/legal'
+import { accountInitials } from '~/utils/account'
 
 const router = useRouter()
 const { tab, go } = useNav()
@@ -16,11 +17,49 @@ const planner = usePlannerStore()
 const onboarding = useOnboarding()
 const accountOpen = ref(false)
 const resetOpen = ref(false)
+const accountRef = ref<HTMLElement | null>(null)
+const avatarRef = ref<HTMLButtonElement | null>(null)
+const menuRef = ref<HTMLElement | null>(null)
+const themeRef = ref<HTMLButtonElement | null>(null)
 
 /** Replays the tour from Plan your week; without an ambition and a life area with habits there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
   if (planner.ambition && onboardedCategories(planner.$state).length) onboarding.startTour()
   else onboarding.openWelcome()
+}
+
+/** Avatar initials from the Google name or the email; '' shows the person glyph (local mode, or no letters) */
+const initials = computed(() => (auth.value.status === 'signed-in' && auth.value.user ? accountInitials(auth.value.user.name, auth.value.user.email) : ''))
+
+/** Saving and not saved get a dot on the avatar; saved, loading and local show none (the menu says it in text) */
+const attention = computed(() => storageStatus.value.state === 'saving' || storageStatus.value.state === 'error')
+
+const avatarLabel = computed(() => {
+  const who = auth.value.status === 'signed-in' ? auth.value.user?.name || auth.value.user?.email : ''
+  const save = storageStatus.value.state === 'error' ? ', not saved' : storageStatus.value.state === 'saving' ? ', saving' : ''
+  return `Account menu${who ? `, ${who}` : ''}${save}`
+})
+
+const storageLabels = { loading: 'Loading...', saving: 'Saving...', saved: 'Saved', error: 'Not saved' }
+
+/** Opens the menu; on desktop the first control takes focus, on a phone the menu panel does (app/utils/focus.ts) */
+const toggleAccount = async () => {
+  accountOpen.value = !accountOpen.value
+  if (!accountOpen.value) return
+  await nextTick()
+  focusEditField(themeRef.value, menuRef.value)
+}
+
+/** Escape closes the menu from anywhere inside it and returns focus to the avatar */
+const onAccountEscape = () => {
+  if (!accountOpen.value) return
+  accountOpen.value = false
+  avatarRef.value?.focus()
+}
+
+/** A click or tap outside the account block closes the menu */
+const onDocumentPointer = (event: PointerEvent) => {
+  if (accountOpen.value && accountRef.value && !accountRef.value.contains(event.target as Node)) accountOpen.value = false
 }
 
 const onSignOut = async () => {
@@ -38,8 +77,6 @@ const onReplayTour = () => {
   replayTour()
 }
 
-const storageLabels = { loading: 'Loading', saving: 'Saving', saved: 'Saved', error: 'Not saved' }
-
 // Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
 watch(dark, (v) => {
   if (import.meta.client) {
@@ -53,7 +90,10 @@ onMounted(() => {
   if (saved !== null) dark.value = saved === 'true'
   // Date-dependent views read this only after mount, so server and client render the same first pass
   today.value = localDateKey()
+  document.addEventListener('pointerdown', onDocumentPointer)
 })
+
+onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointer))
 
 const toggleDark = () => {
   dark.value = !dark.value
@@ -82,53 +122,58 @@ const toggleDark = () => {
         </nav>
         <div v-else class="topbar-spacer" aria-hidden="true" />
 
-        <span
-          v-if="auth.status === 'signed-in'"
-          class="storage-status"
-          :data-state="storageStatus.state"
-          role="status"
-          :title="storageStatus.message || undefined"
-        >
-          <span class="storage-status-dot" aria-hidden="true" />
-          {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
-        </span>
-
-        <div v-if="auth.status === 'off' || auth.status === 'signed-in'" class="account">
+        <div v-if="auth.status === 'off' || auth.status === 'signed-in'" ref="accountRef" class="account" @keydown.esc="onAccountEscape">
           <button
+            ref="avatarRef"
             type="button"
             class="account-button"
+            :aria-label="avatarLabel"
             aria-haspopup="true"
             :aria-expanded="accountOpen"
-            @click="accountOpen = !accountOpen"
-            @keydown.esc="accountOpen = false"
+            @click="toggleAccount"
           >
-            Account
+            <template v-if="initials">{{ initials }}</template>
+            <!-- Person glyph: local mode, or no name and no email to take letters from -->
+            <svg v-else class="account-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="9" r="3.6" />
+              <path d="M5.2 20c1.3-3.3 3.8-5 6.8-5s5.5 1.7 6.8 5" />
+            </svg>
+            <span v-if="attention" class="account-dot" :data-state="storageStatus.state" aria-hidden="true" />
           </button>
-          <div v-if="accountOpen" class="account-menu">
-            <p v-if="auth.status === 'signed-in'" class="account-email">{{ auth.user?.email }}</p>
+          <div v-if="accountOpen" ref="menuRef" class="account-menu" tabindex="-1">
+            <div class="account-head">
+              <template v-if="auth.status === 'signed-in'">
+                <p v-if="auth.user?.name" class="account-name">{{ auth.user.name }}</p>
+                <p class="account-email">{{ auth.user?.email }}</p>
+              </template>
+              <p v-else class="account-email">Local mode, saved in this browser</p>
+            </div>
+
+            <div v-if="storageStatus.state !== 'local'" class="account-save">
+              <p class="account-status" :data-state="storageStatus.state" aria-live="polite">
+                <span class="account-status-dot" aria-hidden="true" />
+                {{ storageLabels[storageStatus.state as keyof typeof storageLabels] }}
+              </p>
+              <p v-if="storageStatus.message" class="account-status-note">{{ storageStatus.message }}</p>
+            </div>
+
+            <button
+              ref="themeRef"
+              type="button"
+              class="account-switch"
+              role="switch"
+              :aria-checked="dark ? 'true' : 'false'"
+              @click="toggleDark"
+            >
+              <span>Dark mode</span>
+              <span class="account-track" aria-hidden="true"><span class="account-knob" /></span>
+            </button>
+
             <button v-if="storageStatus.state !== 'loading'" type="button" class="btn btn-sm" @click="onReplayTour">Replay tour</button>
-            <button v-if="auth.status === 'signed-in'" type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
             <button type="button" class="btn btn-sm btn-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">Reset my data</button>
+            <button v-if="auth.status === 'signed-in'" type="button" class="btn btn-sm" @click="onSignOut">Sign out</button>
           </div>
         </div>
-
-        <button
-          class="theme-toggle"
-          type="button"
-          :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'"
-          :title="dark ? 'Light theme' : 'Dark theme'"
-          @click="toggleDark"
-        >
-          <!-- Sun -->
-          <svg v-if="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6" />
-          </svg>
-          <!-- Moon -->
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
-          </svg>
-        </button>
       </header>
 
       <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />

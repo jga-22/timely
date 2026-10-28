@@ -109,7 +109,7 @@ In Supabase mode:
 
 - Nothing is loaded or written before a signed-in session exists. The page shows a sign-in card instead.
 - Sign-in is with Google. The session is kept by supabase-js in the browser, so a reload stays signed in.
-- The topbar shows the save status (Loading, Saving, Saved, Not saved) and an Account menu with the email and Sign out.
+- The top bar's account avatar carries the save state: a dot while saving or not saved. Its Account menu shows the save status (Loading..., Saving..., Saved, Not saved), the email and Sign out.
 - Sign-out returns the screen to the seed without writing it to the database. Another user signing in on the same browser never sees the previous user's data.
 - Saves are debounced by 600 ms and sent when the page is hidden. If the first load fails, nothing is written, so the remote copy is never overwritten; reload to try again.
 

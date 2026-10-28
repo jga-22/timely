@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
+import { focusEditById } from '~/utils/focus'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
@@ -69,7 +70,7 @@ const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : 
 const editButton = ref<HTMLButtonElement | null>(null)
 
 function startEdit() {
-  setSelection({ item: props.categoryId, edit: true }).then(() => nextTick(() => document.getElementById('cat-edit-name')?.focus()))
+  setSelection({ item: props.categoryId, edit: true }).then(() => nextTick(() => focusEditById('cat-edit-name', 'cat-detail')))
 }
 
 function finishEdit() {
@@ -161,7 +162,7 @@ function confirmRemove() {
 </script>
 
 <template>
-  <div v-if="category" class="detail" @keydown="onKeydown">
+  <div v-if="category" id="cat-detail" class="detail" tabindex="-1" @keydown="onKeydown">
     <div class="detail-head">
       <button type="button" class="btn btn-sm detail-back" @click="emit('back')">
         <svg class="detail-back-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
@@ -177,17 +178,17 @@ function confirmRemove() {
       </div>
     </div>
 
-    <!-- View mode: read-only. Target first, then the habits and the hours they need, the 5-year goal, and the activities no habit links -->
+    <!-- View mode: read-only. The 5-year goal and the 1-year target, the hours comparison, the habits, then the activities no habit links (FR-GOALS-27) -->
     <template v-if="!editing">
+      <section class="detail-block">
+        <h4 class="detail-label">5-year goal</h4>
+        <p class="detail-text" :class="{ 'is-empty': !category.goal5y }">{{ category.goal5y || 'Not written yet.' }}</p>
+      </section>
+
       <section class="detail-block">
         <h4 class="detail-label">1-year target</h4>
         <p v-if="category.targetTbd" class="detail-flag">To define</p>
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
-      </section>
-
-      <section class="detail-block">
-        <h4 class="detail-label">Habits</h4>
-        <HaradaHabitList :category-id="category.id" :editing="false" />
       </section>
 
       <section v-if="mounted" class="detail-block detail-goal">
@@ -201,8 +202,8 @@ function confirmRemove() {
       </section>
 
       <section class="detail-block">
-        <h4 class="detail-label">5-year goal</h4>
-        <p class="detail-text" :class="{ 'is-empty': !category.goal5y }">{{ category.goal5y || 'Not written yet.' }}</p>
+        <h4 class="detail-label">Habits</h4>
+        <HaradaHabitList :category-id="category.id" :editing="false" />
       </section>
 
       <section class="detail-block">

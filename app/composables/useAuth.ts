@@ -5,6 +5,8 @@ import type { StorageConfig } from '~/utils/storage/types'
 export interface AuthUser {
   id: string
   email: string
+  /** Name from the Google account (user_metadata), '' when the provider sends none */
+  name: string
 }
 
 export interface AuthState {
@@ -16,6 +18,13 @@ export interface AuthState {
 let initialised = false
 
 /** Sign-in state for Supabase mode: Google sign-in, session restore and sign-out. Kept apart from the storage adapter */
+/** The Google name (full_name, or name); other providers may send neither */
+const userName = (session: Session): string => {
+  const meta = session.user.user_metadata ?? {}
+  const name = meta.full_name || meta.name
+  return typeof name === 'string' ? name : ''
+}
+
 export const useAuth = () => {
   const config = useRuntimeConfig().public as StorageConfig
   const enabled = resolveStorageMode(config) === 'supabase'
@@ -24,7 +33,7 @@ export const useAuth = () => {
 
   const setSession = (session: Session | null) => {
     state.value = session
-      ? { status: 'signed-in', user: { id: session.user.id, email: session.user.email ?? '' } }
+      ? { status: 'signed-in', user: { id: session.user.id, email: session.user.email ?? '', name: userName(session) } }
       : { status: 'signed-out', user: null }
   }
 

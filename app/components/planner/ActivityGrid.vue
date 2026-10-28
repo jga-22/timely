@@ -49,6 +49,8 @@ const menuOpen = ref(false)
 const editing = ref(false)
 const editSnapshot = ref<Range | null>(null)
 const editActivityId = ref<string | null>(null)
+// True while the edit that Apply opened is open: its undo step is the Apply's, and Save extends that step
+const editFromApply = ref(false)
 const undo = ref<Undo | null>(null)
 // Keyboard: the focused hour, and the start of a Shift-arrow selection
 const cursor = ref<Cell>({ day: 0, hour: 8 })
@@ -86,6 +88,11 @@ const dismissUndo = () => {
   clearTimeout(undoTimer)
 }
 
+const restartUndoTimer = () => {
+  clearTimeout(undoTimer)
+  undoTimer = setTimeout(dismissUndo, UNDO_MS)
+}
+
 /** Runs a change to the active template as one undoable step. Nothing is recorded when no hour changed */
 const commit = (text: string, change: () => void) => {
   const template = activeTemplate.value
@@ -97,14 +104,15 @@ const commit = (text: string, change: () => void) => {
   if (!template.slots.some((holder, index) => holder !== before[index])) return
 
   undo.value = { text: `${text}.`, templateId: template.id, slots: before }
-  clearTimeout(undoTimer)
-  undoTimer = setTimeout(dismissUndo, UNDO_MS)
+  restartUndoTimer()
 }
 
 const undoLast = () => {
   const last = undo.value
   if (!last) return
 
+  // Undo leaves an open edit first, then restores the week from before the change
+  if (editing.value) closeAll()
   planner.restoreSlots(last.templateId, last.slots)
   dismissUndo()
 }
@@ -128,20 +136,36 @@ const openBar = () => {
 }
 
 const closeAll = () => {
+  const endsApplyEdit = editFromApply.value
   barOpen.value = false
   menuOpen.value = false
   editing.value = false
   editSnapshot.value = null
   editActivityId.value = null
+  editFromApply.value = false
   selection.value = null
   anchor.value = null
+  // The undo line of an Apply has waited for its edit; it now dismisses itself as usual
+  if (endsApplyEdit && undo.value) restartUndoTimer()
   focusCursor()
+}
+
+// The menu stays on screen: it moves up when its bottom would pass the screen edge, and its list scrolls inside it
+const fitMenu = () => {
+  const menu = menuEl.value
+  if (!menu) return
+
+  const height = menu.getBoundingClientRect().height
+  barPos.value = { ...barPos.value, y: Math.max(8, Math.min(barPos.value.y, window.innerHeight - height - 8)) }
 }
 
 const pickFromBar = () => {
   barOpen.value = false
   menuOpen.value = true
-  nextTick(() => menuEl.value?.querySelector<HTMLButtonElement>('button')?.focus())
+  nextTick(() => {
+    fitMenu()
+    menuEl.value?.querySelector<HTMLButtonElement>('button')?.focus()
+  })
 }
 
 const applyActivity = (activityId: string) => {
@@ -150,15 +174,35 @@ const applyActivity = (activityId: string) => {
   if (!range || !template) return
 
   const name = activityMap.value.get(activityId)?.name ?? 'Activity'
+  // Applying the activity that already fills the whole run changes nothing: the bar closes as it always did
+  const changes = cellsOf(range).some(index => slots.value[index] !== activityId)
   commit(`${name} set on ${rangeLabel(range)}`, () => {
     planner.paintCells(template.id, cellsOf(range), activityId)
   })
-  closeAll()
+
+  if (!changes) {
+    closeAll()
+    return
+  }
+
+  // The new block opens in edit mode at once, so its start and end change without selecting it again (FR-PLAN-23).
+  // Its undo step waits for the edit: Save extends it, Cancel and Escape keep the block as applied
+  clearTimeout(undoTimer)
+  barOpen.value = false
+  menuOpen.value = false
+  editSnapshot.value = { ...range }
+  editActivityId.value = activityId
+  editFromApply.value = true
+  editing.value = true
+  nextTick(() => gridEl.value?.querySelector<HTMLElement>('.wk-handle.is-top')?.focus())
 }
 
 const clearRange = (range: Range) => {
   const template = activeTemplate.value
   if (!template) return
+
+  // A change made outside the edit (clear day, a block's delete) ends the edit first
+  if (editing.value) closeAll()
 
   commit(`Cleared ${rangeLabel(range)}`, () => {
     planner.paintCells(template.id, cellsOf(range), null)
@@ -185,6 +229,12 @@ const startEdit = () => {
 }
 
 const cancelEdit = () => {
+  // The edit that Apply opened leaves the block as applied
+  if (editFromApply.value) {
+    closeAll()
+    return
+  }
+
   if (editSnapshot.value) selection.value = { ...editSnapshot.value }
   editing.value = false
   editSnapshot.value = null
@@ -199,13 +249,34 @@ const saveEdit = () => {
   const activityId = editActivityId.value
 
   if (snapshot && range && template) {
-    commit(`Moved to ${rangeLabel(range)}`, () => {
+    const moved = range.day !== snapshot.day || range.start !== snapshot.start || range.end !== snapshot.end
+    const move = () => {
       planner.paintCells(template.id, cellsOf(snapshot), null)
       if (activityId) planner.paintCells(template.id, cellsOf(range), activityId)
-    })
+    }
+
+    if (editFromApply.value && undo.value) {
+      // The Apply's step still restores the week from before the Apply, so a move extends that step instead of adding one
+      if (moved) {
+        move()
+        undo.value = { ...undo.value, text: `Moved to ${rangeLabel(range)}.` }
+      }
+    } else {
+      commit(`Moved to ${rangeLabel(range)}`, move)
+    }
   }
 
   closeAll()
+}
+
+/** Moves one edge of the selection to an hour line (0 to 24); the run keeps at least one hour */
+const setEdge = (side: 'top' | 'bottom', hour: number) => {
+  const range = selection.value
+  if (!range) return
+
+  selection.value = side === 'top'
+    ? { ...range, start: Math.max(0, Math.min(hour, range.end - 1)) }
+    : { ...range, end: Math.min(24, Math.max(hour, range.start + 1)) }
 }
 
 const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
@@ -214,24 +285,33 @@ const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
   resizeSide = side
   resizeDay = (event.currentTarget as HTMLElement).closest<HTMLElement>('.wk-day')
   window.addEventListener('pointermove', onResizeMove)
-  window.addEventListener('pointerup', endResize, { once: true })
+  window.addEventListener('pointerup', endResize)
+  window.addEventListener('pointercancel', endResize)
 }
 
 const onResizeMove = (event: PointerEvent) => {
-  const range = selection.value
-  if (!resizeDay || !resizeSide || !range) return
+  if (!resizeDay || !resizeSide || !selection.value) return
 
-  const hour = Math.max(0, Math.min(24, Math.round((event.clientY - resizeDay.getBoundingClientRect().top) / HOUR_PX)))
-
-  selection.value = resizeSide === 'top'
-    ? { ...range, start: Math.max(0, Math.min(hour, range.end - 1)) }
-    : { ...range, end: Math.min(24, Math.max(hour, range.start + 1)) }
+  setEdge(resizeSide, Math.max(0, Math.min(24, Math.round((event.clientY - resizeDay.getBoundingClientRect().top) / HOUR_PX))))
 }
 
 const endResize = () => {
   window.removeEventListener('pointermove', onResizeMove)
+  window.removeEventListener('pointerup', endResize)
+  window.removeEventListener('pointercancel', endResize)
   resizeDay = null
   resizeSide = null
+}
+
+// A focused handle moves its edge one hour with Up and Down (FR-PLAN-19)
+const onHandleKey = (side: 'top' | 'bottom', event: KeyboardEvent) => {
+  if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+
+  event.preventDefault()
+  const range = selection.value
+  if (!range) return
+
+  setEdge(side, (side === 'top' ? range.start : range.end) + (event.key === 'ArrowUp' ? -1 : 1))
 }
 
 // Pointer: press on an hour, drag down the same day column, release to open the bar.
@@ -464,14 +544,16 @@ onBeforeUnmount(() => {
                   <button
                     type="button"
                     class="wk-handle is-top"
-                    aria-label="Drag to change start"
+                    aria-label="Change start: drag, or Up and Down arrows"
                     @pointerdown="startResize('top', $event)"
+                    @keydown="onHandleKey('top', $event)"
                   ><span /></button>
                   <button
                     type="button"
                     class="wk-handle is-bottom"
-                    aria-label="Drag to change end"
+                    aria-label="Change end: drag, or Up and Down arrows"
                     @pointerdown="startResize('bottom', $event)"
+                    @keydown="onHandleKey('bottom', $event)"
                   ><span /></button>
                 </template>
                 <span class="wk-dur">{{ selection.end - selection.start }}h</span>
