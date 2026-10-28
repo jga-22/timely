@@ -38,10 +38,6 @@ export const dayHours = (state: PlannerState, date: string): Array<string | null
   return hours
 }
 
-/** Name of the template that applies to the date, or null when there is none */
-export const dayTemplateName = (state: PlannerState, date: string): string | null =>
-  effectiveTemplate(state, date)?.name ?? null
-
 /** "Sunday 25 October 2026" */
 export const formatDayLabel = (key: string): string => {
   const [year, month, day] = key.split('-').map(Number)
