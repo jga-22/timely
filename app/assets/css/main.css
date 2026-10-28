@@ -245,14 +245,14 @@ a { color: var(--accent); text-underline-offset: 3px; }
   box-shadow: var(--shadow);
 }
 .account-menu:focus { outline: none; }
-.account-head { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--space-3); border-bottom: 1px solid var(--rule-2); }
+.account-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--space-1) var(--space-2) var(--space-3); border-bottom: 1px solid var(--rule-2); text-align: left; }
+.account-sub { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
 .account-name { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
-.account-save { display: flex; flex-direction: column; gap: var(--space-1); }
 .account-status {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0;
+  margin: var(--space-1) 0 0;
   font-size: var(--fs-xs);
   color: var(--ink-3);
 }
@@ -261,20 +261,30 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .account-status[data-state="error"] { color: var(--danger); }
 .account-status[data-state="error"] .account-status-dot { background: var(--danger); }
 .account-status-note { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); overflow-wrap: anywhere; }
-/* Dark mode switch: the whole row is the button; the track is the visible state (text and aria-checked too) */
-.account-switch {
+/* Menu rows: icon, left-aligned label; the Dark mode row adds the switch track at the right (text and aria-checked carry the state too) */
+.account-items { display: flex; flex-direction: column; gap: 2px; }
+.account-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
   min-height: 36px;
   padding: 0 var(--space-2);
+  border: 0;
   border-radius: var(--radius);
+  background: transparent;
+  font: inherit;
   font-size: var(--fs-sm);
+  text-align: left;
   color: var(--ink-2);
+  cursor: pointer;
 }
-.account-switch:hover { background: var(--bg-3); color: var(--ink); }
+.account-item:hover:not(:disabled) { background: var(--bg-3); color: var(--ink); }
+.account-item:disabled { opacity: 0.5; cursor: default; }
+.account-item-danger { color: var(--danger); }
+.account-item-danger:hover:not(:disabled) { color: var(--danger); }
+.account-icon { width: 16px; height: 16px; flex: none; }
+.account-label { flex: 1; min-width: 0; }
 .account-track {
   position: relative;
   flex: none;
@@ -296,7 +306,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .account-switch[aria-checked="true"] .account-track { background: var(--accent); }
 .account-switch[aria-checked="true"] .account-knob { transform: translateX(14px); }
-.account-email { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); overflow-wrap: anywhere; }
 
 /* Sign-in page (LoginGate.vue, Supabase mode, signed out): one centred column, 640px at most, full width minus the gutters on phones.
    Order: the mark and headline, the intro (frameless, on the page surface), the sign-in block, the consent line. No card frame */

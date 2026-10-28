@@ -19,7 +19,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | File | Size | Notes |
 | --- | --- | --- |
 | `topbar-account-closed-desktop-light.png` | 1280 px wide | Topbar, Supabase mode, signed in: the avatar with the initials "JG" (Google name), no dot |
-| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name and email, "Saved", the Dark mode switch, Replay tour, Reset my data, Sign out last |
+| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name with "Saved" under it, the Dark mode switch, Replay tour, Reset my data, Sign out last |
 | `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark |
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
@@ -120,7 +120,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 - The topbar shows one round avatar button instead of the "Account" text button, the save status and the theme toggle. Initials come from the Google name or the email (`app/utils/account.ts`); local mode shows a person glyph.
 - A dot on the avatar shows while saving (quiet, still with reduced motion) and when not saved (danger). The menu says the same in text ("Saving...", "Not saved", "Saved", "Loading...").
-- The Account menu: the name or email (or "Local mode, saved in this browser"), the save status, a Dark mode switch (`role="switch"`, the same `timely.dark` key), Replay tour, Reset my data, and Sign out last (Supabase mode).
+- The Account menu, left aligned with an icon on each row: the name (no email; "Local mode, saved in this browser" in local mode) with the save status under it, a Dark mode switch (`role="switch"`, the same `timely.dark` key), Replay tour, Reset my data, and Sign out last (Supabase mode).
 - Focus: a desktop focuses the first control on open; a phone focuses the panel (FR-UX-9). Escape closes and returns focus to the avatar; a click outside closes.
 - Checks: typecheck 0 errors; build clean; the initials function (17 cases, `npx tsx`); headless Edge on the production build, 104 browser checks in local mode and against the fake Supabase server (names, initials, the dot states, the error and recovery, the theme persisting on reload, Escape, outside click, sign out) at 1280 and 400 px, light and dark. Not run against the real Supabase project, and not on a real phone.
 - Storage version unchanged (8). Screenshots `topbar-account-*.png`.
