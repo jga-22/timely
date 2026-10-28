@@ -23,9 +23,9 @@ const steps = computed(() => {
   return [
     {
       title: 'Plan your week',
-      body: count
+      body: (count
         ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals shows each area as on target when its activities and habits match the hours planned.`
-        : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.'
+        : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.') + ' Sleep is set to 10 PM-7 AM and kept out of your totals; change it any time in Week.'
     },
     {
       title: 'Insights',
