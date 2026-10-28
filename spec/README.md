@@ -21,12 +21,15 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `home-desktop-light.png` | 1280 px wide | Today, light: title and date, the hour timeline with 9h, 12h, 18h and 22h, the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, the Harada map, the category list with the needed-and-planned bar and status text under each target |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: vision, the category list with the needed-and-planned bar and status text under each target (feat/goals-insights-simplify) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the bars, full page |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, the needed-and-planned bar with "2 h planned of 1.5 h needed", and the quiet "Not linked" habit |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: Physical with its 1-year target, habits, the hours comparison, the 5-year goal and More activities (feat/goals-insights-simplify) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
+| `goals-list-collapsed-desktop-light.png` | 1280 px wide, full page | Goals, light, two life areas with content: the full rows, "6 more life areas · add a goal" collapsed (feat/goals-insights-simplify) |
+| `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
+| `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows with "Add a goal", no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
 | `planner-schedule-desktop-light.png` | 1280 px wide | Week, light: the "Schedule in the week" block under Training, three days at 6PM for 1 h, with the result line and Undo (FR-PLAN-25) |
 | `planner-schedule-mobile-light.png` | 400 px wide | The same block at 400 px: one column of days, duration and start |
@@ -42,6 +45,8 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
+| `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the headline sentence above the chart (feat/goals-insights-simplify) |
+| `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
 
@@ -62,7 +67,7 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
 | `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
 | `onboarding-intro-dialog-mobile-{light,dark}-scene-{1..5}.png` | 390 by 700 px | The intro dialog at a phone size, light and dark, every scene: the stage and its caption band whole, the controls inside the dialog |
-| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, a category with the "+ Add habit" form open (name, times and period, minutes each, linked activity) |
+| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, a category with the "+ Add habit" form open: name Run, minutes each 30, and the linked activity set to "Add 'Run' to my week" as the default (feat/goals-insights-simplify) |
 | `goals-add-habit-mobile-light.png` | 390 px wide | The same add form at phone width |
 | `onboarding-ambition-long-desktop-light.png` | 1280 px wide | Guided step 1 with a 228-character ambition: the field wraps and grows, nothing is cut |
 | `goals-vision-long-desktop-light.png` | 1280 px wide, full page | Goals with the long ambition in the vision and the Harada map centre |
@@ -105,6 +110,17 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 - Year (FR-YEAR-7): the Year section exists with one week type as well, collapsed by default. Its body starts with "Every week of <year> uses <name>."; the Weeks row and the painter work as with two or more week types.
 - Closing (FR-PLAN-26, FR-TPL-9): the activity editor, the Add activity form, Edit week type and New week type close with Done, Cancel or Escape, and focus returns to the control that opened them. Focus after Done in the activity editor was lost before (it looked for a class that did not exist). Opening Edit week type leaves an open activity editor.
 - Screens: `planner-one-type-desktop-light.png` is the collapsed Year section; `planner-one-type-year-open-desktop-light.png` is it open.
+
+### Goals and Insights simplify (2026-10-28, branch `feat/goals-insights-simplify`, from `main`, not pushed)
+
+Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PRD 9.15 and `frontend-design.md` section 13.
+
+- Habit creates its activity (FR-GOALS-24): the habit form's first activity option, "Add '<name>' to my week", is the default for a new habit once minutes each is set. It makes an activity in the habit's life area with the life area colour and a free short code, or links the one of that name there. Cancel creates nothing.
+- Goals list (FR-GOALS-25): life areas with content are listed in full; empty ones fold into one "N more life areas · add a goal" row, and a life area with nothing in it shows its name and "Add a goal".
+- Goals Grid (FR-GOALS-26): List | Grid toggle from 1100px. List is the default; Grid is the Harada map with the detail under it. The two "Life areas" headings are gone.
+- Category detail (FR-GOALS-27): 1-year target, habits, the hours comparison, the 5-year goal, then the activities no habit links.
+- Insights (FR-INS-P1 to P3): Month and Week on the first row; Quarter, Year, the range and the unit under "More options"; a headline sentence over the chart; unassigned weeks count the week type that governs them, as Home and Planner do (PRD 23.1 superseded).
+- Storage: no change; version 8.
 
 ### Week types (2026-10-28, branch `feat/week-types`, stacked on `feat/ux-simplify`)
 

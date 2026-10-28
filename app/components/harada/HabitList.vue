@@ -53,6 +53,12 @@ const draft = ref<Habit | null>(null)
 const draftError = ref('')
 const draftEl = ref<HTMLElement | null>(null)
 const addButton = ref<HTMLButtonElement | null>(null)
+// The activity choice of the add form ('' None, 'new' the habit's own activity, or an id) and whether the user has made one
+const draftLink = ref('')
+let draftLinkTouched = false
+const draftActivityError = ref('')
+// Activity errors of the open edit forms, by habit id
+const activityErrors = ref<Record<string, string>>({})
 
 watch(
   () => [props.categoryId, props.editing] as const,
@@ -69,18 +75,40 @@ function toggleOpen(habitId: string) {
   openId.value = openId.value === habitId ? null : habitId
 }
 
+// A habit's own activity ('new' in the form, FR-GOALS-24) is made from the habit's name by the store; its error stays on the form
 function applyChange(habitId: string, changes: HabitChange) {
   if (changes.name !== undefined) planner.updateHabit(habitId, { name: changes.name })
   if (changes.frequency) planner.setHabitFrequency(habitId, changes.frequency.count, changes.frequency.period)
   if ('minutesPerOccurrence' in changes) planner.updateHabit(habitId, { minutesPerOccurrence: changes.minutesPerOccurrence })
-  if ('activityId' in changes) planner.setHabitActivity(habitId, changes.activityId ?? null)
+
+  if ('activityId' in changes) {
+    if (changes.activityId === 'new') {
+      const habit = planner.habits.find(item => item.id === habitId)
+      const own = planner.ownActivityFor(props.categoryId, habit?.name ?? '')
+
+      if ('error' in own) {
+        activityErrors.value[habitId] = own.error
+        return
+      }
+
+      planner.setHabitActivity(habitId, own.id)
+    } else {
+      planner.setHabitActivity(habitId, changes.activityId ?? null)
+    }
+
+    delete activityErrors.value[habitId]
+  }
 }
 
-// Add habit: available in view and edit mode. Cancel and Escape leave nothing behind; Save habit adds the habit with the store's action
+// Add habit: available in view and edit mode. Cancel and Escape leave nothing behind; Save habit adds the habit with the store's action.
+// The activity defaults to the habit's own one once minutes each is set (FR-GOALS-24); the user's choice always wins
 function openAdd() {
   openId.value = null
   confirmRemoveId.value = null
   draftError.value = ''
+  draftActivityError.value = ''
+  draftLink.value = ''
+  draftLinkTouched = false
   draft.value = { id: '', categoryId: props.categoryId, name: '', frequency: { count: 1, period: 'week' } }
   nextTick(() => draftEl.value?.querySelector<HTMLElement>('textarea')?.focus())
 }
@@ -90,26 +118,48 @@ function closeAdd() {
   nextTick(() => addButton.value?.focus())
 }
 
-function onDraftChange(changes: HabitChange) {
+function onDraftChange({ activityId, ...changes }: HabitChange) {
   if (!draft.value) return
   Object.assign(draft.value, changes)
   if (changes.name?.trim()) draftError.value = ''
+
+  if (activityId !== undefined) {
+    draftLinkTouched = true
+    draftLink.value = activityId ?? ''
+    draftActivityError.value = ''
+  } else if ('minutesPerOccurrence' in changes && !draftLinkTouched) {
+    draftLink.value = changes.minutesPerOccurrence ? 'new' : ''
+  }
 }
 
 function saveDraft() {
   if (!draft.value) return
 
-  const { name, frequency, minutesPerOccurrence, activityId } = draft.value
+  const { name, frequency, minutesPerOccurrence } = draft.value
   if (!name.trim()) {
     draftError.value = 'Name the habit, for example Run or Read.'
     nextTick(() => draftEl.value?.querySelector<HTMLElement>('textarea')?.focus())
     return
   }
 
+  // The activity is made first, so a refused one leaves no habit behind
+  let activityId: string | null = draftLink.value && draftLink.value !== 'new' ? draftLink.value : null
+
+  if (draftLink.value === 'new') {
+    const own = planner.ownActivityFor(props.categoryId, name)
+
+    if ('error' in own) {
+      draftActivityError.value = own.error
+      return
+    }
+
+    activityId = own.id
+  }
+
   const id = planner.addHabit(props.categoryId, name)
   if (!id) return
 
-  applyChange(id, { frequency, minutesPerOccurrence, activityId: activityId ?? null })
+  applyChange(id, { frequency, minutesPerOccurrence, activityId })
   closeAdd()
 }
 
@@ -135,7 +185,14 @@ function removeHabit(habitId: string) {
         <EditButton :label="`Edit habit ${habit.name}`" :expanded="openId === habit.id" @click="toggleOpen(habit.id)" />
       </div>
 
-      <HaradaHabitForm v-if="openId === habit.id" :habit="habit" :groups="activityGroups" @change="applyChange(habit.id, $event)">
+      <HaradaHabitForm
+        v-if="openId === habit.id"
+        :habit="habit"
+        :link-value="habit.activityId ?? ''"
+        :groups="activityGroups"
+        :activity-error="activityErrors[habit.id]"
+        @change="applyChange(habit.id, $event)"
+      >
         <div v-if="confirmRemoveId === habit.id" class="inline-confirm" role="group" aria-label="Confirm remove habit">
           <p class="inline-confirm-text">Remove {{ habit.name }}? This cannot be undone.</p>
           <div class="form-actions">
@@ -153,7 +210,14 @@ function removeHabit(habitId: string) {
 
     <!-- The add form: Escape cancels it here, so the category's own Escape (leave edit mode) does not run -->
     <div v-if="draft" ref="draftEl" class="habit-edit is-open" @keydown.esc.stop="closeAdd">
-      <HaradaHabitForm :habit="draft" :groups="activityGroups" :name-error="draftError" @change="onDraftChange">
+      <HaradaHabitForm
+        :habit="draft"
+        :link-value="draftLink"
+        :groups="activityGroups"
+        :name-error="draftError"
+        :activity-error="draftActivityError"
+        @change="onDraftChange"
+      >
         <div class="form-actions">
           <button type="button" class="btn btn-sm btn-primary" @click="saveDraft">Save habit</button>
           <button type="button" class="btn btn-sm" @click="closeAdd">Cancel</button>

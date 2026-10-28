@@ -1,15 +1,15 @@
 import type { PlannerState } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { aggregateTemplateByCategory, getTemplateById } from '~/utils/planner'
+import { aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
 
 /**
  * Insights calculations (PRD section 17, Insights): planned hours of the chosen years, grouped by year, quarter,
  * month or ISO week, the hours available in each bar, and the share of each category. Pure functions over the planner
  * state, so they run in node.
  *
- * Each ISO week counts once and belongs to the year, quarter and month of its Thursday (ISO convention), so the
- * Each activity counts once: in its primary category (PRD FR-PLAN-20). Only weeks assigned on the year grid count planned
- * hours; an unassigned week counts as zero (owner decision, PRD 23.1), but its available time still counts.
+ * Each ISO week counts once and belongs to the year, quarter and month of its Thursday (ISO convention), so the totals agree
+ * across granularities. Each activity counts once: in its primary category (PRD FR-PLAN-20). A week counts the template that
+ * governs it: its assigned week type, else the active one, as Home and Planner do (PRD 23.1).
  * A bar is a whole number of ISO weeks, so its available time is its days times 24 (the days of those weeks):
  * a calendar month would not match the hours planned in its weeks, and the free time would be wrong.
  */
@@ -32,8 +32,8 @@ export type InsightsUnit = 'hours' | 'days' | 'weeks'
 /** The one unit selector of Insights: the chart axis, the bar values and the categories list all use it */
 export const UNITS: Array<{ id: InsightsUnit; label: string; short: string; hours: number }> = [
   { id: 'hours', label: 'Hours', short: 'h', hours: 1 },
-  { id: 'days', label: 'Days', short: 'd', hours: HOURS_PER_DAY },
-  { id: 'weeks', label: 'Weeks', short: 'wk', hours: HOURS_PER_WEEK }
+  { id: 'days', label: 'Days (24 h)', short: 'd', hours: HOURS_PER_DAY },
+  { id: 'weeks', label: 'Weeks (168 h)', short: 'wk', hours: HOURS_PER_WEEK }
 ]
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -74,23 +74,12 @@ export interface InsightsBar {
 export const rangeYears = (startYear: number, count: number): number[] =>
   Array.from({ length: count }, (_, index) => startYear + index)
 
-/** The template assigned to a week on the year grid; an unassigned week (or one whose template was deleted) has none */
-const assignedTemplate = (state: PlannerState, monday: string) => {
-  const applied = state.appliedWeeks.find(week => week.startDate === monday)
-
-  return applied ? getTemplateById(state, applied.templateId) : undefined
-}
-
-/** Planned hours of one ISO week by category, from its assigned template (primary categories only); unassigned weeks plan nothing */
+/** Planned hours of one ISO week by category, from the template that governs it (effectiveTemplate); primary categories only */
 export const weekCategoryHours = (state: PlannerState, monday: string): Map<string, number> => {
-  const template = assignedTemplate(state, monday)
+  const template = effectiveTemplate(state, monday)
 
   return template ? aggregateTemplateByCategory(template, state) : new Map()
 }
-
-/** ISO weeks of the years that are assigned on the year grid: the only weeks that count planned hours in Insights */
-export const assignedWeekCount = (state: PlannerState, years: number[]): number =>
-  years.reduce((count, year) => count + isoWeekStarts(year).filter(monday => assignedTemplate(state, monday)).length, 0)
 
 /** The bar a week falls into: decided by its Thursday, so each week is counted once */
 const periodOfWeek = (monday: string, granularity: InsightsGranularity): { key: string; label: string; year: number; week: number } => {
@@ -202,4 +191,16 @@ export const categoryShares = (bars: InsightsBar[]): { total: number; rows: Cate
     total: sorted.reduce((sum, row) => sum + row.hours, 0),
     rows: sorted.map((row, index) => ({ ...row, share: shares[index]! }))
   }
+}
+
+/**
+ * The headline over the chart (FR-INS-P1): the top three life areas by planned hours with their rounded shares, e.g.
+ * "2026: 48% Physical, 27% Professional, 19% Relational". Nothing planned gives "Nothing planned yet in 2026"
+ */
+export const headlineSentence = (rangeLabel: string, rows: Array<{ name: string; share: number }>): string => {
+  const top = rows.filter(row => row.share > 0).slice(0, 3)
+
+  if (!top.length) return `Nothing planned yet in ${rangeLabel}`
+
+  return `${rangeLabel}: ${top.map(row => `${row.share}% ${row.name}`).join(', ')}`
 }
