@@ -213,14 +213,18 @@ export const categoryShares = (bars: InsightsBar[]): { total: number; rows: Cate
   }
 }
 
+const PER_PERIOD: Record<InsightsGranularity, string> = { year: 'per year', quarter: 'per quarter', month: 'per month', week: 'per week' }
+
 /**
- * The headline over the chart (FR-INS-P1): the top three life areas by planned hours with their rounded shares, e.g.
- * "2026: 48% Physical, 27% Professional, 19% Relational". Nothing planned gives "Nothing planned yet in 2026"
+ * The label of the red available-time lines, for the current granularity: "Available per month: 525 h". Months and quarters differ
+ * in length, so when the bars differ the figure is the largest one: "Available per month: up to 525 h"
  */
-export const headlineSentence = (rangeLabel: string, rows: Array<{ name: string; share: number }>): string => {
-  const top = rows.filter(row => row.share > 0).slice(0, 3)
+export const capacityLabel = (granularity: InsightsGranularity, bars: InsightsBar[], unit: InsightsUnit): string => {
+  if (!bars.length) return ''
 
-  if (!top.length) return `Nothing planned yet in ${rangeLabel}`
+  const capacities = bars.map(bar => bar.capacity)
+  const varies = capacities.some(capacity => capacity !== capacities[0])
+  const figure = `${formatInUnit(Math.max(...capacities), unit)} ${UNITS.find(option => option.id === unit)!.short}`
 
-  return `${rangeLabel}: ${top.map(row => `${row.share}% ${row.name}`).join(', ')}`
+  return `Available ${PER_PERIOD[granularity]}: ${varies ? 'up to ' : ''}${figure}`
 }

@@ -24,7 +24,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light: title and date, the hour timeline with 9h, 12h, 18h and 22h, the activities list, the journal |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden: title and date, the hour bar spans 7h to 22h (the sleep at the day's edges is left off), the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: vision, the category list with the needed-and-planned bar and status text under each target (feat/goals-insights-simplify) |
@@ -56,7 +56,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
-| `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the headline sentence above the chart (feat/goals-insights-simplify) |
+| `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open at Year: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the chart header key reads "Available per year" (2026-10-28) |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
@@ -158,7 +158,7 @@ Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PR
 - Goals list (FR-GOALS-25): life areas with content are listed in full; empty ones fold into one "N more life areas · add a goal" row, and a life area with nothing in it shows its name and "Add a goal".
 - Goals Grid (FR-GOALS-26): List | Grid toggle from 1100px. List is the default; Grid is the Harada map with the detail under it. The two "Life areas" headings are gone.
 - Category detail (FR-GOALS-27): 1-year target, habits, the hours comparison, the 5-year goal, then the activities no habit links.
-- Insights (FR-INS-P1 to P3): Month and Week on the first row; Quarter, Year, the range and the unit under "More options"; a headline sentence over the chart; unassigned weeks count the week type that governs them, as Home and Planner do (PRD 23.1 superseded).
+- Insights (FR-INS-P1 to P3): Month and Week on the first row; Quarter, Year, the range and the unit under "More options"; the headline sentence was removed (2026-10-28); unassigned weeks count the week type that governs them, as Home and Planner do (PRD 23.1 superseded).
 - Storage: no change; version 8.
 
 ### Week types (2026-10-28, branch `feat/week-types`, stacked on `feat/ux-simplify`)
@@ -196,6 +196,14 @@ Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PR
 - The guided path follows the owner's order: 1 Your ambition (one required field), 2 Goals and habits (one or two life areas, each with a habit, times a week and hours each time; a second goal is added on request), then the build, then three tour cards: 3 Plan your week (what the planner placed, and that Goals shows each area as on target), 4 Insights, 5 Daily follow-up. Goals has no tour card. Each step shows "Step N of 5". "Start with my ambition" leads from the intro to step 1. FR-ONB-4 to 7.
 - The intro scenes are about 9 seconds each (about 45 seconds). Each caption sits inside the stage in a band across its top 28 percent, and the graphics are laid out below it. A visually hidden live caption keeps the text for screen readers. FR-ONB-9.
 - Replay from the Tour button starts at step 3 when the user has an ambition and a life area.
+
+### Sleep follow-ups (2026-10-28, branch `fix/sleep-followups`, not pushed)
+
+- Home: with sleep hidden, the bar leaves out the sleep at the start and end of the day and labels its ends (FR-SLEEP-8).
+- Show sleep and Hide sleep are outline buttons, so Hide is easy to find in Week, Home and Insights (FR-SLEEP-4).
+- Insights: the headline sentence and the hidden-sleep note are removed; the chart header holds the available-time key ("Available per month: up to 525 h") and the Show sleep toggle (FR-INS-4, FR-INS-P1 removed).
+- Goals: "Needed" and "Planned" captions on the comparison bars (FR-GOALS-P1).
+- No data change; the storage version stays 8.
 
 ### First-run intro (2026-10-27, branch `feat/reset-and-intro`)
 

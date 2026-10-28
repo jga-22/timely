@@ -4,7 +4,7 @@ import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { isoWeekOf } from '~/utils/dates'
 import { formatHour } from '~/utils/planner'
-import { dayBlocks, dayHours, formatDayLabel } from '~/utils/home'
+import { dayBlocks, dayHours, dayRange, formatDayLabel } from '~/utils/home'
 
 // Read-only (FR-HOME-1) except the journal card (a separate component); every item has an Edit link to its owner.
 const planner = usePlannerStore()
@@ -55,7 +55,10 @@ const dayRows = computed(() => {
   })
 })
 
-// Timeline: the 24 hours of today in order, one flex segment per hour (FR-HOME-4). Unplanned hours have no colour
+// The hours the bar spans: all 24, or without the sleep at the day's edges while sleep is hidden (FR-SLEEP-4, 5)
+const range = computed(() => (today.value ? dayRange(planner.$state, today.value, showSleep.value) : { start: 0, end: 24 }))
+
+// Timeline: the hours of today in order, one flex segment per hour (FR-HOME-4). Unplanned hours have no colour
 interface TimelineSegment {
   key: string
   color: string
@@ -65,7 +68,8 @@ interface TimelineSegment {
 const timeline = computed<TimelineSegment[]>(() => {
   if (!today.value) return []
 
-  return dayHours(planner.$state, today.value, showSleep.value).map((activityId, hour) => {
+  return dayHours(planner.$state, today.value, showSleep.value).slice(range.value.start, range.value.end).map((activityId, index) => {
+    const hour = range.value.start + index
     const name = activityId ? planner.activities.find(item => item.id === activityId)?.name ?? '' : ''
 
     return {
@@ -76,9 +80,10 @@ const timeline = computed<TimelineSegment[]>(() => {
   })
 })
 
-// Hour labels on the timeline axis, positioned on a 24-hour scale
+// Hour labels on the timeline axis, positioned on the span the bar shows. The range's own ends are labelled when they are trimmed
 const AXIS_HOURS = [9, 12, 18, 22]
-const axisLeft = (hour: number) => `${(hour / 24) * 100}%`
+const axisTicks = computed(() => AXIS_HOURS.filter(hour => hour > range.value.start && hour < range.value.end))
+const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value.end - range.value.start)) * 100}%`
 </script>
 
 <template>
@@ -91,7 +96,7 @@ const axisLeft = (hour: number) => `${(hour / 24) * 100}%`
     <template v-if="today">
       <!-- Timeline directly below the title: coloured hours only; the text is in each segment's title and aria-label -->
       <div class="home-sleep-line">
-        <p v-if="!showSleep" class="page-meta">Sleep is hidden: those hours count as unplanned.</p>
+        <p v-if="!showSleep" class="page-meta">Sleep is hidden: its hours are left off the bar, and a nap counts as unplanned.</p>
         <SleepToggle />
       </div>
 
@@ -110,11 +115,13 @@ const axisLeft = (hour: number) => `${(hour / 24) * 100}%`
         </div>
         <div class="home-axis" aria-hidden="true">
           <span
-            v-for="hour in AXIS_HOURS"
+            v-for="hour in axisTicks"
             :key="hour"
             class="home-axis-tick"
             :style="{ left: axisLeft(hour) }"
           >{{ hour }}h</span>
+          <span v-if="range.start > 0" class="home-axis-tick is-start" :style="{ left: '0%' }">{{ range.start }}h</span>
+          <span v-if="range.end < 24" class="home-axis-tick is-end" :style="{ left: '100%' }">{{ range.end }}h</span>
         </div>
       </div>
 
