@@ -10,6 +10,7 @@ import {
   type ActivityFieldErrors
 } from '~/utils/planner'
 import { inkOn } from '~/utils/palette'
+import { shortCodeFor } from '~/utils/onboarding'
 import type { Activity } from '~/types/planner'
 
 const planner = usePlannerStore()
@@ -41,6 +42,14 @@ const appliedByDate = computed(() => {
   return m
 })
 const assignedInYear = computed(() => weeks.value.filter(startDate => appliedByDate.value.has(startDate)).length)
+/** With one week type: every week uses it when all are assigned to it; otherwise unassigned weeks use the active one (named generically) */
+const yearLine = computed(() => {
+  const only = templates.value[0]
+  if (!only) return ''
+
+  const uses = assignedInYear.value === weeks.value.length ? only.name : 'the active week type'
+  return `Every week of ${year.value} uses ${uses}.`
+})
 const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 /** Weeks per year-grid row: 13 columns, so each row is a quarter-year of weeks */
@@ -58,11 +67,6 @@ const yearRows = computed(() => {
   }
 
   return rows
-})
-
-onMounted(() => {
-  // Open by default on desktop; phones keep the long year grid behind its summary
-  yearOpen.value = window.matchMedia('(min-width: 900px)').matches
 })
 
 function paintWeek(wi: number) {
@@ -133,7 +137,7 @@ const editing = computed(() => !!selectedActivity.value && edit.value)
 
 const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
 const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
-const categoryName = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'No category'
+const categoryName = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'No life area'
 
 // Hours per week in the template being edited (the activity list reads this)
 const activeHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
@@ -150,7 +154,7 @@ const deleteImpact = computed(() => {
   const habitCount = linkedHabits.value.length
   const parts: string[] = []
 
-  if (hours > 0) parts.push(`clears ${hoursText(hours)} h in ${plural(templateCount, 'template', 'templates')}`)
+  if (hours > 0) parts.push(`clears ${hoursText(hours)} h in ${plural(templateCount, 'week type', 'week types')}`)
   if (habitCount > 0) parts.push(`unlinks ${plural(habitCount, 'habit', 'habits')}`)
   if (!parts.length) return 'Nothing is scheduled or linked to it.'
 
@@ -263,8 +267,14 @@ function confirmDelete() {
 const addOpen = ref(false)
 const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '', alsoCategoryIds: [] as string[] })
 const addErrors = ref<ActivityFieldErrors>({})
+// The short code follows the name until it is typed by hand; a blank one is derived from the name when the form is submitted
+const shortCodeEdited = ref(false)
 const addNameInput = ref<HTMLInputElement | null>(null)
 const addTrigger = ref<HTMLButtonElement | null>(null)
+
+watch(() => addDraft.name, (name) => {
+  if (!shortCodeEdited.value) addDraft.shortCode = name.trim() ? shortCodeFor(name) : ''
+})
 
 // A new activity starts in its category's colour; changing the category follows it
 watch(() => addDraft.categoryId, (categoryId) => {
@@ -278,6 +288,7 @@ function openAdd(categoryId?: string | null) {
 
   addDraft.name = ''
   addDraft.shortCode = ''
+  shortCodeEdited.value = false
   addDraft.categoryId = presetId
   addDraft.alsoCategoryIds = []
   addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
@@ -298,16 +309,18 @@ watch(add, (open) => {
 }, { immediate: true })
 
 function submitAdd() {
+  // A blank short code is derived from the name here (the field is optional), then checked like a typed one
+  const shortCode = addDraft.shortCode.trim() || shortCodeFor(addDraft.name)
   const errors = validateActivityFields(planner.$state, {
     name: addDraft.name,
-    shortCode: addDraft.shortCode,
+    shortCode,
     categoryId: addDraft.categoryId
   })
   addErrors.value = errors
 
   if (Object.keys(errors).length) return
 
-  const id = planner.addActivity(addDraft.name, addDraft.shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
+  const id = planner.addActivity(addDraft.name, shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
   addOpen.value = false
   if (id) selectActivity(id)
 }
@@ -322,7 +335,7 @@ function submitAdd() {
 
     <!-- Template switcher -->
     <div class="template-switch">
-      <span class="field-label">Template</span>
+      <span class="field-label">Week type</span>
 
       <div v-for="t in templates" :key="t.id" class="template-chip-wrap">
         <input
@@ -375,26 +388,15 @@ function submitAdd() {
         />
         <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add</button>
       </div>
-      <button v-else class="chip-add" @click="newTemplateOpen = true">+ New template</button>
+      <button v-else class="chip-add" @click="newTemplateOpen = true">+ New week type</button>
 
-      <EditButton v-if="activeTemplate" label="Edit template" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
-
-      <button
-        v-if="templates.length > 1"
-        ref="deleteTemplateTrigger"
-        type="button"
-        class="btn btn-xs btn-danger delete-template-btn"
-        @click.stop="askDeleteTemplate"
-      >
-        <span class="delete-template-btn-label">Delete "{{ activeTemplate?.name }}"</span>
-        <span class="delete-template-btn-icon" aria-hidden="true">✕</span>
-      </button>
+      <EditButton v-if="activeTemplate" label="Edit week type" :expanded="templateEditOpen" @click="templateEditOpen = !templateEditOpen" />
     </div>
 
     <!-- Template edit: name, colour and delete for the active template; changes apply at once (FR-UX-2) -->
     <div v-if="templateEditOpen && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="templateEditOpen = false">
       <div class="act-panel-head">
-        <h3 class="act-panel-title">Edit template</h3>
+        <h3 class="act-panel-title">Edit week type</h3>
         <button type="button" class="btn btn-sm btn-primary" @click="templateEditOpen = false">Done</button>
       </div>
       <div class="form-stack">
@@ -422,7 +424,7 @@ function submitAdd() {
           </div>
         </div>
         <div v-if="templates.length > 1" class="form-actions">
-          <button type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete template</button>
+          <button ref="deleteTemplateTrigger" type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete week type</button>
         </div>
       </div>
     </div>
@@ -436,7 +438,7 @@ function submitAdd() {
     >
       <p id="template-delete-text" class="act-confirm-text">{{ templateDeleteText }}</p>
       <div class="act-actions">
-        <button type="button" class="btn btn-sm btn-danger" @click="confirmDeleteActiveTemplate">Delete template</button>
+        <button type="button" class="btn btn-sm btn-danger" @click="confirmDeleteActiveTemplate">Delete week type</button>
         <button ref="cancelTemplateDeleteButton" type="button" class="btn btn-sm" @click="cancelDeleteTemplate">Cancel</button>
       </div>
     </div>
@@ -518,11 +520,11 @@ function submitAdd() {
               <p v-if="editErrors.shortCode" id="act-edit-code-error" class="field-error">{{ editErrors.shortCode }}</p>
             </div>
             <div class="field">
-              <label class="field-label" for="act-edit-cat">Category</label>
+              <label class="field-label" for="act-edit-cat">Life area</label>
               <select
                 id="act-edit-cat"
                 class="timely-select"
-                title="The primary category is changed here; it cannot be unlinked"
+                title="The primary life area is changed here; it cannot be unlinked"
                 :value="selectedActivity.categoryId"
                 @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
               >
@@ -600,6 +602,7 @@ function submitAdd() {
                 v-model="addDraft.shortCode"
                 class="timely-input"
                 placeholder="MED"
+                @input="shortCodeEdited = true"
                 maxlength="3"
                 :aria-invalid="!!addErrors.shortCode"
                 aria-describedby="add-act-code-error"
@@ -609,7 +612,7 @@ function submitAdd() {
               <p v-if="addErrors.shortCode" id="add-act-code-error" class="field-error">{{ addErrors.shortCode }}</p>
             </div>
             <div class="field">
-              <label class="field-label" for="add-act-cat">Category</label>
+              <label class="field-label" for="add-act-cat">Life area</label>
               <select id="add-act-cat" v-model="addDraft.categoryId" class="timely-select">
                 <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select>
@@ -639,15 +642,15 @@ function submitAdd() {
         </div>
 
         <div class="act-actions">
-          <button class="btn btn-sm btn-primary" :disabled="!addDraft.name.trim() || !addDraft.shortCode.trim()" @click="submitAdd">Add activity</button>
+          <button class="btn btn-sm btn-primary" :disabled="!addDraft.name.trim()" @click="submitAdd">Add activity</button>
           <button class="btn btn-sm" @click="closeAdd">Cancel</button>
         </div>
       </div>
       <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd()">+ Add activity</button>
     </section>
 
-    <!-- Year painter: full width, collapsible; open by default on desktop -->
-    <section class="section year-section" aria-labelledby="year-title">
+    <!-- Year painter: full width, collapsible, closed by default. Shown only with two or more week types (otherwise the line below) -->
+    <section v-if="templates.length > 1" class="section year-section" aria-labelledby="year-title">
       <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="year-summary">
           <h2 id="year-title" class="section-title">Year</h2>
@@ -708,5 +711,8 @@ function submitAdd() {
         </div>
       </details>
     </section>
+
+    <!-- One week type: nothing to paint, so one line says which week type the year uses -->
+    <p v-else-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
   </div>
 </template>
