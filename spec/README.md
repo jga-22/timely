@@ -116,6 +116,10 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Unified item form (2026-10-28, branch `feat/unified-item-form`, not pushed)
+
+One form and one list for activities and habits (FR-ITEM-1 to 5). The Week tab shows "Activities and habits": timed chips with their hours, a Habits list for entries with no time, and "+ Add". The Goals life area shows one list with the schedule, the week types and the time planned against the need; its rows and "+ Add" open the same form. `ActivityForm.vue` holds the fields (name, life area, duration, days or times, start and week types, More options) and saves through `saveEntry`; a repaint reports its result with Undo for 8 s. The separate schedule panel, the Activities add form, `HabitForm.vue` and `HabitList.vue` are removed. Storage version unchanged (8). Checks: build clean, typecheck 0 errors, 13 tsx checks of the store and rules, headless Edge at 1280 and 400 px, light and dark, 22 browser checks, no overflow, no console errors. New screenshots: `spec/screens/unified-week-add-1280.png`, `unified-week-add-400.png`, `unified-goals-detail-1280.png`, `unified-goals-form-dark-1280.png`, `unified-no-time-confirm-1280.png`.
+
 ### Account avatar (2026-10-28, branch `fix/ux-batch-5`, not pushed)
 
 - The topbar shows one round avatar button instead of the "Account" text button, the save status and the theme toggle. Initials come from the Google name or the email (`app/utils/account.ts`); local mode shows a person glyph.
