@@ -458,7 +458,7 @@ function submitAdd() {
 
 .goals-view-toggle {
   display: none;
-  margin-bottom: var(--space-4);
+  margin: var(--space-4) 0;
 }
 
 /* Grid view: the map above, the selected life area's detail below it, the list hidden (the list stays below 1100px) */
