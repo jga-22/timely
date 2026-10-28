@@ -413,7 +413,7 @@ function submitAdd() {
           :editing="editing"
           @back="backToList"
         />
-        <p v-else class="browse-placeholder">Select a life area to see its goals, habits and planned time.</p>
+        <p v-else class="browse-placeholder">Select a life area to see its goals, activities and habits.</p>
       </div>
     </section>
   </div>

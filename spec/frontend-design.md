@@ -330,7 +330,7 @@ One category's time against its need, in hours a week (FR-GOALS-16). Used in eve
 - The bars and icon are `aria-hidden`; the text is the reading. The Goals list renders the bar after mount only (the saved state is not known on the server), like the rest of the status cues.
 - Status comes from `alignmentStatus` and `categoryAlignments` (section 4.10 and `agent.md`): unchanged.
 
-### 4.10 Category detail and habit rows (`CategoryDetail.vue`, `HabitList.vue`, scoped)
+### 4.10 Category detail (`CategoryDetail.vue`, scoped; its list is 4.20)
 
 `HaradaCategoryDetail` (FR-GOALS-16 to 18; FR-GOALS-20 is not built). Keyed by the category, so its drafts reset on change.
 
@@ -467,7 +467,7 @@ Restored on 2026-10-26 (FR-PLAN-24). The Activities list is a compact section un
 - Empty list: "No activities yet. Add one to plan when it happens." (`.acts-empty`).
 - Phones: chips wrap; the editor and the form take the full width, and their two-column rows stack under 480px.
 
-### 4.17b Week type panels and schedule (`PlannerView.vue`, `.act-schedule`, `.sched-*`, `.new-template-panel`, `.role-*`, `.weeks-*` in `main.css`)
+### 4.17b Week type panels (`PlannerView.vue`, `.sched-*`, `.new-template-panel`, `.role-*`, `.weeks-*` in `main.css`). The schedule panel is retired: its fields are in the one form (4.20)
 
 Added 2026-10-28 (FR-PLAN-25, FR-TPL-8, FR-YEAR-7). All three use existing tokens and the `.act-panel` surface.
 
@@ -536,6 +536,13 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - Onboarding overlays (Welcome, tour) are not rendered on the legal pages, so they do not cover the text. The state is kept, so they appear again on Home.
 - Verified in headless Edge on the production build: 1280 and 400 px, light and dark, no horizontal overflow, no console errors; in dev no hydration warnings (only the known dev-only 404s for Vuetify and MDI CSS). Screenshots `spec/screens/legal-*`.
 
+### 4.20 Activities and habits: the one form and the one list (`app/components/ActivityForm.vue`, `.entry-*`, `.row-*` in `main.css`)
+
+- **The form** is a `.act-panel` (the same panel as the other editors) with a title ("New activity or habit" or "Edit <name>"). Fields in order: Name (the Enter key saves), Life area and Duration in a two-column `.form-row` from 480 px (one column on a phone), Days (seven `.chip` buttons with `aria-pressed`), "Or: N times a week or month" only when no day is chosen and the entry is not timed, then for a timed entry Start (`.timely-select`) and Week types (checkboxes). "More options" is a native `<details>` with Short code, Colour and "Also counts toward" (timed only).
+- **Hints and errors** use `.form-hint` (quiet, `--ink-3`) and `.field-error` (role alert). A paint of a duration that is not whole hours shows the whole-hour hint. The repaint note appears only when the schedule changed on an existing entry.
+- **Confirmations** use `.act-confirm` inside the panel: No time names the hours and the activity it removes; Delete names what goes. Buttons: Save and Cancel; Delete sits apart at the foot (`.act-delete`).
+- **The list** (Week tab and the Goals life area) is `.row-list` / `.row-item` / `.row-main` with a name and quiet `.row-meta` lines, the `EditButton` pencil at the end. Week: timed chips under `.act-list`, the Habits sublist under `.entry-habits`. Goals: one list, each row followed by its open form.
+- **Result line:** `.sched-result` under the list, role status, with its Undo button, for 8 s (`useEntryResult`).
 ## 5. Colour handling: one palette for planned time
 
 One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Insights bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.

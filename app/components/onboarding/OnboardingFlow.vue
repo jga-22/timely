@@ -81,7 +81,7 @@ const submitGoals = () => {
     goal.error.area = !goal.categoryId
       ? 'Choose one of the life areas.'
       : index > 0 && goal.categoryId === goals.value[0]!.categoryId ? 'Pick a different life area for the second goal.' : ''
-    goal.error.habit = goal.habitName.trim() ? '' : 'Name one habit, for example Run or Read.'
+    goal.error.habit = goal.habitName.trim() ? '' : 'Name one activity or habit, for example Run or Read.'
   })
 
   if (goals.value.some(goal => goal.error.area || goal.error.habit)) {
@@ -156,7 +156,7 @@ const removeGoal = () => {
       <form v-else class="onb-form" novalidate @submit.prevent="submitGoals">
         <p class="onb-step">Step 2 of 2</p>
         <h2 id="onb-title" class="onb-title" tabindex="-1">Goals and habits</h2>
-        <p class="onb-lede">Pick one or two of the eight life areas that matter most for that ambition, and a habit for each.</p>
+        <p class="onb-lede">Pick one or two of the eight life areas that matter most for that ambition, and an activity or habit for each.</p>
 
         <section v-for="(goal, index) in goals" :key="index" class="onb-goal" :aria-label="`Goal ${index + 1}`">
           <div class="onb-goal-head">
@@ -193,7 +193,7 @@ const removeGoal = () => {
           </div>
 
           <div class="field">
-            <label class="field-label" :for="`onb-habit-${index}`">One habit for it</label>
+            <label class="field-label" :for="`onb-habit-${index}`">One activity or habit for it</label>
             <input
               :id="`onb-habit-${index}`"
               v-model="goal.habitName"

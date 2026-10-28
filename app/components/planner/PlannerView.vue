@@ -3,25 +3,16 @@ import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
-import {
-  DAYS,
-  DESIGN_COLORS,
-  aggregateTemplate,
-  formatHour,
-  isHourlyTemplate,
-  validateActivityFields,
-  type ActivityFieldErrors
-} from '~/utils/planner'
+import { DESIGN_COLORS, aggregateTemplate, formatHour } from '~/utils/planner'
+import { dayText, durationText, entryDraftOf, frequencyText } from '~/utils/entries'
 import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
-import { shortCodeFor } from '~/utils/onboarding'
-import { focusEditById, focusEditField } from '~/utils/focus'
-import type { Activity } from '~/types/planner'
+import { focusEditField } from '~/utils/focus'
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
 const { year, weeks, currentWeekIndex } = usePlannerYear()
-const { item, edit, add, category, setSelection } = useNav()
+const { item, edit, setSelection } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
 
@@ -256,301 +247,104 @@ function confirmDeleteActiveTemplate() {
   deletingTemplate.value = false
 }
 
-// ── Activities: the list under the week, its detail and the edit form ──
+// ── Activities and habits (FR-ITEM-4): one list of entries. An entry is a habit with its linked activity, or an activity that no habit
+// links to. ?item= holds the habit's id or the activity's id; an activity resolves to the habit that links it, so one entry has one key
 const orderedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
-const selectedActivity = computed(() => planner.activities.find(activity => activity.id === item.value) ?? null)
-const editing = computed(() => !!selectedActivity.value && edit.value)
-
-const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
-const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count === 1 ? singular : pluralForm}`
 const categoryName = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'No life area'
+const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
 
-// Hours per week in the template being edited (the activity list reads this)
+// Hours per week in the active template: the chips read this
 const activeHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
-const linkedHabits = computed(() => planner.habits.filter(habit => habit.activityId === selectedActivity.value?.id))
 
-/** What deleting the selected activity does (FR-UX-7): cleared hours across templates and unlinked habits */
-const deleteImpact = computed(() => {
-  const activity = selectedActivity.value
-  if (!activity) return ''
+/** The selected entry: a habit and its activity (null when it has none), or an activity and the habit that links it (null when none does) */
+const selected = computed<{ habitId: string | null; activityId: string | null } | null>(() => {
+  const id = item.value
+  if (!id) return null
 
-  const hoursByTemplate = planner.templates.map(template => aggregateTemplate(template, planner.activities).get(activity.id) ?? 0)
-  const hours = hoursByTemplate.reduce((sum, value) => sum + value, 0)
-  const templateCount = hoursByTemplate.filter(value => value > 0).length
-  const habitCount = linkedHabits.value.length
-  const parts: string[] = []
+  const habit = planner.habits.find(entry => entry.id === id)
+  if (habit) {
+    const activityId = planner.activities.some(activity => activity.id === habit.activityId) ? habit.activityId ?? null : null
+    return { habitId: habit.id, activityId }
+  }
 
-  if (hours > 0) parts.push(`clears ${hoursText(hours)} h in ${plural(templateCount, 'week type', 'week types')}`)
-  if (habitCount > 0) parts.push(`unlinks ${plural(habitCount, 'habit', 'habits')}`)
-  if (!parts.length) return 'Nothing is scheduled or linked to it.'
+  const activity = planner.activities.find(entry => entry.id === id)
+  if (activity) {
+    return { habitId: planner.habits.find(entry => entry.activityId === activity.id)?.id ?? null, activityId: activity.id }
+  }
 
-  const sentence = parts.join(' and ')
-  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`
+  return null
 })
 
-// Selection and edit mode live in the URL: a selection is a history entry, Done replaces it (FR-UX-5)
-function selectActivity(activityId: string) {
-  setSelection({ item: activityId })
+const selectedDraft = computed(() => (selected.value ? entryDraftOf(planner.$state, selected.value.habitId, selected.value.activityId) : null))
+const editing = computed(() => !!selected.value && edit.value)
+
+/** Habits with no activity (no time): the Habits list. Every activity is a timed entry (a chip) */
+const habitOnly = computed(() => planner.habits.filter(habit => !planner.activities.some(activity => activity.id === habit.activityId)))
+
+
+const selectedName = computed(() => selectedDraft.value?.name ?? '')
+const selectedColor = computed(() => selectedDraft.value?.color ?? '#888')
+
+/** The summary line of the selected entry: code, life area, when and where it is painted, or its frequency when it has no time */
+const summaryLine = computed(() => {
+  const draft = selectedDraft.value
+  if (!draft || !selected.value) return ''
+
+  const parts = [draft.activityId ? draft.shortCode : '', categoryName(draft.categoryId)]
+
+  if (selected.value.activityId) {
+    parts.push(draft.days.length ? `${dayText(draft.days)} at ${formatHour(draft.start)}, ${durationText(draft.durationMinutes)}` : 'no days yet')
+    parts.push(draft.templateIds.length
+      ? `in ${draft.templateIds.map(id => planner.templates.find(template => template.id === id)?.name ?? '').filter(Boolean).join(', ')}`
+      : 'not in a week type')
+  } else {
+    const habit = planner.habits.find(entry => entry.id === selected.value?.habitId)
+    if (habit) parts.push(frequencyText(habit.frequency))
+  }
+
+  return parts.filter(Boolean).join(' · ')
+})
+
+// ── The one form (ActivityForm): one entry at a time. A new entry is added from the "+ Add" button at the end of the section
+const adding = ref(false)
+const addTrigger = ref<HTMLButtonElement | null>(null)
+const selectedEditButton = ref<{ focus: () => void } | null>(null)
+const { resultText, canUndo, showResult, undoResult } = useEntryResult()
+
+function selectEntry(key: string) {
+  adding.value = false
+  setSelection({ item: key })
+}
+
+function editEntry(key: string) {
+  adding.value = false
+  // One item in edit mode per screen: the week type editor closes
+  templateEditOpen.value = false
+  setSelection({ item: key, edit: true })
 }
 
 function startEdit() {
-  if (!selectedActivity.value) return
+  if (selected.value && item.value) editEntry(item.value)
+}
 
-  // One item in edit mode per screen: the week type editor closes
+function openAdd() {
+  adding.value = true
   templateEditOpen.value = false
-  // Focus moves into the form once the route shows it, so Escape reaches the panel
-  setSelection({ item: selectedActivity.value.id, edit: true }).then(() => nextTick(() => focusEditById('act-edit-name', 'act-edit-panel')))
+  if (editing.value) setSelection({}, true)
 }
 
-const activityEditButton = ref<{ focus: () => void } | null>(null)
-
-function finishEdit() {
-  confirmingDelete.value = false
-  if (!selectedActivity.value) return
-
-  // Focus waits for the route to update, so the Edit button is rendered again and focus returns to it
-  setSelection({ item: selectedActivity.value.id }, true).then(() => nextTick(() => activityEditButton.value?.focus()))
-}
-
-// Edit drafts: edits apply at once (FR-UX-6); a rejected entry keeps its message until the next valid one
-const nameDraft = ref('')
-const codeDraft = ref('')
-const editErrors = ref<ActivityFieldErrors>({})
-const confirmingDelete = ref(false)
-const cancelDeleteButton = ref<HTMLButtonElement | null>(null)
-const deleteTrigger = ref<HTMLButtonElement | null>(null)
-
-watch(
-  () => [selectedActivity.value?.id ?? null, editing.value] as const,
-  () => {
-    nameDraft.value = selectedActivity.value?.name ?? ''
-    codeDraft.value = selectedActivity.value?.shortCode ?? ''
-    editErrors.value = {}
-    confirmingDelete.value = false
-  },
-  { immediate: true }
-)
-
-function applyField(changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>) {
-  const activity = selectedActivity.value
-  if (!activity) return
-
-  const errors = planner.updateActivity(activity.id, changes)
-
-  for (const field of ['name', 'shortCode', 'categoryId'] as const) {
-    if (field in changes) editErrors.value = { ...editErrors.value, [field]: errors[field] }
-  }
-}
-
-function onNameInput(event: Event) {
-  nameDraft.value = (event.target as HTMLInputElement).value
-  applyField({ name: nameDraft.value })
-}
-
-function onCodeInput(event: Event) {
-  codeDraft.value = (event.target as HTMLInputElement).value
-  applyField({ shortCode: codeDraft.value })
-}
-
-// Leaving an invalid field restores the stored value; the message stays until the next valid entry
-function onNameBlur() {
-  nameDraft.value = selectedActivity.value?.name ?? ''
-}
-
-function onCodeBlur() {
-  codeDraft.value = selectedActivity.value?.shortCode ?? ''
-}
-
-function onEditKeydown(event: KeyboardEvent) {
-  if (event.key !== 'Escape') return
-
-  if (confirmingDelete.value) {
-    event.stopPropagation()
-    cancelDelete()
-  } else if (editing.value) {
-    event.stopPropagation()
-    finishEdit()
-  }
-}
-
-// Inline delete confirmation (FR-UX-7): nothing changes before the second button
-function askDelete() {
-  confirmingDelete.value = true
-  nextTick(() => cancelDeleteButton.value?.focus())
-}
-
-function cancelDelete() {
-  confirmingDelete.value = false
-  nextTick(() => deleteTrigger.value?.focus())
-}
-
-function confirmDelete() {
-  const activity = selectedActivity.value
-  if (!activity) return
-
-  planner.removeActivity(activity.id)
-  confirmingDelete.value = false
-  setSelection({}, true)
-}
-
-// New activity: a quiet link reveals the form (progressive disclosure)
-const addOpen = ref(false)
-const addDraft = reactive({ name: '', shortCode: '', categoryId: '', color: '', alsoCategoryIds: [] as string[] })
-const addErrors = ref<ActivityFieldErrors>({})
-// The short code follows the name until it is typed by hand; a blank one is derived from the name when the form is submitted
-const shortCodeEdited = ref(false)
-const addNameInput = ref<HTMLInputElement | null>(null)
-const addPanel = ref<HTMLElement | null>(null)
-const addTrigger = ref<HTMLButtonElement | null>(null)
-
-watch(() => addDraft.name, (name) => {
-  if (!shortCodeEdited.value) addDraft.shortCode = name.trim() ? shortCodeFor(name) : ''
-})
-
-// A new activity starts in its category's colour; changing the category follows it
-watch(() => addDraft.categoryId, (categoryId) => {
-  addDraft.color = categoryMap.value.get(categoryId)?.color ?? DESIGN_COLORS[0]!.bg
-  addDraft.alsoCategoryIds = addDraft.alsoCategoryIds.filter(id => id !== categoryId)
-})
-
-// categoryId preselects a category (FR-GOALS-20); an unknown or missing id falls back to the first category
-function openAdd(categoryId?: string | null) {
-  const presetId = orderedCategories.value.find(cat => cat.id === categoryId)?.id ?? orderedCategories.value[0]?.id ?? ''
-
-  addDraft.name = ''
-  addDraft.shortCode = ''
-  shortCodeEdited.value = false
-  addDraft.categoryId = presetId
-  addDraft.alsoCategoryIds = []
-  addDraft.color = categoryMap.value.get(presetId)?.color ?? DESIGN_COLORS[0]!.bg
-  addErrors.value = {}
-  addOpen.value = true
-  nextTick(() => focusEditField(addNameInput.value, addPanel.value))
+// Done, Cancel, Escape and a removal all leave the form here; focus returns to the Edit button of the entry, or to "+ Add"
+function closeEdit() {
+  setSelection({ item: item.value ?? undefined }, true).then(() => nextTick(() => selectedEditButton.value?.focus()))
 }
 
 function closeAdd() {
-  addOpen.value = false
-  // A form opened from Goals carries ?add=1; closing drops it so a reload does not reopen the form
-  if (add.value) setSelection({ item: item.value ?? undefined, edit: edit.value }, true)
+  adding.value = false
   nextTick(() => addTrigger.value?.focus())
 }
 
-watch(add, (open) => {
-  if (open) openAdd(category.value)
-}, { immediate: true })
-
-function submitAdd() {
-  // A blank short code is derived from the name here (the field is optional), then checked like a typed one
-  const shortCode = addDraft.shortCode.trim() || shortCodeFor(addDraft.name)
-  const errors = validateActivityFields(planner.$state, {
-    name: addDraft.name,
-    shortCode,
-    categoryId: addDraft.categoryId
-  })
-  addErrors.value = errors
-
-  if (Object.keys(errors).length) return
-
-  const id = planner.addActivity(addDraft.name, shortCode, addDraft.categoryId, addDraft.color, addDraft.alsoCategoryIds)
-  addOpen.value = false
-  nextTick(() => addTrigger.value?.focus())
-  if (id) selectActivity(id)
-}
-
-// ── Schedule in the week (FR-PLAN-25): paints the selected activity into the active week type, as the grid does ──
-const SCHEDULE_UNDO_MS = 8000
-const scheduleDays = ref<number[]>([])
-const scheduleDuration = ref(1)
-const scheduleStart = ref(9)
-const scheduleError = ref('')
-const scheduleResult = ref<{ text: string; templateId: string; slots: string[] } | null>(null)
-// The schedule is a collapsible under the activity detail, closed by default (FR-PLAN-25)
-const scheduleOpen = ref(false)
-const scheduleToggle = ref<HTMLButtonElement | null>(null)
-let scheduleUndoTimer: ReturnType<typeof setTimeout> | undefined
-const scheduleHourly = computed(() => isHourlyTemplate(activeTemplate.value))
-const hourOptions = Array.from({ length: 24 }, (_, hour) => hour)
-const durationOptions = Array.from({ length: 12 }, (_, index) => index + 1)
-
-// Default duration: the first linked habit's time per occurrence, rounded up to whole hours (1 to 12); otherwise 1 hour
-const scheduleDefaultDuration = (activityId: string) => {
-  const minutes = planner.habits.find(habit => habit.activityId === activityId && habit.minutesPerOccurrence)?.minutesPerOccurrence
-  return minutes ? Math.min(12, Math.max(1, Math.ceil(minutes / 60))) : 1
-}
-
-// Hint only, no preselection: a linked habit with a weekly count says how many days to pick
-const scheduleHabitHint = computed(() => {
-  const habit = linkedHabits.value.find(item => item.frequency.period === 'week' && item.frequency.count > 0)
-  return habit ? `Habit "${habit.name}" asks for ${habit.frequency.count} a week. Pick the days you want.` : ''
-})
-
-const dismissScheduleResult = () => {
-  scheduleResult.value = null
-  clearTimeout(scheduleUndoTimer)
-}
-
-const resetSchedule = () => {
-  scheduleDays.value = []
-  scheduleDuration.value = selectedActivity.value ? scheduleDefaultDuration(selectedActivity.value.id) : 1
-  scheduleStart.value = 9
-  scheduleError.value = ''
-  scheduleOpen.value = false
-  dismissScheduleResult()
-}
-
-watch(() => selectedActivity.value?.id ?? null, resetSchedule, { immediate: true })
-
-// Close (or Escape) hides the form and keeps an applied schedule; focus goes back to the button that opened it
-function closeSchedule() {
-  scheduleOpen.value = false
-  nextTick(() => scheduleToggle.value?.focus())
-}
-
-function toggleScheduleDay(day: number) {
-  scheduleDays.value = scheduleDays.value.includes(day)
-    ? scheduleDays.value.filter(item => item !== day)
-    : [...scheduleDays.value, day]
-  scheduleError.value = ''
-}
-
-function addToWeek() {
-  const activity = selectedActivity.value
-  const template = activeTemplate.value
-  if (!activity || !template || !scheduleHourly.value) return
-
-  const duration = scheduleDuration.value
-  const start = scheduleStart.value
-
-  if (!scheduleDays.value.length) {
-    scheduleError.value = 'Choose at least one day.'
-    return
-  }
-
-  if (start + duration > 24) {
-    scheduleError.value = `A ${duration} h block from ${formatHour(start)} would run past midnight. Choose an earlier start or a shorter block.`
-    return
-  }
-
-  scheduleError.value = ''
-  const days = [...scheduleDays.value].sort((a, b) => a - b)
-  const cells = days.flatMap(day => Array.from({ length: duration }, (_, offset) => day * 24 + start + offset))
-  const before = [...template.slots]
-  const taken = planner.paintCells(template.id, cells, activity.id)
-
-  const replaced = taken.map(item => `${hoursText(item.hours)} h of ${planner.activities.find(a => a.id === item.activityId)?.name ?? 'another activity'}`)
-  const text = `Added ${days.length} x ${duration} h.${replaced.length ? ` Replaced ${replaced.join(' and ')}.` : ''}`
-
-  scheduleResult.value = { text, templateId: template.id, slots: before }
-  clearTimeout(scheduleUndoTimer)
-  scheduleUndoTimer = setTimeout(dismissScheduleResult, SCHEDULE_UNDO_MS)
-}
-
-function undoSchedule() {
-  const last = scheduleResult.value
-  if (!last) return
-
-  planner.restoreSlots(last.templateId, last.slots)
-  dismissScheduleResult()
+function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slots: string[] }> }) {
+  if (result.text) showResult(result.text, result.undo ?? [])
 }
 </script>
 
@@ -729,10 +523,11 @@ function undoSchedule() {
       <PlannerActivityGrid />
     </ClientOnly>
 
-    <!-- Activities: a compact list under the week; select one to see it, edit it or add one -->
+    <!-- Activities and habits (FR-ITEM-4): one list. Timed entries are chips with their hours in the active week type; habits with no time
+         are listed under them. Each opens the one form, inline; "+ Add" opens it for a new entry -->
     <section class="section acts" aria-labelledby="activities-title">
       <div class="acts-head">
-        <h2 id="activities-title" class="section-title">Activities</h2>
+        <h2 id="activities-title" class="section-title">Activities and habits</h2>
       </div>
 
       <ul class="act-list">
@@ -740,9 +535,9 @@ function undoSchedule() {
           <button
             type="button"
             class="chip"
-            :data-active="selectedActivity?.id === activity.id"
-            :aria-pressed="selectedActivity?.id === activity.id"
-            @click="selectActivity(activity.id)"
+            :data-active="selected?.activityId === activity.id"
+            :aria-pressed="selected?.activityId === activity.id"
+            @click="selectEntry(activity.id)"
           >
             <span class="dot" :style="{ background: activity.color }" />
             <span class="t-name">{{ activity.name }}</span>
@@ -751,247 +546,56 @@ function undoSchedule() {
         </li>
       </ul>
 
-      <p v-if="!planner.activities.length" class="acts-empty">No activities yet. Add one to plan when it happens.</p>
+      <div v-if="habitOnly.length" class="entry-habits">
+        <h3 class="entry-habits-title">Habits</h3>
+        <ul class="row-list">
+          <li v-for="habit in habitOnly" :key="habit.id" class="row-item">
+            <span class="dot" :style="{ background: categoryMap.get(habit.categoryId)?.color ?? '#888' }" aria-hidden="true" />
+            <span class="row-main">
+              <span class="row-name">{{ habit.name }}</span>
+              <span class="row-meta">{{ categoryName(habit.categoryId) }} · {{ frequencyText(habit.frequency) }}</span>
+            </span>
+            <EditButton :label="`Edit ${habit.name}`" @click="editEntry(habit.id)" />
+          </li>
+        </ul>
+      </div>
 
-      <div v-if="selectedActivity && !editing" class="act-detail">
-        <span class="dot dot-lg" :style="{ background: selectedActivity.color }" />
+      <p v-if="!planner.activities.length && !habitOnly.length" class="acts-empty">No activities or habits yet. Add one to plan when it happens.</p>
+
+      <div v-if="selected && !editing && !adding" class="act-detail">
+        <span class="dot dot-lg" :style="{ background: selectedColor }" />
         <div class="act-detail-main">
-          <span class="act-detail-name">{{ selectedActivity.name }}</span>
-          <span class="act-detail-sub">{{ selectedActivity.shortCode }} · {{ categoryName(selectedActivity.categoryId) }}<template v-if="selectedActivity.alsoCategoryIds?.length"> · also {{ selectedActivity.alsoCategoryIds.map(categoryName).join(', ') }}</template> · {{ linkedHabits.length }} linked {{ linkedHabits.length === 1 ? 'habit' : 'habits' }}</span>
+          <span class="act-detail-name">{{ selectedName }}</span>
+          <span class="act-detail-sub">{{ summaryLine }}</span>
         </div>
-        <EditButton ref="activityEditButton" :label="`Edit ${selectedActivity.name}`" :expanded="editing" @click="startEdit" />
+        <EditButton ref="selectedEditButton" :label="`Edit ${selectedName}`" :expanded="editing" @click="startEdit" />
       </div>
 
-      <!-- Schedule in the week (FR-PLAN-25): closed by default. The active week type; hours it replaces belong to other activities -->
-      <div v-if="selectedActivity && !editing" class="act-schedule-toggle">
-        <button
-          ref="scheduleToggle"
-          type="button"
-          class="btn btn-sm"
-          :aria-expanded="scheduleOpen ? 'true' : 'false'"
-          :aria-controls="scheduleOpen ? 'act-schedule' : undefined"
-          @click="scheduleOpen = !scheduleOpen"
-          @keydown.escape.stop="scheduleOpen && closeSchedule()"
-        >Schedule in the week</button>
+      <!-- The result stays under the list after the form closes, so its Undo is still there (8 s) -->
+      <div v-if="resultText" class="sched-result" role="status">
+        <span>{{ resultText }}</span>
+        <button v-if="canUndo" type="button" class="btn btn-sm" @click="undoResult">Undo</button>
       </div>
 
-      <section v-if="selectedActivity && !editing && scheduleOpen" id="act-schedule" class="act-panel act-schedule" aria-labelledby="act-schedule-title" @keydown.escape.stop="closeSchedule">
-        <div class="act-panel-head">
-          <h3 id="act-schedule-title" class="act-panel-title">Schedule in the week</h3>
-          <button type="button" class="btn btn-sm" @click="closeSchedule">Close</button>
-        </div>
-        <p class="act-schedule-lede">
-          Paints {{ selectedActivity.name }} in <strong>{{ activeTemplate?.name ?? 'no week type' }}</strong>. Hours it replaces belong to other activities.
-        </p>
-        <p v-if="scheduleHabitHint" class="act-schedule-hint">{{ scheduleHabitHint }}</p>
+      <ActivityForm
+        v-if="selected && editing"
+        :key="`edit-${selected.habitId ?? ''}-${selected.activityId ?? ''}`"
+        :habit-id="selected.habitId"
+        :activity-id="selected.activityId"
+        @saved="onSaved"
+        @close="closeEdit"
+      />
 
-        <fieldset class="sched-days">
-          <legend class="field-label">Days</legend>
-          <div class="sched-day-row">
-            <button
-              v-for="(day, index) in DAYS"
-              :key="day"
-              type="button"
-              class="chip"
-              :data-active="scheduleDays.includes(index)"
-              :aria-pressed="scheduleDays.includes(index)"
-              @click="toggleScheduleDay(index)"
-            >{{ day }}</button>
-          </div>
-        </fieldset>
-
-        <div class="form-row">
-          <div class="field">
-            <label class="field-label" for="sched-duration">Duration</label>
-            <select id="sched-duration" v-model.number="scheduleDuration" class="timely-select" @change="scheduleError = ''">
-              <option v-for="hours in durationOptions" :key="hours" :value="hours">{{ hours }} h</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label" for="sched-start">Start</label>
-            <select id="sched-start" v-model.number="scheduleStart" class="timely-select" @change="scheduleError = ''">
-              <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ formatHour(hour) }}</option>
-            </select>
-          </div>
-        </div>
-
-        <p v-if="scheduleError" id="sched-error" class="field-error" role="alert">{{ scheduleError }}</p>
-        <p v-if="!scheduleHourly" class="act-schedule-hint">This week type is not hourly, so hours cannot be painted here.</p>
-
-        <div class="act-actions">
-          <button type="button" class="btn btn-sm btn-primary" :disabled="!scheduleHourly" @click="addToWeek">Add to my week</button>
-        </div>
-      </section>
-
-      <!-- The result stays under the button after the form closes, so its Undo is still there -->
-      <div v-if="selectedActivity && !editing && scheduleResult" class="sched-result" role="status">
-        <span>{{ scheduleResult.text }}</span>
-        <button type="button" class="btn btn-sm" @click="undoSchedule">Undo</button>
-      </div>
-
-      <!-- Inline edit of the selected activity: changes apply at once; Done leaves edit mode -->
-      <div v-if="editing && selectedActivity" id="act-edit-panel" class="act-panel" tabindex="-1" @keydown="onEditKeydown">
-        <div class="act-panel-head">
-          <h3 class="act-panel-title">Edit {{ selectedActivity.name }}</h3>
-          <button type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
-        </div>
-
-        <div class="form-stack">
-          <div class="field">
-            <label class="field-label" for="act-edit-name">Name</label>
-            <input
-              id="act-edit-name"
-              class="timely-input"
-              :value="nameDraft"
-              :aria-invalid="!!editErrors.name"
-              aria-describedby="act-edit-name-error"
-              @input="onNameInput"
-              @blur="onNameBlur"
-            />
-            <p v-if="editErrors.name" id="act-edit-name-error" class="field-error">{{ editErrors.name }}</p>
-          </div>
-
-          <div class="form-row">
-            <div class="field">
-              <label class="field-label" for="act-edit-code">Short code</label>
-              <input
-                id="act-edit-code"
-                class="timely-input"
-                :value="codeDraft"
-                maxlength="3"
-                :aria-invalid="!!editErrors.shortCode"
-                aria-describedby="act-edit-code-error"
-                @input="onCodeInput"
-                @blur="onCodeBlur"
-              />
-              <p v-if="editErrors.shortCode" id="act-edit-code-error" class="field-error">{{ editErrors.shortCode }}</p>
-            </div>
-            <div class="field">
-              <label class="field-label" for="act-edit-cat">Life area</label>
-              <select
-                id="act-edit-cat"
-                class="timely-select"
-                title="The primary life area is changed here; it cannot be unlinked"
-                :value="selectedActivity.categoryId"
-                @change="applyField({ categoryId: ($event.target as HTMLSelectElement).value })"
-              >
-                <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-              </select>
-              <p v-if="editErrors.categoryId" class="field-error">{{ editErrors.categoryId }}</p>
-            </div>
-          </div>
-
-          <PlannerAlsoCategories
-            :model-value="selectedActivity.alsoCategoryIds ?? []"
-            :categories="orderedCategories"
-            :primary-id="selectedActivity.categoryId"
-            @update:model-value="applyField({ alsoCategoryIds: $event })"
-          />
-
-          <div class="field">
-            <span class="field-label">Colour</span>
-            <div class="color-pop color-pop-inline">
-              <button
-                v-for="dc in DESIGN_COLORS"
-                :key="dc.id"
-                type="button"
-                :style="{ background: dc.bg }"
-                :data-active="selectedActivity.color === dc.bg"
-                :aria-label="`Colour ${dc.id}`"
-                @click="applyField({ color: dc.bg })"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="act-delete">
-          <button
-            v-if="!confirmingDelete"
-            ref="deleteTrigger"
-            type="button"
-            class="btn btn-sm btn-danger"
-            @click="askDelete"
-          >Delete activity</button>
-          <div v-else class="act-confirm" role="group" aria-label="Confirm delete">
-            <p class="act-confirm-text">{{ deleteImpact }}</p>
-            <div class="act-actions">
-              <button type="button" class="btn btn-sm btn-danger" @click="confirmDelete">Delete</button>
-              <button ref="cancelDeleteButton" type="button" class="btn btn-sm" @click="cancelDelete">Cancel</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- New activity: a quiet link reveals the form -->
-      <div v-if="addOpen" ref="addPanel" class="act-panel" tabindex="-1" @keydown.escape="closeAdd">
-        <div class="form-stack">
-          <div class="field">
-            <label class="field-label" for="add-act-name">Name</label>
-            <input
-              id="add-act-name"
-              ref="addNameInput"
-              v-model="addDraft.name"
-              class="timely-input"
-              placeholder="e.g. Meditation"
-              :aria-invalid="!!addErrors.name"
-              aria-describedby="add-act-name-error"
-              @keydown.enter.prevent="submitAdd"
-            />
-            <p v-if="addErrors.name" id="add-act-name-error" class="field-error">{{ addErrors.name }}</p>
-          </div>
-
-          <div class="form-row">
-            <div class="field">
-              <label class="field-label" for="add-act-code">Short code</label>
-              <input
-                id="add-act-code"
-                v-model="addDraft.shortCode"
-                class="timely-input"
-                placeholder="MED"
-                @input="shortCodeEdited = true"
-                maxlength="3"
-                :aria-invalid="!!addErrors.shortCode"
-                aria-describedby="add-act-code-error"
-                @keydown.enter.prevent="submitAdd"
-              />
-              <p v-if="addErrors.shortCode" id="add-act-code-error" class="field-error">{{ addErrors.shortCode }}</p>
-            </div>
-            <div class="field">
-              <label class="field-label" for="add-act-cat">Life area</label>
-              <select id="add-act-cat" v-model="addDraft.categoryId" class="timely-select">
-                <option v-for="cat in orderedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-              </select>
-            </div>
-          </div>
-
-          <PlannerAlsoCategories
-            v-model="addDraft.alsoCategoryIds"
-            :categories="orderedCategories"
-            :primary-id="addDraft.categoryId"
-          />
-
-          <div class="field">
-            <span class="field-label">Colour</span>
-            <div class="color-pop color-pop-inline">
-              <button
-                v-for="dc in DESIGN_COLORS"
-                :key="dc.id"
-                type="button"
-                :style="{ background: dc.bg }"
-                :data-active="addDraft.color === dc.bg"
-                :aria-label="`Colour ${dc.id}`"
-                @click="addDraft.color = dc.bg"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="act-actions">
-          <button class="btn btn-sm btn-primary" :disabled="!addDraft.name.trim()" @click="submitAdd">Add activity</button>
-          <button class="btn btn-sm" @click="closeAdd">Cancel</button>
-        </div>
-      </div>
-      <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd()">+ Add activity</button>
+      <ActivityForm
+        v-if="adding"
+        key="add"
+        :habit-id="null"
+        :activity-id="null"
+        :category-id="orderedCategories[0]?.id"
+        @saved="onSaved"
+        @close="closeAdd"
+      />
+      <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd">+ Add</button>
     </section>
 
     <!-- Year: full width, collapsible, closed by default with any number of week types. With one week type a line says which one the year uses -->

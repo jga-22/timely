@@ -24,7 +24,7 @@ const steps = computed(() => {
     {
       title: 'Plan your week',
       body: count
-        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals shows each area as on target when its habits and hours match.`
+        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals shows each area as on target when its activities and habits match the hours planned.`
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.'
     },
     {
