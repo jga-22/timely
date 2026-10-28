@@ -1,5 +1,17 @@
 import type { Habit, PlannerState, WeekTemplate } from '~/types/planner'
-import { DESIGN_COLORS, formatHour, getActiveTemplate, goalsTemplate, isHourlyTemplate, slotsToBlocks, validateActivityFields } from '~/utils/planner'
+import {
+  DAYS,
+  DESIGN_COLORS,
+  formatHour,
+  getActiveTemplate,
+  goalsTemplate,
+  habitAlignment,
+  hoursLabel,
+  isHourlyTemplate,
+  scheduledWeeklyMinutesForActivity,
+  slotsToBlocks,
+  validateActivityFields
+} from '~/utils/planner'
 
 /**
  * One entry of the Week and Goals lists (FR-ITEM-1): a habit with its linked activity when it has one, or an activity that no habit
@@ -238,4 +250,43 @@ export const paintResultText = (input: {
   if (input.cleared.length) parts.push(`Cleared from ${joinNames(input.cleared)}.`)
 
   return parts.join(' ')
+}
+
+/** Day names of a draft: "every day" for all seven */
+export const dayText = (days: number[]): string => (days.length === 7 ? 'every day' : days.map(day => DAYS[day]).join(', '))
+
+/** A block's length as it reads: "45 min", "2 h" */
+export const durationText = (minutes: number): string => (minutes % 60 ? `${minutes} min` : `${minutes / 60} h`)
+
+/** A habit's frequency as it reads: "3 a week", "Every day", "2 a month" */
+export const frequencyText = (frequency: Habit['frequency']): string => (frequency.period === 'day'
+  ? (frequency.count === 1 ? 'Every day' : `${frequency.count} a day`)
+  : `${frequency.count} a ${frequency.period}`)
+
+/**
+ * The lines an entry shows (FR-ITEM-4): when and where its hours are painted, and their time against the need (a habit with a
+ * time per occurrence); or, for a habit with no activity, its frequency. Hours are read from the Goals week type, as the comparison does
+ */
+export const entryLines = (state: PlannerState, habitId: string | null, activityId: string | null): string[] => {
+  const draft = entryDraftOf(state, habitId, activityId)
+  const habit = habitId ? state.habits.find(item => item.id === habitId) : undefined
+  const lines: string[] = []
+
+  if (activityId) {
+    lines.push(draft.days.length ? `${dayText(draft.days)} at ${formatHour(draft.start)} for ${durationText(draft.durationMinutes)}` : 'No days yet')
+
+    const names = draft.templateIds.map(id => state.templates.find(template => template.id === id)?.name ?? '').filter(Boolean)
+    lines.push(names.length ? `In ${joinNames(names)}` : 'Not in a week type')
+
+    const needed = habit ? habitAlignment(state, habit) : null
+    if (needed && needed.neededMinutes) {
+      lines.push(`${hoursLabel(needed.allocatedMinutes ?? 0)} planned of ${hoursLabel(needed.neededMinutes)} needed`)
+    } else {
+      lines.push(`${hoursLabel(scheduledWeeklyMinutesForActivity(state, activityId))} a week`)
+    }
+  } else if (habit) {
+    lines.push(frequencyText(habit.frequency))
+  }
+
+  return lines
 }

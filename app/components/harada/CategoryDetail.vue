@@ -1,36 +1,27 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, aggregateTemplate, comparedActivityIds, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
+import { DESIGN_COLORS, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
+import { entryLines } from '~/utils/entries'
 import { focusEditById } from '~/utils/focus'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
-const { categories, activities } = storeToRefs(planner)
-const { link, setSelection } = useNav()
+const { categories } = storeToRefs(planner)
+const { setSelection } = useNav()
+const { resultText, canUndo, showResult, undoResult } = useEntryResult()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
 const category = computed(() => categories.value.find(entry => entry.id === props.categoryId))
 const position = computed(() => sortedCategories.value.findIndex(entry => entry.id === props.categoryId))
 const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
-
-const categoryActivities = computed(() => activities.value.filter(activity => activity.categoryId === props.categoryId))
-// Rows of the activities list: every activity of the category, plus those counted here from another category
-// (a habit link or a secondary category). Each row says whether its hours count toward the comparison, and why
-const comparedIds = computed(() => comparedActivityIds(planner.$state, props.categoryId))
-const categoryRows = computed(() => activities.value
-  .filter(activity => activity.categoryId === props.categoryId || comparedIds.value.has(activity.id))
-  .map(activity => ({
-    activity,
-    note: !comparedIds.value.has(activity.id)
-      ? 'not in comparison'
-      : activity.categoryId === props.categoryId ? '' : activity.alsoCategoryIds?.includes(props.categoryId) ? 'also counts here' : 'linked by a habit'
-  })))
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
-const activityCount = computed(() => categoryActivities.value.length)
+const categoryName = (categoryId: string) => categories.value.find(entry => entry.id === categoryId)?.name ?? 'No life area'
+
+const activityCount = computed(() => planner.activities.filter(activity => activity.categoryId === props.categoryId).length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
@@ -42,29 +33,103 @@ onMounted(() => {
   mounted.value = true
 })
 
+const goalsWeek = computed(() => goalsTemplate(planner.$state) ?? null)
 const alignments = computed(() => categoryAlignments(planner.$state))
 const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
 
-// Unlink a secondary category from an activity; the primary category is changed in Planner only. Inline confirmation first
-const unlinkId = ref<string | null>(null)
-// Only a secondary link that no habit of this category also holds can be removed here: a habit link keeps the hours counted
-const linkedByHabit = (activityId: string) => planner.habits.some(habit => habit.categoryId === props.categoryId && habit.activityId === activityId)
-const isSecondary = (activity: { id: string; categoryId: string; alsoCategoryIds?: string[] }) =>
-  activity.categoryId !== props.categoryId && !!activity.alsoCategoryIds?.includes(props.categoryId) && !linkedByHabit(activity.id)
-const confirmUnlink = (activityId: string) => {
-  planner.removeAlsoCategory(activityId, props.categoryId)
-  unlinkId.value = null
+// ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
+// lies), an activity of this life area that no habit links to, or an activity that also counts here (its note says so)
+interface EntryRow {
+  key: string
+  habitId: string | null
+  activityId: string | null
+  name: string
+  lines: string[]
+  /** Counts here through "also counts toward" only: its hours are compared here, its life area is another one */
+  secondary: boolean
+  note: string
 }
 
-// View mode lists the activities no habit links: a habit's activity shows under its habit (FR-GOALS-16)
-const viewRows = computed(() => categoryActivities.value.filter(activity => !linkedByHabit(activity.id)))
+const entryRows = computed<EntryRow[]>(() => {
+  const here = props.categoryId
+  const rows: EntryRow[] = []
+  const linkedAnywhere = new Set(planner.habits.map(habit => habit.activityId).filter((id): id is string => !!id))
 
-// ── Activities: hours a week in the week type the comparison reads (goalsTemplate, FR-GOALS-16), so the figures add up to the bar
-const goalsWeek = computed(() => goalsTemplate(planner.$state) ?? null)
-const activeHours = computed(() =>
-  goalsWeek.value ? aggregateTemplate(goalsWeek.value, activities.value) : new Map<string, number>()
-)
-const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
+  for (const habit of planner.habits.filter(entry => entry.categoryId === here)) {
+    const activity = habit.activityId ? planner.activities.find(entry => entry.id === habit.activityId) : undefined
+
+    rows.push({
+      key: habit.id,
+      habitId: habit.id,
+      activityId: activity?.id ?? null,
+      name: habit.name,
+      lines: entryLines(planner.$state, habit.id, activity?.id ?? null),
+      secondary: false,
+      note: activity && activity.categoryId !== here ? `in ${categoryName(activity.categoryId)}` : ''
+    })
+  }
+
+  const habitLinkedHere = new Set(planner.habits.filter(habit => habit.categoryId === here).map(habit => habit.activityId))
+
+  for (const activity of planner.activities) {
+    if (habitLinkedHere.has(activity.id)) continue
+
+    const counted = activity.categoryId !== here && !!activity.alsoCategoryIds?.includes(here)
+    const orphan = activity.categoryId === here && !linkedAnywhere.has(activity.id)
+    if (!counted && !orphan) continue
+
+    rows.push({
+      key: activity.id,
+      habitId: null,
+      activityId: activity.id,
+      name: activity.name,
+      lines: entryLines(planner.$state, null, activity.id),
+      secondary: counted,
+      note: counted ? 'also counts here' : ''
+    })
+  }
+
+  return rows
+})
+
+// ── One item at a time: a row's form or the add form, opened from its pencil or "+ Add" (both modes)
+const openKey = ref<string | null>(null)
+const adding = ref(false)
+const addTrigger = ref<HTMLButtonElement | null>(null)
+const unlinkKey = ref<string | null>(null)
+
+function toggleRow(key: string) {
+  adding.value = false
+  unlinkKey.value = null
+  openKey.value = openKey.value === key ? null : key
+}
+
+function openAdd() {
+  openKey.value = null
+  unlinkKey.value = null
+  adding.value = true
+}
+
+// Done, Cancel, Escape and a removal leave the form here; focus returns to the row's pencil, or to "+ Add"
+function closeForm() {
+  const key = openKey.value
+  openKey.value = null
+  adding.value = false
+  nextTick(() => {
+    if (key) document.getElementById(`entry-edit-${key}`)?.focus()
+    else addTrigger.value?.focus()
+  })
+}
+
+function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slots: string[] }> }) {
+  if (result.text) showResult(result.text, result.undo ?? [])
+}
+
+// Unlink a secondary category from an activity: its hours stop counting here. Inline confirmation first
+function confirmUnlink(activityId: string | null) {
+  if (activityId) planner.removeAlsoCategory(activityId, props.categoryId)
+  unlinkKey.value = null
+}
 
 // ── Mode changes live in the URL (FR-UX-5); Done replaces the entry and returns focus to Edit
 const editButton = ref<HTMLButtonElement | null>(null)
@@ -102,6 +167,9 @@ watch(
     nameDraft.value = category.value?.name ?? ''
     nameError.value = ''
     removing.value = false
+    openKey.value = null
+    adding.value = false
+    unlinkKey.value = null
   },
   { immediate: true }
 )
@@ -141,6 +209,8 @@ const removeText = computed(() => {
   return `Its ${contentSummary.value} must move to another life area before ${name} is removed.`
 })
 
+const moveToOptions = computed(() => otherCategories.value)
+
 function askRemove() {
   moveToId.value = otherCategories.value[0]?.id ?? ''
   removing.value = true
@@ -178,7 +248,7 @@ function confirmRemove() {
       </div>
     </div>
 
-    <!-- View mode: read-only. The 5-year goal and the 1-year target, the hours comparison, the habits, then the activities no habit links (FR-GOALS-27) -->
+    <!-- View mode: read-only. The 5-year goal and the 1-year target, then the hours comparison -->
     <template v-if="!editing">
       <section class="detail-block">
         <h4 class="detail-label">5-year goal</h4>
@@ -200,31 +270,9 @@ function confirmRemove() {
         />
         <p v-if="goalsWeek" class="detail-compare">Compared with {{ goalsWeek.name }}</p>
       </section>
-
-      <section class="detail-block">
-        <h4 class="detail-label">Habits</h4>
-        <HaradaHabitList :category-id="category.id" :editing="false" />
-      </section>
-
-      <section class="detail-block">
-        <h4 class="detail-label">More activities</h4>
-        <ul v-if="viewRows.length" class="row-list">
-          <li v-for="activity in viewRows" :key="activity.id" class="row-item">
-            <span class="row-main">
-              <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week</span>
-            </span>
-            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
-          </li>
-        </ul>
-        <p v-else class="detail-text is-empty">No other activities yet.</p>
-        <p class="detail-action">
-          <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
-        </p>
-      </section>
     </template>
 
-    <!-- Edit mode: fields apply at once; Done leaves. Habits and activities follow the same rules as in view mode -->
+    <!-- Edit mode: fields apply at once; Done leaves. The list below is the same in both modes -->
     <template v-else>
       <section class="detail-block">
         <div class="form-stack">
@@ -283,42 +331,69 @@ function confirmRemove() {
           </label>
         </div>
       </section>
+    </template>
 
-      <section class="detail-block">
-        <h4 class="detail-label">Habits</h4>
-        <HaradaHabitList :category-id="category.id" :editing="true" />
-      </section>
-
-      <section class="detail-block">
-        <h4 class="detail-label">Activities</h4>
-        <ul v-if="categoryRows.length" class="row-list">
-          <li v-for="{ activity, note } in categoryRows" :key="activity.id" class="row-item">
+    <section class="detail-block">
+      <h4 class="detail-label">Activities and habits</h4>
+      <ul v-if="entryRows.length" class="row-list">
+        <li v-for="row in entryRows" :key="row.key" class="entry-row">
+          <div class="row-item">
             <span class="row-main">
-              <span class="row-name">{{ activity.name }}</span>
-              <span class="row-meta">{{ activity.shortCode }} · {{ hoursText(activeHours.get(activity.id) ?? 0) }} h a week{{ note ? ' · ' + note : '' }}</span>
+              <span class="row-name">{{ row.name }}</span>
+              <span v-for="(line, index) in row.lines" :key="index" class="row-meta">{{ line }}</span>
+              <span v-if="row.note" class="row-meta">{{ row.note }}</span>
             </span>
-            <template v-if="isSecondary(activity)">
-              <span v-if="unlinkId === activity.id" class="row-confirm">
-                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(activity.id)">Unlink</button>
-                <button type="button" class="btn btn-xs" @click="unlinkId = null">Cancel</button>
+            <template v-if="editing && row.secondary && row.activityId">
+              <span v-if="unlinkKey === row.key" class="row-confirm">
+                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(row.activityId)">Unlink</button>
+                <button type="button" class="btn btn-xs" @click="unlinkKey = null">Cancel</button>
               </span>
               <button
                 v-else
                 type="button"
                 class="btn btn-xs btn-outline"
-                :aria-label="`Unlink ${activity.name} from ${category.name}`"
-                @click="unlinkId = activity.id"
+                :aria-label="`Unlink ${row.name} from ${category.name}`"
+                @click="unlinkKey = row.key"
               >Unlink</button>
             </template>
-            <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
-          </li>
-        </ul>
-        <p v-else class="detail-empty">No activities in this life area yet. Add one in Planner.</p>
-        <p class="detail-action">
-          <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
-        </p>
-      </section>
+            <EditButton
+              :id="`entry-edit-${row.key}`"
+              :label="`Edit ${row.name}`"
+              :expanded="openKey === row.key"
+              @click="toggleRow(row.key)"
+            />
+          </div>
 
+          <ActivityForm
+            v-if="openKey === row.key"
+            :habit-id="row.habitId"
+            :activity-id="row.activityId"
+            :category-id="category.id"
+            @saved="onSaved"
+            @close="closeForm"
+          />
+        </li>
+      </ul>
+      <p v-else class="detail-empty">No activities or habits in this life area yet.</p>
+
+      <ActivityForm
+        v-if="adding"
+        key="add"
+        :habit-id="null"
+        :activity-id="null"
+        :category-id="category.id"
+        @saved="onSaved"
+        @close="closeForm"
+      />
+      <button v-else ref="addTrigger" type="button" class="chip-add detail-add" @click="openAdd">+ Add</button>
+
+      <div v-if="resultText" class="sched-result" role="status">
+        <span>{{ resultText }}</span>
+        <button v-if="canUndo" type="button" class="btn btn-sm" @click="undoResult">Undo</button>
+      </div>
+    </section>
+
+    <template v-if="editing">
       <section class="detail-block detail-manage">
         <div class="form-actions">
           <button type="button" class="btn btn-sm" :disabled="isFirst" @click="planner.moveCategory(category.id, -1)">Move up</button>
@@ -339,7 +414,7 @@ function confirmRemove() {
                 class="timely-select"
                 aria-label="Move contents to"
               >
-                <option v-for="other in otherCategories" :key="other.id" :value="other.id">{{ other.name }}</option>
+                <option v-for="other in moveToOptions" :key="other.id" :value="other.id">{{ other.name }}</option>
               </select>
               <button type="button" class="btn btn-sm btn-danger" :disabled="hasContent && !moveToId" @click="confirmRemove">
                 {{ hasContent ? 'Move and remove' : 'Remove' }}
@@ -439,52 +514,18 @@ function confirmRemove() {
   color: var(--warn);
 }
 
-.row-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.detail-add {
+  align-self: flex-start;
+  margin-top: var(--space-3);
 }
 
-.row-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--rule-2);
+.entry-row .row-item {
+  flex-wrap: wrap;
 }
 
-.row-main {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.row-name {
-  font-size: var(--fs-md);
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-
-.row-meta {
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-
-.row-link {
-  flex: none;
-  min-height: 24px;
-  padding: 2px var(--space-2);
-  border-radius: var(--radius);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  color: var(--accent);
-}
-
-.row-link:hover {
-  background: var(--bg-3);
+.row-confirm {
+  display: inline-flex;
+  gap: var(--space-2);
 }
 
 .check {

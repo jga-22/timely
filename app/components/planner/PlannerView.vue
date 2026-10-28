@@ -3,12 +3,11 @@ import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
-import { DAYS, DESIGN_COLORS, aggregateTemplate, formatHour } from '~/utils/planner'
-import { entryDraftOf } from '~/utils/entries'
+import { DESIGN_COLORS, aggregateTemplate, formatHour } from '~/utils/planner'
+import { dayText, durationText, entryDraftOf, frequencyText } from '~/utils/entries'
 import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
-import type { Habit } from '~/types/planner'
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
@@ -282,11 +281,6 @@ const editing = computed(() => !!selected.value && edit.value)
 /** Habits with no activity (no time): the Habits list. Every activity is a timed entry (a chip) */
 const habitOnly = computed(() => planner.habits.filter(habit => !planner.activities.some(activity => activity.id === habit.activityId)))
 
-const frequencyText = (frequency: Habit['frequency']) => (frequency.period === 'day'
-  ? (frequency.count === 1 ? 'Every day' : `${frequency.count} a day`)
-  : `${frequency.count} a ${frequency.period}`)
-const dayText = (days: number[]) => (days.length === 7 ? 'every day' : days.map(day => DAYS[day]).join(', '))
-const minutesText = (minutes: number) => (minutes % 60 ? `${minutes} min` : `${minutes / 60} h`)
 
 const selectedName = computed(() => selectedDraft.value?.name ?? '')
 const selectedColor = computed(() => selectedDraft.value?.color ?? '#888')
@@ -299,7 +293,7 @@ const summaryLine = computed(() => {
   const parts = [draft.activityId ? draft.shortCode : '', categoryName(draft.categoryId)]
 
   if (selected.value.activityId) {
-    parts.push(draft.days.length ? `${dayText(draft.days)} at ${formatHour(draft.start)}, ${minutesText(draft.durationMinutes)}` : 'no days yet')
+    parts.push(draft.days.length ? `${dayText(draft.days)} at ${formatHour(draft.start)}, ${durationText(draft.durationMinutes)}` : 'no days yet')
     parts.push(draft.templateIds.length
       ? `in ${draft.templateIds.map(id => planner.templates.find(template => template.id === id)?.name ?? '').filter(Boolean).join(', ')}`
       : 'not in a week type')
