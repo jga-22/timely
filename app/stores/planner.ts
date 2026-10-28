@@ -63,8 +63,8 @@ export const usePlannerStore = defineStore('planner', {
 
       this.templates.unshift({
         id: templateId,
-        name: `New Template ${this.templates.length + 1}`,
-        description: 'Empty template — paint your ideal week.',
+        name: `New week type ${this.templates.length + 1}`,
+        description: 'Empty week type — paint your ideal week.',
         granularityMinutes: granularity,
         color: source?.color,
         slots: createEmptySlots(granularity)
@@ -357,6 +357,18 @@ export const usePlannerStore = defineStore('planner', {
     },
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
       if (this.ambition) Object.assign(this.ambition, changes)
+    },
+    /** Writes the 5-year ambition: creates it when the state has none (Start empty). A blank statement creates nothing */
+    setAmbition(statement: string) {
+      if (this.ambition) {
+        this.updateAmbition({ statement })
+        return
+      }
+
+      const trimmed = statement.trim()
+      if (!trimmed) return
+
+      this.ambition = { id: `ambition-${Date.now()}`, statement: trimmed, horizonYears: 5 }
     },
     /** Adds a habit to a category. Returns its id, or null when the name is blank or the category is unknown */
     addHabit(categoryId: string, name: string): string | null {

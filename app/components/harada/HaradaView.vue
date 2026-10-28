@@ -46,7 +46,15 @@ const targetLine = (category: Category) => category.targetTbd
   ? { text: 'Target to define', warn: true }
   : { text: category.target1y || 'No target written yet', warn: false }
 
-// ── Vision: the only place the ambition is edited (FR-GOALS-13). Edit mode is local: one field, one edit at a time
+// ── Ambition: the only place the ambition is edited (FR-GOALS-13). Edit mode is local: one field, one edit at a time
+// A new user has no ambition yet (Start empty): the prompt writes the first one, and the view takes over once it exists
+const newAmbition = ref('')
+
+function saveNewAmbition() {
+  planner.setAmbition(newAmbition.value)
+  newAmbition.value = ''
+}
+
 const visionEditing = ref(false)
 const visionEditButton = ref<HTMLButtonElement | null>(null)
 
@@ -183,14 +191,32 @@ function submitAdd() {
 <template>
   <div class="view harada-view" :data-selected="selected ? 'true' : 'false'">
     <header class="page-head">
-      <h1 class="page-title">My vision</h1>
+      <h1 class="page-title">Goals</h1>
     </header>
 
     <div class="goals-top">
-      <!-- Vision: view mode by default; Edit applies at once, Done leaves -->
-      <section v-if="ambition" class="vision" @keydown="onVisionKeydown">
+      <!-- Ambition: view mode by default; Edit applies at once, Done leaves. Without one, the prompt writes it -->
+      <section v-if="!ambition" class="vision vision-new">
         <div class="vision-head">
-          <h2 class="section-title">Vision, {{ horizonText }}</h2>
+          <h2 class="section-title">Ambition, {{ horizonText }}</h2>
+        </div>
+
+        <form class="vision-form" @submit.prevent="saveNewAmbition">
+          <AutoTextarea
+            v-model="newAmbition"
+            label="Write your 5-year ambition"
+            placeholder="For example, be a present father and run a half marathon"
+            class="vision-input"
+          />
+          <div class="vision-actions">
+            <button type="submit" class="btn btn-sm btn-primary" :disabled="!newAmbition.trim()">Save ambition</button>
+          </div>
+        </form>
+      </section>
+
+      <section v-else class="vision" @keydown="onVisionKeydown">
+        <div class="vision-head">
+          <h2 class="section-title">Ambition, {{ horizonText }}</h2>
           <EditButton v-if="!visionEditing" ref="visionEditButton" label="Edit ambition" @click="startVisionEdit" />
           <button v-else type="button" class="btn btn-sm btn-primary" @click="finishVisionEdit">Done</button>
         </div>
@@ -253,7 +279,7 @@ function submitAdd() {
     <section v-else class="section browse">
       <div class="browse-list">
         <div class="section-head">
-          <h2 class="section-title">Categories</h2>
+          <h2 class="section-title">Life areas</h2>
         </div>
         <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
           <li v-for="category in sortedCategories" :key="category.id">
@@ -280,7 +306,7 @@ function submitAdd() {
         </ul>
 
         <div class="add-category">
-          <button v-if="!addOpen" ref="addTrigger" type="button" class="chip-add" @click="openAdd">+ Add category</button>
+          <button v-if="!addOpen" ref="addTrigger" type="button" class="chip-add" @click="openAdd">+ Add life area</button>
 
           <form v-else class="form-stack" @submit.prevent="submitAdd" @keydown.escape="closeAdd">
             <div class="field">
@@ -314,7 +340,7 @@ function submitAdd() {
             </div>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-sm btn-primary">Add category</button>
+              <button type="submit" class="btn btn-sm btn-primary">Add life area</button>
               <button type="button" class="btn btn-sm" @click="closeAdd">Cancel</button>
             </div>
           </form>
@@ -329,7 +355,7 @@ function submitAdd() {
           :editing="editing"
           @back="backToList"
         />
-        <p v-else class="browse-placeholder">Select a category to see its goals, habits and planned time.</p>
+        <p v-else class="browse-placeholder">Select a life area to see its goals, habits and planned time.</p>
       </div>
     </section>
   </div>
@@ -365,6 +391,10 @@ function submitAdd() {
 
 .vision-input {
   max-width: 720px;
+}
+
+.vision-actions {
+  margin-top: var(--space-3);
 }
 
 /* 3x3 map separated by hairlines, as in the prototype; read-only. Large screens only: hidden, not squeezed, below 1100px */

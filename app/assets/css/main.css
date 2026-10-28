@@ -188,12 +188,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .tab[aria-selected="true"]::after { transform: scaleX(1); }
 
-.tab-num {
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
 
 /* Remote storage only (hidden in 'local' mode): a quiet dot and label */
 .storage-status {
@@ -345,15 +339,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .theme-toggle:hover { background: var(--bg-3); color: var(--ink); }
 .theme-toggle svg { width: 18px; height: 18px; }
-.tour-button {
-  flex: none;
-  height: 32px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius);
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
-}
-.tour-button:hover { background: var(--bg-3); color: var(--ink); }
 
 /* ── First-run onboarding (FR-ONB): welcome and form dialog, guided tour card ── */
 .onb-overlay {
@@ -413,6 +398,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
   white-space: nowrap;
 }
 .onb-link:hover { text-decoration: underline; }
+/* Welcome: the intro link sits under the actions, aligned with them */
+.onb-intro-link { align-self: flex-start; margin-top: var(--space-1); padding-left: 0; }
 .onb-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 .onb-chips .chip { cursor: pointer; }
 .onb-chips .chip:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -914,8 +901,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   box-shadow: var(--focus-ring);
 }
 .new-template-form { display: flex; gap: var(--space-1); }
-.delete-template-btn { margin-left: auto; }
-.delete-template-btn .delete-template-btn-icon { display: none; }
 
 .unit {
   margin-left: 2px;
@@ -1488,6 +1473,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.year-line {
+  margin: var(--space-5) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
 .year-body { margin-top: var(--space-4); }
 .year-paint-head {
   display: flex;
@@ -1775,7 +1765,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
     gap: var(--space-5);
     height: 44px;
   }
-  .tab-num { display: none; }
 
   .view { padding: var(--space-5) var(--space-4) 72px; }
   .page-title { font-size: var(--fs-lg); }
@@ -1793,9 +1782,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 @media (max-width: 480px) {
   .view { padding: var(--space-4) var(--space-4) 64px; }
 
-  .delete-template-btn .delete-template-btn-label { display: none; }
-  .delete-template-btn .delete-template-btn-icon { display: inline; }
-  .delete-template-btn { padding: 0 var(--space-2); }
 
 }
 

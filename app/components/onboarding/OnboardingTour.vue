@@ -58,7 +58,6 @@ watch([phase, step], ([value]) => {
     aria-describedby="onb-tour-body"
     @keydown.esc.stop="close"
   >
-    <p class="onb-step" aria-live="polite">Step {{ TOUR_FIRST_STEP + step }} of {{ ONBOARDING_STEP_COUNT }}</p>
     <h2 id="onb-tour-title" ref="heading" class="onb-tour-title" tabindex="-1">{{ current.title }}</h2>
     <p id="onb-tour-body" class="onb-tour-body">{{ current.body }}</p>
     <div class="onb-tour-actions">

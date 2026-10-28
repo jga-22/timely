@@ -131,9 +131,9 @@ const contentSummary = computed(() => [
 const removeText = computed(() => {
   const name = category.value?.name ?? ''
   if (!hasContent.value) return `Remove ${name}? It has no activities or habits.`
-  if (!otherCategories.value.length) return `Add another category first, then remove ${name}.`
+  if (!otherCategories.value.length) return `Add another life area first, then remove ${name}.`
 
-  return `Its ${contentSummary.value} must move to another category before ${name} is removed.`
+  return `Its ${contentSummary.value} must move to another life area before ${name} is removed.`
 })
 
 function askRemove() {
@@ -161,7 +161,7 @@ function confirmRemove() {
     <div class="detail-head">
       <button type="button" class="btn btn-sm detail-back" @click="emit('back')">
         <svg class="detail-back-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-        Back to categories
+        Back to life areas
       </button>
       <div class="detail-title">
         <h3 class="detail-name">
@@ -224,7 +224,7 @@ function confirmRemove() {
             <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
-        <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
+        <p v-else class="detail-empty">No activities in this life area yet. Add one in Planner.</p>
         <p class="detail-action">
           <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
         </p>
@@ -320,7 +320,7 @@ function confirmRemove() {
             <EditButton :to="link('planner', { item: activity.id, edit: true })" :label="`Edit ${activity.name} in Planner`" />
           </li>
         </ul>
-        <p v-else class="detail-empty">No activities in this category yet. Add one in Planner.</p>
+        <p v-else class="detail-empty">No activities in this life area yet. Add one in Planner.</p>
         <p class="detail-action">
           <NuxtLink class="chip-add" :to="link('planner', { add: true, category: category.id })">+ Add activity</NuxtLink>
         </p>
@@ -333,10 +333,10 @@ function confirmRemove() {
         </div>
 
         <button v-if="!removing" ref="removeTrigger" type="button" class="btn btn-sm btn-danger detail-remove" @click="askRemove">
-          Remove category
+          Remove life area
         </button>
 
-        <div v-else class="inline-confirm" role="group" aria-label="Confirm remove category">
+        <div v-else class="inline-confirm" role="group" aria-label="Confirm remove life area">
           <p class="inline-confirm-text">{{ removeText }}</p>
           <div class="form-actions">
             <template v-if="!hasContent || otherCategories.length">

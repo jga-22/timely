@@ -23,11 +23,13 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light: vision, the Harada map, the category list with the needed-and-planned bar and status text under each target |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
+| `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
 | `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the bars, full page |
 | `goals-detail-desktop-light.png` | 1280 px wide | Goals, light: Spiritual, the needed-and-planned bar with "2 h planned of 1.5 h needed", and the quiet "Not linked" habit |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
+| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type: the "Week type" bar with no delete, the week grid, and the one line "Every week of 2026 uses My week." in place of the year section |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
 | `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
 | `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
@@ -90,6 +92,14 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### UX simplify (2026-10-28, branch `feat/ux-simplify`)
+
+- Vocabulary: "Categories" is "Life areas" in the UI, "vision" is "ambition", the Planner tab is "Week" (route `planner` and the URL stay), "Template" in Planner is "Week type". Code identifiers, routes and stored fields are unchanged.
+- Start empty creates no data but assigns the empty week type to every week of the year, so Insights and the Planner have weeks. A new user with no ambition gets the prompt in Goals; typing one saves it.
+- Planner: the red delete in the bar is gone (delete stays in the week type edit panel); the year section is closed by default; with one week type it is one line, "Every week of <year> uses <name>.". The add-activity short code is derived from the name until it is typed by hand; it is not required to enable Add.
+- Topbar: no tab numerals; Tour is "Replay tour" in the Account menu (both modes). Home header: date and ISO week, no template name.
+- Onboarding: Guide me goes straight to step 1; "Watch the short intro" is a link on Welcome and returns to Welcome. The form steps read "Step n of 2"; the tour cards have no counter.
 
 ### Polish v4 (2026-10-27, branch `feat/polish-v4`)
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The first-run intro dialog (FR-ONB-9): the title, focus and the dialog's own end actions around IntroPlayer. "Start with my ambition"
- * is always there, so the video is optional; Skip intro and Escape leave. Client only (ClientOnly in app.vue), so the server markup has no
+ * The first-run intro dialog (FR-ONB-9): the title, focus and the dialog's own end actions around IntroPlayer. "Continue"
+ * is always there, so the video is optional; Skip intro and Escape leave (back to Welcome, or to the tour). Client only (ClientOnly in app.vue), so the server markup has no
  * intro.
  */
 const { phase, finishIntro } = useOnboarding()
@@ -27,7 +27,7 @@ watch(() => phase.value === 'intro', (open) => {
 
       <OnboardingIntroPlayer>
         <template #end>
-          <button type="button" class="btn btn-sm btn-primary" @click="finishIntro">Start with my ambition</button>
+          <button type="button" class="btn btn-sm btn-primary" @click="finishIntro">Continue</button>
           <button type="button" class="onb-link" @click="finishIntro">Skip intro</button>
         </template>
       </OnboardingIntroPlayer>

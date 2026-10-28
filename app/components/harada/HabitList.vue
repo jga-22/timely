@@ -20,7 +20,7 @@ const frequencyText = (habit: Habit) => {
   return habit.minutesPerOccurrence ? `${base}, ${habit.minutesPerOccurrence} min` : base
 }
 
-const categoryName = (categoryId: string) => planner.categories.find(category => category.id === categoryId)?.name ?? 'No category'
+const categoryName = (categoryId: string) => planner.categories.find(category => category.id === categoryId)?.name ?? 'No life area'
 
 const linkedActivity = (habit: Habit): Activity | undefined =>
   habit.activityId ? planner.activities.find(activity => activity.id === habit.activityId) : undefined
@@ -122,7 +122,7 @@ function removeHabit(habitId: string) {
 
 <template>
   <div class="habit-list">
-    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this category.</p>
+    <p v-if="!habits.length" class="habit-empty">No daily habits yet for this life area.</p>
 
     <!-- Every habit has its own pencil: its form opens inline, whatever the category's edit mode -->
     <div v-for="habit in habits" :key="habit.id" class="habit-edit" :class="{ 'is-open': openId === habit.id }">

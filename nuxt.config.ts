@@ -3,7 +3,7 @@
 // Vercel Web Analytics (page views, no cookies). Vercel serves the script at /_vercel/insights/script.js, so it is added
 // only when building on Vercel (the VERCEL env var): locally the path does not exist. The @vercel/analytics package does the
 // same, but its peer ranges (vue-router 4, an optional Svelte/Vite 8 chain) break `npm install` with this dependency set.
-const vercelAnalytics = process.env.VERCEL
+const vercelAnalytics = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.VERCEL
   ? [
       { innerHTML: 'window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)}' },
       { src: '/_vercel/insights/script.js', defer: true },

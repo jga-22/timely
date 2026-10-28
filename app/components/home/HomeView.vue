@@ -4,7 +4,7 @@ import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { isoWeekOf } from '~/utils/dates'
 import { formatHour } from '~/utils/planner'
-import { dayBlocks, dayHours, dayTemplateName, formatDayLabel } from '~/utils/home'
+import { dayBlocks, dayHours, formatDayLabel } from '~/utils/home'
 
 // Read-only (FR-HOME-1) except the journal card (a separate component); every item has an Edit link to its owner.
 const planner = usePlannerStore()
@@ -30,13 +30,11 @@ onUnmounted(() => window.clearInterval(clock))
 
 // Date-dependent output is null until mounted, so the first server and client passes agree (FR-DATE-6)
 const weekNumber = computed(() => (today.value ? isoWeekOf(today.value).week : null))
-const templateName = computed(() => (today.value ? dayTemplateName(planner.$state, today.value) ?? planner.activeTemplate?.name ?? '' : ''))
-
-// Small text under the title: the date, the ISO week and the template that applies today
+// Small text under the title: the date and the ISO week, e.g. "Tuesday 27 October · Week 44"
 const headerLine = computed(() => {
   if (!today.value || weekNumber.value === null) return null
 
-  return [formatDayLabel(today.value), `Week ${weekNumber.value}`, templateName.value].filter(Boolean).join(' · ')
+  return [formatDayLabel(today.value), `Week ${weekNumber.value}`].join(' · ')
 })
 
 // Today's blocks in time order, each with its activity, category and duration

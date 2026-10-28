@@ -377,7 +377,7 @@ export const validateActivityFields = (
   }
 
   if (fields.categoryId !== undefined && !state.categories.some(category => category.id === fields.categoryId)) {
-    errors.categoryId = 'Choose a category'
+    errors.categoryId = 'Choose a life area'
   }
 
   return errors

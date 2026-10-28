@@ -32,7 +32,7 @@ const { activeTemplate } = storeToRefs(planner)
 
 const slots = computed(() => activeTemplate.value?.slots ?? [])
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
-const templateName = computed(() => activeTemplate.value?.name ?? 'no template')
+const templateName = computed(() => activeTemplate.value?.name ?? 'no week type')
 const plannedHours = computed(() => slots.value.filter(Boolean).length)
 const hoursPerDay = computed(() => DAYS.map((_, day) => slots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length))
 const blocksByDay = computed(() => DAYS.map((_, day) => slotsToBlocks(slots.value, day)))
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
       <p class="wk-meta">{{ templateName }} · {{ plannedHours }} of 168 h planned</p>
     </div>
 
-    <p v-if="!hourly" class="wk-helper">This template has 30-minute slots, and this grid edits hourly templates only.</p>
+    <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
 
     <template v-else>
       <div class="wk-scroll">

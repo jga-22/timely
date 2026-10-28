@@ -1,6 +1,6 @@
 import type { NavTarget, TabId } from '~/composables/useNav'
-import { localDateKey, isoWeekOf } from '~/utils/dates'
-import { createInitialState } from '~/utils/planner'
+import { localDateKey, isoWeekOf, isoWeekStarts } from '~/utils/dates'
+import { createInitialState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
 import { buildOnboardingState, firstCategory, type OnboardingAnswers } from '~/utils/onboarding'
 
 export type OnboardingPhase = 'closed' | 'welcome' | 'intro' | 'ambition' | 'goals' | 'tour'
@@ -55,10 +55,10 @@ export const useOnboarding = () => {
     phase.value = 'intro'
   }
 
-  /** Leaves the intro: to step 1 after Welcome, back to the tour when it was opened from there */
+  /** Leaves the intro: back to Welcome after its link, back to the tour when it was opened from there */
   const finishIntro = () => {
     if (introFrom.value === 'tour') phase.value = 'tour'
-    else openAmbition()
+    else openWelcome()
   }
 
   const openAmbition = () => {
@@ -88,8 +88,14 @@ export const useOnboarding = () => {
     if (step.value > 0) showStep(step.value - 1)
   }
 
-  /** Start empty: no data is created, onboarding is marked done */
+  /** Start empty: no life area, habit or activity is created, but the empty week is assigned to every week of the year (as the build does), so Planner and Insights have weeks to show. Onboarding is marked done */
   const startEmpty = () => {
+    const planYear = year.value ?? currentYear.value ?? isoWeekOf(localDateKey()).year
+
+    for (const startDate of isoWeekStarts(planYear)) {
+      planner.setWeekTemplate(startDate, ONBOARDING_TEMPLATE_ID)
+    }
+
     planner.finishOnboarding()
     close()
   }

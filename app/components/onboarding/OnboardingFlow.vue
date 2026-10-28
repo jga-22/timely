@@ -120,14 +120,15 @@ const removeGoal = () => {
         <h2 id="onb-title" class="onb-title" tabindex="-1" data-autofocus>Welcome to timely</h2>
         <p class="onb-lede">Your goals decide your week: set a goal, give it time in your week, see where your hours go.</p>
         <div class="onb-actions">
-          <button type="button" class="btn btn-primary" @click="openIntro('welcome')">Guide me</button>
+          <button type="button" class="btn btn-primary" @click="openAmbition">Guide me</button>
           <button type="button" class="btn btn-outline" @click="startEmpty">Start empty</button>
           <button type="button" class="onb-link" @click="useSampleData">Explore with sample data</button>
         </div>
+        <button type="button" class="onb-link onb-intro-link" @click="openIntro('welcome')">Watch the short intro</button>
       </template>
 
       <form v-else-if="phase === 'ambition'" class="onb-form" novalidate @submit.prevent="submitAmbition">
-        <p class="onb-step">Step 1 of 5</p>
+        <p class="onb-step">Step 1 of 2</p>
         <h2 id="onb-title" class="onb-title" tabindex="-1">Your 5-year ambition</h2>
         <p class="onb-lede">Where do you want to be in 5 years? Everything else in Timely serves this.</p>
 
@@ -152,7 +153,7 @@ const removeGoal = () => {
       </form>
 
       <form v-else class="onb-form" novalidate @submit.prevent="submitGoals">
-        <p class="onb-step">Step 2 of 5</p>
+        <p class="onb-step">Step 2 of 2</p>
         <h2 id="onb-title" class="onb-title" tabindex="-1">Goals and habits</h2>
         <p class="onb-lede">Pick one or two of the eight life areas that matter most for that ambition, and a habit for each.</p>
 
