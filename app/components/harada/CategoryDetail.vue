@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
 import { entryLines } from '~/utils/entries'
+import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'
 
 const props = defineProps<{ categoryId: string; editing: boolean }>()
@@ -21,7 +22,8 @@ const isLast = computed(() => position.value === sortedCategories.value.length -
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
 const categoryName = (categoryId: string) => categories.value.find(entry => entry.id === categoryId)?.name ?? 'No life area'
 
-const activityCount = computed(() => planner.activities.filter(activity => activity.categoryId === props.categoryId).length)
+// Sleep is not shown in a life area's lists or counts (FR-SLEEP-6)
+const activityCount = computed(() => planner.activities.filter(activity => activity.categoryId === props.categoryId && !isSleepActivity(activity)).length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
@@ -72,7 +74,7 @@ const entryRows = computed<EntryRow[]>(() => {
   const habitLinkedHere = new Set(planner.habits.filter(habit => habit.categoryId === here).map(habit => habit.activityId))
 
   for (const activity of planner.activities) {
-    if (habitLinkedHere.has(activity.id)) continue
+    if (habitLinkedHere.has(activity.id) || isSleepActivity(activity)) continue
 
     const counted = activity.categoryId !== here && !!activity.alsoCategoryIds?.includes(here)
     const orphan = activity.categoryId === here && !linkedAnywhere.has(activity.id)

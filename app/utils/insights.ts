@@ -1,6 +1,7 @@
 import type { PlannerState } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
+import { aggregateTemplate, aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
+import { sleepActivityId } from '~/utils/sleep'
 
 /**
  * Insights calculations (PRD section 17, Insights): planned hours of the chosen years, grouped by year, quarter,
@@ -61,7 +62,7 @@ export interface InsightsBar {
   weeks: number
   /** Days of those weeks: the weeks times 7 */
   days: number
-  /** Hours available in the bar: days times 24 */
+  /** Hours available in the bar: days times 24, less the sleep hours when sleep is hidden (FR-SLEEP-7) */
   capacity: number
   /** Hours planned in the bar */
   total: number
@@ -74,11 +75,26 @@ export interface InsightsBar {
 export const rangeYears = (startYear: number, count: number): number[] =>
   Array.from({ length: count }, (_, index) => startYear + index)
 
-/** Planned hours of one ISO week by category, from the template that governs it (effectiveTemplate); primary categories only */
-export const weekCategoryHours = (state: PlannerState, monday: string): Map<string, number> => {
+/**
+ * Planned hours of one ISO week by category, from the template that governs it (effectiveTemplate); primary categories only.
+ * Sleep is left out unless `showSleep` is on: when it is on, it counts under its own life area, Physical (FR-SLEEP-7)
+ */
+export const weekCategoryHours = (state: PlannerState, monday: string, showSleep = false): Map<string, number> => {
+  const template = effectiveTemplate(state, monday)
+  if (!template) return new Map()
+
+  const sleepId = showSleep ? null : sleepActivityId(state)
+  const visible = sleepId ? { ...template, slots: template.slots.map(holder => (holder === sleepId ? '' : holder)) } : template
+
+  return aggregateTemplateByCategory(visible, state)
+}
+
+/** Sleep hours of one ISO week from the template that governs it: what hidden sleep takes out of the available time */
+const weekSleepHours = (state: PlannerState, monday: string): number => {
+  const sleepId = sleepActivityId(state)
   const template = effectiveTemplate(state, monday)
 
-  return template ? aggregateTemplateByCategory(template, state) : new Map()
+  return sleepId && template ? aggregateTemplate(template, state.activities).get(sleepId) ?? 0 : 0
 }
 
 /** The bar a week falls into: decided by its Thursday, so each week is counted once */
@@ -94,9 +110,12 @@ const periodOfWeek = (monday: string, granularity: InsightsGranularity): { key: 
   return { key: `${year}-W${String(week).padStart(2, '0')}`, label: `${week}`, year, week }
 }
 
-/** Bars of the years in order, one per year, quarter, month or ISO week; a bar with no plan has no segments */
-export const insightsBars = (state: PlannerState, granularity: InsightsGranularity, years: number[]): InsightsBar[] => {
-  const bars = new Map<string, { period: ReturnType<typeof periodOfWeek>; weeks: number; hours: Map<string, number> }>()
+/**
+ * Bars of the years in order, one per year, quarter, month or ISO week; a bar with no plan has no segments. With sleep hidden
+ * (`showSleep` off, the default) its hours are neither planned nor available
+ */
+export const insightsBars = (state: PlannerState, granularity: InsightsGranularity, years: number[], showSleep = false): InsightsBar[] => {
+  const bars = new Map<string, { period: ReturnType<typeof periodOfWeek>; weeks: number; hours: Map<string, number>; sleep: number }>()
 
   for (const year of years) {
     for (const monday of isoWeekStarts(year)) {
@@ -104,23 +123,24 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
       let entry = bars.get(period.key)
 
       if (!entry) {
-        entry = { period, weeks: 0, hours: new Map() }
+        entry = { period, weeks: 0, hours: new Map(), sleep: 0 }
         bars.set(period.key, entry)
       }
 
       entry.weeks += 1
+      if (!showSleep) entry.sleep += weekSleepHours(state, monday)
 
-      for (const [categoryId, hours] of weekCategoryHours(state, monday)) {
+      for (const [categoryId, hours] of weekCategoryHours(state, monday, showSleep)) {
         entry.hours.set(categoryId, (entry.hours.get(categoryId) ?? 0) + hours)
       }
     }
   }
 
-  return [...bars.values()].map(({ period, weeks, hours }) => {
+  return [...bars.values()].map(({ period, weeks, hours, sleep }) => {
     const segments = [...hours].map(([categoryId, value]) => ({ categoryId, hours: value }))
     const total = segments.reduce((sum, segment) => sum + segment.hours, 0)
     const days = weeks * 7
-    const capacity = days * HOURS_PER_DAY
+    const capacity = days * HOURS_PER_DAY - sleep
 
     return {
       key: period.key,
