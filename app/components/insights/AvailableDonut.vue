@@ -194,10 +194,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 .donut-rest.is-dim,
 .donut-seg.is-dim { opacity: 0.5; }
 
+/* A circle's outline is the square around the whole ring, so no browser outline: a tap must not box the donut. Keyboard focus is
+   drawn on the slice itself (thicker, with a halo in the accent colour) */
+.donut-svg,
+.donut-rest,
+.donut-seg {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .donut-rest:focus-visible,
 .donut-seg:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  stroke-width: 34;
+  filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 2px var(--accent));
 }
 
 /* The centre sits over the hole of the ring. While a slice is selected it is a button that clears the selection */
