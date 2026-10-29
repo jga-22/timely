@@ -1,11 +1,11 @@
 # Timely
 
-A local-first weekly planner joined to a Harada goals grid. You write one 5-year ambition, split it into eight life areas with measurable habits, and plan a week of hour slots. Timely then shows whether the time you plan matches the time your habits need.
+A local-first weekly planner joined to a Harada goals grid. You write one 5-year ambition, split it into eight life areas with measurable habits, and plan a week of hour slots. You tick what you really did on Home, and Timely shows where your planned hours go and how well you kept to the plan. It is a cockpit for becoming your best self, not a time tracker.
 
-- **Home:** today's hours, today's activities and a journal note for any past day.
-- **Goals:** the ambition, eight life areas (goal, 1-year target, habits), and a comparison of needed against planned time. A List or Grid view shows the Harada map.
+- **Home:** today's hours, today's activities with a done check each, a collapsed Habits list to tick, a day switch for the last 60 days, and a journal note for any past day.
+- **Goals:** the ambition, eight life areas (goal, 1-year target, habits, each with its plain need such as "Needs 6 h a week"). A List or Grid view shows the Harada map.
 - **Week:** a typical week painted in hour slots, activities, week types (Standard, Vacation and others, from presets) and the year, one ISO year at a time.
-- **Insights:** planned hours by life area over a year or several.
+- **Insights:** planned hours by life area over a year or several, as Bars or a Donut (life area split plus the time not planned, click a slice for details), or Adherence: what you ticked against what you planned, by week or month, by life area and by habit.
 
 First-time users get a short guided setup (ambition, one or two goals with a habit each, then a tour). The app works without an account: data stays in the browser. With an account (Google sign-in) it is stored in Supabase, one row per user.
 
