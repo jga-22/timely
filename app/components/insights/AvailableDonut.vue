@@ -203,13 +203,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 /* The centre sits over the hole of the ring. While a slice is selected it is a button that clears the selection */
 .donut-centre {
   position: absolute;
-  inset: 0;
+  /* Only the hole of the ring: a box over the whole chart would swallow the clicks meant for the slices */
+  inset: 24%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 0 64px;
+  padding: 0 6px;
   text-align: center;
 }
 .donut-centre.is-clearable { cursor: pointer; }
