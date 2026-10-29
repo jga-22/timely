@@ -1901,6 +1901,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
 }
 .adh-intro {
