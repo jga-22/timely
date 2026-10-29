@@ -323,7 +323,7 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "Goals" and a lede. Order top to bottom:
 
 ### 4.9a Needed and planned comparison (`app/components/insights/PlanComparison.vue`, scoped)
 
-One life area's time against its need over the period shown (FR-INS-P4, FR-GOALS-16). Under the life area's share bar in the Life areas list (`.share-plan`, across the full row), in the unit the view shows (`format` prop; hours when none is given).
+One life area's time against its need over the period shown (FR-INS-P4, FR-GOALS-16). Under the life area's figures in the Life areas list (`.share-plan`, across the full row; the list has no share bar since 2026-10-29), in the unit the view shows (`format` prop; hours when none is given).
 
 - Two bars on one scale, the larger of the needed and the planned time. Each is a full-width track (`--bg-3`, 8px, 3px radius) with the value inside it. Needed is an outline (1.5px `--control-border`); Planned is solid, in the life area colour through the planned fill rule (section 5.2), and `--accent` without a colour. A zero value draws no bar.
 - Inline captions "Needed" and "Planned" to the left of the bars (12px `--ink-3`, 48px wide). They name the bars, so there is no legend.
@@ -340,6 +340,10 @@ One life area's time against its need over the period shown (FR-INS-P4, FR-GOALS
 ### 4.9b Yearly badge (`app/components/harada/PlanBadge.vue`, scoped)
 
 The Goals badge for the year shown (FR-GOALS-P2, 2026-10-29): one line, 13px `--ink-2`, a 16px status icon and the text. "On track this year" (check in a filled circle, `--ok`), "Short by 12 h this year" (plus in a ring, `--warn`), "Over by 5 h this year" (minus in a ring, `--warn`). "in 2027" replaces "this year" when another year is selected. No need (no time per occurrence): nothing renders. Icon shape and words carry the status; colour is never alone. The detail adds a quiet underlined "See in Insights" link (`.detail-plan-link`, ink-3) beside it; list rows have no link (a button cannot hold one). The badge renders after mount only.
+
+### 4.9c Available-time donut (`app/components/insights/AvailableDonut.vue`, FR-INS-P5)
+
+The Insights chart can show the whole range as a ring instead of the period bars (`Bars | Donut`, a `.segmented` control in the chart header, beside Show sleep; Bars by default; a session choice). One slice per life area with planned hours, in its planned colour, starting at 12 o'clock in list order; the rest of the ring is "Not planned" (`--bg-3`). Each slice and the ring have a `<title>` with the name, hours and percent. The centre shows the percent planned of the available time (`.donut-value`, 28px 600) and "X h planned of Y h" (`.donut-sub`, 12px ink-3). Width 240px at most, centred; SVG only (`pathLength="100"`), no animation, so reduced motion needs no rule. The Life areas list beside it is the legend (dot, name, hours, percent); "Not planned" is its last row with a hollow dot. The chart label names both shares. Dark mode uses the same tokens.
 
 ### 4.10 Category detail (`CategoryDetail.vue`, scoped; its list is 4.20)
 
@@ -738,7 +742,7 @@ These are facts about the code as it is today. They are not requirements for new
 - **Attention token.** `--attention` is the outline of a category under or over its time target: `#a33a3a` on light and `#ee9a9a` on dark (6.9:1 and 9:1 on the surfaces). It is a 2px outline set inside the box (the grid frame clips outside outlines). The legend swatch uses the same token, plus a neutral 1px swatch for on track or no target. **Superseded:** the outline and the legend are gone from Goals; the status is the needed-and-planned bar with its icon and text (section 4.9a). The token stays for the Insights capacity line.
 - **Comparison bars.** Needed and Allocated share one scale in the category detail; Needed is `--ink-4`, Allocated `--accent`. The verdict colours: Missing `--warn`, over `--accent`, On track `--ok`, No time target `--ink-3`. The verdict is text, so colour is never the only signal.
 - **Hour timeline.** 24 colour-only segments under the Today title, 10px tall. Axis labels 9h, 12h, 18h and 22h sit at their hour on a 24-hour scale, 12px, with a 4px tick above each. Labels are HTML, not SVG, so they keep the 12px minimum. While sleep is hidden, the bar spans only the hours between the day's leading and trailing sleep (`dayRange`, 2026-10-28): the axis labels sit on that span and its two ends are labelled (`.home-axis-tick.is-start` and `.is-end`).
-- **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The categories list uses a 6px share bar under the name row. The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
+- **Insights chart.** Flex columns scaled to the largest total, stacked by category with `flex-grow` set to the hours. Hour labels are HTML at 12px. The Life areas list has no share bar: a row is dot, name, hours and percent of the available time, then the comparison (section 4.9a). The Hours and Weeks switches and the granularity switches use the shared `.segmented` control.
 - **Copy rules.** No intro paragraphs, subtitles or instructional sentences under titles, section titles or tabs. Keep field labels, units, values, empty states that say what to do, errors and confirmations. Keyboard hints can live in `title` tooltips or `aria-label`s, not in visible text.
 - **Removed.** `.page-lede`, `.section-lede`, `.detail-lede`, `.browse-note`, `.wk-pop-hint`, the Visualization classes (`.viz-*`, `.metric*`, `.goal-*`) and the journal experiment classes.
 
