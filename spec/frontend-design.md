@@ -10,7 +10,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | --- | --- | --- |
 | Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (empty life areas folded: [goals-list-collapsed-desktop-light.png](screens/goals-list-collapsed-desktop-light.png); Grid view: [goals-grid-desktop-light.png](screens/goals-grid-desktop-light.png); category detail: [goals-detail-desktop-light.png](screens/goals-detail-desktop-light.png); category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
 | Planner | The week grid is the original range-select grid (`ActivityGrid.vue`, section 4.12): a 52 px hour gutter, seven day columns, 28 px hour rows and a frame of at least 540 px that scrolls sideways inside `.wk-scroll` on phones (the page does not). The Activities list (section 4.17) is a row of chips under the grid. The year grid is full width (13 week columns, 32 px cells, a quarter label per row) and collapsible. Measured in the 2026-10-26 run (section 11). |
-| Home | [home-desktop-light.png](screens/home-desktop-light.png) (Week: [home-week-desktop-light.png](screens/home-week-desktop-light.png); Month: [home-month-desktop-light.png](screens/home-month-desktop-light.png); dark: [home-desktop-dark.png](screens/home-desktop-dark.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (Week: [home-week-mobile-light.png](screens/home-week-mobile-light.png)) |
+| Home | [home-desktop-light.png](screens/home-desktop-light.png) (dark: [home-desktop-dark.png](screens/home-desktop-dark.png); yesterday: [home-yesterday-desktop-light.png](screens/home-yesterday-desktop-light.png)) | [home-mobile-light.png](screens/home-mobile-light.png) (dark: [home-mobile-dark.png](screens/home-mobile-dark.png)) |
 | Insights | [insights-desktop-light.png](screens/insights-desktop-light.png) (More options open: [insights-more-options-desktop-light.png](screens/insights-more-options-desktop-light.png)) | [insights-mobile-light.png](screens/insights-mobile-light.png) |
 
 ---
@@ -445,18 +445,19 @@ Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted 
 
 ---
 
-### 4.16 Home (`app/components/home/HomeView.vue`; pure calculations in `app/utils/home.ts`)
+### 4.16 Home (`app/components/home/HomeView.vue`; pure calculations in `app/utils/home.ts`; done keys in `app/utils/done.ts`)
 
-Read-only except the period selector and the journal card (FR-HOME-1). The journal card is described in 4.18.
+Today or a past day, with done ticks (FR-HOME-1, FR-HOME-14 to 18). The journal card is described in 4.18.
 
-- Page header: "Home", a one-line lede, and `p.page-meta` with the header line: date and ISO week only, no template name ("Sunday 25 October 2026 · Week 43"; Month lists each template with its days, "October 2026 · Standard Week 31 d"). A `p.section-lede.home-note` names the active template when the current week has no template of its own. Date output is null until mounted (FR-DATE-6).
-- Period selector (`.segmented` in `.home-toolbar`, group "Period"): Day, Week, Month as buttons with `aria-pressed`. Left, Right, Up and Down move the selection and focus with wrap-around; Home and End go to the first and last. The choice is session state, so it survives a tab switch and resets on reload. Default Day.
-- Order (UX slice 8): the activities of the period first (the list below), the timeline directly under it, then the journal card. The totals row, the time-per-category bar and legend, and the below-target line are removed.
-- Timeline (`.home-timeline`): a 12px bar of coloured segments only, no text inside. Day: 24 segments, one per hour, in order. Week and Month: one segment per activity, proportional to its hours (largest first), then Unplanned. Unplanned time is `--cell-empty` with a `--cell-line` outline (section 5). Each segment has a title and an aria-label such as "Deep Work, 12 h, 20%"; the group is labelled "Hours today by activity" (or this week, this month).
-- Day list: `.home-rows` with `.home-row.is-block` rows: time range (`.home-row-time`, 12AM style), name with its colour dot (`.home-row-name`), category link (`.home-row-cat`), hours and Edit. The block that holds the current hour has `.is-now` (3px accent bar on the left) and a `.home-now` tag. Empty day: `.home-empty` with a link to Planner.
-- Week and Month list: `.home-row` rows sorted by hours, largest first: name, category link, hours, percent of the period and Edit. Empty period: `.home-empty` with a link to Planner. No activities at all: "No activities yet." with a link to Planner.
-- Edit (`.btn.btn-xs.btn-outline`, a link named "Edit {activity}") opens Planner with the activity in edit mode. Category links open Goals with the category selected.
-- Phones: see 3.5. Blocks wrap; Edit stays at the row end.
+- Page header (`.home-head`): `h1.page-title` "Today", or the day label on a past day; `p.page-meta` with the date (today only) and the ISO week ("Thursday 29 October 2026 · Week 44", "Week 43" on a past day). Date output is null until mounted (FR-DATE-6).
+- Day switch (`.home-day-nav`, beside the title): previous (‹, "Previous day"), Today (shown on a past day only), next (›, disabled on today). Previous stops 60 days back. The day is session state (`useState` "home-day", null follows today), not in the URL.
+- Timeline: unchanged; 24 segments of the viewed day, axis labels 9h, 12h, 18h, 22h.
+- Progress line (`.home-progress`, `aria-live="polite"`): "3 of 5 done", counting the day's blocks and daily habits. Complete: a check icon (`.home-progress-icon`, `--ok`) and "All done for today". No streak and no motion.
+- Activities (`.home-rows`, label "Activities"): `.home-row` rows with time range, name and colour dot (`.home-row-name`), category link (`.home-row-cat`), hours, and a done check (a 22px circle: blue outline when to do, filled green with a check mark when done). The check is `button.home-check` with `role="checkbox"`, `aria-checked` and the label "Mark {activity} done". Done rows carry `.is-done`: the name is struck and muted, and the check mark shows (never colour alone). `.is-now` and `.home-now` mark the current hour, on today only.
+- Habits (`.home-habits`, a native `details.disclosure`, collapsed by default; its summary "Habits" with "N of M ticked"): the habits with no block on the day (no linked activity, or the linked activity has no block that day). Rows are `.home-row.is-habit` (no time column): name, category link, and for week and month habits the progress (`.home-row-progress`: "2 of 3 this week", "1 of 4 this month"). A habit of the Sleep activity is left out while sleep is hidden.
+- Check (`.home-check`): a 44px tap area around a 22px box (`.home-check-box`, 1.5px `--control-border`; checked: `--accent` fill and a check mark). Space and Enter toggle it; focus ring `--focus-ring`.
+- Empty day: `.home-empty` with a link to Planner. No activities at all: "No activities yet." with a link to Planner.
+- Phones: rows wrap as before; the check stays at the row end.
 
 ### 4.17 Activities under the week (`PlannerView.vue`, `.acts`, `.act-*` in `main.css`)
 
@@ -553,7 +554,7 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - **Sleep editor.** In the Sleep form (`ActivityForm.vue`, which has no days, duration or start for Sleep): a `.segmented` choice (Same every night / Weekdays and weekend), one or two rows of bedtime and wake-up selects (12 AM to 11 PM), the total and the nights in `.form-hint`. The short code is disabled with a note; Delete is replaced by "Sleep is built in; hide it instead."
 - **Hidden grid.** Rows that are sleep on all seven days collapse. A leading or trailing run is a full-width button band above or below the grid (`.wk-band`, "Sleep hidden: 12 AM to 7 AM" and "Show sleep" in `--accent`, the whole band clickable). A run between shown rows is a 14 px band (`.wk-gap`, quiet `--bg-2` with a dashed top rule). The hour labels follow the shown rows.
 
-Screens: `spec/screens/sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-home-400-dark.png`, `sleep-insights-1280-hidden.png`.
+Screens: `spec/screens/sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-insights-1280-hidden.png`.
 ## 5. Colour handling: one palette for planned time
 
 One logical palette covers every place where time is painted: the Home timeline, the week grid (blocks and the activity colour), the year grid, the Insights bars and the category and activity colours. Daily, weekly and yearly views use the same semantic tokens, so an empty hour, a planned hour, the current week and the selection look the same wherever they appear.
@@ -602,7 +603,7 @@ Text on a planned fill: the lowest contrast is teal at 4.33:1 (both themes), jus
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Pass for planned fills and empty-cell outlines (section 5). | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Home (period selector and Edit links), Goals, Insights, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for topbar, Home (day switch and done checks), Goals, Insights, the Planner activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |

@@ -78,4 +78,6 @@ export interface PlannerState {
   journal: Record<string, string>
   /** First-run onboarding (FR-ONB). Absent in saves made before it existed, which are never onboarded. 'pending' shows Welcome again on load */
   onboarding?: 'pending' | 'done'
+  /** Done ticks on Home (FR-HOME-14): date key (YYYY-MM-DD) to done keys (`a:<activityId>@<hour>`, `h:<habitId>`). Absent in saves made before it existed; never a future date */
+  done?: Record<string, string[]>
 }

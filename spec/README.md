@@ -24,9 +24,11 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden: title and date, the hour bar spans 7h to 22h (the sleep at the day's edges is left off), the activities list, the journal |
-| `home-desktop-dark.png` | 1280 px wide | Today, dark |
-| `home-mobile-light.png` | 400 px wide | Today, light, full page |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, with some items ticked: the hour bar (7h to 22h), the activities with done checks (struck names), the progress line "3 of 7 done", the Habits list with weekly progress, the journal |
+| `home-desktop-dark.png` | 1280 px wide | Today, dark, with some items ticked |
+| `home-mobile-light.png` | 400 px wide | Today, light, full page, with some items ticked |
+| `home-mobile-dark.png` | 400 px wide | Today, dark, full page, with some items ticked |
+| `home-yesterday-desktop-light.png` | 1280 px wide | The previous day (Wednesday 28 October): the day label as title, "Today" button shown, its own ticks |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 1-year target (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
@@ -105,7 +107,7 @@ Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with loca
 | `legal-login-consent-desktop-light.png` | 1280 px wide | Sign-in page with the consent line under the sign-in button (the current page, as in `login-gate-desktop-light.png`) |
 | `legal-login-consent-mobile-dark.png` | 400 px wide, dark | Sign-in page at phone width in dark mode, with the consent line and the intro player below |
 
-Sleep screens (feat/sleep-default, 2026-10-28, generic seed, light unless named): `sleep-week-1280-hidden.png` (the Week grid with sleep hidden: 15 rows and the two bands), `sleep-week-1280-shown.png` (all 24 rows), `sleep-week-1280-split.png` (a weekend nap in the split editor), `sleep-week-400-hidden.png` (phone), `sleep-editor-1280.png` (the Sleep form), `sleep-home-400-dark.png` (Home, phone, dark), `sleep-insights-1280-hidden.png` and `sleep-insights-1280-shown.png`.
+Sleep screens (feat/sleep-default, 2026-10-28, generic seed, light unless named): `sleep-week-1280-hidden.png` (the Week grid with sleep hidden: 15 rows and the two bands), `sleep-week-1280-shown.png` (all 24 rows), `sleep-week-1280-split.png` (a weekend nap in the split editor), `sleep-week-400-hidden.png` (phone), `sleep-editor-1280.png` (the Sleep form), `sleep-insights-1280-hidden.png` and `sleep-insights-1280-shown.png`.
 
 Onboarding and sign-in screens use the names above; the Goals and Planner screens are regenerated on the same date with the generic seed.
 
@@ -127,6 +129,10 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Home done ticks (2026-10-29, branch `feat/home-checks`, from `main`, not pushed)
+
+Home ticks what really happened (FR-HOME-14 to 18): one checkbox per scheduled block and per habit, stored as the optional `done` map of the state (no durations, no timestamps, no storage version change). Habits that are not already a block of the day are listed under "Habits"; week and month habits show "2 of 3 this week". A progress line counts the day ("3 of 5 done", then "All done for today"). A previous and next day switch (Today; never a future day; 60 days back) lets yesterday be caught up. The Edit links on Home rows are removed (FR-HOME-8 superseded). Screens: `home-desktop-light.png`, `home-desktop-dark.png`, `home-mobile-light.png`, `home-mobile-dark.png`, `home-yesterday-desktop-light.png` (the old `sleep-home-400-dark.png` is removed: it showed the Edit links).
 
 ### Also counts toward removed (2026-10-29, branch `refactor/remove-plan-vs-need`, not pushed)
 
@@ -153,7 +159,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Sleep as a default (2026-10-28, branch `feat/sleep-default`, not pushed)
 
-Sleep is the activity whose code is SLP (FR-SLEEP-1 to 8). It is built in (not deletable, code locked), set to 10 PM to 7 AM every night in every new planner, new week type and preset, and set up in existing saves with "Set up sleep". The Week tab's Sleep row opens the editor per week type (every night, or weekdays and weekend). A "Show sleep" button (Home, Week, Insights; default off, remembered in this browser) hides it: Home leaves it out of the timeline and the day rows, the Week grid collapses the hour rows that are sleep on all seven days, and Insights and Goals leave it out of the planned hours and the available time. No data model change: storage version unchanged (8), no new field, no migration. Screens: `sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-1280-split.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-home-400-dark.png`, `sleep-insights-1280-hidden.png`, `sleep-insights-1280-shown.png`.
+Sleep is the activity whose code is SLP (FR-SLEEP-1 to 8). It is built in (not deletable, code locked), set to 10 PM to 7 AM every night in every new planner, new week type and preset, and set up in existing saves with "Set up sleep". The Week tab's Sleep row opens the editor per week type (every night, or weekdays and weekend). A "Show sleep" button (Home, Week, Insights; default off, remembered in this browser) hides it: Home leaves it out of the timeline and the day rows, the Week grid collapses the hour rows that are sleep on all seven days, and Insights and Goals leave it out of the planned hours and the available time. No data model change: storage version unchanged (8), no new field, no migration. Screens: `sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-1280-split.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-insights-1280-hidden.png`, `sleep-insights-1280-shown.png`.
 
 ### Unified item form (2026-10-28, branch `feat/unified-item-form`, not pushed)
 

@@ -1,5 +1,6 @@
-import type { PlannerState } from '~/types/planner'
+import type { Habit, PlannerState } from '~/types/planner'
 import { weekdayOf } from '~/utils/dates'
+import { habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
 import {
   HOURS_PER_DAY,
   effectiveTemplate,
@@ -63,6 +64,35 @@ export const dayRange = (state: PlannerState, date: string, showSleep = false): 
 
   return { start, end: awake.lastIndexOf(true) + 1 }
 }
+
+/**
+ * Habits listed under the day (FR-HOME-15): every habit that is not already a scheduled block of the date. A habit with no
+ * activity, or whose activity has no block that day, is listed. A habit of the Sleep activity is left out while sleep is hidden
+ */
+export const dayHabits = (state: PlannerState, date: string, showSleep = false): Habit[] => {
+  const sleepId = showSleep ? null : sleepActivityId(state)
+  const scheduled = new Set(dayBlocks(state, date, showSleep).map(block => block.activityId))
+
+  return state.habits.filter(habit => {
+    if (sleepId && habit.activityId === sleepId) return false
+
+    return !(habit.activityId && scheduled.has(habit.activityId))
+  })
+}
+
+/** The progress of a habit in its period (FR-HOME-16): "2 of 3 this week" or "1 of 4 this month"; null for a daily habit */
+export const habitProgressText = (state: PlannerState, habit: Habit, date: string): string | null => {
+  const { count, period } = habit.frequency
+
+  if (period === 'week') return `${weekTicks(state, habit.id, date)} of ${count} this week`
+  if (period === 'month') return `${monthTicks(state, habit.id, date)} of ${count} this month`
+
+  return null
+}
+
+/** Whether a habit is ticked on a date (FR-HOME-15) */
+export const habitTicked = (state: PlannerState, habit: Habit, date: string): boolean =>
+  isDone(state, date, habitDoneKey(habit.id))
 
 /** "Sunday 25 October 2026" */
 export const formatDayLabel = (key: string): string => {
