@@ -2,6 +2,8 @@
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
+import { adherenceMode, adherenceReport } from '~/utils/adherence'
+import { localDateKey } from '~/utils/dates'
 import {
   GRANULARITIES,
   UNITS,
@@ -61,8 +63,13 @@ const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?
 // The available time of the range (FR-INS-P5): planned hours per life area and the not planned rest, as shares that add up to 100.
 // The list and the donut both read it. Its percentages are of the available time, not of the planned time
 const available = computed(() => availableShares(bars.value))
-// The chart: the period bars (default) or the donut of the whole range; a session choice, like the other view controls
-const chartView = ref<'bars' | 'donut'>('bars')
+// The chart: the period bars (default), the donut of the whole range, or the adherence view (FR-INS-P6); a session choice, like the other view controls
+const chartView = ref<'bars' | 'donut' | 'adherence'>('bars')
+// Adherence: planned against ticked on Home over the same years. Sleep never counts; the bar cut follows the granularity (adherenceMode)
+const adherenceBarMode = computed(() => adherenceMode(granularity.value, years.value.length))
+const adherence = computed(() => (chartView.value === 'adherence' && years.value.length
+  ? adherenceReport(planner.$state, years.value, localDateKey(), adherenceBarMode.value)
+  : null))
 
 const donutSlices = computed(() => available.value.rows.map(row => ({
   key: row.categoryId,
@@ -105,7 +112,7 @@ const onRowClick = (event: MouseEvent, key: string) => {
 const moreSummary = computed(() => [
   granularity.value === 'quarter' || granularity.value === 'year' ? GRANULARITIES.find(option => option.id === granularity.value)!.label : '',
   span.value === 'several' ? `${years.value.length} years` : '',
-  unit.value !== 'hours' ? UNITS.find(option => option.id === unit.value)!.label : ''
+  unit.value !== 'hours' && chartView.value !== 'adherence' ? UNITS.find(option => option.id === unit.value)!.label : ''
 ].filter(Boolean).join(', '))
 
 const heightPct = (hours: number) => `${(hours / scale.value) * 100}%`
@@ -194,7 +201,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
               <span class="insights-range">{{ rangeLabel }}</span>
             </div>
           </div>
-          <div class="insights-toolbar">
+          <div v-if="chartView !== 'adherence'" class="insights-toolbar">
             <div class="segmented" role="group" aria-label="Show in">
               <button
                 v-for="option in UNITS"
@@ -209,18 +216,25 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         </div>
       </div>
 
-      <section v-if="shares.total" class="section">
+      <section v-if="shares.total || chartView === 'adherence'" class="section">
         <div class="insights-chart-head">
           <p v-if="chartView === 'bars'" class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
           <div class="insights-chart-tools">
             <div class="segmented" role="group" aria-label="Chart view">
               <button type="button" :data-active="chartView === 'bars'" :aria-pressed="chartView === 'bars'" @click="chartView = 'bars'">Bars</button>
               <button type="button" :data-active="chartView === 'donut'" :aria-pressed="chartView === 'donut'" @click="chartView = 'donut'">Donut</button>
+              <button type="button" :data-active="chartView === 'adherence'" :aria-pressed="chartView === 'adherence'" @click="chartView = 'adherence'">Adherence</button>
             </div>
-            <SleepToggle />
+            <SleepToggle v-if="chartView !== 'adherence'" />
           </div>
         </div>
-        <div v-if="chartView === 'bars'" class="insights-chart" role="img" :aria-label="chartLabel">
+        <InsightsAdherenceView
+          v-if="chartView === 'adherence' && adherence"
+          :report="adherence"
+          :mode="adherenceBarMode"
+          :granularity="granularity"
+        />
+        <div v-else-if="chartView === 'bars'" class="insights-chart" role="img" :aria-label="chartLabel">
           <div class="insights-axis" aria-hidden="true">
             <span class="insights-axis-top">{{ formatInUnit(scale, unit) }}</span>
             <span class="insights-axis-mid">{{ formatInUnit(scale / 2, unit) }}</span>
@@ -260,10 +274,10 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
           :label="donutLabel"
           @select="selectSlice"
         />
-        <p v-if="showSleep" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
+        <p v-if="showSleep && chartView !== 'adherence'" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
       </section>
 
-      <section v-if="shares.total" class="section">
+      <section v-if="shares.total && chartView !== 'adherence'" class="section">
         <div class="section-head">
           <h2 class="section-title">Life areas</h2>
         </div>
@@ -298,7 +312,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         </ul>
       </section>
 
-      <section v-else class="section insights-empty-state">
+      <section v-else-if="chartView !== 'adherence'" class="section insights-empty-state">
         <p class="insights-empty">Plan the week in Planner and the hours show here.</p>
         <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Planner</NuxtLink>
       </section>
