@@ -18,6 +18,8 @@ import {
   type PaintMode
 } from '~/utils/planner'
 import { shortCodeFor } from '~/utils/onboarding'
+import { isDateKey, isDoneKey, sanitiseDone } from '~/utils/done'
+import { localDateKey } from '~/utils/dates'
 import {
   ALL_NIGHTS,
   DEFAULT_SLEEP,
@@ -98,9 +100,12 @@ const presetCategoryId = (categories: Category[], role: PresetRole): string | un
 
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
-  state: (): PlannerState => createOnboardingState(),
+  // `done` is listed so the storage watcher can track it (FR-HOME-14)
+  state: (): PlannerState => ({ ...createOnboardingState(), done: {} }),
   getters: {
     activeTemplate: state => getActiveTemplate(state),
+    /** The done keys of one date (FR-HOME-14) */
+    doneOn: state => (date: string): string[] => state.done?.[date] ?? [],
   },
   actions: {
     hydrate(state: PlannerState | null) {
@@ -114,6 +119,8 @@ export const usePlannerStore = defineStore('planner', {
       this.$patch(current => {
         Object.assign(current, next)
         if (next.onboarding === undefined) delete current.onboarding
+        // Done ticks are per user (FR-HOME-14): a save without them, or a malformed map, starts with none
+        current.done = sanitiseDone(next.done)
       })
     },
     /** Ends the first-run onboarding without creating data (FR-ONB-3, Start empty) */
@@ -762,6 +769,18 @@ export const usePlannerStore = defineStore('planner', {
       } else {
         delete this.journal[dateKey]
       }
+    },
+    /** Done tick on Home (FR-HOME-14): adds or removes a block or habit key of a date. A date with no ticks left is removed.
+     * A future date (after today, local) or a malformed key is refused */
+    toggleDone(date: string, key: string) {
+      if (!isDateKey(date) || !isDoneKey(key) || date > localDateKey()) return
+
+      const keys = this.done?.[date] ?? []
+      const next = keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]
+
+      if (!this.done) this.done = {}
+      if (next.length) this.done[date] = next
+      else delete this.done[date]
     },
   }
 })

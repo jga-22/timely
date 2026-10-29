@@ -2096,6 +2096,85 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .home-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
 
+/* Day switch beside the title (FR-HOME-18): previous, Today and next */
+.home-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.home-day-nav { display: flex; align-items: center; gap: var(--space-2); }
+.home-habits { margin-top: var(--space-6); }
+
+/* Done ticks (FR-HOME-14 to 16): a 44px tap area around a 22px box; the check mark and the struck name show done, not colour alone */
+.home-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px -8px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--on-accent);
+  cursor: pointer;
+}
+.home-check:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.home-check-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--control-border);
+  border-radius: 5px;
+  background: var(--bg);
+}
+.home-check:hover .home-check-box { border-color: var(--ink-3); }
+.home-check[aria-checked="true"] .home-check-box { background: var(--accent); border-color: var(--accent); }
+.home-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.home-row.is-done .home-row-time,
+.home-row.is-done .home-row-hours,
+.home-row.is-done .home-row-name { color: var(--ink-3); }
+.home-row.is-done .home-row-name { text-decoration: line-through; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+/* Habits have no time column: the name and its meta on the left, the check on the right */
+.home-row.is-habit { grid-template-columns: minmax(0, 1fr) auto; }
+.home-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.home-row-progress { font-variant-numeric: tabular-nums; }
+/* The progress line above the list: a count, or a check and "All done" when complete (no streak, no motion) */
+.home-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.home-progress.is-complete { color: var(--ink); }
+.home-progress-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* Journal (FR-HOME-11 to 13) */
 .journal-view,
 .journal-edit { display: grid; gap: var(--space-3); justify-items: start; }
