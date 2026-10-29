@@ -5,7 +5,6 @@ import {
   formatHour,
   getActiveTemplate,
   goalsTemplate,
-  habitAlignment,
   hoursLabel,
   isHourlyTemplate,
   scheduledWeeklyMinutesForActivity,
@@ -264,8 +263,18 @@ export const frequencyText = (frequency: Habit['frequency']): string => (frequen
   : `${frequency.count} a ${frequency.period}`)
 
 /**
- * The lines an entry shows (FR-ITEM-4): when and where its hours are painted, and their time against the need (a habit with a
- * time per occurrence); or, for a habit with no activity, its frequency. Hours are read from the Goals week type, as the comparison does
+ * A habit's need as a plain figure in its own frequency (FR-GOALS-16): "Needs 1.5 h a week", "Needs 1 h a day". Null with no time per occurrence
+ */
+export const needText = (habit: Habit): string | null => {
+  if (!habit.minutesPerOccurrence) return null
+
+  const { count, period } = habit.frequency
+  return `Needs ${hoursLabel(count * habit.minutesPerOccurrence)} a ${period}`
+}
+
+/**
+ * The lines an entry shows (FR-ITEM-4): when and where its hours are painted, and for a habit with a time per occurrence what it needs;
+ * or, for a habit with no activity, its frequency. The planned time against the need is in Insights, not here
  */
 export const entryLines = (state: PlannerState, habitId: string | null, activityId: string | null): string[] => {
   const draft = entryDraftOf(state, habitId, activityId)
@@ -278,14 +287,13 @@ export const entryLines = (state: PlannerState, habitId: string | null, activity
     const names = draft.templateIds.map(id => state.templates.find(template => template.id === id)?.name ?? '').filter(Boolean)
     lines.push(names.length ? `In ${joinNames(names)}` : 'Not in a week type')
 
-    const needed = habit ? habitAlignment(state, habit) : null
-    if (needed && needed.neededMinutes) {
-      lines.push(`${hoursLabel(needed.allocatedMinutes ?? 0)} planned of ${hoursLabel(needed.neededMinutes)} needed`)
-    } else {
-      lines.push(`${hoursLabel(scheduledWeeklyMinutesForActivity(state, activityId))} a week`)
-    }
+    const need = habit ? needText(habit) : null
+    lines.push(need ?? `${hoursLabel(scheduledWeeklyMinutesForActivity(state, activityId))} a week`)
   } else if (habit) {
     lines.push(frequencyText(habit.frequency))
+
+    const need = needText(habit)
+    if (need) lines.push(need)
   }
 
   return lines

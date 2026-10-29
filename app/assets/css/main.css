@@ -1873,6 +1873,10 @@ a { color: var(--accent); text-underline-offset: 3px; }
   height: 100%;
   border-radius: 3px;
 }
+/* Planned against needed (Insights): the status line under a life area's share, across the whole row */
+.share-plan {
+  grid-column: 1 / -1;
+}
 .insights-empty {
   margin: 0;
   font-size: var(--fs-sm);

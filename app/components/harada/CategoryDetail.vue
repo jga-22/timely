@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, categoryAlignments, countLabel, goalsTemplate } from '~/utils/planner'
+import { DESIGN_COLORS, countLabel } from '~/utils/planner'
+import { planPeriodLabel, yearPlanVsNeed } from '~/utils/insights'
 import { entryLines } from '~/utils/entries'
 import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'
@@ -11,7 +12,7 @@ const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
 const { categories } = storeToRefs(planner)
-const { setSelection } = useNav()
+const { setSelection, link } = useNav()
 const { resultText, canUndo, showResult, undoResult } = useEntryResult()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
@@ -27,17 +28,17 @@ const activityCount = computed(() => planner.activities.filter(activity => activ
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
-// ── Needed against allocated time (FR-GOALS-16): hours a week, both bars on one scale
-// Saved state is not known on the server, so the status-driven classes and text wait for mount: the first client render
+// ── Time against need (FR-GOALS-16): one badge for the year shown; the full comparison is in Insights
+// Saved state is not known on the server, so the badge waits for mount: the first client render
 // matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
 const mounted = ref(false)
 onMounted(() => {
   mounted.value = true
 })
 
-const goalsWeek = computed(() => goalsTemplate(planner.$state) ?? null)
-const alignments = computed(() => categoryAlignments(planner.$state))
-const alignment = computed(() => alignments.value.get(props.categoryId) ?? null)
+const { year, currentYear } = usePlannerYear()
+const plan = computed(() => (year.value === null ? null : yearPlanVsNeed(planner.$state, year.value).get(props.categoryId) ?? null))
+const periodText = computed(() => (year.value === null ? '' : planPeriodLabel(year.value, currentYear.value)))
 
 // ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
 // lies), an activity of this life area that no habit links to, or an activity that also counts here (its note says so)
@@ -264,13 +265,15 @@ function confirmRemove() {
       </section>
 
       <section v-if="mounted" class="detail-block detail-goal">
-        <h4 class="detail-label">Hours a week</h4>
-        <HaradaNeededPlannedBar
-          :needed-minutes="alignment?.neededMinutes ?? 0"
-          :planned-minutes="alignment?.allocatedMinutes ?? 0"
-          :color="category.color"
-        />
-        <p v-if="goalsWeek" class="detail-compare">Compared with {{ goalsWeek.name }}</p>
+        <h4 class="detail-label">Time against need</h4>
+        <div class="detail-plan">
+          <HaradaPlanBadge
+            :needed-minutes="plan?.neededMinutes ?? 0"
+            :planned-minutes="plan?.plannedMinutes ?? 0"
+            :period="periodText"
+          />
+          <NuxtLink class="detail-plan-link" :to="link('insights')">See in Insights</NuxtLink>
+        </div>
       </section>
     </template>
 
@@ -501,12 +504,20 @@ function confirmRemove() {
   color: var(--ink-3);
 }
 
-/* Quiet line under the hours bar: which week type the comparison reads */
-.detail-compare {
-  margin: 0;
+/* The badge and the quiet link to the full comparison in Insights */
+.detail-plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.detail-plan-link {
   font-size: var(--fs-sm);
   color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
+.detail-plan-link:hover { color: var(--ink-2); }
 
 .detail-empty,
 .detail-flag {

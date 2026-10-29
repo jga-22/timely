@@ -1,6 +1,14 @@
-import type { PlannerState } from '~/types/planner'
+import type { Habit, PlannerState, WeekTemplate } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { aggregateTemplate, aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
+import {
+  aggregateTemplate,
+  aggregateTemplateByCategory,
+  alignmentStatus,
+  comparedActivityIds,
+  effectiveTemplate,
+  habitWeeklyOccurrences,
+  type AlignmentStatus
+} from '~/utils/planner'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**
@@ -228,3 +236,64 @@ export const capacityLabel = (granularity: InsightsGranularity, bars: InsightsBa
 
   return `Available ${PER_PERIOD[granularity]}: ${varies ? 'up to ' : ''}${figure}`
 }
+
+/* ── Planned against needed (FR-INS-P4, FR-GOALS-16): the time a life area's habits ask for, against the time its activities hold ── */
+
+/** Minutes a habit asks for over a number of ISO weeks: its weekly rate times its time per occurrence (0 with no time) */
+export const neededMinutesOverWeeks = (habit: Habit, weeks: number): number =>
+  habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence * weeks : 0
+
+export interface PlanVsNeed {
+  /** Minutes the habits of the life area ask for over the weeks */
+  neededMinutes: number
+  /** Minutes its compared activities hold over the weeks (comparedActivityIds), in the template that governs each week */
+  plannedMinutes: number
+  status: AlignmentStatus
+}
+
+/**
+ * Needed against planned time per life area over every ISO week of the years, summed (one row per life area, in the state's
+ * order). Planned: each week's governing template (effectiveTemplate, as Insights counts it) through the activities that count for the
+ * life area (linked from its habits, or listed as also counting there). Sleep is never compared. Each template is read once and
+ * weighted by its number of weeks.
+ */
+export const categoryPlanVsNeed = (state: PlannerState, years: number[]): Map<string, PlanVsNeed> => {
+  const mondays = years.flatMap(year => isoWeekStarts(year))
+  const weeksByTemplate = new Map<string, { template: WeekTemplate; weeks: number }>()
+
+  for (const monday of mondays) {
+    const template = effectiveTemplate(state, monday)
+    if (!template) continue
+
+    const entry = weeksByTemplate.get(template.id)
+    if (entry) entry.weeks += 1
+    else weeksByTemplate.set(template.id, { template, weeks: 1 })
+  }
+
+  const hoursByTemplate = new Map([...weeksByTemplate].map(([id, { template }]) => [id, aggregateTemplate(template, state.activities)]))
+  const result = new Map<string, PlanVsNeed>()
+
+  for (const category of state.categories) {
+    const compared = comparedActivityIds(state, category.id)
+    const neededMinutes = state.habits
+      .filter(habit => habit.categoryId === category.id)
+      .reduce((total, habit) => total + neededMinutesOverWeeks(habit, mondays.length), 0)
+
+    let plannedHours = 0
+    for (const [id, { weeks }] of weeksByTemplate) {
+      const hours = hoursByTemplate.get(id)!
+      for (const activityId of compared) plannedHours += (hours.get(activityId) ?? 0) * weeks
+    }
+
+    const plannedMinutes = plannedHours * 60
+    result.set(category.id, { neededMinutes, plannedMinutes, status: alignmentStatus(neededMinutes, plannedMinutes) })
+  }
+
+  return result
+}
+
+/** The Goals comparison for one ISO year (FR-GOALS-16): categoryPlanVsNeed over its weeks */
+export const yearPlanVsNeed = (state: PlannerState, year: number): Map<string, PlanVsNeed> => categoryPlanVsNeed(state, [year])
+
+/** The period a Goals badge names: "this year" for the current ISO year, else "in 2027" */
+export const planPeriodLabel = (year: number, currentYear: number | null): string => (year === currentYear ? 'this year' : `in ${year}`)
