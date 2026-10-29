@@ -102,6 +102,7 @@ const habitRows = computed(() => {
 })
 
 // Progress line (FR-HOME-17): the blocks and the daily habits of the day
+const habitsDone = computed(() => habitRows.value.filter(row => row.done).length)
 const total = computed(() => dayRows.value.length + habitRows.value.filter(row => row.daily).length)
 const doneCount = computed(() => dayRows.value.filter(row => row.done).length + habitRows.value.filter(row => row.daily && row.done).length)
 const allDone = computed(() => total.value > 0 && doneCount.value === total.value)
@@ -238,8 +239,8 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
       </template>
 
       <!-- Habits not already a block of the day (FR-HOME-15): ticked for the day, progress for weekly and monthly habits -->
-      <section v-if="habitRows.length" class="home-habits" aria-labelledby="home-habits-title">
-        <h2 id="home-habits-title" class="section-title">Habits</h2>
+      <details v-if="habitRows.length" class="disclosure home-habits">
+        <summary>Habits <span class="home-habits-count">{{ habitsDone }} of {{ habitRows.length }} ticked</span></summary>
         <ol class="home-rows" aria-label="Habits">
           <li
             v-for="row in habitRows"
@@ -268,7 +269,7 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
             </button>
           </li>
         </ol>
-      </section>
+      </details>
     </template>
 
     <HomeJournalCard />

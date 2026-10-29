@@ -2100,8 +2100,11 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .home-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
 .home-day-nav { display: flex; align-items: center; gap: var(--space-2); }
 .home-habits { margin-top: var(--space-6); }
+.home-habits > summary { font-size: var(--fs-md, 1rem); font-weight: 600; color: var(--ink); }
+.home-habits > .home-rows { margin-top: var(--space-3); }
+.home-habits-count { margin-left: var(--space-2); font-weight: 400; color: var(--ink-3); }
 
-/* Done ticks (FR-HOME-14 to 16): a 44px tap area around a 22px box; the check mark and the struck name show done, not colour alone */
+/* Done ticks (FR-HOME-14 to 16): a 44px tap area around a 22px circle, blue and empty to do, green with a check mark when done; the check mark and the struck name show done, not colour alone */
 .home-check {
   flex: none;
   display: inline-flex;
@@ -2114,7 +2117,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border: 0;
   border-radius: var(--radius);
   background: transparent;
-  color: var(--on-accent);
+  color: var(--bg);
   cursor: pointer;
 }
 .home-check:focus-visible { outline: none; box-shadow: var(--focus-ring); }
@@ -2124,12 +2127,12 @@ a { color: var(--accent); text-underline-offset: 3px; }
   justify-content: center;
   width: 22px;
   height: 22px;
-  border: 1.5px solid var(--control-border);
-  border-radius: 5px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
   background: var(--bg);
 }
-.home-check:hover .home-check-box { border-color: var(--ink-3); }
-.home-check[aria-checked="true"] .home-check-box { background: var(--accent); border-color: var(--accent); }
+.home-check:hover .home-check-box { background: var(--bg-2); }
+.home-check[aria-checked="true"] .home-check-box { background: var(--ok); border-color: var(--ok); }
 .home-check svg {
   width: 14px;
   height: 14px;
