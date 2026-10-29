@@ -233,11 +233,12 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             <span class="share-track" aria-hidden="true">
               <span class="share-fill" :style="{ width: `${row.share}%`, background: colorOf(row.categoryId) }" />
             </span>
-            <InsightsPlanStatus
+            <InsightsPlanComparison
               v-if="planByCategory.get(row.categoryId)?.neededMinutes"
               class="share-plan"
               :needed-minutes="planByCategory.get(row.categoryId)!.neededMinutes"
               :planned-minutes="planByCategory.get(row.categoryId)!.plannedMinutes"
+              :color="categoryMap.get(row.categoryId)?.color"
               :format="formatMinutes"
             />
           </li>

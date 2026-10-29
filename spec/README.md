@@ -58,7 +58,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 | `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open at Year: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the chart header key reads "Available per year" (2026-10-28) |
-| `insights-plan-vs-need-desktop-light.png` | 1280 px wide | Insights, light, the Life areas list with a status line under each life area that has a need: "Needs 32 h more", "43 h over", "222 h planned of 225 h needed" (feat/insights-plan-vs-need, 2026-10-29) |
+| `insights-plan-vs-need-desktop-light.png` | 1280 px wide | Insights, light, the Life areas list: each life area with a need has the Needed and Planned bars and a status line ("Needs 32 h more", "43 h over", "222 h planned of 225 h needed") (feat/insights-plan-vs-need, 2026-10-29) |
 | `insights-plan-vs-need-desktop-dark.png` | 1280 px wide | Insights, dark, the same list (regenerated 2026-10-29 with the merged design) |
 | `insights-plan-vs-need-mobile-light.png` | 400 px wide | The same list at phone width, light, full page |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
@@ -124,7 +124,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Planned against needed (2026-10-29, branch `feat/insights-plan-vs-need`, not pushed)
 
-- Insights (FR-INS-P4): the Life areas list carries the comparison. Under the title, one caption; each life area with a need gets one status line under its bar ("Needs 32 h more", "43 h over", "74 h planned of 80 h needed"), over the range shown, in the chosen unit. No separate section, no extra bars, nothing extra for life areas with no need. `NeededPlannedBar.vue` is removed.
+- Insights (FR-INS-P4): the Life areas list carries the comparison. Under the title, one caption (with the note on counting); each life area with a need gets the Needed and Planned bars (inline captions, on one scale) and one status line ("Needs 32 h more", "43 h over", "74 h planned of 80 h needed"), over the range shown, in the chosen unit. No separate section; nothing extra for life areas with no need. The two-bar component is `insights/PlanComparison.vue` (moved from `harada/NeededPlannedBar.vue`).
 - Open point: a life area's status counts activities linked from its habits even when they belong to another life area, while its share counts only its own activities, so a row can read "0 h" beside a status with planned hours.
 - Goals (FR-GOALS-P2): the weekly bars are gone. Each list row and the category detail show a yearly badge ("On track this year", "Short by 32 h this year", "Over by 43 h this year"; "in 2027" for another year), and the detail links "See in Insights". The habit lines show the need as a plain figure ("Needs 6 h a week").
 - The comparison reads each week's governing week type (as Insights), so the Goals time-off read-around (FR-TPL-8) no longer applies. Owner to confirm.
