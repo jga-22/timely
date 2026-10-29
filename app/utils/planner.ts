@@ -569,22 +569,6 @@ export const categoryAlignments = (state: PlannerState): Map<string, CategoryAli
 /** Hours for display: one decimal at most, no trailing zero (2.5 h, 3 h) */
 export const hoursLabel = (minutes: number): string => `${Math.round((minutes / 60) * 10) / 10} h`
 
-/** One habit's own comparison: its need and, when it is linked, the minutes a week of its activity (null when not linked) */
-export interface HabitAlignment {
-  neededMinutes: number
-  allocatedMinutes: number | null
-}
-
-export const habitAlignment = (state: PlannerState, habit: Habit): HabitAlignment => {
-  // A habit linked to Sleep is not linked for Goals: Sleep does not count (FR-SLEEP-7)
-  const linked = !!habit.activityId && !isSleepActivity(state.activities.find(activity => activity.id === habit.activityId))
-
-  return {
-    neededMinutes: habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0,
-    allocatedMinutes: linked ? scheduledWeeklyMinutesForActivity(state, habit.activityId!) : null
-  }
-}
-
 /* ── Activity grid (FR-PLAN-17 to 19): hourly cells of one template ── */
 
 export const HOURS_PER_DAY = 24

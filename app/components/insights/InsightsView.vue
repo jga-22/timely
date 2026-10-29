@@ -6,6 +6,7 @@ import {
   GRANULARITIES,
   UNITS,
   capacityLabel,
+  categoryPlanVsNeed,
   categoryShares,
   chartScale,
   formatInUnit,
@@ -55,6 +56,21 @@ const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShor
 
 const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
+
+// Planned against needed over the whole range (FR-INS-P4), merged into the life areas list: each row with a time need shows its status line.
+// A life area whose habits ask for time but that has nothing planned yet is listed too, with no share
+const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
+const planByCategory = computed(() => (years.value.length ? categoryPlanVsNeed(planner.$state, years.value) : new Map()))
+const lifeAreaRows = computed(() => {
+  const listed = new Set(shares.value.rows.map(row => row.categoryId))
+  const unplanned = sortedCategories.value
+    .filter(category => !listed.has(category.id) && (planByCategory.value.get(category.id)?.neededMinutes ?? 0) > 0)
+    .map(category => ({ categoryId: category.id, hours: 0, share: 0 }))
+
+  return [...shares.value.rows, ...unplanned]
+})
+const hasNeed = computed(() => [...planByCategory.value.values()].some(row => row.neededMinutes > 0))
+const formatMinutes = (minutes: number) => amount(minutes / 60)
 
 // The disclosure's button names the settings it hides when they are not the defaults, so they are not lost from view
 const moreSummary = computed(() => [
@@ -204,9 +220,10 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         <div class="section-head">
           <h2 class="section-title">Life areas</h2>
         </div>
+        <p v-if="hasNeed" class="page-meta">Planned time against what your habits need over this period. The status also counts activities linked from the habits, even those of another life area</p>
 
         <ul class="share-list">
-          <li v-for="row in shares.rows" :key="row.categoryId" class="share-row">
+          <li v-for="row in lifeAreaRows" :key="row.categoryId" class="share-row">
             <span class="share-name">
               <span class="dot" :style="{ background: colorOf(row.categoryId) }" aria-hidden="true" />
               <NuxtLink class="share-link" :to="link('goals', { item: row.categoryId })">{{ nameOf(row.categoryId) }}</NuxtLink>
@@ -216,6 +233,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             <span class="share-track" aria-hidden="true">
               <span class="share-fill" :style="{ width: `${row.share}%`, background: colorOf(row.categoryId) }" />
             </span>
+            <InsightsPlanStatus
+              v-if="planByCategory.get(row.categoryId)?.neededMinutes"
+              class="share-plan"
+              :needed-minutes="planByCategory.get(row.categoryId)!.neededMinutes"
+              :planned-minutes="planByCategory.get(row.categoryId)!.plannedMinutes"
+              :format="formatMinutes"
+            />
           </li>
         </ul>
       </section>
@@ -224,6 +248,7 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         <p class="insights-empty">Plan the week in Planner and the hours show here.</p>
         <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Planner</NuxtLink>
       </section>
+
     </template>
   </div>
 </template>

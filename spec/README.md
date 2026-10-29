@@ -27,11 +27,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden: title and date, the hour bar spans 7h to 22h (the sleep at the day's edges is left off), the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: vision, the category list with the needed-and-planned bar and status text under each target (feat/goals-insights-simplify) |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: vision, the category list with the yearly badge under each target ("Over by 43 h this year", "On track this year", "Short by 32 h this year") (feat/insights-plan-vs-need, 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the bars, full page |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data, scrolled to the sections: the 5-year goal, the 1-year target, the hours comparison ("Needs 1 h more", "Compared with Standard Week"), the habits and More activities (fix/ux-batch-5; the order was changed on purpose) |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the yearly badges, full page (feat/insights-plan-vs-need, 2026-10-29) |
+| `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: "Time against need" with the badge and "See in Insights", the habits with "Needs 6 h a week" (feat/insights-plan-vs-need, 2026-10-29) |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Time against need" with its badge and "See in Insights", the habits with "Needs 6 h a week" and More activities (feat/insights-plan-vs-need, 2026-10-29) |
 | `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
 | `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
 | `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
@@ -57,6 +58,9 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 | `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open at Year: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the chart header key reads "Available per year" (2026-10-28) |
+| `insights-plan-vs-need-desktop-light.png` | 1280 px wide | Insights, light, the Life areas list with a status line under each life area that has a need: "Needs 32 h more", "43 h over", "222 h planned of 225 h needed" (feat/insights-plan-vs-need, 2026-10-29) |
+| `insights-plan-vs-need-desktop-dark.png` | 1280 px wide | Insights, dark, the same list (regenerated 2026-10-29 with the merged design) |
+| `insights-plan-vs-need-mobile-light.png` | 400 px wide | The same list at phone width, light, full page |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
@@ -117,6 +121,15 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Planned against needed (2026-10-29, branch `feat/insights-plan-vs-need`, not pushed)
+
+- Insights (FR-INS-P4): the Life areas list carries the comparison. Under the title, one caption; each life area with a need gets one status line under its bar ("Needs 32 h more", "43 h over", "74 h planned of 80 h needed"), over the range shown, in the chosen unit. No separate section, no extra bars, nothing extra for life areas with no need. `NeededPlannedBar.vue` is removed.
+- Open point: a life area's status counts activities linked from its habits even when they belong to another life area, while its share counts only its own activities, so a row can read "0 h" beside a status with planned hours.
+- Goals (FR-GOALS-P2): the weekly bars are gone. Each list row and the category detail show a yearly badge ("On track this year", "Short by 32 h this year", "Over by 43 h this year"; "in 2027" for another year), and the detail links "See in Insights". The habit lines show the need as a plain figure ("Needs 6 h a week").
+- The comparison reads each week's governing week type (as Insights), so the Goals time-off read-around (FR-TPL-8) no longer applies. Owner to confirm.
+- Checks: typecheck 0 errors; build clean; tsx checks of the calculations (per-habit need over 7, 52 and 53 weeks; the year map and the multi-year totals); headless Edge on the production build at 1280 and 400 px, light and dark: 42 checks, no console errors, no overflow.
+- Storage: no change; version 8.
 
 ### Sleep as a default (2026-10-28, branch `feat/sleep-default`, not pushed)
 
