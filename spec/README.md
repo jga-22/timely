@@ -69,6 +69,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (refreshed 2026-10-29) |
 | `insights-donut-selected-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view with Physical selected |
 | `insights-donut-selected-mobile-light.png` | 400 px wide | Insights, light, Donut view with Physical selected, at phone width, full page |
+| `insights-adherence-desktop-light.png` | 1280 px wide | Insights, light, Adherence view (month, one year): the headline "Done 5% of planned", the week bars with dashed future weeks, By life area, Habits, the journal nudge. Sample data: the seed plus ticks over the last three weeks (from 9 to 29 October 2026); the chart starts at the first tick and ends at the current week, so earlier weeks are not drawn |
+| `insights-adherence-desktop-dark.png` | 1280 px wide | Insights, dark, Adherence view (month) |
+| `insights-adherence-week-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with Week: one bar per weekday, Monday to Sunday |
+| `insights-adherence-mobile-light.png` | 400 px wide | Insights, light, Adherence view at phone width, full page |
+| `insights-adherence-mobile-dark.png` | 400 px wide | Insights, dark, Adherence view at phone width, full page |
+| `insights-adherence-empty-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with no tick in the range: the empty state with "Open Home" |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: the year switcher, Month or Week, More options, and "Plan the week in Planner and the hours show here." with an Open Planner button (refreshed 2026-10-29) |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
@@ -130,6 +136,9 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Insights adherence (2026-10-29, branch `feat/insights-adherence`, stacked on `feat/home-checks`, not pushed)
+
+A third choice in the Insights chart header, "Adherence", beside Bars and Donut (FR-INS-P6). It compares what was planned with what was ticked on Home over the range shown: a headline ("Done N% of planned", counted in hours of planned blocks, or in habit target ticks when no block is planned), bars by weekday (Week), by ISO week (Month, one year) or by month (several years, Quarter, Year), trimmed to the periods from the first tick up to the current one, a "By life area" list, the habits kept up or slipping, and a journal nudge with a prompt. The pure rules are in `app/utils/adherence.ts`: counting starts at the first tick and runs up to today, sleep never counts, a habit with a block that day is judged through the block, and habit ticks are capped at their target. Nothing is stored; storage version unchanged (8). Checks: build clean, typecheck 0 errors, 65 tsx checks of the rules, 49 headless Edge checks at 1280 and 400 px, light and dark, with real mouse clicks, no console errors, no horizontal overflow. Screenshots: `screens/insights-adherence-*`.
 ### Home done ticks (2026-10-29, branch `feat/home-checks`, from `main`, not pushed)
 
 Home ticks what really happened (FR-HOME-14 to 18): one checkbox per scheduled block and per habit, stored as the optional `done` map of the state (no durations, no timestamps, no storage version change). Habits that are not already a block of the day are listed under "Habits"; week and month habits show "2 of 3 this week". A progress line counts the day ("3 of 5 done", then "All done for today"). A previous and next day switch (Today; never a future day; 60 days back) lets yesterday be caught up. The Edit links on Home rows are removed (FR-HOME-8 superseded). Screens: `home-desktop-light.png`, `home-desktop-dark.png`, `home-mobile-light.png`, `home-mobile-dark.png`, `home-yesterday-desktop-light.png` (the old `sleep-home-400-dark.png` is removed: it showed the Edit links).
