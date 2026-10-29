@@ -63,6 +63,9 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-donut-desktop-light.png` | 1280 px wide | Insights, light, Donut view: the whole range as a ring (76% planned of the available time, "4,232 h planned of 5,565 h"), with the Life areas list beside it ending in "Not planned" (feat/insights-plan-vs-need, 2026-10-29) |
 | `insights-donut-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view |
 | `insights-donut-mobile-light.png` | 400 px wide | Insights, light, Donut view at phone width, full page |
+| `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (feat/insights-plan-vs-need, 2026-10-29) |
+| `insights-donut-selected-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view with Physical selected |
+| `insights-donut-selected-mobile-light.png` | 400 px wide | Insights, light, Donut view with Physical selected, at phone width, full page |
 | `insights-plan-vs-need-mobile-light.png` | 400 px wide | The same list at phone width, light, full page |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
 
@@ -127,6 +130,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ### Planned against needed (2026-10-29, branch `feat/insights-plan-vs-need`, not pushed)
 
+- Insights donut selection (FR-INS-P5 follow-up, 2026-10-29): a click or tap on a donut slice (or the Not planned ring) selects it: the others dim, the selected one is drawn thicker, its list row is marked, and the centre shows its name, percent and hours. Clear with a second click, a click on the centre or Escape. Keyboard: Tab, Enter or Space, arrow keys. Session state. Dimmed slices fall below 3:1 (flagged for the owner).
 - Insights (FR-INS-P5, 2026-10-29, owner request): the Life areas list has no share bar; its percentages are of the available time, with a "Not planned" last row, so the list adds to 100. A "Bars | Donut" choice in the chart header shows the same range as a ring (planned slices and a Not planned ring, centre: percent planned and hours). Bars stay the default; the choice is session state.
 - Insights (FR-INS-P4): the Life areas list carries the comparison. Under the title, one caption (with the note on counting); each life area with a need gets the Needed and Planned bars (inline captions, on one scale) and one status line ("Needs 32 h more", "43 h over", "74 h planned of 80 h needed"), over the range shown, in the chosen unit. No separate section; nothing extra for life areas with no need. The two-bar component is `insights/PlanComparison.vue` (moved from `harada/NeededPlannedBar.vue`).
 - Open point: a life area's status counts activities linked from its habits even when they belong to another life area, while its share counts only its own activities, so a row can read "0 h" beside a status with planned hours.
