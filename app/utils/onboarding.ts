@@ -68,7 +68,7 @@ export const needsOnboarding = (saved: PlannerState | null): boolean => !saved |
 /**
  * Builds the ambition, the chosen life areas (the default categories, filled in place: a 1-year target, an activity and a habit each),
  * and the template with every goal's sessions (FR-ONB-5). A habit asks for the chosen hours each time and its activity fills the
- * same hours in the template, so Goals compares equal times. The other default areas stay empty. The template is assigned to every
+ * same hours in the template, so Goals sees equal times. The other default areas stay empty. The template is assigned to every
  * ISO week of `year`. `stamp` makes the ids; pass a fixed one in tests.
  */
 export const buildOnboardingState = (answers: OnboardingAnswers, year: number, stamp: number = Date.now()): PlannerState => {

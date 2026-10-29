@@ -512,7 +512,7 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
               :checked="activeTemplate.kind === 'break'"
               @change="planner.setTemplateKind(activeTemplate.id, ($event.target as HTMLInputElement).checked ? 'break' : undefined)"
             />
-            Time off: Goals does not compare against this week type
+            Time off: Goals reads its hours from a working week type
           </label>
         </div>
         <div v-if="templates.length > 1" class="form-actions">

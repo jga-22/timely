@@ -290,6 +290,8 @@ order by 1, 2;
 
 ### 7.2 Needed against allocated time per category (per week, active template)
 
+> Not in the app: the planned-against-needed comparison was removed on 2026-10-29 (circular: both sides come from the same habits). The query stays as a design reference for a possible time budget per life area.
+
 ```sql
 with needed as (
   select h.category_id,

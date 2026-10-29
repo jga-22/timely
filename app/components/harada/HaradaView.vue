@@ -3,7 +3,6 @@ import { storeToRefs } from 'pinia'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS } from '~/utils/planner'
-import { planPeriodLabel, yearPlanVsNeed } from '~/utils/insights'
 import { focusEditById, focusEditField } from '~/utils/focus'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
@@ -37,11 +36,6 @@ const editing = computed(() => !!selected.value && edit.value)
 const horizonYears = computed(() => ambition.value?.horizonYears ?? 5)
 const horizonText = computed(() => `${horizonYears.value} ${horizonYears.value === 1 ? 'year' : 'years'}`)
 
-// The Goals badge compares the year shown (the planner's year, the current one on a fresh load) with what its habits ask for (FR-GOALS-16)
-const { year, currentYear } = usePlannerYear()
-const planYear = computed(() => (year.value === null ? new Map() : yearPlanVsNeed(planner.$state, year.value)))
-const periodText = computed(() => (year.value === null ? '' : planPeriodLabel(year.value, currentYear.value)))
-
 // ── List or Grid (FR-GOALS-26): the Harada map is an opt-in view from 1100px; the list is the default and the only view below it.
 // The choice lasts for the session (useState), not the saved state
 const view = useState<'list' | 'grid'>('goals-view', () => 'list')
@@ -67,10 +61,6 @@ const listCategories = computed(() => showAll.value ? sortedCategories.value : s
 function toggleEmpty() {
   emptyOpen.value = !emptyOpen.value
 }
-
-// The badge of each row waits for mount: the saved state is not known on the server, so the first client render
-// matches the server, and the next render patches the badges (a reload with a saved state that differs from the seed)
-const mounted = ref(false)
 
 // Short line under each name in the list: the 1-year target, or that it is still to be defined
 const targetLine = (category: Category) => category.targetTbd
@@ -152,9 +142,6 @@ function onWindowKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => window.addEventListener('keydown', onWindowKeydown))
-onMounted(() => {
-  mounted.value = true
-})
 onUnmounted(() => window.removeEventListener('keydown', onWindowKeydown))
 
 // Arrow keys move between map cells; Enter and Space (native buttons) select
@@ -336,12 +323,6 @@ function submitAdd() {
               <span class="cat-main">
                 <span class="cat-row-name">{{ category.name }}</span>
                 <span class="cat-meta" :class="{ 'is-warn': targetLine(category).warn }">{{ targetLine(category).text }}</span>
-                <HaradaPlanBadge
-                  v-if="mounted"
-                  :needed-minutes="planYear.get(category.id)?.neededMinutes ?? 0"
-                  :planned-minutes="planYear.get(category.id)?.plannedMinutes ?? 0"
-                  :period="periodText"
-                />
               </span>
             </button>
 

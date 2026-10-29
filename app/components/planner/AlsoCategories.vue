@@ -2,7 +2,7 @@
 import type { Category } from '~/types/planner'
 
 /**
- * Secondary categories of an activity (PRD FR-PLAN-20): the hours also count toward these in the Goals comparison.
+ * Secondary categories of an activity (PRD FR-PLAN-20): the activity is also listed under these in Goals.
  * The primary category is never offered here; it is chosen in the Category select above.
  */
 const props = defineProps<{ modelValue: string[]; categories: Category[]; primaryId: string }>()

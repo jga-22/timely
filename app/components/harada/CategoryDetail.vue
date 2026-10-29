@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS, countLabel } from '~/utils/planner'
-import { planPeriodLabel, yearPlanVsNeed } from '~/utils/insights'
 import { entryLines } from '~/utils/entries'
 import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'
@@ -12,7 +11,7 @@ const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
 const { categories } = storeToRefs(planner)
-const { setSelection, link } = useNav()
+const { setSelection } = useNav()
 const { resultText, canUndo, showResult, undoResult } = useEntryResult()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
@@ -28,18 +27,6 @@ const activityCount = computed(() => planner.activities.filter(activity => activ
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
-// ── Time against need (FR-GOALS-16): one badge for the year shown; the full comparison is in Insights
-// Saved state is not known on the server, so the badge waits for mount: the first client render
-// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
-const mounted = ref(false)
-onMounted(() => {
-  mounted.value = true
-})
-
-const { year, currentYear } = usePlannerYear()
-const plan = computed(() => (year.value === null ? null : yearPlanVsNeed(planner.$state, year.value).get(props.categoryId) ?? null))
-const periodText = computed(() => (year.value === null ? '' : planPeriodLabel(year.value, currentYear.value)))
-
 // ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
 // lies), an activity of this life area that no habit links to, or an activity that also counts here (its note says so)
 interface EntryRow {
@@ -48,7 +35,7 @@ interface EntryRow {
   activityId: string | null
   name: string
   lines: string[]
-  /** Counts here through "also counts toward" only: its hours are compared here, its life area is another one */
+  /** Listed here through "also counts toward" only: its life area is another one */
   secondary: boolean
   note: string
 }
@@ -128,7 +115,7 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
   if (result.text) showResult(result.text, result.undo ?? [])
 }
 
-// Unlink a secondary category from an activity: its hours stop counting here. Inline confirmation first
+// Unlink a secondary category from an activity: the activity is no longer listed here. Inline confirmation first
 function confirmUnlink(activityId: string | null) {
   if (activityId) planner.removeAlsoCategory(activityId, props.categoryId)
   unlinkKey.value = null
@@ -251,7 +238,7 @@ function confirmRemove() {
       </div>
     </div>
 
-    <!-- View mode: read-only. The 5-year goal and the 1-year target, then the hours comparison -->
+    <!-- View mode: read-only. The 5-year goal and the 1-year target, then the entries -->
     <template v-if="!editing">
       <section class="detail-block">
         <h4 class="detail-label">5-year goal</h4>
@@ -262,18 +249,6 @@ function confirmRemove() {
         <h4 class="detail-label">1-year target</h4>
         <p v-if="category.targetTbd" class="detail-flag">To define</p>
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
-      </section>
-
-      <section v-if="mounted" class="detail-block detail-goal">
-        <h4 class="detail-label">Time against need</h4>
-        <div class="detail-plan">
-          <HaradaPlanBadge
-            :needed-minutes="plan?.neededMinutes ?? 0"
-            :planned-minutes="plan?.plannedMinutes ?? 0"
-            :period="periodText"
-          />
-          <NuxtLink class="detail-plan-link" :to="link('insights')">See in Insights</NuxtLink>
-        </div>
       </section>
     </template>
 
@@ -503,21 +478,6 @@ function confirmRemove() {
 .detail-text.is-empty {
   color: var(--ink-3);
 }
-
-/* The badge and the quiet link to the full comparison in Insights */
-.detail-plan {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-}
-.detail-plan-link {
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.detail-plan-link:hover { color: var(--ink-2); }
 
 .detail-empty,
 .detail-flag {

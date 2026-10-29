@@ -274,7 +274,7 @@ export const needText = (habit: Habit): string | null => {
 
 /**
  * The lines an entry shows (FR-ITEM-4): when and where its hours are painted, and for a habit with a time per occurrence what it needs;
- * or, for a habit with no activity, its frequency. The planned time against the need is in Insights, not here
+ * or, for a habit with no activity, its frequency
  */
 export const entryLines = (state: PlannerState, habitId: string | null, activityId: string | null): string[] => {
   const draft = entryDraftOf(state, habitId, activityId)

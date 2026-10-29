@@ -1861,10 +1861,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .share-value { color: var(--ink-2); }
 .share-pct { color: var(--ink-3); }
-/* Planned against needed (Insights): the status line under a life area's share, across the whole row */
-.share-plan {
-  grid-column: 1 / -1;
-}
 /* Not planned: the last row of the list, no bars; a hollow dot marks it, since it has no colour of its own */
 .share-row-free .share-free { color: var(--ink-2); }
 /* The selected slice in the donut view: its list row is marked (a bar on the left, a tint) and the row is clickable */

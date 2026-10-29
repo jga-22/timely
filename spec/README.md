@@ -27,12 +27,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden: title and date, the hour bar spans 7h to 22h (the sleep at the day's edges is left off), the activities list, the journal |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: vision, the category list with the yearly badge under each target ("Over by 43 h this year", "On track this year", "Short by 32 h this year") (feat/insights-plan-vs-need, 2026-10-29) |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 1-year target (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list with the yearly badges, full page (feat/insights-plan-vs-need, 2026-10-29) |
-| `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: "Time against need" with the badge and "See in Insights", the habits with "Needs 6 h a week" (feat/insights-plan-vs-need, 2026-10-29) |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Time against need" with its badge and "See in Insights", the habits with "Needs 6 h a week" and More activities (feat/insights-plan-vs-need, 2026-10-29) |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list at phone width, full page (refreshed 2026-10-29) |
+| `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: the 5-year goal, the 1-year target, the entries with "Needs 6 h a week" (refreshed 2026-10-29) |
+| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Activities and habits" with each habit's schedule and "Needs 6 h a week" (refreshed 2026-10-29) |
 | `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
 | `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
 | `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
@@ -58,15 +58,15 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
 | `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
 | `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open at Year: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the chart header key reads "Available per year" (2026-10-28) |
-| `insights-plan-vs-need-desktop-light.png` | 1280 px wide | Insights, light, the Life areas list: each life area with a need has the Needed and Planned bars and a status line ("Needs 32 h more", "43 h over", "222 h planned of 225 h needed") (feat/insights-plan-vs-need, 2026-10-29) |
-| `insights-plan-vs-need-desktop-dark.png` | 1280 px wide | Insights, dark, the same list (regenerated 2026-10-29 with the merged design) |
-| `insights-donut-desktop-light.png` | 1280 px wide | Insights, light, Donut view: the whole range as a ring (76% planned of the available time, "4,232 h planned of 5,565 h"), with the Life areas list beside it ending in "Not planned" (feat/insights-plan-vs-need, 2026-10-29) |
+| `insights-bars-desktop-light.png` | 1280 px wide, full page | Insights, light, Bars view: the planned hours by month stacked by life area, the Life areas list with hours and percent of the available time and "Not planned" (refreshed 2026-10-29) |
+| `insights-bars-desktop-dark.png` | 1280 px wide, full page | Insights, dark, Bars view, the same list |
+| `insights-donut-desktop-light.png` | 1280 px wide | Insights, light, Donut view: the whole range as a ring (76% planned of the available time, "4,232 h planned of 5,565 h"), with the Life areas list beside it ending in "Not planned" (refreshed 2026-10-29) |
 | `insights-donut-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view |
+| `insights-bars-mobile-light.png` | 400 px wide, full page | Insights, light, Bars view at phone width (refreshed 2026-10-29) |
 | `insights-donut-mobile-light.png` | 400 px wide | Insights, light, Donut view at phone width, full page |
-| `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (feat/insights-plan-vs-need, 2026-10-29) |
+| `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (refreshed 2026-10-29) |
 | `insights-donut-selected-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view with Physical selected |
 | `insights-donut-selected-mobile-light.png` | 400 px wide | Insights, light, Donut view with Physical selected, at phone width, full page |
-| `insights-plan-vs-need-mobile-light.png` | 400 px wide | The same list at phone width, light, full page |
 | `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
@@ -77,7 +77,7 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `onboarding-ambition-desktop-light.png` | 1280 px wide | Step 1 of 5, Your 5-year ambition: the framing text and the one field, filled in |
 | `onboarding-goals-desktop-light.png` | 1280 px wide | Step 2 of 5, Goals and habits with one goal: the Physical chip, the habit Run, "Add a second goal" |
 | `onboarding-goals-two-desktop-light.png` | 1280 px wide | Step 2 of 5 with two goals: the chip the first goal uses is disabled in the second; Remove on goal 2 |
-| `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Step 3 of 5 on Planner: "Timely placed 3 h for Physical" and the week the build placed |
+| `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Card 3 Plan your week on Week, after Replay tour: "Timely placed 68 h for Physical and 0 h for Spiritual" and "Goals keeps the why" (refreshed 2026-10-29) |
 | `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
 | `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
 | `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the headline and its supporting line, the intro player (scene 1 of 5, paused behind a Play button, frameless), the Google sign-in button and the consent line |
@@ -127,6 +127,14 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Planned against needed removed (2026-10-29, branch `refactor/remove-plan-vs-need`, not pushed)
+
+- The owner removed the planned-against-needed comparison: it is circular, since both sides come from the same habits. Removed from Insights (the Needed and Planned bars and their status lines, `PlanComparison.vue`), from Goals (the yearly badge `PlanBadge.vue`, "Time against need", "See in Insights") and from the calculations (`categoryPlanVsNeed`, `yearPlanVsNeed`, `categoryAlignments`, `alignmentStatus`, `comparedActivityIds`, and the Goals-side hour sums). FR-GOALS-16, FR-GOALS-P1, FR-GOALS-P2 (both rows) and FR-INS-P4 are removed in the PRD.
+- Kept: the Insights donut and available time (FR-INS-P5), each habit's plain need text, `goalsTemplate` (entries and presets read it), time off (`kind`), and "Also counts toward" (`alsoCategoryIds`, now only listed under Goals).
+- Copy: the tour's Plan card no longer mentions the comparison ("Goals keeps the why"); intro scene 4 is now "Goals" (a goal and a habit linked to an activity) instead of "Compare".
+- A time budget per life area is the later idea, not built. Storage version unchanged (8).
+- Screenshots: `insights-plan-vs-need-*` deleted; `insights-bars-*` added; `goals-*`, `goals-detail-*`, `insights-*` and the Plan card and intro scene 4 re-shot.
 
 ### Planned against needed (2026-10-29, branch `feat/insights-plan-vs-need`, not pushed)
 

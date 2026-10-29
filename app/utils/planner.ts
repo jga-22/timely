@@ -443,7 +443,7 @@ export const habitWeeklyOccurrences = (habit: Habit): number => {
 }
 
 /**
- * The week type the Goals comparison reads (FR-GOALS-16, FR-TPL-8): the active one unless it is time off; otherwise the
+ * The week type Goals reads (FR-TPL-8): the active one unless it is time off; otherwise the
  * working week type with the most assigned weeks (the first one when none is assigned); otherwise the active one.
  * Home, Planner and Insights do not use it.
  */
@@ -478,93 +478,6 @@ export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityI
 /** Secondary links kept only when they name a known category other than the primary one, each once */
 export const cleanAlsoCategoryIds = (categories: Category[], primaryId: string, ids: string[]): string[] =>
   [...new Set(ids)].filter(id => id !== primaryId && categories.some(category => category.id === id))
-
-/**
- * Activities whose hours count toward a category's comparison (FR-GOALS-16), each once: the activities linked from
- * the category's habits, and the activities that list the category as secondary. Primary membership alone does not count.
- */
-export const comparedActivityIds = (state: PlannerState, categoryId: string): Set<string> => {
-  const ids = new Set<string>()
-  // Sleep is not compared against any life area (FR-SLEEP-7)
-  const isSleepId = (id: string) => isSleepActivity(state.activities.find(activity => activity.id === id))
-
-  for (const habit of state.habits) {
-    if (habit.categoryId === categoryId && habit.activityId && !isSleepId(habit.activityId)) ids.add(habit.activityId)
-  }
-
-  for (const activity of state.activities) {
-    if (activity.alsoCategoryIds?.includes(categoryId) && !isSleepActivity(activity)) ids.add(activity.id)
-  }
-
-  return ids
-}
-
-/** Scheduled minutes per week for one category, from the Goals week type (goalsTemplate): the hours of its comparedActivityIds */
-export const scheduledWeeklyMinutesForCategory = (state: PlannerState, categoryId: string): number => {
-  const template = goalsTemplate(state)
-
-  if (!template) {
-    return 0
-  }
-
-  const hours = aggregateTemplate(template, state.activities)
-  let total = 0
-
-  for (const activityId of comparedActivityIds(state, categoryId)) {
-    total += hours.get(activityId) ?? 0
-  }
-
-  return total * 60
-}
-
-/** Slack before a category counts as under or over its time target: the larger of 30 minutes and 10% of the need */
-const ALIGNMENT_TOLERANCE_MINUTES = 30
-const ALIGNMENT_TOLERANCE_SHARE = 0.1
-
-/** under: allocated time is short of the need; over: it is beyond the need; none: the habits give no time to compare */
-export type AlignmentStatus = 'under' | 'over' | 'ok' | 'none'
-
-export interface CategoryAlignment {
-  /** Minutes a week the habits of the category ask for (habits with a time per occurrence) */
-  neededMinutes: number
-  /** Minutes a week scheduled in the Goals week type (goalsTemplate) through the activities of the category */
-  allocatedMinutes: number
-  /** Allocated minus needed: negative when time is missing */
-  gapMinutes: number
-  status: AlignmentStatus
-}
-
-export const alignmentStatus = (neededMinutes: number, allocatedMinutes: number): AlignmentStatus => {
-  if (neededMinutes <= 0) return 'none'
-
-  const tolerance = Math.max(ALIGNMENT_TOLERANCE_MINUTES, neededMinutes * ALIGNMENT_TOLERANCE_SHARE)
-  const gap = allocatedMinutes - neededMinutes
-
-  if (gap < -tolerance) return 'under'
-  if (gap > tolerance) return 'over'
-  return 'ok'
-}
-
-/** Needed against allocated time per category, in minutes a week (FR-GOALS-16). Every category has an entry */
-export const categoryAlignments = (state: PlannerState): Map<string, CategoryAlignment> => {
-  const alignments = new Map<string, CategoryAlignment>()
-
-  for (const category of state.categories) {
-    const neededMinutes = state.habits
-      .filter(habit => habit.categoryId === category.id)
-      .reduce((total, habit) => total + (habit.minutesPerOccurrence ? habitWeeklyOccurrences(habit) * habit.minutesPerOccurrence : 0), 0)
-    const allocatedMinutes = scheduledWeeklyMinutesForCategory(state, category.id)
-
-    alignments.set(category.id, {
-      neededMinutes,
-      allocatedMinutes,
-      gapMinutes: allocatedMinutes - neededMinutes,
-      status: alignmentStatus(neededMinutes, allocatedMinutes)
-    })
-  }
-
-  return alignments
-}
 
 /** Hours for display: one decimal at most, no trailing zero (2.5 h, 3 h) */
 export const hoursLabel = (minutes: number): string => `${Math.round((minutes / 60) * 10) / 10} h`
