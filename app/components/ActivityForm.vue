@@ -85,8 +85,7 @@ const durationLabel = (minutes: number) => {
 const snapshot = (): EntryDraft => ({
   ...draft,
   days: [...draft.days],
-  templateIds: [...draft.templateIds],
-  alsoCategoryIds: [...draft.alsoCategoryIds]
+  templateIds: [...draft.templateIds]
 })
 
 // Repaint: a timed entry whose schedule changed repaints its hours on Save (never a name, colour, code or life-area change alone)
@@ -335,10 +334,8 @@ function onEscape(event: KeyboardEvent) {
                 />
               </div>
             </div>
-
-            <PlannerAlsoCategories v-if="!isSleep" v-model="draft.alsoCategoryIds" :categories="categories" :primary-id="draft.categoryId" />
           </template>
-          <p v-else class="form-hint">The short code, colour and "also counts toward" belong to a timed item.</p>
+          <p v-else class="form-hint">The short code and colour belong to a timed item.</p>
         </div>
       </details>
     </div>

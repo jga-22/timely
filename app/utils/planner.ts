@@ -265,13 +265,7 @@ export const isPlannerState = (value: unknown): value is PlannerState => {
   const linksToCategory = (item: { categoryId?: string } | null) =>
     typeof item?.categoryId === 'string' && categoryIds.has(item.categoryId)
 
-  // Secondary categories are optional; when present they must be known categories
-  const alsoLinks = (activity: Partial<Activity> | null) => {
-    const also = activity?.alsoCategoryIds
-    return also === undefined || (Array.isArray(also) && also.every(id => typeof id === 'string' && categoryIds.has(id)))
-  }
-
-  return activities.every(linksToCategory) && activities.every(alsoLinks) && habits.every(linksToCategory)
+  return activities.every(linksToCategory) && habits.every(linksToCategory)
 }
 
 /** Seed for a year; the default is the ISO year of today. The store serialises this seed, so server and client share it */
@@ -292,7 +286,7 @@ export const createInitialState = (year: number = isoWeekOf(localDateKey()).year
     { id: 'family',    name: 'Family time',      shortCode: 'FAM', categoryId: 'relationnelle',   color: '#c19a3e' },
     { id: 'learning',  name: 'Learning',         shortCode: 'LRN', categoryId: 'cognitive',       color: '#8a5a7a' },
     { id: 'projects',  name: 'Personal project', shortCode: 'PRJ', categoryId: 'cognitive',       color: '#a04e3e' },
-    { id: 'reading',   name: 'Reading',          shortCode: 'RDG', categoryId: 'cognitive',       alsoCategoryIds: ['spirituelle'], color: '#6e5c7c' },
+    { id: 'reading',   name: 'Reading',          shortCode: 'RDG', categoryId: 'cognitive',       color: '#6e5c7c' },
     { id: 'planning',  name: 'Weekly planning',  shortCode: 'PLN', categoryId: 'professionnelle', color: '#c19a3e' },
     { id: 'errands',   name: 'Errands',          shortCode: 'ERR', categoryId: 'environnement',   color: '#d97757' },
     { id: 'sleep',     name: 'Sleep',            shortCode: 'SLP', categoryId: 'physique',        color: '#6e5c7c' }
@@ -474,10 +468,6 @@ export const scheduledWeeklyMinutesForActivity = (state: PlannerState, activityI
 
   return (aggregateTemplate(template, state.activities).get(activityId) ?? 0) * 60
 }
-
-/** Secondary links kept only when they name a known category other than the primary one, each once */
-export const cleanAlsoCategoryIds = (categories: Category[], primaryId: string, ids: string[]): string[] =>
-  [...new Set(ids)].filter(id => id !== primaryId && categories.some(category => category.id === id))
 
 /** Hours for display: one decimal at most, no trailing zero (2.5 h, 3 h) */
 export const hoursLabel = (minutes: number): string => `${Math.round((minutes / 60) * 10) / 10} h`

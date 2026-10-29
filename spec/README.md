@@ -50,7 +50,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
 | `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section collapsed (closed by default, FR-YEAR-7) |
 | `planner-one-type-year-open-desktop-light.png` | 1280 px wide | The same with the Year section open: the one line "Every week of 2026 uses My week.", the year nav, the painter, and the Weeks row |
-| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: Reading in the activity editor, with Done in the panel head (Escape and Done close it and return focus to Edit, FR-PLAN-26) |
+| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: an entry open in the unified edit form ("Edit Read for inspiration", sample data), with Save, Cancel and Delete; More options closed (refreshed 2026-10-29: the "Also counts toward" field is gone; Escape and Cancel close it and return focus to Edit, FR-PLAN-26) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
 | `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
@@ -67,7 +67,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (refreshed 2026-10-29) |
 | `insights-donut-selected-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view with Physical selected |
 | `insights-donut-selected-mobile-light.png` | 400 px wide | Insights, light, Donut view with Physical selected, at phone width, full page |
-| `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: "Nothing planned yet in 2026" and the link to Planner |
+| `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: the year switcher, Month or Week, More options, and "Plan the week in Planner and the hours show here." with an Open Planner button (refreshed 2026-10-29) |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
 
@@ -88,8 +88,8 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
 | `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
 | `onboarding-intro-dialog-mobile-{light,dark}-scene-{1..5}.png` | 390 by 700 px | The intro dialog at a phone size, light and dark, every scene: the stage and its caption band whole, the controls inside the dialog |
-| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, a category with the "+ Add habit" form open: name Run, minutes each 30, and the linked activity set to "Add 'Run' to my week" as the default (feat/goals-insights-simplify) |
-| `goals-add-habit-mobile-light.png` | 390 px wide | The same add form at phone width |
+| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, Cognitive with the "+ Add" form open (the unified entry form, FR-ITEM-3): name Run, duration 30 min, the Life area preselected, Days, Start, Week types, More options closed (refreshed 2026-10-29; the earlier "+ Add habit" form and its linked-activity select are gone) |
+| `goals-add-habit-mobile-light.png` | 390 px wide | The same unified add form at phone width (refreshed 2026-10-29) |
 | `onboarding-ambition-long-desktop-light.png` | 1280 px wide | Guided step 1 with a 228-character ambition: the field wraps and grows, nothing is cut |
 | `goals-vision-long-desktop-light.png` | 1280 px wide, full page | Goals with the long ambition in the vision and the Harada map centre |
 | `goals-vision-long-mobile-light.png` | 400 px wide, full page | The same at phone width |
@@ -128,10 +128,14 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Also counts toward removed (2026-10-29, branch `refactor/remove-plan-vs-need`, not pushed)
+
+- The secondary categories (`alsoCategoryIds`, "Also counts toward") fed only the planned-against-needed comparison, which is gone, so they are removed: the Planner and Goals controls ("Also counts toward", "also counts here", the secondary Unlink), the store actions and the helpers (`cleanAlsoCategoryIds`, `AlsoCategories.vue`). The field is no longer in the type; a save that still carries it loads, and the value is ignored. FR-PLAN-P1 and FR-GOALS-P5 are removed in the PRD. Storage version unchanged (8).
+
 ### Planned against needed removed (2026-10-29, branch `refactor/remove-plan-vs-need`, not pushed)
 
 - The owner removed the planned-against-needed comparison: it is circular, since both sides come from the same habits. Removed from Insights (the Needed and Planned bars and their status lines, `PlanComparison.vue`), from Goals (the yearly badge `PlanBadge.vue`, "Time against need", "See in Insights") and from the calculations (`categoryPlanVsNeed`, `yearPlanVsNeed`, `categoryAlignments`, `alignmentStatus`, `comparedActivityIds`, and the Goals-side hour sums). FR-GOALS-16, FR-GOALS-P1, FR-GOALS-P2 (both rows) and FR-INS-P4 are removed in the PRD.
-- Kept: the Insights donut and available time (FR-INS-P5), each habit's plain need text, `goalsTemplate` (entries and presets read it), time off (`kind`), and "Also counts toward" (`alsoCategoryIds`, now only listed under Goals).
+- Kept: the Insights donut and available time (FR-INS-P5), each habit's plain need text, `goalsTemplate` (entries and presets read it), time off (`kind`). "Also counts toward" was removed the same day (see above).
 - Copy: the tour's Plan card no longer mentions the comparison ("Goals keeps the why"); intro scene 4 is now "Goals" (a goal and a habit linked to an activity) instead of "Compare".
 - A time budget per life area is the later idea, not built. Storage version unchanged (8).
 - Screenshots: `insights-plan-vs-need-*` deleted; `insights-bars-*` added; `goals-*`, `goals-detail-*`, `insights-*` and the Plan card and intro scene 4 re-shot.

@@ -28,15 +28,13 @@ const habitCount = computed(() => planner.habits.filter(habit => habit.categoryI
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
 // ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
-// lies), an activity of this life area that no habit links to, or an activity that also counts here (its note says so)
+// lies), or an activity of this life area that no habit links to
 interface EntryRow {
   key: string
   habitId: string | null
   activityId: string | null
   name: string
   lines: string[]
-  /** Listed here through "also counts toward" only: its life area is another one */
-  secondary: boolean
   note: string
 }
 
@@ -54,7 +52,6 @@ const entryRows = computed<EntryRow[]>(() => {
       activityId: activity?.id ?? null,
       name: habit.name,
       lines: entryLines(planner.$state, habit.id, activity?.id ?? null),
-      secondary: false,
       note: activity && activity.categoryId !== here ? `in ${categoryName(activity.categoryId)}` : ''
     })
   }
@@ -64,9 +61,8 @@ const entryRows = computed<EntryRow[]>(() => {
   for (const activity of planner.activities) {
     if (habitLinkedHere.has(activity.id) || isSleepActivity(activity)) continue
 
-    const counted = activity.categoryId !== here && !!activity.alsoCategoryIds?.includes(here)
-    const orphan = activity.categoryId === here && !linkedAnywhere.has(activity.id)
-    if (!counted && !orphan) continue
+    // An activity of this life area that no habit links to
+    if (activity.categoryId !== here || linkedAnywhere.has(activity.id)) continue
 
     rows.push({
       key: activity.id,
@@ -74,8 +70,7 @@ const entryRows = computed<EntryRow[]>(() => {
       activityId: activity.id,
       name: activity.name,
       lines: entryLines(planner.$state, null, activity.id),
-      secondary: counted,
-      note: counted ? 'also counts here' : ''
+      note: ''
     })
   }
 
@@ -86,17 +81,14 @@ const entryRows = computed<EntryRow[]>(() => {
 const openKey = ref<string | null>(null)
 const adding = ref(false)
 const addTrigger = ref<HTMLButtonElement | null>(null)
-const unlinkKey = ref<string | null>(null)
 
 function toggleRow(key: string) {
   adding.value = false
-  unlinkKey.value = null
   openKey.value = openKey.value === key ? null : key
 }
 
 function openAdd() {
   openKey.value = null
-  unlinkKey.value = null
   adding.value = true
 }
 
@@ -113,12 +105,6 @@ function closeForm() {
 
 function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slots: string[] }> }) {
   if (result.text) showResult(result.text, result.undo ?? [])
-}
-
-// Unlink a secondary category from an activity: the activity is no longer listed here. Inline confirmation first
-function confirmUnlink(activityId: string | null) {
-  if (activityId) planner.removeAlsoCategory(activityId, props.categoryId)
-  unlinkKey.value = null
 }
 
 // ── Mode changes live in the URL (FR-UX-5); Done replaces the entry and returns focus to Edit
@@ -159,7 +145,6 @@ watch(
     removing.value = false
     openKey.value = null
     adding.value = false
-    unlinkKey.value = null
   },
   { immediate: true }
 )
@@ -323,19 +308,6 @@ function confirmRemove() {
               <span v-for="(line, index) in row.lines" :key="index" class="row-meta">{{ line }}</span>
               <span v-if="row.note" class="row-meta">{{ row.note }}</span>
             </span>
-            <template v-if="editing && row.secondary && row.activityId">
-              <span v-if="unlinkKey === row.key" class="row-confirm">
-                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(row.activityId)">Unlink</button>
-                <button type="button" class="btn btn-xs" @click="unlinkKey = null">Cancel</button>
-              </span>
-              <button
-                v-else
-                type="button"
-                class="btn btn-xs btn-outline"
-                :aria-label="`Unlink ${row.name} from ${category.name}`"
-                @click="unlinkKey = row.key"
-              >Unlink</button>
-            </template>
             <EditButton
               :id="`entry-edit-${row.key}`"
               :label="`Edit ${row.name}`"
