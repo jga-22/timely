@@ -35,7 +35,7 @@ export interface Preset {
   id: PresetId
   name: string
   description: string
-  /** 'break' marks time off: Goals does not compare against it */
+  /** 'break' marks time off: Goals reads a working week type instead */
   kind?: 'break'
   /** Whether a new week type keeps the hours of habit-linked activities by default */
   keepHabitsDefault: boolean
@@ -92,7 +92,7 @@ export const PRESETS: Preset[] = [
   {
     id: 'vacation',
     name: 'Vacation',
-    description: 'Sleep only. Goals does not compare against time off.',
+    description: 'Sleep only. Goals reads a working week type instead.',
     kind: 'break',
     keepHabitsDefault: false,
     blocks: SLEEP_BLOCKS

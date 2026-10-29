@@ -46,7 +46,6 @@ export interface EntryDraft {
   /** Blank keeps the stored code of an activity, or derives one from the name for a new activity */
   shortCode: string
   color: string
-  alsoCategoryIds: string[]
 }
 
 export type EntryErrors = Partial<Record<'name' | 'categoryId' | 'days' | 'frequency' | 'start' | 'weekTypes' | 'shortCode', string>>
@@ -108,8 +107,7 @@ export const newEntryDraft = (state: PlannerState, categoryId: string): EntryDra
     start: DEFAULT_START,
     templateIds: active && isHourlyTemplate(active) ? [active.id] : [],
     shortCode: '',
-    color: category?.color ?? DESIGN_COLORS[0]!.bg,
-    alsoCategoryIds: []
+    color: category?.color ?? DESIGN_COLORS[0]!.bg
   }
 }
 
@@ -158,8 +156,7 @@ export const entryDraftOf = (state: PlannerState, habitId: string | null, activi
       ? state.templates.filter(template => isHourlyTemplate(template) && template.slots.includes(activity.id)).map(template => template.id)
       : [],
     shortCode: activity?.shortCode ?? '',
-    color: activity?.color ?? category?.color ?? DESIGN_COLORS[0]!.bg,
-    alsoCategoryIds: activity?.alsoCategoryIds ?? []
+    color: activity?.color ?? category?.color ?? DESIGN_COLORS[0]!.bg
   }
 }
 
@@ -274,7 +271,7 @@ export const needText = (habit: Habit): string | null => {
 
 /**
  * The lines an entry shows (FR-ITEM-4): when and where its hours are painted, and for a habit with a time per occurrence what it needs;
- * or, for a habit with no activity, its frequency. The planned time against the need is in Insights, not here
+ * or, for a habit with no activity, its frequency
  */
 export const entryLines = (state: PlannerState, habitId: string | null, activityId: string | null): string[] => {
   const draft = entryDraftOf(state, habitId, activityId)

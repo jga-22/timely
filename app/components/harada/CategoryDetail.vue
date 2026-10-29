@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS, countLabel } from '~/utils/planner'
-import { planPeriodLabel, yearPlanVsNeed } from '~/utils/insights'
 import { entryLines } from '~/utils/entries'
 import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'
@@ -12,7 +11,7 @@ const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
 const { categories } = storeToRefs(planner)
-const { setSelection, link } = useNav()
+const { setSelection } = useNav()
 const { resultText, canUndo, showResult, undoResult } = useEntryResult()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
@@ -28,28 +27,14 @@ const activityCount = computed(() => planner.activities.filter(activity => activ
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
 const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
 
-// ── Time against need (FR-GOALS-16): one badge for the year shown; the full comparison is in Insights
-// Saved state is not known on the server, so the badge waits for mount: the first client render
-// matches the server, and the next render patches the DOM (a reload with a saved state that differs from the seed)
-const mounted = ref(false)
-onMounted(() => {
-  mounted.value = true
-})
-
-const { year, currentYear } = usePlannerYear()
-const plan = computed(() => (year.value === null ? null : yearPlanVsNeed(planner.$state, year.value).get(props.categoryId) ?? null))
-const periodText = computed(() => (year.value === null ? '' : planPeriodLabel(year.value, currentYear.value)))
-
 // ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
-// lies), an activity of this life area that no habit links to, or an activity that also counts here (its note says so)
+// lies), or an activity of this life area that no habit links to
 interface EntryRow {
   key: string
   habitId: string | null
   activityId: string | null
   name: string
   lines: string[]
-  /** Counts here through "also counts toward" only: its hours are compared here, its life area is another one */
-  secondary: boolean
   note: string
 }
 
@@ -67,7 +52,6 @@ const entryRows = computed<EntryRow[]>(() => {
       activityId: activity?.id ?? null,
       name: habit.name,
       lines: entryLines(planner.$state, habit.id, activity?.id ?? null),
-      secondary: false,
       note: activity && activity.categoryId !== here ? `in ${categoryName(activity.categoryId)}` : ''
     })
   }
@@ -77,9 +61,8 @@ const entryRows = computed<EntryRow[]>(() => {
   for (const activity of planner.activities) {
     if (habitLinkedHere.has(activity.id) || isSleepActivity(activity)) continue
 
-    const counted = activity.categoryId !== here && !!activity.alsoCategoryIds?.includes(here)
-    const orphan = activity.categoryId === here && !linkedAnywhere.has(activity.id)
-    if (!counted && !orphan) continue
+    // An activity of this life area that no habit links to
+    if (activity.categoryId !== here || linkedAnywhere.has(activity.id)) continue
 
     rows.push({
       key: activity.id,
@@ -87,8 +70,7 @@ const entryRows = computed<EntryRow[]>(() => {
       activityId: activity.id,
       name: activity.name,
       lines: entryLines(planner.$state, null, activity.id),
-      secondary: counted,
-      note: counted ? 'also counts here' : ''
+      note: ''
     })
   }
 
@@ -99,17 +81,14 @@ const entryRows = computed<EntryRow[]>(() => {
 const openKey = ref<string | null>(null)
 const adding = ref(false)
 const addTrigger = ref<HTMLButtonElement | null>(null)
-const unlinkKey = ref<string | null>(null)
 
 function toggleRow(key: string) {
   adding.value = false
-  unlinkKey.value = null
   openKey.value = openKey.value === key ? null : key
 }
 
 function openAdd() {
   openKey.value = null
-  unlinkKey.value = null
   adding.value = true
 }
 
@@ -126,12 +105,6 @@ function closeForm() {
 
 function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slots: string[] }> }) {
   if (result.text) showResult(result.text, result.undo ?? [])
-}
-
-// Unlink a secondary category from an activity: its hours stop counting here. Inline confirmation first
-function confirmUnlink(activityId: string | null) {
-  if (activityId) planner.removeAlsoCategory(activityId, props.categoryId)
-  unlinkKey.value = null
 }
 
 // ── Mode changes live in the URL (FR-UX-5); Done replaces the entry and returns focus to Edit
@@ -172,7 +145,6 @@ watch(
     removing.value = false
     openKey.value = null
     adding.value = false
-    unlinkKey.value = null
   },
   { immediate: true }
 )
@@ -251,7 +223,7 @@ function confirmRemove() {
       </div>
     </div>
 
-    <!-- View mode: read-only. The 5-year goal and the 1-year target, then the hours comparison -->
+    <!-- View mode: read-only. The 5-year goal and the 1-year target, then the entries -->
     <template v-if="!editing">
       <section class="detail-block">
         <h4 class="detail-label">5-year goal</h4>
@@ -262,18 +234,6 @@ function confirmRemove() {
         <h4 class="detail-label">1-year target</h4>
         <p v-if="category.targetTbd" class="detail-flag">To define</p>
         <p class="detail-text" :class="{ 'is-empty': !category.target1y }">{{ category.target1y || 'Not written yet.' }}</p>
-      </section>
-
-      <section v-if="mounted" class="detail-block detail-goal">
-        <h4 class="detail-label">Time against need</h4>
-        <div class="detail-plan">
-          <HaradaPlanBadge
-            :needed-minutes="plan?.neededMinutes ?? 0"
-            :planned-minutes="plan?.plannedMinutes ?? 0"
-            :period="periodText"
-          />
-          <NuxtLink class="detail-plan-link" :to="link('insights')">See in Insights</NuxtLink>
-        </div>
       </section>
     </template>
 
@@ -348,19 +308,6 @@ function confirmRemove() {
               <span v-for="(line, index) in row.lines" :key="index" class="row-meta">{{ line }}</span>
               <span v-if="row.note" class="row-meta">{{ row.note }}</span>
             </span>
-            <template v-if="editing && row.secondary && row.activityId">
-              <span v-if="unlinkKey === row.key" class="row-confirm">
-                <button type="button" class="btn btn-xs btn-danger" @click="confirmUnlink(row.activityId)">Unlink</button>
-                <button type="button" class="btn btn-xs" @click="unlinkKey = null">Cancel</button>
-              </span>
-              <button
-                v-else
-                type="button"
-                class="btn btn-xs btn-outline"
-                :aria-label="`Unlink ${row.name} from ${category.name}`"
-                @click="unlinkKey = row.key"
-              >Unlink</button>
-            </template>
             <EditButton
               :id="`entry-edit-${row.key}`"
               :label="`Edit ${row.name}`"
@@ -503,21 +450,6 @@ function confirmRemove() {
 .detail-text.is-empty {
   color: var(--ink-3);
 }
-
-/* The badge and the quiet link to the full comparison in Insights */
-.detail-plan {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-}
-.detail-plan-link {
-  font-size: var(--fs-sm);
-  color: var(--ink-3);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.detail-plan-link:hover { color: var(--ink-2); }
 
 .detail-empty,
 .detail-flag {

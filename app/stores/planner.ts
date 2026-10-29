@@ -3,7 +3,6 @@ import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } f
 import {
   DESIGN_COLORS,
   applyActivityCells,
-  cleanAlsoCategoryIds,
   createEmptySlots,
   createHaradaSeed,
   createOnboardingState,
@@ -235,7 +234,7 @@ export const usePlannerStore = defineStore('planner', {
 
       return id
     },
-    /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals does not compare against time off */
+    /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals reads a working week type instead */
     setTemplateKind(templateId: string, kind: 'break' | undefined) {
       const template = getTemplateById(this.$state, templateId)
 
@@ -278,17 +277,6 @@ export const usePlannerStore = defineStore('planner', {
       const trimmed = name.trim()
 
       if (template && trimmed) template.name = trimmed
-    },
-    /** Removes a secondary category from an activity: its hours stop counting there. The primary category is not touched */
-    removeAlsoCategory(activityId: string, categoryId: string): boolean {
-      const activity = this.activities.find(item => item.id === activityId)
-
-      if (!activity?.alsoCategoryIds?.includes(categoryId)) {
-        return false
-      }
-
-      activity.alsoCategoryIds = activity.alsoCategoryIds.filter(id => id !== categoryId)
-      return true
     },
     setTemplateColor(templateId: string, color: string) {
       const template = getTemplateById(this.$state, templateId)
@@ -407,7 +395,7 @@ export const usePlannerStore = defineStore('planner', {
         return false
       }
 
-      // Only primary links need a new home; secondary links are simply dropped below
+      // Only primary links need a new home
       const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
         || this.habits.some(habit => habit.categoryId === categoryId)
       const target = targetCategoryId && targetCategoryId !== categoryId
@@ -429,17 +417,11 @@ export const usePlannerStore = defineStore('planner', {
         }
       }
 
-      for (const activity of this.activities) {
-        if (!activity.alsoCategoryIds) continue
-
-        activity.alsoCategoryIds = cleanAlsoCategoryIds(this.categories, activity.categoryId, activity.alsoCategoryIds.filter(id => id !== categoryId))
-      }
-
       this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
       return true
     },
     /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
-    addActivity(name: string, shortCode: string, categoryId: string, color?: string, alsoCategoryIds: string[] = []): string | null {
+    addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
       const fields = { name, shortCode, categoryId }
 
       if (Object.keys(validateActivityFields(this.$state, fields)).length) {
@@ -454,7 +436,6 @@ export const usePlannerStore = defineStore('planner', {
         name: name.trim(),
         shortCode: shortCode.trim().toUpperCase(),
         categoryId,
-        alsoCategoryIds: cleanAlsoCategoryIds(this.categories, categoryId, alsoCategoryIds),
         color: color ?? category?.color ?? '#685847'
       })
 
@@ -482,7 +463,7 @@ export const usePlannerStore = defineStore('planner', {
       return id ? { id } : { error: 'The activity could not be added. Check the life area.' }
     },
     /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
-    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'alsoCategoryIds' | 'color'>>): ActivityFieldErrors {
+    updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
       const activity = this.activities.find(item => item.id === activityId)
 
       if (!activity) {
@@ -496,14 +477,8 @@ export const usePlannerStore = defineStore('planner', {
       }
 
       // Changing the category moves the activity's hours with it; its slots and habit links stay as they are
-      // Secondary links follow the primary category: one that becomes primary is dropped from them
-      const alsoCategoryIds = changes.alsoCategoryIds !== undefined || changes.categoryId !== undefined
-        ? cleanAlsoCategoryIds(this.categories, changes.categoryId ?? activity.categoryId, changes.alsoCategoryIds ?? activity.alsoCategoryIds ?? [])
-        : undefined
-
       Object.assign(activity, {
         ...changes,
-        ...(alsoCategoryIds !== undefined ? { alsoCategoryIds } : {}),
         ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
         ...(changes.shortCode !== undefined ? { shortCode: changes.shortCode.trim().toUpperCase() } : {})
       })
@@ -693,11 +668,10 @@ export const usePlannerStore = defineStore('planner', {
             name,
             categoryId: draft.categoryId,
             color: draft.color,
-            alsoCategoryIds: draft.alsoCategoryIds,
             ...(code ? { shortCode: code } : {})
           })
         } else {
-          activityId = this.addActivity(name, code || freeShortCode(this.$state, name) || '', draft.categoryId, draft.color, draft.alsoCategoryIds) ?? null
+          activityId = this.addActivity(name, code || freeShortCode(this.$state, name) || '', draft.categoryId, draft.color) ?? null
           if (!activityId) return { errors: { shortCode: 'The activity could not be added. Check the life area.' } }
         }
       }

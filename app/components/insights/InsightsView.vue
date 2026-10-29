@@ -7,7 +7,6 @@ import {
   UNITS,
   capacityLabel,
   availableShares,
-  categoryPlanVsNeed,
   categoryShares,
   chartScale,
   formatInUnit,
@@ -65,18 +64,6 @@ const available = computed(() => availableShares(bars.value))
 // The chart: the period bars (default) or the donut of the whole range; a session choice, like the other view controls
 const chartView = ref<'bars' | 'donut'>('bars')
 
-// Planned against needed over the whole range (FR-INS-P4), merged into the life areas list: each row with a time need shows its bars and status line.
-// A life area whose habits ask for time but that has nothing planned yet is listed too, with no share
-const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
-const planByCategory = computed(() => (years.value.length ? categoryPlanVsNeed(planner.$state, years.value) : new Map()))
-const lifeAreaRows = computed(() => {
-  const listed = new Set(available.value.rows.map(row => row.categoryId))
-  const unplanned = sortedCategories.value
-    .filter(category => !listed.has(category.id) && (planByCategory.value.get(category.id)?.neededMinutes ?? 0) > 0)
-    .map(category => ({ categoryId: category.id, hours: 0, share: 0 }))
-
-  return [...available.value.rows, ...unplanned]
-})
 const donutSlices = computed(() => available.value.rows.map(row => ({
   key: row.categoryId,
   label: nameOf(row.categoryId),
@@ -113,8 +100,6 @@ const onRowClick = (event: MouseEvent, key: string) => {
   if (chartView.value !== 'donut' || !donutKeys.value.includes(key) || (event.target as HTMLElement).closest('a')) return
   selectedKey.value = selectedKey.value === key ? null : key
 }
-const hasNeed = computed(() => [...planByCategory.value.values()].some(row => row.neededMinutes > 0))
-const formatMinutes = (minutes: number) => amount(minutes / 60)
 
 // The disclosure's button names the settings it hides when they are not the defaults, so they are not lost from view
 const moreSummary = computed(() => [
@@ -282,11 +267,10 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         <div class="section-head">
           <h2 class="section-title">Life areas</h2>
         </div>
-        <p v-if="hasNeed" class="page-meta">Planned time against what your habits need over this period. The status also counts activities linked from the habits, even those of another life area</p>
 
         <ul class="share-list">
           <li
-            v-for="row in lifeAreaRows"
+            v-for="row in available.rows"
             :key="row.categoryId"
             class="share-row"
             :class="{ 'is-selected': selectedKey === row.categoryId, 'is-clickable': chartView === 'donut' && donutKeys.includes(row.categoryId) }"
@@ -298,14 +282,6 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </span>
             <span class="share-value">{{ amount(row.hours) }}</span>
             <span class="share-pct">{{ row.share }}%</span>
-            <InsightsPlanComparison
-              v-if="planByCategory.get(row.categoryId)?.neededMinutes"
-              class="share-plan"
-              :needed-minutes="planByCategory.get(row.categoryId)!.neededMinutes"
-              :planned-minutes="planByCategory.get(row.categoryId)!.plannedMinutes"
-              :color="categoryMap.get(row.categoryId)?.color"
-              :format="formatMinutes"
-            />
           </li>
           <li
             class="share-row share-row-free"

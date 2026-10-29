@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { categoryAlignments, hoursLabel } from '~/utils/planner'
+import { aggregateTemplateByCategory, getActiveTemplate, hoursLabel } from '~/utils/planner'
 import { onboardedCategories } from '~/utils/onboarding'
 
 /** Guided tour (FR-ONB-6): the cards 3 to 5 of the path, at the bottom of the screen. It never blocks the page and can be skipped at any step */
@@ -7,14 +7,18 @@ const planner = usePlannerStore()
 const { phase, step, next, back, close, openIntro } = useOnboarding()
 const heading = ref<HTMLElement | null>(null)
 
-const alignments = computed(() => categoryAlignments(planner.$state))
+/** Hours a week the active week type holds for each life area (its activities, by primary life area) */
+const hoursByArea = computed(() => {
+  const template = getActiveTemplate(planner.$state)
+  return template ? aggregateTemplateByCategory(template, planner.$state) : new Map<string, number>()
+})
 /** The life areas the build filled (the chosen ones); the other default areas are not named in the tour */
 const lifeAreas = computed(() => onboardedCategories(planner.$state))
 
 /** The hours the planner holds for each chosen life area, as "3 h for Physical and 2 h for Spiritual" */
 const placed = computed(() => lifeAreas.value
   .slice(0, 2)
-  .map(area => `${hoursLabel(alignments.value.get(area.id)?.allocatedMinutes ?? 0)} for ${area.name}`)
+  .map(area => `${hoursLabel((hoursByArea.value.get(area.id) ?? 0) * 60)} for ${area.name}`)
   .join(' and '))
 
 const steps = computed(() => {
@@ -24,7 +28,7 @@ const steps = computed(() => {
     {
       title: 'Plan your week',
       body: (count
-        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals shows each area as on target when its activities and habits match the hours planned.`
+        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals keeps the why: each area's goal and its habits.`
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.') + ' Sleep is set to 10 PM-7 AM and kept out of your totals; change it any time in Week.'
     },
     {

@@ -27,7 +27,7 @@ const scenes = [
   { title: 'Ambition', caption: 'Start with the why: your 5-year ambition and a few life areas around it.' },
   { title: 'Goals and habits', caption: 'Pick one or two life areas, each with an activity or habit you can measure.' },
   { title: 'Plan the week', caption: 'Place each activity in your week: the hours you really have.' },
-  { title: 'Compare', caption: 'Compare the time your habits need with the time you planned.' },
+  { title: 'Goals', caption: "Goals keeps the why: each life area's 5-year goal and the habits behind it." },
   { title: 'Insights and daily follow-up', caption: 'See where your hours go over the year, then follow each day.' }
 ]
 
@@ -242,18 +242,12 @@ onBeforeUnmount(() => {
           </g>
         </g>
 
-        <!-- Scene 4, Compare: needed and planned hours reach the same length, then a check -->
+        <!-- Scene 4, Goals: a life area's 5-year goal and its habit, then the activity the habit is linked to -->
         <g class="onb-intro-scene" :data-active="String(scene === 3)">
-          <text class="onb-intro-svg-label" x="80" y="134" font-size="22">Physical</text>
-          <text class="onb-intro-svg-muted" x="80" y="168" font-size="17">Needed: 3 h a week</text>
-          <rect class="onb-intro-svg-track" x="80" y="176" width="360" height="28" rx="4" />
-          <text class="onb-intro-svg-muted" x="80" y="236" font-size="17">Planned: 3 h a week</text>
-          <rect class="onb-intro-grow-x" :fill="colors.teal" x="80" y="244" width="360" height="28" rx="4" style="--d: 1s" />
-          <g class="onb-intro-pop" style="--d: 4.4s">
-            <circle class="onb-intro-svg-ok" cx="470" cy="258" r="16" />
-            <path class="onb-intro-svg-check onb-intro-draw" d="M462 258 L468 264 L479 252" pathLength="1" style="--d: 4.8s" />
-          </g>
-          <text class="onb-intro-svg-ok onb-intro-fade" x="80" y="312" font-size="18" style="--d: 5.4s">On track</text>
+          <text class="onb-intro-svg-label" x="80" y="96" font-size="22">Physical</text>
+          <text class="onb-intro-svg-muted onb-intro-fade" x="80" y="124" font-size="17" style="--d: 1s">Goal: run a half marathon</text>
+          <text class="onb-intro-svg-muted onb-intro-fade" x="80" y="284" font-size="17" style="--d: 2.4s">Habit: run 3 times a week</text>
+          <text class="onb-intro-svg-ok onb-intro-fade" x="80" y="316" font-size="18" style="--d: 4s">Linked to the activity Running</text>
         </g>
 
         <!-- Scene 5, Insights and daily follow-up: the year month by month, and the share of each life area -->

@@ -16,8 +16,6 @@ export interface Activity {
   shortCode: string
   /** Primary category: its colour, its listing and its share of the Insights totals (counted once) */
   categoryId: string
-  /** Other categories the hours also count toward in the Goals comparison (never the primary one) */
-  alsoCategoryIds?: string[]
   color: string
 }
 
@@ -28,7 +26,7 @@ export interface WeekTemplate {
   granularityMinutes: 60 | 30
   slots: string[]
   color?: string
-  /** 'break': time off. Goals does not compare against it (FR-TPL-8); Home, Planner and Insights still show it */
+  /** 'break': time off. Goals reads a working week type instead (FR-TPL-8); Home, Planner and Insights still show it */
   kind?: 'break'
 }
 
