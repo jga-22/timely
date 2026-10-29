@@ -101,17 +101,24 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
     </template>
 
     <template v-else>
+      <div class="adh-intro">
+        <p class="adh-figure">{{ headingText }}</p>
+        <p v-if="report.trackingStart" class="adh-sub adh-muted">Counted from {{ formatDay(report.trackingStart) }} to today, {{ report.elapsedDays }} days.</p>
+        <p v-if="showSummaryNote" class="adh-sub adh-muted">Quarter and Year show one bar per month.</p>
+        <p v-if="report.trimmedEarlier" class="adh-sub adh-muted">{{ earlierNote }}</p>
+      </div>
+
       <div class="adh-headline">
         <div class="adh-ring" aria-hidden="true">
-          <svg viewBox="0 0 36 36" class="adh-ring-svg">
-            <circle class="adh-ring-track" cx="18" cy="18" r="15.9155" pathLength="100" />
+          <svg viewBox="0 0 200 200" class="adh-ring-svg">
+            <circle class="adh-ring-track" cx="100" cy="100" r="70" />
             <circle
               v-if="report.percent !== null"
               class="adh-ring-arc"
               :class="{ 'is-habits': report.basis === 'habits' }"
-              cx="18"
-              cy="18"
-              r="15.9155"
+              cx="100"
+              cy="100"
+              r="70"
               pathLength="100"
               :stroke-dasharray="ringArc"
             />
@@ -119,13 +126,8 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
           <span class="adh-ring-value">{{ report.percent === null ? '-' : `${report.percent}%` }}</span>
         </div>
         <div class="adh-headline-text">
-          <p class="adh-figure">{{ headingText }}</p>
           <p v-if="hoursText" class="adh-sub">{{ hoursText }}</p>
-          <p v-if="report.measure.blocks.planned" class="adh-sub">{{ report.measure.blocks.done }} of {{ report.measure.blocks.planned }} planned blocks ticked</p>
           <p v-if="habitsLine" class="adh-sub">{{ habitsLine }}</p>
-          <p v-if="report.trackingStart" class="adh-sub adh-muted">Counted from {{ formatDay(report.trackingStart) }} to today, {{ report.elapsedDays }} days.</p>
-          <p v-if="showSummaryNote" class="adh-sub adh-muted">Quarter and Year show one bar per month.</p>
-          <p v-if="report.trimmedEarlier" class="adh-sub adh-muted">{{ earlierNote }}</p>
         </div>
       </div>
 
