@@ -297,3 +297,45 @@ export const yearPlanVsNeed = (state: PlannerState, year: number): Map<string, P
 
 /** The period a Goals badge names: "this year" for the current ISO year, else "in 2027" */
 export const planPeriodLabel = (year: number, currentYear: number | null): string => (year === currentYear ? 'this year' : `in ${year}`)
+
+/* ── Available time (FR-INS-P5): the share of the whole range's available time, per life area and not planned ── */
+
+export interface AvailableShare {
+  categoryId: string
+  /** Hours planned over the range */
+  hours: number
+  /** Percent of the available time; the rows and the not planned share add up to 100 */
+  share: number
+}
+
+export interface AvailableShares {
+  /** Hours available over the range: the bars' capacity (sleep taken out when hidden) */
+  available: number
+  /** Hours planned over the range */
+  planned: number
+  /** Hours available but not planned */
+  notPlannedHours: number
+  /** Percent of the available time that is not planned */
+  notPlannedShare: number
+  /** One row per life area with planned hours, largest first */
+  rows: AvailableShare[]
+}
+
+/**
+ * Planned hours per life area and the free hours, as shares of the available time of the bars (largest remainder, so they add up
+ * to exactly 100 with the not planned share). All zeros when nothing is available.
+ */
+export const availableShares = (bars: InsightsBar[]): AvailableShares => {
+  const { rows } = categoryShares(bars)
+  const planned = rows.reduce((sum, row) => sum + row.hours, 0)
+  const notPlannedHours = bars.reduce((sum, bar) => sum + bar.free, 0)
+  const shares = largestRemainderShares([...rows.map(row => row.hours), notPlannedHours])
+
+  return {
+    available: planned + notPlannedHours,
+    planned,
+    notPlannedHours,
+    notPlannedShare: shares[rows.length]!,
+    rows: rows.map((row, index) => ({ categoryId: row.categoryId, hours: row.hours, share: shares[index]! }))
+  }
+}

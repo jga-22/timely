@@ -6,6 +6,7 @@ import {
   GRANULARITIES,
   UNITS,
   capacityLabel,
+  availableShares,
   categoryPlanVsNeed,
   categoryShares,
   chartScale,
@@ -57,18 +58,33 @@ const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShor
 const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
-// Planned against needed over the whole range (FR-INS-P4), merged into the life areas list: each row with a time need shows its status line.
+// The available time of the range (FR-INS-P5): planned hours per life area and the not planned rest, as shares that add up to 100.
+// The list and the donut both read it. Its percentages are of the available time, not of the planned time
+const available = computed(() => availableShares(bars.value))
+// The chart: the period bars (default) or the donut of the whole range; a session choice, like the other view controls
+const chartView = ref<'bars' | 'donut'>('bars')
+
+// Planned against needed over the whole range (FR-INS-P4), merged into the life areas list: each row with a time need shows its bars and status line.
 // A life area whose habits ask for time but that has nothing planned yet is listed too, with no share
 const sortedCategories = computed(() => [...planner.categories].sort((a, b) => a.order - b.order))
 const planByCategory = computed(() => (years.value.length ? categoryPlanVsNeed(planner.$state, years.value) : new Map()))
 const lifeAreaRows = computed(() => {
-  const listed = new Set(shares.value.rows.map(row => row.categoryId))
+  const listed = new Set(available.value.rows.map(row => row.categoryId))
   const unplanned = sortedCategories.value
     .filter(category => !listed.has(category.id) && (planByCategory.value.get(category.id)?.neededMinutes ?? 0) > 0)
     .map(category => ({ categoryId: category.id, hours: 0, share: 0 }))
 
-  return [...shares.value.rows, ...unplanned]
+  return [...available.value.rows, ...unplanned]
 })
+const donutSlices = computed(() => available.value.rows.map(row => ({
+  key: row.categoryId,
+  label: nameOf(row.categoryId),
+  share: row.share,
+  color: colorOf(row.categoryId),
+  text: `${amount(row.hours)}, ${row.share}%`
+})))
+const donutPlannedPct = computed(() => 100 - available.value.notPlannedShare)
+const donutLabel = computed(() => `Planned time as a share of the available time, ${rangeLabel.value}: ${donutPlannedPct.value}% planned, ${available.value.notPlannedShare}% not planned`)
 const hasNeed = computed(() => [...planByCategory.value.values()].some(row => row.neededMinutes > 0))
 const formatMinutes = (minutes: number) => amount(minutes / 60)
 
@@ -182,10 +198,16 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
 
       <section v-if="shares.total" class="section">
         <div class="insights-chart-head">
-          <p class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
-          <SleepToggle />
+          <p v-if="chartView === 'bars'" class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
+          <div class="insights-chart-tools">
+            <div class="segmented" role="group" aria-label="Chart view">
+              <button type="button" :data-active="chartView === 'bars'" :aria-pressed="chartView === 'bars'" @click="chartView = 'bars'">Bars</button>
+              <button type="button" :data-active="chartView === 'donut'" :aria-pressed="chartView === 'donut'" @click="chartView = 'donut'">Donut</button>
+            </div>
+            <SleepToggle />
+          </div>
         </div>
-        <div class="insights-chart" role="img" :aria-label="chartLabel">
+        <div v-if="chartView === 'bars'" class="insights-chart" role="img" :aria-label="chartLabel">
           <div class="insights-axis" aria-hidden="true">
             <span class="insights-axis-top">{{ formatInUnit(scale, unit) }}</span>
             <span class="insights-axis-mid">{{ formatInUnit(scale / 2, unit) }}</span>
@@ -213,6 +235,15 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </div>
           </div>
         </div>
+        <InsightsAvailableDonut
+          v-else
+          class="insights-donut"
+          :slices="donutSlices"
+          :not-planned="{ share: available.notPlannedShare, text: `${amount(available.notPlannedHours)}, ${available.notPlannedShare}%` }"
+          :center-value="`${donutPlannedPct}%`"
+          :center-label="`${amount(available.planned)} planned of ${amount(available.available)}`"
+          :label="donutLabel"
+        />
         <p v-if="showSleep" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
       </section>
 
@@ -230,16 +261,22 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
             </span>
             <span class="share-value">{{ amount(row.hours) }}</span>
             <span class="share-pct">{{ row.share }}%</span>
-            <span class="share-track" aria-hidden="true">
-              <span class="share-fill" :style="{ width: `${row.share}%`, background: colorOf(row.categoryId) }" />
-            </span>
-            <InsightsPlanStatus
+            <InsightsPlanComparison
               v-if="planByCategory.get(row.categoryId)?.neededMinutes"
               class="share-plan"
               :needed-minutes="planByCategory.get(row.categoryId)!.neededMinutes"
               :planned-minutes="planByCategory.get(row.categoryId)!.plannedMinutes"
+              :color="categoryMap.get(row.categoryId)?.color"
               :format="formatMinutes"
             />
+          </li>
+          <li class="share-row share-row-free">
+            <span class="share-name">
+              <span class="dot dot-free" aria-hidden="true" />
+              <span class="share-free">Not planned</span>
+            </span>
+            <span class="share-value">{{ amount(available.notPlannedHours) }}</span>
+            <span class="share-pct">{{ available.notPlannedShare }}%</span>
           </li>
         </ul>
       </section>
