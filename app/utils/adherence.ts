@@ -9,7 +9,9 @@ import { getActivityMap } from '~/utils/planner'
  * Adherence (PRD FR-INS-P6): what was planned against what was ticked on Home, over the range shown. Pure functions over the
  * planner state, so they run in node. Read-only; nothing is stored.
  *
- * Only dates from the first tick (`trackingStart`, the earliest date with a tick) up to and including today count; before the
+ * Bars (Month and Quarter or Year, and the Week cut): the periods before the first tick are not drawn, and neither are the periods after
+ * today (only the current period is kept). The Week granularity keeps its seven weekday bars. Only dates from the first tick (`trackingStart`,
+ * the earliest date with a tick) up to and including today count; before the
  * first tick nothing is counted, so a new user is not measured against the days before they began. Sleep never counts (its blocks
  * and its habits are left out, as Home does).
  *
@@ -53,6 +55,8 @@ export interface Basis {
 }
 
 export interface AdherenceBar extends Basis {
+  /** The first tick falls inside this period (after its first day): the date counting starts from, shown in the title; null otherwise */
+  countedFrom: string | null
   key: string
   label: string
   /** ISO year of the bar (0 for weekdays) */
@@ -81,6 +85,8 @@ export interface HabitRow {
 }
 
 export interface AdherenceReport extends Basis {
+  /** Periods before the first tick that were not drawn (Month and Week cuts): the chart says so when above zero */
+  trimmedEarlier: number
   /** The first date with a tick (counting starts here), or null when nothing is ticked */
   trackingStart: string | null
   /** Counted days of the range: from trackingStart up to and including today */
@@ -252,19 +258,19 @@ export const trackingStartOf = (state: PlannerState, today: string): string | nu
 /** The adherence of the years shown, counted from the first tick up to and including today */
 export const adherenceReport = (state: PlannerState, years: number[], today: string, mode: AdherenceBarMode): AdherenceReport => {
   const trackingStart = trackingStartOf(state, today)
-  const bars = new Map<string, { meta: BarMeta; elapsed: boolean; tracked: boolean; days: DayRecord[] }>()
+  const bars = new Map<string, { meta: BarMeta; elapsed: boolean; tracked: boolean; first: string | null; days: DayRecord[] }>()
   const records: DayRecord[] = []
   let ticks = 0
   let journalDays = 0
 
   // Weekday bars exist even when a weekday has no counted day yet, so the chart always shows seven in Monday-first order
   if (mode === 'weekday') {
-    WEEKDAY_SHORT.forEach((label, index) => bars.set(`${index}`, { meta: { key: `${index}`, label, year: 0, week: 0 }, elapsed: false, tracked: false, days: [] }))
+    WEEKDAY_SHORT.forEach((label, index) => bars.set(`${index}`, { meta: { key: `${index}`, label, year: 0, week: 0 }, elapsed: false, tracked: false, first: null, days: [] }))
   }
 
   for (const date of calendarDays(years)) {
     const meta = periodOf(date, mode)
-    const bar = bars.get(meta.key) ?? { meta, elapsed: false, tracked: false, days: [] }
+    const bar = bars.get(meta.key) ?? { meta, elapsed: false, tracked: false, first: date, days: [] }
     bars.set(meta.key, bar)
 
     if (date > today) continue
@@ -282,11 +288,16 @@ export const adherenceReport = (state: PlannerState, years: number[], today: str
 
   const measure = measureOf(records)
 
-  const barRows: AdherenceBar[] = [...bars.values()].map(({ meta, elapsed, tracked, days }) => {
+  const barRows: AdherenceBar[] = [...bars.values()].map(({ meta, elapsed, tracked, first, days }) => {
     const barMeasure = measureOf(days)
+    const countedFrom = trackingStart && tracked && first && trackingStart > first ? trackingStart : null
 
-    return { ...meta, future: !elapsed, untracked: elapsed && !tracked, measure: barMeasure, ...basisOf(barMeasure) }
+    return { ...meta, future: !elapsed, untracked: elapsed && !tracked, countedFrom, measure: barMeasure, ...basisOf(barMeasure) }
   })
+
+  // The chart: the seven weekdays as they are; otherwise the periods from the one holding the first tick to the current one
+  const shownBars = mode === 'weekday' ? barRows : barRows.filter(row => !row.untracked && !row.future)
+  const trimmedEarlier = mode === 'weekday' ? 0 : barRows.filter(row => row.untracked).length
 
   const areas: AdherenceArea[] = [...state.categories]
     .sort((a, b) => a.order - b.order)
@@ -315,12 +326,13 @@ export const adherenceReport = (state: PlannerState, years: number[], today: str
 
   return {
     trackingStart,
+    trimmedEarlier,
     elapsedDays: records.length,
     ticks,
     journalDays,
     measure,
     ...basisOf(measure),
-    bars: barRows,
+    bars: shownBars,
     areas,
     kept,
     slipping

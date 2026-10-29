@@ -43,9 +43,11 @@ const habitsLine = computed(() => {
 
 // The bars: one per weekday, ISO week or month (see adherenceMode). Week values show in the title only: 53 labels would not fit
 const showValues = computed(() => props.report.bars.length <= 12)
+// The dashed key shows only while a dashed bar is drawn (future or not tracked); the trimmed chart usually has none
+const hasDashed = computed(() => props.report.bars.some(bar => bar.future || bar.untracked))
 const multiYear = computed(() => props.report.bars.some(bar => bar.year !== props.report.bars[0]?.year))
 const tickLabel = (bar: AdherenceBar) => {
-  if (props.mode === 'week') return bar.week % 4 === 1 ? bar.label : ''
+  if (props.mode === 'week' && props.report.bars.length > 12) return bar.week % 4 === 1 ? bar.label : ''
   return bar.label
 }
 const yearLabel = (index: number) => {
@@ -64,8 +66,8 @@ const barTitle = (bar: AdherenceBar) => {
   if (bar.untracked) return `${head}: Not tracked yet`
   if (bar.percent === null) return `${head}: no plan`
 
-  const detail = detailText(bar.measure)
-  return `${head}: ${bar.percent}% done${bar.basis === 'habits' ? ' of habit ticks' : ''}${detail ? ` (${detail})` : ''}`
+  const parts = [detailText(bar.measure), bar.countedFrom ? `counted from ${formatDay(bar.countedFrom)}` : ''].filter(Boolean).join('; ')
+  return `${head}: ${bar.percent}% done${bar.basis === 'habits' ? ' of habit ticks' : ''}${parts ? ` (${parts})` : ''}`
 }
 const barValue = (bar: AdherenceBar) => {
   if (bar.future || bar.untracked) return ''
@@ -86,6 +88,7 @@ const kept = computed(() => props.report.kept)
 const slipping = computed(() => props.report.slipping)
 
 const showSummaryNote = computed(() => props.granularity === 'quarter' || props.granularity === 'year')
+const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are not tracked yet.' : 'Earlier months are not tracked yet.'))
 </script>
 
 <template>
@@ -122,6 +125,7 @@ const showSummaryNote = computed(() => props.granularity === 'quarter' || props.
           <p v-if="habitsLine" class="adh-sub">{{ habitsLine }}</p>
           <p v-if="report.trackingStart" class="adh-sub adh-muted">Counted from {{ formatDay(report.trackingStart) }} to today, {{ report.elapsedDays }} days.</p>
           <p v-if="showSummaryNote" class="adh-sub adh-muted">Quarter and Year show one bar per month.</p>
+          <p v-if="report.trimmedEarlier" class="adh-sub adh-muted">{{ earlierNote }}</p>
         </div>
       </div>
 
@@ -129,7 +133,7 @@ const showSummaryNote = computed(() => props.granularity === 'quarter' || props.
         <div class="adh-key" aria-hidden="true">
           <span class="adh-key-item"><span class="adh-swatch" />Planned time ticked</span>
           <span class="adh-key-item"><span class="adh-swatch is-habits" />Habits, against target</span>
-          <span class="adh-key-item"><span class="adh-swatch is-future" />Not yet</span>
+          <span v-if="hasDashed" class="adh-key-item"><span class="adh-swatch is-future" />Not yet</span>
         </div>
 
         <div class="insights-chart adh-chart" role="img" :aria-label="chartLabel">
