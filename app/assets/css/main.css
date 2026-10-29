@@ -1867,6 +1867,14 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 /* Not planned: the last row of the list, no bars; a hollow dot marks it, since it has no colour of its own */
 .share-row-free .share-free { color: var(--ink-2); }
+/* The selected slice in the donut view: its list row is marked (a bar on the left, a tint) and the row is clickable */
+.share-row.is-clickable { cursor: pointer; }
+.share-row.is-selected {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--bg-2);
+  margin-inline: -12px;
+  padding-inline: 12px;
+}
 .dot-free {
   background: transparent !important;
   box-shadow: inset 0 0 0 1.5px var(--control-border);

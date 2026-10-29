@@ -339,3 +339,6 @@ export const availableShares = (bars: InsightsBar[]): AvailableShares => {
     rows: rows.map((row, index) => ({ categoryId: row.categoryId, hours: row.hours, share: shares[index]! }))
   }
 }
+
+/** The key of the "Not planned" slice and row (FR-INS-P5): it is not a life area, so it has no category id */
+export const NOT_PLANNED_KEY = 'not-planned'

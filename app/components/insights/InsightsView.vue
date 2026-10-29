@@ -11,6 +11,7 @@ import {
   categoryShares,
   chartScale,
   formatInUnit,
+  NOT_PLANNED_KEY,
   insightsBars,
   rangeYears,
   type InsightsBar,
@@ -81,10 +82,37 @@ const donutSlices = computed(() => available.value.rows.map(row => ({
   label: nameOf(row.categoryId),
   share: row.share,
   color: colorOf(row.categoryId),
-  text: `${amount(row.hours)}, ${row.share}%`
+  hours: amount(row.hours)
 })))
 const donutPlannedPct = computed(() => 100 - available.value.notPlannedShare)
 const donutLabel = computed(() => `Planned time as a share of the available time, ${rangeLabel.value}: ${donutPlannedPct.value}% planned, ${available.value.notPlannedShare}% not planned`)
+
+// The selected slice (FR-INS-P5): a session choice, set by a slice or a list row in the donut view. It clears when the view changes,
+// and when its slice is no longer in the chart (another range or a different set of life areas)
+const selectedKey = ref<string | null>(null)
+const donutKeys = computed(() => [...available.value.rows.map(row => row.categoryId), NOT_PLANNED_KEY])
+watch(donutKeys, keys => {
+  if (selectedKey.value && !keys.includes(selectedKey.value)) selectedKey.value = null
+})
+watch(chartView, () => {
+  selectedKey.value = null
+})
+const selectedDetail = computed(() => {
+  const key = selectedKey.value
+  if (!key) return null
+  if (key === NOT_PLANNED_KEY) return { name: 'Not planned', percent: available.value.notPlannedShare, hours: amount(available.value.notPlannedHours) }
+
+  const row = available.value.rows.find(item => item.categoryId === key)
+  return row ? { name: nameOf(key), percent: row.share, hours: amount(row.hours) } : null
+})
+const selectSlice = (key: string | null) => {
+  selectedKey.value = key
+}
+// A list row selects its slice in the donut view (a link inside it still goes to Goals); rows with no slice do nothing
+const onRowClick = (event: MouseEvent, key: string) => {
+  if (chartView.value !== 'donut' || !donutKeys.value.includes(key) || (event.target as HTMLElement).closest('a')) return
+  selectedKey.value = selectedKey.value === key ? null : key
+}
 const hasNeed = computed(() => [...planByCategory.value.values()].some(row => row.neededMinutes > 0))
 const formatMinutes = (minutes: number) => amount(minutes / 60)
 
@@ -239,10 +267,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
           v-else
           class="insights-donut"
           :slices="donutSlices"
-          :not-planned="{ share: available.notPlannedShare, text: `${amount(available.notPlannedHours)}, ${available.notPlannedShare}%` }"
+          :not-planned="{ key: NOT_PLANNED_KEY, share: available.notPlannedShare, hours: amount(available.notPlannedHours) }"
+          :selected="selectedKey"
+          :selected-detail="selectedDetail"
           :center-value="`${donutPlannedPct}%`"
           :center-label="`${amount(available.planned)} planned of ${amount(available.available)}`"
           :label="donutLabel"
+          @select="selectSlice"
         />
         <p v-if="showSleep" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
       </section>
@@ -254,7 +285,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
         <p v-if="hasNeed" class="page-meta">Planned time against what your habits need over this period. The status also counts activities linked from the habits, even those of another life area</p>
 
         <ul class="share-list">
-          <li v-for="row in lifeAreaRows" :key="row.categoryId" class="share-row">
+          <li
+            v-for="row in lifeAreaRows"
+            :key="row.categoryId"
+            class="share-row"
+            :class="{ 'is-selected': selectedKey === row.categoryId, 'is-clickable': chartView === 'donut' && donutKeys.includes(row.categoryId) }"
+            @click="onRowClick($event, row.categoryId)"
+          >
             <span class="share-name">
               <span class="dot" :style="{ background: colorOf(row.categoryId) }" aria-hidden="true" />
               <NuxtLink class="share-link" :to="link('goals', { item: row.categoryId })">{{ nameOf(row.categoryId) }}</NuxtLink>
@@ -270,7 +307,11 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
               :format="formatMinutes"
             />
           </li>
-          <li class="share-row share-row-free">
+          <li
+            class="share-row share-row-free"
+            :class="{ 'is-selected': selectedKey === NOT_PLANNED_KEY, 'is-clickable': chartView === 'donut' }"
+            @click="onRowClick($event, NOT_PLANNED_KEY)"
+          >
             <span class="share-name">
               <span class="dot dot-free" aria-hidden="true" />
               <span class="share-free">Not planned</span>
