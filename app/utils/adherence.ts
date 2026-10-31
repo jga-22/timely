@@ -1,5 +1,5 @@
 import type { Habit, PlannerState } from '~/types/planner'
-import { addDays, daysInMonth, isoWeekOf, mondayOf, weekdayOf } from '~/utils/dates'
+import { addDays, daysInMonth, isoWeekOf, weekdayOf } from '~/utils/dates'
 import { blockDoneKey, doneKeysOn, habitDoneKey, isDone } from '~/utils/done'
 import { dayBlocks, dayHabits } from '~/utils/home'
 import type { InsightsGranularity } from '~/utils/insights'
@@ -336,46 +336,5 @@ export const adherenceReport = (state: PlannerState, years: number[], today: str
     areas,
     kept,
     slipping
-  }
-}
-
-export interface AdherenceSpan extends Basis {
-  /** Blocks and habits of the counted dates */
-  measure: Measure
-  /** Counted dates: from the later of `from` and trackingStart up to the earlier of `to` and today */
-  elapsedDays: number
-  /** The first date with a tick in the state, not in the future (null without ticks) */
-  trackingStart: string | null
-}
-
-/**
- * The adherence of one span of dates (Home's week and overall figures, FR-HOME-19). The same rules as adherenceReport: counting starts
- * at the first tick, future dates and future ticks are left out, sleep never counts, habits are capped at their expected share.
- * Both ends are inclusive; a span that holds no counted date has no percent.
- */
-export const adherenceSpan = (state: PlannerState, from: string, to: string, today: string): AdherenceSpan => {
-  const trackingStart = trackingStartOf(state, today)
-  const first = trackingStart && trackingStart > from ? trackingStart : from
-  const last = to < today ? to : today
-  const records: DayRecord[] = []
-
-  if (trackingStart) {
-    for (let date = first; date <= last; date = addDays(date, 1)) records.push(recordOf(state, date))
-  }
-
-  const measure = measureOf(records)
-
-  return { measure, elapsedDays: records.length, trackingStart, ...basisOf(measure) }
-}
-
-/** Home's figures (FR-HOME-19): this week, Monday to today, and overall, from the first tick to today. Null without a tick, so no ring */
-export const homeAdherence = (state: PlannerState, today: string): { week: AdherenceSpan; overall: AdherenceSpan } | null => {
-  const trackingStart = trackingStartOf(state, today)
-
-  if (!trackingStart) return null
-
-  return {
-    week: adherenceSpan(state, mondayOf(today), today, today),
-    overall: adherenceSpan(state, trackingStart, today, today)
   }
 }

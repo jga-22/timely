@@ -2479,42 +2479,36 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .home-row-progress { font-variant-numeric: tabular-nums; }
 /* The progress line above the list: a count, or a check and "All done" when complete (no streak, no motion) */
 /* The progress line and, on today, the adherence ring: one row that wraps on a phone (FR-HOME-19) */
-.home-progress-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
-  margin: 0 0 var(--space-2);
-}
-.home-adherence {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-.home-adherence .adh-ring { flex: none; }
-.home-adherence-text { margin: 0; }
+/* Day progress (FR-HOME-17, 19): a 28px ring filled by the share of the day done, or a green check when all is done; one line of text beside it */
 .home-progress {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin: 0;
+  margin: 0 0 var(--space-2);
   font-size: var(--fs-sm);
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 .home-progress.is-complete { color: var(--ink); }
-.home-progress-icon {
+.home-progress .adh-ring { flex: none; }
+/* The small day ring needs a track that shows at 0 of N: the Insights track (bg-3) is nearly the page colour at 28px */
+.home-progress .adh-ring-track { stroke: var(--bg-4); }
+.home-progress-check {
+  display: inline-flex;
   flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: var(--bg);
+}
+.home-progress-check svg {
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: var(--ok);
+  stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
