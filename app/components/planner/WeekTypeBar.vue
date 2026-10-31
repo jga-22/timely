@@ -9,10 +9,10 @@ import type { WeekTemplate } from '~/types/planner'
 /**
  * The week type bar of the Week tab: the switcher chips (click to select, double-click to rename, the dot opens a colour pop),
  * "+ New week type" and the Edit week type button. It hosts the New week type panel and the Edit panel. editOpen is the Edit panel's
- * open state (v-model:editOpen); created reports a new week type, so the view can open the year after a time-off one.
+ * open state (v-model:editOpen); created reports a new week type, and opened that the New week type panel opened.
  */
 const editOpen = defineModel<boolean>('editOpen', { required: true })
-const emit = defineEmits<{ created: [templateId: string, kind?: 'break'] }>()
+const emit = defineEmits<{ created: [templateId: string], opened: [] }>()
 
 const planner = usePlannerStore()
 const { activeTemplate, templates } = storeToRefs(planner)
@@ -42,6 +42,7 @@ function startRename(templateId: string) {
 
 function openNewTemplate() {
   newTemplateOpen.value = true
+  emit('opened')
 }
 
 function closeNewTemplate() {
@@ -49,9 +50,9 @@ function closeNewTemplate() {
   nextTick(() => newTemplateTrigger.value?.focus())
 }
 
-function onTemplateCreated(templateId: string, kind?: 'break') {
+function onTemplateCreated(templateId: string) {
   newTemplateOpen.value = false
-  emit('created', templateId, kind)
+  emit('created', templateId)
 }
 
 // Done and Escape close the week type edit panel; focus returns to its Edit button (FR-UX-2)

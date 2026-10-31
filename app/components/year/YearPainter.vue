@@ -8,8 +8,9 @@ import { weekRangeError, yearRows } from '~/utils/yearGrid'
 import type { WeekTemplate } from '~/types/planner'
 
 /**
- * The Year section of the Week tab (FR-YEAR-7): the year grid to paint weeks with a week type, the Weeks row to apply one to a range of
- * weeks, and the count of assigned weeks. Collapsible, open by default. openFor opens it with a week type chosen for the Weeks row.
+ * The year painter of the Year tab (FR-YEAR-7): the year grid to paint weeks with a week type, the Weeks row to apply one to a range of
+ * weeks, and the count of assigned weeks. Collapsible, open by default. A week type id in the URL (the Week tab's link after a new week
+ * type) preselects it for the Weeks row and the paint tool.
  */
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
@@ -73,14 +74,19 @@ const rangeError = ref('')
 const rangeResult = ref('')
 const weekCount = computed(() => weeks.value.length)
 
-/** Opens the year with a week type chosen for the Weeks row and its first week field focused (a time-off week type is applied next) */
-function openFor(templateId: string) {
-  weekRangeTemplate.value = templateId
-  yearOpen.value = true
-  nextTick(() => focusEditField(weekFromInput.value, weekFromInput.value?.closest<HTMLElement>('.weeks-row')))
-}
+// The item in the URL is a week type id (a time-off week type is usually applied next): it is chosen for the Weeks row and the paint
+// tool, and its first week field takes focus on a desktop (FR-UX-9). The item is then cleared from the URL, so a reload does not repeat it.
+// An id this year does not know is ignored
+const { item, setSelection } = useNav()
+onMounted(() => {
+  const templateId = item.value
+  if (!templateId || !templateById.value.has(templateId)) return
 
-defineExpose({ openFor })
+  weekRangeTemplate.value = templateId
+  paintTool.value = templateId
+  setSelection({}, true)
+  nextTick(() => focusEditField(weekFromInput.value, weekFromInput.value?.closest<HTMLElement>('.weeks-row')))
+})
 
 function applyWeekRange() {
   const count = weekCount.value
@@ -108,18 +114,12 @@ function applyWeekRange() {
   <section class="section year-section" aria-labelledby="year-title">
     <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary class="year-summary">
-        <h2 id="year-title" class="section-title">Year</h2>
+        <h2 id="year-title" class="section-title">Plan your year</h2>
         <span v-if="year !== null" class="year-count">{{ assignedInYear }} of {{ weeks.length }} weeks assigned</span>
       </summary>
 
       <div class="year-body">
         <p v-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
-
-        <div class="year-paint-head">
-          <div class="year-controls">
-            <YearNav />
-          </div>
-        </div>
 
         <div class="paint-tools">
           <span class="field-label">Paint with</span>

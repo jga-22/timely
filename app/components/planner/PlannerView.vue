@@ -1,18 +1,22 @@
 <script setup lang="ts">
-// The Week tab: the week type bar, the week grid, Activities and habits, and the Year. Each part is its own component; this view
-// holds what they share: the Edit week type panel's open state and the year to open after a time-off week type is added
-const { item, edit, setSelection } = useNav()
+// The Week tab: the week type bar, the week grid and Activities and habits. Each part is its own component; this view holds what they
+// share: the Edit week type panel's open state and the week type added last. The Year (the painter and the Weeks row) is the Year tab.
+const { item, edit, setSelection, link } = useNav()
+const planner = usePlannerStore()
 const templateEditOpen = ref(false)
-const yearPainter = ref<{ openFor: (templateId: string) => void } | null>(null)
+// The week type just added: a status line names it and links to its weeks on the Year tab. Another panel opening clears it
+const addedTemplateId = ref<string | null>(null)
+const addedTemplate = computed(() => planner.templates.find(t => t.id === addedTemplateId.value) ?? null)
 
 // One item in edit mode per screen (PRD 11.2): opening the week type editor leaves an open activity editor
 watch(templateEditOpen, (open) => {
-  if (open && edit.value) setSelection({ item: item.value ?? undefined }, true)
+  if (!open) return
+  addedTemplateId.value = null
+  if (edit.value) setSelection({ item: item.value ?? undefined }, true)
 })
 
-// A time-off week type is usually applied to weeks next: open the year with it chosen and the first week field focused
-function onTemplateCreated(templateId: string, kind?: 'break') {
-  if (kind === 'break') yearPainter.value?.openFor(templateId)
+function onTemplateCreated(templateId: string) {
+  addedTemplateId.value = templateId
 }
 </script>
 
@@ -24,7 +28,13 @@ function onTemplateCreated(templateId: string, kind?: 'break') {
     </header>
 
     <!-- Week type bar: the switcher, New week type and the Edit week type panel -->
-    <PlannerWeekTypeBar v-model:editOpen="templateEditOpen" @created="onTemplateCreated" />
+    <PlannerWeekTypeBar v-model:editOpen="templateEditOpen" @opened="addedTemplateId = null" @created="onTemplateCreated" />
+
+    <!-- The new week type, with its way to the Year tab (applying it to weeks is there, not here; no tab change by itself) -->
+    <p v-if="addedTemplate" class="sched-result" role="status">
+      <span>{{ addedTemplate.name }} added.</span>
+      <NuxtLink :to="link('year', { item: addedTemplate.id })">Choose its weeks in Year</NuxtLink>
+    </p>
 
     <!-- Week grid: the original range-select grid, with its action bar and menu teleported to the body -->
     <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
@@ -32,8 +42,6 @@ function onTemplateCreated(templateId: string, kind?: 'break') {
       <PlannerActivityGrid />
     </ClientOnly>
 
-    <PlannerEntryList @form-open="templateEditOpen = false" />
-
-    <YearPainter ref="yearPainter" />
+    <PlannerEntryList @form-open="templateEditOpen = false; addedTemplateId = null" />
   </div>
 </template>

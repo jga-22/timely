@@ -28,7 +28,7 @@ const scenes = [
   { title: 'Goals and habits', caption: 'Pick one or two life areas, each with an activity or habit you can measure.' },
   { title: 'Plan the week', caption: 'Place each activity in your week: the hours you really have.' },
   { title: 'Goals', caption: "Goals keeps the why: each life area's 5-year goal and the habits behind it." },
-  { title: 'Insights and daily follow-up', caption: 'See where your hours go over the year, then follow each day.' }
+  { title: 'Your year and daily follow-up', caption: 'See where your hours go over the year, then follow each day.' }
 ]
 
 const swatch = (id: string) => DESIGN_COLORS.find(color => color.id === id)?.bg ?? '#4a8683'
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
           <text class="onb-intro-svg-ok onb-intro-fade" x="80" y="316" font-size="18" style="--d: 4s">Linked to the activity Running</text>
         </g>
 
-        <!-- Scene 5, Insights and daily follow-up: the year month by month, and the share of each life area -->
+        <!-- Scene 5, Your year and daily follow-up: the year month by month, and the share of each life area -->
         <g class="onb-intro-scene" :data-active="String(scene === 4)">
           <g v-for="bar in bars" :key="bar.key" class="onb-intro-grow-y" :style="{ '--d': bar.delay }">
             <rect

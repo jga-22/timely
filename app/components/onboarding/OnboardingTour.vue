@@ -32,14 +32,14 @@ const steps = computed(() => {
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.') + ' Sleep is set to 10 PM-7 AM and kept out of your totals; change it any time in Week.'
     },
     {
-      title: 'Insights',
+      title: 'Your year',
       body: count > 1
-        ? `Insights shows where the planned hours of your year go, stacked by life area. The chart has ${count} life areas, and the share of each is listed below it.`
-        : `Insights shows where the planned hours of your year go, stacked by life area. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Goals and it fills.` : 'Add a life area in Goals and it fills the chart.'}`
+        ? `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. The chart has ${count} life areas, and the share of each is listed below it.`
+        : `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Goals and it fills.` : 'Add a life area in Goals and it fills the chart.'}`
     },
     {
       title: 'Daily follow-up',
-      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: the other life areas are already in Goals for you to complete, edit, rename or remove, and you can add the activities for the rest of your week in Planner.'
+      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: the other life areas are already in Goals for you to complete, edit, rename or remove, and you can add the activities for the rest of your week in Week.'
     }
   ]
 })

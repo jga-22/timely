@@ -9,7 +9,7 @@ export type OnboardingPhase = 'closed' | 'welcome' | 'intro' | 'ambition' | 'goa
 export const ONBOARDING_STEP_COUNT = 5
 /** The first tour card is step 3 of the path: Plan your week */
 export const TOUR_FIRST_STEP = 3
-/** Tour cards: Plan your week, Insights, Daily follow-up. `step` in the composable counts from 0 within the tour */
+/** Tour cards: Plan your week, Your year, Daily follow-up. `step` in the composable counts from 0 within the tour */
 export const TOUR_STEP_COUNT = ONBOARDING_STEP_COUNT - TOUR_FIRST_STEP + 1
 
 /**
@@ -33,7 +33,7 @@ export const useOnboarding = () => {
 
     switch (index) {
       case 0: return { tab: 'planner', target: { item: activity?.id } }
-      case 1: return { tab: 'insights' }
+      case 1: return { tab: 'year' }
       case 2: return { tab: 'home' }
       default: return null
     }
@@ -88,7 +88,7 @@ export const useOnboarding = () => {
     if (step.value > 0) showStep(step.value - 1)
   }
 
-  /** Start empty: no life area, habit or activity is created, but the empty week is assigned to every week of the year (as the build does), so Planner and Insights have weeks to show. Onboarding is marked done */
+  /** Start empty: no life area, habit or activity is created, but the empty week is assigned to every week of the year (as the build does), so Week and Year have weeks to show. Onboarding is marked done */
   const startEmpty = () => {
     const planYear = year.value ?? currentYear.value ?? isoWeekOf(localDateKey()).year
 

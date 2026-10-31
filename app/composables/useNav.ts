@@ -1,8 +1,10 @@
 /**
  * Screen navigation kept in the route query (FR-UX-5, assumption A5):
  *   ?tab=planner&item=<id>&edit=1
- * tab   home | goals | planner | insights. Missing or unknown falls back to home (an old ?tab=visualization too).
- * item  id of the selected category, activity or habit. A screen ignores an id it does not know.
+ * tab   home | goals | planner | year | insights. Missing or unknown falls back to home (an old ?tab=visualization too).
+ *       planner is the Week tab; year is the Year tab (painter, Weeks row, planned hours, life areas).
+ * item  id of the selected category, activity or habit; on the Year tab, a week type id (the Weeks row starts with it).
+ *       A screen ignores an id it does not know.
  * edit  "1" puts the selected item in edit mode.
  * Switching tab drops item and edit. Use `go` for a history entry (Back works) and `link` for NuxtLink.
  * Within a screen, `setSelection` changes item and edit and keeps the tab.
@@ -11,6 +13,7 @@ export const TABS = [
   { id: 'home', label: 'Home' },
   { id: 'goals', label: 'Goals' },
   { id: 'planner', label: 'Week' },
+  { id: 'year', label: 'Year' },
   { id: 'insights', label: 'Insights' }
 ] as const
 
