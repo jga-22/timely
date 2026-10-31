@@ -9,9 +9,11 @@ import {
   insightsBars,
   largestRemainderShares,
   rangeYears,
+  templateSplit,
   weekCategoryHours,
 } from '~/utils/insights'
 import { ONBOARDING_TEMPLATE_ID, createEmptySlots } from '~/utils/planner'
+import type { WeekTemplate } from '~/types/planner'
 import { activity, applyWeek, empty, Run, seed, slotsWith, withActivities, withSlots, withTemplate } from './fixtures'
 
 /**
@@ -222,6 +224,55 @@ describe('availableShares', () => {
       notPlannedShare: 0,
       rows: [],
     })
+  })
+})
+
+describe('templateSplit', () => {
+  const typicalWeek = (state: PlannerState): WeekTemplate => state.templates.find(template => template.id === ONBOARDING_TEMPLATE_ID)!
+
+  it('makes the shares of the typical week add up to 100 with the not planned share', () => {
+    const state = planned()
+    const result = templateSplit(state, typicalWeek(state), false)
+    const sum = result.rows.reduce((total, row) => total + row.share, 0) + result.notPlannedShare
+
+    expect(sum).toBe(100)
+    expect(result.rows.map(row => row.categoryId)).toEqual(['professionnelle', 'relationnelle'])
+  })
+
+  it('leaves the default sleep out when sleep is hidden: 168 less 63 hours is 105 available', () => {
+    const state = planned()
+    const result = templateSplit(state, typicalWeek(state), false)
+
+    expect(result.available).toBe(WEEK_HOURS - SLEEP_HOURS_PER_WEEK)
+    expect(result.planned).toBe(6)
+    expect(result.notPlannedHours).toBe(WEEK_HOURS - SLEEP_HOURS_PER_WEEK - 6)
+  })
+
+  it('counts sleep under its life area when it is shown: 168 available', () => {
+    const state = planned()
+    const result = templateSplit(state, typicalWeek(state), true)
+
+    expect(result.available).toBe(WEEK_HOURS)
+    expect(result.planned).toBe(6 + SLEEP_HOURS_PER_WEEK)
+    expect(result.rows.find(row => row.categoryId === 'physique')?.hours).toBe(SLEEP_HOURS_PER_WEEK)
+  })
+
+  it('is 100% not planned for a week type with nothing in it', () => {
+    const state = empty()
+    const result = templateSplit(state, { ...typicalWeek(state), slots: createEmptySlots(60) }, false)
+
+    expect(result.rows).toEqual([])
+    expect(result.available).toBe(WEEK_HOURS)
+    expect(result.notPlannedShare).toBe(100)
+  })
+
+  it('counts a 30-minute week type in half hours', () => {
+    const state = withActivities(empty(), [activity('work', 'professionnelle')])
+    const slots = createEmptySlots(30).map((slot, index) => (index < 3 ? 'work' : slot))
+    const result = templateSplit(state, { ...typicalWeek(state), granularityMinutes: 30, slots }, false)
+
+    expect(result.planned).toBe(1.5)
+    expect(result.rows[0]?.hours).toBe(1.5)
   })
 })
 

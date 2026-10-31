@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * The available time of a range as a ring (FR-INS-P5): one slice per life area in its colour, planned hours, then the rest of the
+ * The Time split of the Week tab as a ring (FR-INS-P5): the available time of a typical week, one slice per life area in its colour,
+ * planned hours, then the rest of the
  * ring is "Not planned". Shares add up to 100 (the parent computes them). SVG only.
  *
  * Selection (session state, held by the parent): a click or tap on a slice (or on the Not planned ring) selects it; the others are
@@ -230,9 +231,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 }
 .donut-sub {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Wraps rather than cuts: the hole of the ring is narrow and "72 h planned of 105 h" must read in full */
+  text-wrap: balance;
   font-size: var(--fs-xs);
   line-height: 1.3;
   color: var(--ink-3);

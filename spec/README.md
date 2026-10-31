@@ -24,10 +24,10 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, with some items ticked: the hour bar (7h to 22h), the activities with done checks (struck names), the progress line "3 of 7 done", the Habits list with weekly progress, the journal |
-| `home-desktop-dark.png` | 1280 px wide | Today, dark, with some items ticked |
-| `home-mobile-light.png` | 400 px wide | Today, light, full page, with some items ticked |
-| `home-mobile-dark.png` | 400 px wide | Today, dark, full page, with some items ticked |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 7 done" with the adherence ring "This week 63% · Overall 80%" and its Details link on the right, the activities with their done checks, the Habits list with weekly progress, the journal card |
+| `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state with the adherence ring |
+| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row, Details still on screen |
+| `home-mobile-dark.png` | 400 px wide | Today, dark, full page |
 | `home-yesterday-desktop-light.png` | 1280 px wide | The previous day (Wednesday 28 October): the day label as title, "Today" button shown, its own ticks |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 1-year target (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
@@ -58,6 +58,10 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: an entry open in the unified edit form ("Edit Read for inspiration", sample data), with Save, Cancel and Delete; More options closed (refreshed 2026-10-29: the "Also counts toward" field is gone; Escape and Cancel close it and return focus to Edit, FR-PLAN-26) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
+| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: the Time split under Activities and habits for Standard Week: the ring of the typical week's available time and the life areas list with hours and percent, Not planned last |
+| `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: the Time split |
+| `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: the Time split |
+| `planner-time-split-selected-desktop-light.png` | 1280 px wide | Week, light: the Time split with Professional selected: the others dimmed, the centre names it (40%, 42 h), its row marked |
 | `insights-adherence-desktop-light.png` | 1280 px wide | Insights, light, Adherence view (month, one year): the headline "Done 5% of planned", the week bars with dashed future weeks, By life area, Habits, the journal nudge. Sample data: the seed plus ticks over the last three weeks (from 9 to 29 October 2026); the chart starts at the first tick and ends at the current week, so earlier weeks are not drawn |
 | `insights-adherence-desktop-dark.png` | 1280 px wide | Insights, dark, Adherence view (month) |
 | `insights-adherence-week-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with Week: one bar per weekday, Monday to Sunday |
@@ -124,10 +128,17 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Time split and Home ring (2026-11-02, branch `feat/time-split-home-ring`, stacked on the Year tab, not pushed)
+
+- The Week tab ends with a Time split (FR-PLAN-27): the typical week of the active week type as a ring of its available time and the life areas list, sleep left out unless Show sleep is on. The range donut moved here from Insights.
+- Home shows this week and overall adherence beside the progress line, on today once a tick exists, with a Details link to Insights (FR-HOME-19). The figures come from `adherenceSpan` and `homeAdherence` in `app/utils/adherence.ts`; the ring is `app/components/AdherenceRing.vue`, shared with Insights.
+- Checks: `npm test` 528 pass, typecheck 0 errors, production build clean. Headless Edge at 1280 and 400 px, light and dark: 82 Home checks with ticks and 64 with none (each figure equal to an independent calculation from the saved state), no console errors, no overflow. The Adherence view DOM matches the build before the ring extraction, apart from the ring's inline width.
+- Screens: `home-*` refreshed on the adherence seed, `planner-time-split-*` new, and the Week screens `planner-desktop-*` and `planner-mobile-light.png` re-shot. Storage version unchanged (8).
+
 ### Year tab (2026-11-01, branch `feat/year-tab`, from `main`, not pushed)
 
 - A fifth tab, Year (route id `year`), holds the year painter and the Weeks row (FR-YEAR-7, FR-YEAR-8), the planned hours with their range controls (Month or Week, More options, the unit Hours, Days or Weeks) and the Life areas list. The Week tab loses its Year section: after a new week type it says "X added. Choose its weeks in Year", with a link to the Year tab (`item` is the week type id).
-- Insights is the Adherence view only (FR-INS-P7), with its own range controls and no unit. The range donut is kept unused (`AvailableDonut.vue`) for the Time split step on the Week tab.
+- Insights is the Adherence view only (FR-INS-P7), with its own range controls and no unit. The range donut moved to the Week tab's Time split (`planner/TimeSplitDonut.vue`, FR-PLAN-27).
 - Tour card 2 is "Your year" and links to Year; intro scene 5 is "Your year and daily follow-up". Storage version unchanged (8).
 - Screens: `year-*`, `topbar-five-tabs-mobile-light.png`, `planner-vacation-added-desktop-light.png`, `onboarding-tour-year-desktop-light.png`. The Insights bars, donut and tour-insights screens and the Schedule in the week screens are retired.
 

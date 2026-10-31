@@ -29,7 +29,6 @@ const headingText = computed(() => {
   if (props.report.percent === null) return 'Nothing planned in this range yet'
   return `Done ${props.report.percent}% of planned`
 })
-const ringArc = computed(() => `${props.report.percent ?? 0} 100`)
 const hoursText = computed(() => {
   const { blockHours } = props.report.measure
   return blockHours.planned ? `${blockHours.done} of ${blockHours.planned} planned hours ticked` : ''
@@ -109,22 +108,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
       </div>
 
       <div class="adh-headline">
-        <div class="adh-ring" aria-hidden="true">
-          <svg viewBox="0 0 200 200" class="adh-ring-svg">
-            <circle class="adh-ring-track" cx="100" cy="100" r="70" />
-            <circle
-              v-if="report.percent !== null"
-              class="adh-ring-arc"
-              :class="{ 'is-habits': report.basis === 'habits' }"
-              cx="100"
-              cy="100"
-              r="70"
-              pathLength="100"
-              :stroke-dasharray="ringArc"
-            />
-          </svg>
-          <span class="adh-ring-value">{{ report.percent === null ? '-' : `${report.percent}%` }}</span>
-        </div>
+        <AdherenceRing :percent="report.percent" :basis="report.basis" />
         <div class="adh-headline-text">
           <p v-if="hoursText" class="adh-sub">{{ hoursText }}</p>
           <p v-if="habitsLine" class="adh-sub">{{ habitsLine }}</p>
