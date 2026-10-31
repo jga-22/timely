@@ -102,7 +102,7 @@ describe('entryDraftOf', () => {
     })
   })
 
-  it('reads a linked habit: its minutes, its frequency and the days of its activity', () => {
+  it('reads a linked habit: the painted hours, its frequency and the days of its activity', () => {
     const state = withHabits(planned(), [focus])
 
     expect(entryDraftOf(state, 'focus', null)).toMatchObject({
@@ -112,8 +112,14 @@ describe('entryDraftOf', () => {
       days: [0],
       orCount: 3,
       orPeriod: 'week',
-      durationMinutes: 60,
+      durationMinutes: 240,
     })
+  })
+
+  it('falls back to the habit minutes when nothing is painted yet', () => {
+    const state = withHabits(empty(), [{ id: 'f', categoryId: 'professionnelle', name: 'F', frequency: { count: 3, period: 'week' }, minutesPerOccurrence: 60 }])
+
+    expect(entryDraftOf(state, 'f', null).durationMinutes).toBe(60)
   })
 
   it('reads a habit with no activity and a daily frequency as every day', () => {
@@ -294,9 +300,9 @@ describe('entryLines', () => {
     ])
   })
 
-  it('shows the need of a linked habit instead of the hours a week, and the length from the habit minutes', () => {
+  it('shows the need of a linked habit instead of the hours a week, and the painted length', () => {
     expect(entryLines(withHabits(planned(), [focus]), 'focus', 'work')).toEqual([
-      'Mon at 8AM for 1 h',
+      'Mon at 8AM for 4 h',
       'In My week',
       'Needs 3 h a week',
     ])
