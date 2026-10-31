@@ -26,9 +26,25 @@ export const yearRows = (weeks: string[], perRow = 13): YearRow[] => {
   return rows
 }
 
+/** The paint tool that clears a week instead of painting one (the last chip of "Paint with") */
+export const ERASE_TOOL = 'erase'
+
+/** The week type a paint tool applies to a week or a range of weeks: null for Erase, which clears the week */
+export const toolTemplateId = (tool: string): string | null => (tool === ERASE_TOOL ? null : tool)
+
 /** The message for a Weeks row range that cannot be applied to a year of `count` weeks, or '' when it can */
 export const weekRangeError = (from: number, to: number, count: number): string => {
   if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > count) return `Enter week numbers from 1 to ${count}.`
   if (from > to) return 'The first week must not come after the last one.'
   return ''
 }
+
+/** What Apply will do with the chosen paint tool, under the weeks fields: the week type's name, or Erase's clearing */
+export const weekRangeHint = (templateName: string | null): string => (templateName
+  ? `Applies ${templateName} to these weeks.`
+  : 'Erase clears these weeks.')
+
+/** The result line after a range was applied: the week type's name, or that the weeks have none (Erase) */
+export const weekRangeResult = (from: number, to: number, templateName: string | null): string => (templateName
+  ? `Weeks ${from} to ${to} use ${templateName}.`
+  : `Weeks ${from} to ${to} have no week type.`)

@@ -1559,6 +1559,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .weeks-select { width: auto; max-width: 100%; min-width: 0; }
 .weeks-num { width: 72px; }
 .weeks-result { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.weeks-hint { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.weeks-toggle-row { margin-top: var(--space-4); }
 @media (max-width: 480px) {
   .act-panel .form-row { grid-template-columns: minmax(0, 1fr); }
 }

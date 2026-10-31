@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isoWeekStarts } from '~/utils/dates'
-import { weekRangeError, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 
 describe('yearRows', () => {
   it('cuts 2026 (53 weeks) into rows of 13, each labelled with the months its first and last week start in', () => {
@@ -36,5 +36,22 @@ describe('weekRangeError', () => {
 
   it('refuses a first week that comes after the last one', () => {
     expect(weekRangeError(3, 2, 53)).toBe('The first week must not come after the last one.')
+  })
+})
+
+describe('toolTemplateId', () => {
+  it('gives the week type of a paint tool, and null for Erase (it clears the weeks)', () => {
+    expect(toolTemplateId('vacation-1')).toBe('vacation-1')
+    expect(toolTemplateId(ERASE_TOOL)).toBeNull()
+    expect(toolTemplateId('erase')).toBeNull()
+  })
+})
+
+describe('weekRangeHint and weekRangeResult', () => {
+  it('say what Apply does with the paint tool: the week type, or clearing for Erase', () => {
+    expect(weekRangeHint('Vacation')).toBe('Applies Vacation to these weeks.')
+    expect(weekRangeHint(null)).toBe('Erase clears these weeks.')
+    expect(weekRangeResult(2, 5, 'Vacation')).toBe('Weeks 2 to 5 use Vacation.')
+    expect(weekRangeResult(2, 5, null)).toBe('Weeks 2 to 5 have no week type.')
   })
 })

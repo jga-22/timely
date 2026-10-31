@@ -4,16 +4,17 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { inkOn } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
-import { weekRangeError, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 import type { WeekTemplate } from '~/types/planner'
 
 /**
- * The year painter of the Year tab (FR-YEAR-7): the year grid to paint weeks with a week type, the Weeks row to apply one to a range of
- * weeks, and the count of assigned weeks. Collapsible, open by default. A week type id in the URL (the Week tab's link after a new week
- * type) preselects it for the Weeks row and the paint tool.
+ * The year painter of the Year tab (FR-YEAR-7): the year grid to paint weeks with a week type, the "Apply to several weeks" options to
+ * apply the paint tool to a range of weeks, and the count of assigned weeks. Collapsible, open by default. The paint tool is the week type
+ * a range gets: there is no second choice. A week type id in the URL (the Week tab's link after a new week type) preselects it in
+ * Paint with and opens the options.
  */
 const planner = usePlannerStore()
-const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
+const { templates, appliedWeeks } = storeToRefs(planner)
 const { year, weeks, currentWeekIndex } = usePlannerYear()
 const { fill } = usePlannerFill()
 
@@ -42,12 +43,18 @@ const yearLine = computed(() => {
 })
 const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
 
+/** The name of the week type the paint tool applies, or null for Erase: what a range of weeks gets */
+const paintName = computed(() => {
+  const id = toolTemplateId(paintTool.value)
+  return id ? (templateById.value.get(id)?.name ?? null) : null
+})
+
 /** Rows of the year grid (13 weeks each), with their month labels */
 const gridRows = computed(() => yearRows(weeks.value))
 
 function paintWeek(wi: number) {
   const startDate = weeks.value[wi]
-  if (startDate) planner.setWeekTemplate(startDate, paintTool.value === 'erase' ? null : paintTool.value)
+  if (startDate) planner.setWeekTemplate(startDate, toolTemplateId(paintTool.value))
 }
 
 // Background colour for a year cell: the template painted on that week
@@ -59,14 +66,10 @@ const cellStyle = (startDate: string) => {
   return { '--c': color, '--c-ink': inkOn(color) }
 }
 
-// ── Year: the Weeks row applies one week type to a range of weeks (FR-YEAR-7); the choice defaults to the active one ──
-const weekRangeTemplate = ref<string | null>(null)
-const weekRangeChoice = computed({
-  get: () => weekRangeTemplate.value ?? activeTemplate.value?.id ?? '',
-  set: (value: string) => {
-    weekRangeTemplate.value = value
-  }
-})
+// ── Apply to several weeks (FR-YEAR-7): the paint tool's week type for a range of weeks. Closed by default ──
+const weeksOpen = ref(false)
+const weeksToggle = ref<HTMLButtonElement | null>(null)
+const weeksPanel = ref<HTMLElement | null>(null)
 const weekFrom = ref(1)
 const weekTo = ref(1)
 const weekFromInput = ref<HTMLInputElement | null>(null)
@@ -74,18 +77,34 @@ const rangeError = ref('')
 const rangeResult = ref('')
 const weekCount = computed(() => weeks.value.length)
 
-// The item in the URL is a week type id (a time-off week type is usually applied next): it is chosen for the Weeks row and the paint
-// tool, and its first week field takes focus on a desktop (FR-UX-9). The item is then cleared from the URL, so a reload does not repeat it.
+// Opening focuses "for weeks" on a desktop; on a phone the panel takes focus instead (FR-UX-9)
+function openWeeks() {
+  weeksOpen.value = true
+  nextTick(() => focusEditField(weekFromInput.value, weeksPanel.value))
+}
+
+// Escape, or the button again, closes the options; focus returns to the button
+function closeWeeks() {
+  weeksOpen.value = false
+  nextTick(() => weeksToggle.value?.focus())
+}
+
+function toggleWeeks() {
+  if (weeksOpen.value) closeWeeks()
+  else openWeeks()
+}
+
+// The item in the URL is a week type id (a time-off week type is usually applied next): it is chosen in Paint with, and the options open
+// with "for weeks" focused on a desktop (FR-UX-9). The item is then cleared from the URL, so a reload does not repeat it.
 // An id this year does not know is ignored
 const { item, setSelection } = useNav()
 onMounted(() => {
   const templateId = item.value
   if (!templateId || !templateById.value.has(templateId)) return
 
-  weekRangeTemplate.value = templateId
   paintTool.value = templateId
   setSelection({}, true)
-  nextTick(() => focusEditField(weekFromInput.value, weekFromInput.value?.closest<HTMLElement>('.weeks-row')))
+  openWeeks()
 })
 
 function applyWeekRange() {
@@ -101,11 +120,8 @@ function applyWeekRange() {
     return
   }
 
-  const templateId = weekRangeChoice.value || null
-  planner.setWeeksTemplate(weeks.value.slice(from - 1, to), templateId)
-
-  const name = templateId ? (templateById.value.get(templateId)?.name ?? '') : ''
-  rangeResult.value = templateId ? `Weeks ${from} to ${to} use ${name}.` : `Weeks ${from} to ${to} have no week type.`
+  planner.setWeeksTemplate(weeks.value.slice(from - 1, to), toolTemplateId(paintTool.value))
+  rangeResult.value = weekRangeResult(from, to, paintName.value)
 }
 </script>
 
@@ -133,21 +149,36 @@ function applyWeekRange() {
             <span class="dot" :style="{ background: templateFill(t) }" />
             {{ t.name }}
           </button>
-          <button class="chip" :data-active="paintTool === 'erase'" @click="paintTool = 'erase'">
+          <button class="chip" :data-active="paintTool === ERASE_TOOL" @click="paintTool = ERASE_TOOL">
             <span class="dot dot-erase" />
             Erase
           </button>
         </div>
 
-        <!-- Weeks: one week type for a range of weeks, typed rather than painted (FR-YEAR-7) -->
-        <div class="weeks-row" role="group" aria-labelledby="weeks-row-title" tabindex="-1">
-          <span id="weeks-row-title" class="field-label">Weeks</span>
+        <!-- Apply to several weeks: a disclosure under the paint tools (FR-YEAR-7), closed by default -->
+        <div class="weeks-toggle-row">
+          <button
+            ref="weeksToggle"
+            type="button"
+            class="btn btn-sm btn-outline"
+            :aria-expanded="weeksOpen"
+            aria-controls="weeks-panel"
+            @click="toggleWeeks"
+          >Apply to several weeks</button>
+        </div>
+
+        <!-- The range: the paint tool's week type (or Erase) for the weeks from and to; typed rather than painted -->
+        <div
+          v-show="weeksOpen"
+          id="weeks-panel"
+          ref="weeksPanel"
+          class="weeks-row"
+          role="group"
+          aria-label="Apply to several weeks"
+          tabindex="-1"
+          @keydown.esc="closeWeeks"
+        >
           <div class="weeks-row-line">
-            <label class="weeks-part" for="weeks-template">Use</label>
-            <select id="weeks-template" v-model="weekRangeChoice" class="timely-select weeks-select">
-              <option value="">No week type</option>
-              <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.name }}</option>
-            </select>
             <label class="weeks-part" for="weeks-from">for weeks</label>
             <input
               id="weeks-from"
@@ -175,6 +206,7 @@ function applyWeekRange() {
             />
             <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
           </div>
+          <p class="weeks-hint">{{ weekRangeHint(paintName) }}</p>
           <p v-if="rangeError" id="weeks-error" class="field-error" role="alert">{{ rangeError }}</p>
           <p v-else-if="rangeResult" class="weeks-result" role="status">{{ rangeResult }}</p>
         </div>
