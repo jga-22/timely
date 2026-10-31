@@ -585,6 +585,13 @@ watch(collapsed, () => {
   if (range && HOURS.some(hour => hour >= range.start && hour < range.end && isCollapsed(hour))) closeAll()
 })
 
+// The week grid's disclosure (open by default, in memory only). Collapsing it hides the grid, so a bar or menu open on it closes;
+// the selection and the cursor stay and show again when it opens
+const weekOpen = ref(true)
+watch(weekOpen, (open) => {
+  if (!open && (barOpen.value || menuOpen.value || editing.value)) closeAll()
+})
+
 onMounted(() => {
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('pointercancel', onPointerCancel)
@@ -602,156 +609,162 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="section wk-section" aria-labelledby="week-title">
+    <!-- Collapsible like the Year section (open by default, in memory only); the Show sleep button sits beside the summary, not in it -->
     <div class="wk-head-line">
-      <h2 id="week-title" class="section-title">Week</h2>
-      <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
-      <SleepToggle v-if="sleepId" />
-    </div>
+      <details class="wk-details" :open="weekOpen" @toggle="weekOpen = ($event.currentTarget as HTMLDetailsElement).open">
+        <summary class="section-summary wk-summary">
+          <h2 id="week-title" class="section-title">Week</h2>
+          <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
+        </summary>
 
-    <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
+        <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
 
-    <template v-else>
-      <div class="wk-scroll">
-        <div class="wk" :data-editing="editing ? 'true' : 'false'">
-          <div class="wk-head">
-            <div class="wk-corner" aria-hidden="true" />
-            <div v-for="(day, index) in DAYS" :key="day" class="wk-day-head">
-              <span class="wk-day-name">{{ day }}</span>
-              <span class="wk-day-hours">{{ hoursPerDay[index] }} h</span>
-              <button
-                type="button"
-                class="wk-clear-day"
-                :title="`Clear ${DAY_NAMES[index]}`"
-                :aria-label="`Clear ${DAY_NAMES[index]}`"
-                @click="clearDay(index)"
-              >✕</button>
-            </div>
-          </div>
-
-          <!-- The band above the rows: the leading run of collapsed hours (sleep hidden), clicking it shows sleep -->
-          <button v-if="topBand" type="button" class="wk-band is-top" @click="setShowSleep(true)">
-            <span>Sleep hidden: {{ topBand }}</span>
-            <span class="wk-band-action">Show sleep</span>
-          </button>
-
-          <div
-            ref="gridEl"
-            class="wk-body"
-            @pointerdown="onPointerDown"
-            @pointermove="onPointerMove"
-            @keydown="onKeydown"
-          >
-            <div class="wk-hours" aria-hidden="true">
-              <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
-                <div v-if="row.kind === 'gap'" class="wk-gap" />
-                <div v-else class="wk-hour" :class="{ 'is-major': row.hour % 3 === 0 }">{{ row.hour % 3 === 0 ? formatHour(row.hour) : '' }}</div>
-              </template>
-            </div>
-
-            <div v-for="(day, dayIndex) in DAYS" :key="day" class="wk-day" :data-day="dayIndex">
-              <!-- Slots: the interaction layer, one focus stop at a time; a collapsed run is a thin band between them -->
-              <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
-                <div
-                  v-if="row.kind === 'gap'"
-                  class="wk-gap"
-                  :title="`Sleep hidden: ${clockLabel(row.from)} to ${clockLabel(row.to)}`"
-                />
-                <div
-                  v-else
-                  class="wk-slot"
-                  :class="{ 'is-major': row.hour % 3 === 0 }"
-                  role="button"
-                  :tabindex="isCursor(dayIndex, row.hour) ? 0 : -1"
-                  :data-day="dayIndex"
-                  :data-hour="row.hour"
-                  :aria-label="`${DAY_NAMES[dayIndex]} ${formatHour(row.hour)}, ${shownSlots[dayIndex * 24 + row.hour] ? activityMap.get(shownSlots[dayIndex * 24 + row.hour]!)?.name : 'free'}`"
-                  @focus="setCursor({ day: dayIndex, hour: row.hour })"
-                />
-              </template>
-
-              <!-- Blocks: the painted hours, drawn over the slots; hover shows the delete button -->
-              <div
-                v-for="block in blocksByDay[dayIndex]"
-                :key="`${block.start}-${block.activityId}`"
-                class="wk-block"
-                :class="{ 'is-short': block.end - block.start === 1 }"
-                :style="{
-                  top: `${hourTop[block.start] ?? 0}px`,
-                  height: `${(block.end - block.start) * HOUR_PX - 2}px`,
-                  background: blockColor(block),
-                  color: inkOn(blockColor(block)),
-                }"
-              >
-                <span class="wk-block-name" :title="activityMap.get(block.activityId)?.name">{{ blockCode(block) }}</span>
-                <span class="wk-block-time">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</span>
-                <button
-                  type="button"
-                  class="wk-block-del"
-                  title="Clear these hours"
-                  :aria-label="`Clear ${activityMap.get(block.activityId)?.name ?? 'hours'}, ${DAY_NAMES[dayIndex]} ${formatHour(block.start)} to ${formatHour(block.end)}`"
-                  @click="clearRange({ day: dayIndex, start: block.start, end: block.end })"
-                >✕</button>
+        <template v-else>
+          <div class="wk-scroll">
+            <div class="wk" :data-editing="editing ? 'true' : 'false'">
+              <div class="wk-head">
+                <div class="wk-corner" aria-hidden="true" />
+                <div v-for="(day, index) in DAYS" :key="day" class="wk-day-head">
+                  <span class="wk-day-name">{{ day }}</span>
+                  <span class="wk-day-hours">{{ hoursPerDay[index] }} h</span>
+                  <button
+                    type="button"
+                    class="wk-clear-day"
+                    :title="`Clear ${DAY_NAMES[index]}`"
+                    :aria-label="`Clear ${DAY_NAMES[index]}`"
+                    @click="clearDay(index)"
+                  >✕</button>
+                </div>
               </div>
 
-              <!-- Selection: the highlighted run; in edit mode it carries the resize handles -->
+              <!-- The band above the rows: the leading run of collapsed hours (sleep hidden), clicking it shows sleep -->
+              <button v-if="topBand" type="button" class="wk-band is-top" @click="setShowSleep(true)">
+                <span>Sleep hidden: {{ topBand }}</span>
+                <span class="wk-band-action">Show sleep</span>
+              </button>
+
               <div
-                v-if="selection && selection.day === dayIndex"
-                class="wk-sel"
-                :style="{
-                  top: `${hourTop[selection.start] ?? 0}px`,
-                  height: `${(selection.end - selection.start) * HOUR_PX}px`,
-                }"
+                ref="gridEl"
+                class="wk-body"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @keydown="onKeydown"
               >
-                <template v-if="editing">
-                  <button
-                    type="button"
-                    class="wk-handle is-top"
-                    aria-label="Change start: drag, or Up and Down arrows"
-                    @pointerdown="startResize('top', $event)"
-                    @keydown="onHandleKey('top', $event)"
-                  ><span /></button>
-                  <button
-                    type="button"
-                    class="wk-handle is-bottom"
-                    aria-label="Change end: drag, or Up and Down arrows"
-                    @pointerdown="startResize('bottom', $event)"
-                    @keydown="onHandleKey('bottom', $event)"
-                  ><span /></button>
-                </template>
-                <span class="wk-dur">{{ selection.end - selection.start }}h</span>
-                <div v-if="editing" class="wk-confirm">
-                  <button
-                    type="button"
-                    class="wk-round is-cancel"
-                    title="Cancel change"
-                    aria-label="Cancel change"
-                    @click="cancelEdit"
-                  >✕</button>
-                  <button
-                    type="button"
-                    class="wk-round is-ok"
-                    title="Save change"
-                    aria-label="Save change"
-                    @click="saveEdit"
-                  >✓</button>
+                <div class="wk-hours" aria-hidden="true">
+                  <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
+                    <div v-if="row.kind === 'gap'" class="wk-gap" />
+                    <div v-else class="wk-hour" :class="{ 'is-major': row.hour % 3 === 0 }">{{ row.hour % 3 === 0 ? formatHour(row.hour) : '' }}</div>
+                  </template>
+                </div>
+
+                <div v-for="(day, dayIndex) in DAYS" :key="day" class="wk-day" :data-day="dayIndex">
+                  <!-- Slots: the interaction layer, one focus stop at a time; a collapsed run is a thin band between them -->
+                  <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
+                    <div
+                      v-if="row.kind === 'gap'"
+                      class="wk-gap"
+                      :title="`Sleep hidden: ${clockLabel(row.from)} to ${clockLabel(row.to)}`"
+                    />
+                    <div
+                      v-else
+                      class="wk-slot"
+                      :class="{ 'is-major': row.hour % 3 === 0 }"
+                      role="button"
+                      :tabindex="isCursor(dayIndex, row.hour) ? 0 : -1"
+                      :data-day="dayIndex"
+                      :data-hour="row.hour"
+                      :aria-label="`${DAY_NAMES[dayIndex]} ${formatHour(row.hour)}, ${shownSlots[dayIndex * 24 + row.hour] ? activityMap.get(shownSlots[dayIndex * 24 + row.hour]!)?.name : 'free'}`"
+                      @focus="setCursor({ day: dayIndex, hour: row.hour })"
+                    />
+                  </template>
+
+                  <!-- Blocks: the painted hours, drawn over the slots; hover shows the delete button -->
+                  <div
+                    v-for="block in blocksByDay[dayIndex]"
+                    :key="`${block.start}-${block.activityId}`"
+                    class="wk-block"
+                    :class="{ 'is-short': block.end - block.start === 1 }"
+                    :style="{
+                      top: `${hourTop[block.start] ?? 0}px`,
+                      height: `${(block.end - block.start) * HOUR_PX - 2}px`,
+                      background: blockColor(block),
+                      color: inkOn(blockColor(block)),
+                    }"
+                  >
+                    <span class="wk-block-name" :title="activityMap.get(block.activityId)?.name">{{ blockCode(block) }}</span>
+                    <span class="wk-block-time">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</span>
+                    <button
+                      type="button"
+                      class="wk-block-del"
+                      title="Clear these hours"
+                      :aria-label="`Clear ${activityMap.get(block.activityId)?.name ?? 'hours'}, ${DAY_NAMES[dayIndex]} ${formatHour(block.start)} to ${formatHour(block.end)}`"
+                      @click="clearRange({ day: dayIndex, start: block.start, end: block.end })"
+                    >✕</button>
+                  </div>
+
+                  <!-- Selection: the highlighted run; in edit mode it carries the resize handles -->
+                  <div
+                    v-if="selection && selection.day === dayIndex"
+                    class="wk-sel"
+                    :style="{
+                      top: `${hourTop[selection.start] ?? 0}px`,
+                      height: `${(selection.end - selection.start) * HOUR_PX}px`,
+                    }"
+                  >
+                    <template v-if="editing">
+                      <button
+                        type="button"
+                        class="wk-handle is-top"
+                        aria-label="Change start: drag, or Up and Down arrows"
+                        @pointerdown="startResize('top', $event)"
+                        @keydown="onHandleKey('top', $event)"
+                      ><span /></button>
+                      <button
+                        type="button"
+                        class="wk-handle is-bottom"
+                        aria-label="Change end: drag, or Up and Down arrows"
+                        @pointerdown="startResize('bottom', $event)"
+                        @keydown="onHandleKey('bottom', $event)"
+                      ><span /></button>
+                    </template>
+                    <span class="wk-dur">{{ selection.end - selection.start }}h</span>
+                    <div v-if="editing" class="wk-confirm">
+                      <button
+                        type="button"
+                        class="wk-round is-cancel"
+                        title="Cancel change"
+                        aria-label="Cancel change"
+                        @click="cancelEdit"
+                      >✕</button>
+                      <button
+                        type="button"
+                        class="wk-round is-ok"
+                        title="Save change"
+                        aria-label="Save change"
+                        @click="saveEdit"
+                      >✓</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- The band below the rows: the trailing run of collapsed hours -->
-      <button v-if="bottomBand" type="button" class="wk-band is-bottom" @click="setShowSleep(true)">
-        <span>Sleep hidden: {{ bottomBand }}</span>
-        <span class="wk-band-action">Show sleep</span>
-      </button>
+          <!-- The band below the rows: the trailing run of collapsed hours -->
+          <button v-if="bottomBand" type="button" class="wk-band is-bottom" @click="setShowSleep(true)">
+            <span>Sleep hidden: {{ bottomBand }}</span>
+            <span class="wk-band-action">Show sleep</span>
+          </button>
 
-      <p v-if="undo" class="wk-undo" role="status">
-        <span>{{ undo.text }}</span>
-        <button type="button" class="btn btn-xs btn-outline" @click="undoLast">Undo</button>
-      </p>
-    </template>
+          <p v-if="undo" class="wk-undo" role="status">
+            <span>{{ undo.text }}</span>
+            <button type="button" class="btn btn-xs btn-outline" @click="undoLast">Undo</button>
+          </p>
+        </template>
+      </details>
+
+      <SleepToggle v-if="sleepId" />
+    </div>
 
     <Teleport to="body">
       <!-- Closes on pointerdown, not click: the click that follows a tap would otherwise land on the overlay that the tap just opened -->
