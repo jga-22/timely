@@ -403,6 +403,8 @@ Page: "Where your time goes". Year control only, then sections in this order: Th
 
 ### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `main.css`)
 
+The day columns are `app/components/planner/WeekGridDay.vue`; the pure rules are in `app/utils/weekGrid.ts`.
+
 Restored on 2026-10-26 to the original interaction (FR-PLAN-23); it replaces the slice 7 brush grid. Mounted inside `<ClientOnly>` in `PlannerView.vue`: the grid is state-driven, and server HTML kept the seed cells after hydration.
 
 - Head line (`.wk-head-line`): title "Week" (section title) and a quiet meta line "{template} · N of 168 h planned" (13px, `--ink-3`, tabular).
