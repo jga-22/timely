@@ -338,3 +338,32 @@ export const adherenceReport = (state: PlannerState, years: number[], today: str
     slipping
   }
 }
+
+export interface AdherenceSpan extends Basis {
+  /** Blocks and habits of the counted dates */
+  measure: Measure
+  /** Counted dates: from the later of `from` and trackingStart up to the earlier of `to` and today */
+  elapsedDays: number
+  /** The first date with a tick in the state, not in the future (null without ticks) */
+  trackingStart: string | null
+}
+
+/**
+ * The adherence of one span of dates (Home's week and overall figures, FR-HOME-19). The same rules as adherenceReport: counting starts
+ * at the first tick, future dates and future ticks are left out, sleep never counts, habits are capped at their expected share.
+ * Both ends are inclusive; a span that holds no counted date has no percent.
+ */
+export const adherenceSpan = (state: PlannerState, from: string, to: string, today: string): AdherenceSpan => {
+  const trackingStart = trackingStartOf(state, today)
+  const first = trackingStart && trackingStart > from ? trackingStart : from
+  const last = to < today ? to : today
+  const records: DayRecord[] = []
+
+  if (trackingStart) {
+    for (let date = first; date <= last; date = addDays(date, 1)) records.push(recordOf(state, date))
+  }
+
+  const measure = measureOf(records)
+
+  return { measure, elapsedDays: records.length, trackingStart, ...basisOf(measure) }
+}

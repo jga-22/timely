@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
-import { adherenceMode, adherenceReport, basisOf, calendarDays, trackingStartOf } from '~/utils/adherence'
+import { adherenceMode, adherenceReport, adherenceSpan, basisOf, calendarDays, trackingStartOf } from '~/utils/adherence'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
 import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withJournal, withSlots } from './fixtures'
 
@@ -199,5 +199,60 @@ describe('adherenceReport', () => {
     const report = adherenceReport(state, [2026], TODAY, 'month')
 
     expect(report.bars.map(bar => bar.key)).toEqual(['2026-10'])
+  })
+})
+
+describe('adherenceSpan', () => {
+  it('has no percent and no tracking start without ticks', () => {
+    const span = adherenceSpan(planned(), '2026-01-01', '2026-12-31', TODAY)
+
+    expect(span.trackingStart).toBeNull()
+    expect(span.elapsedDays).toBe(0)
+    expect(span.percent).toBeNull()
+    expect(span.basis).toBeNull()
+  })
+
+  it('for the whole year gives the same headline percent as adherenceReport', () => {
+    const state = withDone(withDone(planned(), MONDAY, ['a:work@8']), TUESDAY, ['h:walk'])
+    const report = adherenceReport(state, [2026], TODAY, 'month')
+    const span = adherenceSpan(state, '2026-01-01', '2026-12-31', TODAY)
+
+    expect(span.percent).toBe(report.percent)
+    expect(span.measure).toEqual(report.measure)
+    expect(span.elapsedDays).toBe(report.elapsedDays)
+    expect(span.percent).toBe(100)
+  })
+
+  it('leaves out future dates, and future ticks do not start counting', () => {
+    const state = withDone(planned(), MONDAY, ['a:work@8'])
+
+    // A span wholly after today holds no counted date
+    expect(adherenceSpan(state, '2026-11-01', '2026-11-30', TODAY).elapsedDays).toBe(0)
+    expect(adherenceSpan(state, '2026-11-01', '2026-11-30', TODAY).percent).toBeNull()
+    // A span running past today stops at today
+    expect(adherenceSpan(state, MONDAY, '2026-12-31', TODAY).elapsedDays).toBe(3)
+
+    const future = withDone(planned(), '2026-11-05', ['h:walk'])
+    expect(adherenceSpan(future, '2026-01-01', '2026-12-31', TODAY).trackingStart).toBeNull()
+  })
+
+  it('counts from the later of the span start and the first tick', () => {
+    const state = withDone(planned(), MONDAY, ['a:work@8'])
+    const span = adherenceSpan(state, TUESDAY, TODAY, TODAY)
+
+    // Tuesday and Wednesday: no block is planned on them, only the walk habit is expected
+    expect(span.trackingStart).toBe(MONDAY)
+    expect(span.elapsedDays).toBe(2)
+    expect(span.measure.blockHours.planned).toBe(0)
+    expect(span.measure.habits.planned).toBe(2)
+  })
+
+  it('has no percent for a span that ends before the first tick', () => {
+    const state = withDone(planned(), MONDAY, ['a:work@8'])
+    const span = adherenceSpan(state, '2026-01-01', '2026-10-20', TODAY)
+
+    expect(span.trackingStart).toBe(MONDAY)
+    expect(span.elapsedDays).toBe(0)
+    expect(span.percent).toBeNull()
   })
 })
