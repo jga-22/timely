@@ -4,6 +4,7 @@ import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { DESIGN_COLORS } from '~/utils/planner'
 import { focusEditById, focusEditField } from '~/utils/focus'
+import { categoryEntryCounts, categoryEntryText } from '~/utils/entries'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
 const MAP_SIZE = 8
@@ -43,9 +44,8 @@ const gridView = computed(() => view.value === 'grid')
 
 import { isSleepActivity } from '~/utils/sleep'
 
-// ── Empty life areas (FR-GOALS-25): an area with a goal, a target, habits or activities is listed in full. The others collapse into one
-// row that opens them for the session (useState). With no content at all, every area is listed as an empty one (a new user)
-const emptyOpen = useState('goals-empty-open', () => false)
+// ── Life areas list (FR-GOALS-25): every life area is listed, empty or not. A row shows whether its 1-year target is set and its
+// entries as the detail lists them (habits and activities). An area with nothing in it yet also offers "Add a goal"
 const hasContentArea = (category: Category) => !!(
   category.goal5y?.trim()
   || category.target1y?.trim()
@@ -53,19 +53,14 @@ const hasContentArea = (category: Category) => !!(
   || planner.habits.some(habit => habit.categoryId === category.id)
   || planner.activities.some(activity => activity.categoryId === category.id && !isSleepActivity(activity))
 )
-const filledCount = computed(() => sortedCategories.value.filter(hasContentArea).length)
-const emptyCount = computed(() => sortedCategories.value.length - filledCount.value)
-const showAll = computed(() => emptyOpen.value || filledCount.value === 0)
-const listCategories = computed(() => showAll.value ? sortedCategories.value : sortedCategories.value.filter(hasContentArea))
 
-function toggleEmpty() {
-  emptyOpen.value = !emptyOpen.value
+// Short status under each name (FR-GOALS-15): the 1-year target is set, to define, or not written yet. Text carries it, not colour alone
+const targetStatus = (category: Category) => {
+  if (category.targetTbd) return { text: 'Target to define', warn: true }
+  return { text: category.target1y?.trim() ? 'Target set' : 'No target yet', warn: false }
 }
 
-// Short line under each name in the list: the 1-year target, or that it is still to be defined
-const targetLine = (category: Category) => category.targetTbd
-  ? { text: 'Target to define', warn: true }
-  : { text: category.target1y || 'No target written yet', warn: false }
+const entryStatus = (category: Category) => categoryEntryText(categoryEntryCounts(planner.$state, category.id))
 
 // ── Ambition: the only place the ambition is edited (FR-GOALS-13). Edit mode is local: one field, one edit at a time
 // A new user has no ambition yet (Start empty): the prompt writes the first one, and the view takes over once it exists
@@ -310,24 +305,8 @@ function submitAdd() {
     <section v-else class="section browse" :class="{ 'is-grid': gridView }">
       <div class="browse-list">
         <ul ref="listEl" class="cat-list" @keydown="onListKeydown">
-          <li v-for="category in listCategories" :key="category.id">
-            <button
-              v-if="hasContentArea(category)"
-              type="button"
-              class="cat-row"
-              :data-category-id="category.id"
-              :aria-current="selected?.id === category.id ? 'true' : undefined"
-              @click="openCategory(category.id)"
-            >
-              <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
-              <span class="cat-main">
-                <span class="cat-row-name">{{ category.name }}</span>
-                <span class="cat-meta" :class="{ 'is-warn': targetLine(category).warn }">{{ targetLine(category).text }}</span>
-              </span>
-            </button>
-
-            <!-- An empty life area: its name and a quiet way to add the goal, nothing to compare yet -->
-            <div v-else class="cat-empty">
+          <li v-for="category in sortedCategories" :key="category.id">
+            <div class="cat-item">
               <button
                 type="button"
                 class="cat-row"
@@ -338,15 +317,23 @@ function submitAdd() {
                 <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
                 <span class="cat-main">
                   <span class="cat-row-name">{{ category.name }}</span>
+                  <span class="cat-meta">
+                    <span :class="{ 'is-warn': targetStatus(category).warn }">{{ targetStatus(category).text }}</span>
+                    <span aria-hidden="true"> · </span>
+                    <span>{{ entryStatus(category) }}</span>
+                  </span>
                 </span>
               </button>
-              <button type="button" class="chip-add cat-add-goal" :aria-label="`Add a goal to ${category.name}`" @click="addGoal(category.id)">Add a goal</button>
+
+              <!-- An area with nothing in it yet: a quiet way to add its goal, which opens the detail in edit mode -->
+              <button
+                v-if="!hasContentArea(category)"
+                type="button"
+                class="chip-add cat-add-goal"
+                :aria-label="`Add a goal to ${category.name}`"
+                @click="addGoal(category.id)"
+              >Add a goal</button>
             </div>
-          </li>
-          <li v-if="filledCount && emptyCount">
-            <button type="button" class="cat-more" :aria-expanded="showAll" @click="toggleEmpty">
-              {{ emptyCount }} more life {{ emptyCount === 1 ? 'area' : 'areas' }} · add a goal
-            </button>
           </li>
         </ul>
 
@@ -619,17 +606,15 @@ button.harada-cell:focus-visible {
   min-width: 0;
 }
 
-/* Names and targets wrap: the list row grows with its text, nothing is cut off */
-/* An empty life area: the name row and the quiet Add a goal control share one hairline */
-.cat-empty {
+/* One row per life area: the name row and, for an area with nothing in it yet, the quiet Add a goal control share one hairline */
+.cat-item {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding-right: var(--space-3);
   border-bottom: 1px solid var(--rule-2);
 }
 
-.cat-empty .cat-row {
+.cat-item > .cat-row {
   flex: 1;
   min-width: 0;
   border-bottom: none;
@@ -637,23 +622,10 @@ button.harada-cell:focus-visible {
 
 .cat-add-goal {
   flex-shrink: 0;
+  margin-right: var(--space-3);
 }
 
-.cat-more {
-  display: block;
-  width: 100%;
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--rule-2);
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
-  text-align: left;
-}
-
-.cat-more:hover {
-  background: var(--bg-3);
-}
-
+/* Names, statuses and entry counts wrap: the list row grows with its text, nothing is cut off */
 .cat-row-name {
   overflow-wrap: anywhere;
   font-size: var(--fs-md);

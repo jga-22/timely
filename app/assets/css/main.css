@@ -1064,6 +1064,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
   margin-bottom: var(--space-3);
 }
 .wk-head-line .section-title { margin: 0; }
+/* The disclosure takes the row's free width; the Show sleep button sits at its right, level with the summary */
+.wk-details { flex: 1 1 0; min-width: 0; }
 .wk-meta {
   margin: 0;
   font-size: var(--fs-sm);
@@ -1591,7 +1593,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 /* Year: full width, collapsible, 13 week columns with a quarter label per row */
 .year-section { margin-top: var(--space-6); }
-.year-summary {
+/* Collapsible sections (Year, Week, Activities and habits) share one summary: title and count on a line, no marker */
+.year-summary,
+.section-summary {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -1600,8 +1604,27 @@ a { color: var(--accent); text-underline-offset: 3px; }
   cursor: pointer;
   list-style: none;
 }
-.year-summary::-webkit-details-marker { display: none; }
-.year-summary .section-title { margin: 0; }
+.year-summary::-webkit-details-marker,
+.section-summary::-webkit-details-marker { display: none; }
+.year-summary .section-title,
+.section-summary .section-title { margin: 0; }
+/* The same chevron as .disclosure, before the title (on the title, so the title stays one flex item beside the counts); it turns when the section is open */
+.year-summary .section-title::before,
+.section-summary .section-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+  border-right: 1.5px solid var(--ink-3);
+  border-bottom: 1.5px solid var(--ink-3);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.year-details[open] > .year-summary .section-title::before,
+.acts-details[open] > .section-summary .section-title::before,
+.wk-details[open] > .section-summary .section-title::before { transform: rotate(45deg); }
 .year-count {
   font-size: var(--fs-sm);
   color: var(--ink-3);

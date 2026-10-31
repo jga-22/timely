@@ -41,7 +41,6 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `week-schedule-open-mobile-light.png` | 400 px wide | Week, light: the activity detail with "Schedule in the week" open, its Close button (fix/ux-batch-5) |
 | `week-schedule-open-desktop-light.png` | 1280 px wide | Week, light: the same at 1280 px (fix/ux-batch-5) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
-| `goals-list-collapsed-desktop-light.png` | 1280 px wide, full page | Goals, light, two life areas with content: the full rows, "6 more life areas · add a goal" collapsed (feat/goals-insights-simplify) |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows with "Add a goal", no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
@@ -50,8 +49,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
-| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section collapsed (closed by default, FR-YEAR-7) |
-| `planner-one-type-year-open-desktop-light.png` | 1280 px wide | The same with the Year section open: the one line "Every week of 2026 uses My week.", the year nav, the painter, and the Weeks row |
+| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section open by default, with the one line "Every week of 2026 uses …" (FR-YEAR-7) |
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: an entry open in the unified edit form ("Edit Read for inspiration", sample data), with Save, Cancel and Delete; More options closed (refreshed 2026-10-29: the "Also counts toward" field is gone; Escape and Cancel close it and return focus to Edit, FR-PLAN-26) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
@@ -136,6 +134,13 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Goals list and Planner defaults (2026-10-30, branch `feat/goals-week-defaults`, from `main`, not pushed)
+
+- Goals list (FR-GOALS-25): every life area is listed; the fold ("N more life areas") is removed. Each row shows the 1-year target status ("Target set", "No target yet", "Target to define") and its entries as the detail counts them ("3 habits · 2 activities", or "No habits or activities yet"); "Add a goal" stays on an area with nothing in it.
+- Planner (FR-PLAN-13, FR-YEAR-7): the Year section is open by default. The Week grid and "Activities and habits" are disclosures too, open by default, state in memory only; the Show sleep button sits beside the Week summary.
+- Screens: `goals-desktop-light.png`, `goals-desktop-dark.png`, `goals-mobile-light.png`, `goals-start-empty-mobile-dark.png`, `planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`, `planner-one-type-desktop-light.png`. `goals-list-collapsed-desktop-light.png` and `planner-one-type-year-open-desktop-light.png` are removed.
+- Storage: no change; version 8.
+
 ### Insights adherence (2026-10-29, branch `feat/insights-adherence`, stacked on `feat/home-checks`, not pushed)
 
 A third choice in the Insights chart header, "Adherence", beside Bars and Donut (FR-INS-P6). It compares what was planned with what was ticked on Home over the range shown: a headline ("Done N% of planned", counted in hours of planned blocks, or in habit target ticks when no block is planned), bars by weekday (Week), by ISO week (Month, one year) or by month (several years, Quarter, Year), trimmed to the periods from the first tick up to the current one, a "By life area" list, the habits kept up or slipping, and a journal nudge with a prompt. The pure rules are in `app/utils/adherence.ts`: counting starts at the first tick and runs up to today, sleep never counts, a habit with a block that day is judged through the block, and habit ticks are capped at their target. Nothing is stored; storage version unchanged (8). Checks: build clean, typecheck 0 errors, 65 tsx checks of the rules, 49 headless Edge checks at 1280 and 400 px, light and dark, with real mouse clicks, no console errors, no horizontal overflow. Screenshots: `screens/insights-adherence-*`.
@@ -203,7 +208,7 @@ One form and one list for activities and habits (FR-ITEM-1 to 5). The Week tab s
 Owner UX review: fewer concepts on screen, less to fill in, the power opt-in. PRD 9.15 and `frontend-design.md` section 13.
 
 - Habit creates its activity (FR-GOALS-24): the habit form's first activity option, "Add '<name>' to my week", is the default for a new habit once minutes each is set. It makes an activity in the habit's life area with the life area colour and a free short code, or links the one of that name there. Cancel creates nothing.
-- Goals list (FR-GOALS-25): life areas with content are listed in full; empty ones fold into one "N more life areas · add a goal" row, and a life area with nothing in it shows its name and "Add a goal".
+- Goals list (FR-GOALS-25, changed 2026-10-30: all life areas are listed, see above): life areas with content are listed in full; empty ones fold into one "N more life areas · add a goal" row, and a life area with nothing in it shows its name and "Add a goal".
 - Goals Grid (FR-GOALS-26): List | Grid toggle from 1100px. List is the default; Grid is the Harada map with the detail under it. The two "Life areas" headings are gone.
 - Category detail (FR-GOALS-27): 1-year target, habits, the hours comparison, the 5-year goal, then the activities no habit links.
 - Insights (FR-INS-P1 to P3): Month and Week on the first row; Quarter, Year, the range and the unit under "More options"; the headline sentence was removed (2026-10-28); unassigned weeks count the week type that governs them, as Home and Planner do (PRD 23.1 superseded).

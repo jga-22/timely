@@ -33,7 +33,9 @@ const templateFill = (t: typeof templates.value[0]) => fill(t.color ?? '#5d6b7a'
 // ── Year painter ──
 const isYearPainting = ref(false)
 const hoverWeek = ref<number | null>(null)
-const yearOpen = ref(false)
+// Year and Activities and habits open by default; their state lasts while the view is mounted (in memory, not saved). The week grid keeps its own
+const yearOpen = ref(true)
+const actsOpen = ref(true)
 const appliedByDate = computed(() => {
   const m = new Map<string, string>()
   for (const w of appliedWeeks.value) m.set(w.startDate, w.templateId)
@@ -544,96 +546,98 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
     <!-- Activities and habits (FR-ITEM-4): one list. Timed entries are chips with their hours in the active week type; habits with no time
          are listed under them. Each opens the one form, inline; "+ Add" opens it for a new entry -->
     <section class="section acts" aria-labelledby="activities-title">
-      <div class="acts-head">
-        <h2 id="activities-title" class="section-title">Activities and habits</h2>
-      </div>
+      <details class="acts-details" :open="actsOpen" @toggle="actsOpen = ($event.currentTarget as HTMLDetailsElement).open">
+        <summary class="section-summary acts-head">
+          <h2 id="activities-title" class="section-title">Activities and habits</h2>
+        </summary>
 
-      <div class="sleep-row">
-        <button
-          v-if="sleepId"
-          type="button"
-          class="chip"
-          :data-active="selected?.activityId === sleepId"
-          :aria-pressed="selected?.activityId === sleepId"
-          @click="editEntry(sleepId)"
-        >
-          <span class="dot" :style="{ background: sleepColor }" />
-          <span class="t-name">Sleep</span>
-          <span class="sleep-row-when">{{ sleepWhen }}</span>
-          <span class="pill-count">{{ hoursText(activeHours.get(sleepId) ?? 0) }}h</span>
-        </button>
-        <button v-else type="button" class="chip-add" @click="setUpSleep">Set up sleep</button>
-      </div>
-
-      <ul class="act-list">
-        <li v-for="activity in plannerActivities" :key="activity.id">
+        <div class="sleep-row">
           <button
+            v-if="sleepId"
             type="button"
             class="chip"
-            :data-active="selected?.activityId === activity.id"
-            :aria-pressed="selected?.activityId === activity.id"
-            @click="selectEntry(activity.id)"
+            :data-active="selected?.activityId === sleepId"
+            :aria-pressed="selected?.activityId === sleepId"
+            @click="editEntry(sleepId)"
           >
-            <span class="dot" :style="{ background: activity.color }" />
-            <span class="t-name">{{ activity.name }}</span>
-            <span class="pill-count">{{ hoursText(activeHours.get(activity.id) ?? 0) }}h</span>
+            <span class="dot" :style="{ background: sleepColor }" />
+            <span class="t-name">Sleep</span>
+            <span class="sleep-row-when">{{ sleepWhen }}</span>
+            <span class="pill-count">{{ hoursText(activeHours.get(sleepId) ?? 0) }}h</span>
           </button>
-        </li>
-      </ul>
+          <button v-else type="button" class="chip-add" @click="setUpSleep">Set up sleep</button>
+        </div>
 
-      <div v-if="habitOnly.length" class="entry-habits">
-        <h3 class="entry-habits-title">Habits</h3>
-        <ul class="row-list">
-          <li v-for="habit in habitOnly" :key="habit.id" class="row-item">
-            <span class="dot" :style="{ background: categoryMap.get(habit.categoryId)?.color ?? '#888' }" aria-hidden="true" />
-            <span class="row-main">
-              <span class="row-name">{{ habit.name }}</span>
-              <span class="row-meta">{{ categoryName(habit.categoryId) }} · {{ frequencyText(habit.frequency) }}</span>
-            </span>
-            <EditButton :label="`Edit ${habit.name}`" @click="editEntry(habit.id)" />
+        <ul class="act-list">
+          <li v-for="activity in plannerActivities" :key="activity.id">
+            <button
+              type="button"
+              class="chip"
+              :data-active="selected?.activityId === activity.id"
+              :aria-pressed="selected?.activityId === activity.id"
+              @click="selectEntry(activity.id)"
+            >
+              <span class="dot" :style="{ background: activity.color }" />
+              <span class="t-name">{{ activity.name }}</span>
+              <span class="pill-count">{{ hoursText(activeHours.get(activity.id) ?? 0) }}h</span>
+            </button>
           </li>
         </ul>
-      </div>
 
-      <p v-if="!planner.activities.length && !habitOnly.length" class="acts-empty">No activities or habits yet. Add one to plan when it happens.</p>
-
-      <div v-if="selected && !editing && !adding" class="act-detail">
-        <span class="dot dot-lg" :style="{ background: selectedColor }" />
-        <div class="act-detail-main">
-          <span class="act-detail-name">{{ selectedName }}</span>
-          <span class="act-detail-sub">{{ summaryLine }}</span>
+        <div v-if="habitOnly.length" class="entry-habits">
+          <h3 class="entry-habits-title">Habits</h3>
+          <ul class="row-list">
+            <li v-for="habit in habitOnly" :key="habit.id" class="row-item">
+              <span class="dot" :style="{ background: categoryMap.get(habit.categoryId)?.color ?? '#888' }" aria-hidden="true" />
+              <span class="row-main">
+                <span class="row-name">{{ habit.name }}</span>
+                <span class="row-meta">{{ categoryName(habit.categoryId) }} · {{ frequencyText(habit.frequency) }}</span>
+              </span>
+              <EditButton :label="`Edit ${habit.name}`" @click="editEntry(habit.id)" />
+            </li>
+          </ul>
         </div>
-        <EditButton ref="selectedEditButton" :label="`Edit ${selectedName}`" :expanded="editing" @click="startEdit" />
-      </div>
 
-      <!-- The result stays under the list after the form closes, so its Undo is still there (8 s) -->
-      <div v-if="resultText" class="sched-result" role="status">
-        <span>{{ resultText }}</span>
-        <button v-if="canUndo" type="button" class="btn btn-sm" @click="undoResult">Undo</button>
-      </div>
+        <p v-if="!planner.activities.length && !habitOnly.length" class="acts-empty">No activities or habits yet. Add one to plan when it happens.</p>
 
-      <ActivityForm
-        v-if="selected && editing"
-        :key="`edit-${selected.habitId ?? ''}-${selected.activityId ?? ''}`"
-        :habit-id="selected.habitId"
-        :activity-id="selected.activityId"
-        @saved="onSaved"
-        @close="closeEdit"
-      />
+        <div v-if="selected && !editing && !adding" class="act-detail">
+          <span class="dot dot-lg" :style="{ background: selectedColor }" />
+          <div class="act-detail-main">
+            <span class="act-detail-name">{{ selectedName }}</span>
+            <span class="act-detail-sub">{{ summaryLine }}</span>
+          </div>
+          <EditButton ref="selectedEditButton" :label="`Edit ${selectedName}`" :expanded="editing" @click="startEdit" />
+        </div>
 
-      <ActivityForm
-        v-if="adding"
-        key="add"
-        :habit-id="null"
-        :activity-id="null"
-        :category-id="orderedCategories[0]?.id"
-        @saved="onSaved"
-        @close="closeAdd"
-      />
-      <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd">+ Add</button>
+        <!-- The result stays under the list after the form closes, so its Undo is still there (8 s) -->
+        <div v-if="resultText" class="sched-result" role="status">
+          <span>{{ resultText }}</span>
+          <button v-if="canUndo" type="button" class="btn btn-sm" @click="undoResult">Undo</button>
+        </div>
+
+        <ActivityForm
+          v-if="selected && editing"
+          :key="`edit-${selected.habitId ?? ''}-${selected.activityId ?? ''}`"
+          :habit-id="selected.habitId"
+          :activity-id="selected.activityId"
+          @saved="onSaved"
+          @close="closeEdit"
+        />
+
+        <ActivityForm
+          v-if="adding"
+          key="add"
+          :habit-id="null"
+          :activity-id="null"
+          :category-id="orderedCategories[0]?.id"
+          @saved="onSaved"
+          @close="closeAdd"
+        />
+        <button v-else ref="addTrigger" type="button" class="chip-add act-add-trigger" @click="openAdd">+ Add</button>
+      </details>
     </section>
 
-    <!-- Year: full width, collapsible, closed by default with any number of week types. With one week type a line says which one the year uses -->
+    <!-- Year: full width, collapsible, open by default with any number of week types. With one week type a line says which one the year uses -->
     <section class="section year-section" aria-labelledby="year-title">
       <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="year-summary">
