@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupAt, saveAction, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
+import { bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, saveAction, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
 
 const SLEEP = 'sleep'
 const WORK = 'work'
@@ -216,14 +216,18 @@ describe('collapsedBandLabels', () => {
   })
 })
 
-describe('popupAt and menuTop', () => {
-  it('opens a popup beside the release point on desktop, inside the viewport', () => {
-    expect(popupAt(400, 300, 1280, 900)).toEqual({ x: 416, y: 290 })
-    expect(popupAt(1200, 880, 1280, 900)).toEqual({ x: 1004, y: 700 })
+describe('popupBeside and menuTop', () => {
+  it('opens a popup beside its day column on desktop, level with the run', () => {
+    expect(popupBeside({ left: 400, right: 540 }, 300, { width: 1280, height: 900 })).toEqual({ x: 552, y: 300 })
+  })
+
+  it('opens to the left of the column when the right has no room, and keeps it on the screen', () => {
+    expect(popupBeside({ left: 1100, right: 1240 }, 300, { width: 1280, height: 900 })).toEqual({ x: 828, y: 300 })
+    expect(popupBeside({ left: 400, right: 540 }, 880, { width: 1280, height: 900 })).toEqual({ x: 552, y: 700 })
   })
 
   it('opens a popup at the bottom on phones', () => {
-    expect(popupAt(100, 300, 400, 800)).toEqual({ x: 16, y: 640 })
+    expect(popupBeside({ left: 100, right: 240 }, 300, { width: 400, height: 800 })).toEqual({ x: 16, y: 640 })
   })
 
   it('moves a menu up when its bottom would pass the screen edge', () => {

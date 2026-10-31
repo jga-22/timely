@@ -4,7 +4,7 @@ import { usePlannerStore } from '~/stores/planner'
 import { useGridUndo } from '~/composables/useGridUndo'
 import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks } from '~/utils/planner'
 import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
-import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupAt, rangeLabel, saveAction, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
+import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, rangeLabel, saveAction, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
 
 /** A touch that moves further than this (px) is a scroll, not a tap */
 const TOUCH_SLOP = 8
@@ -106,9 +106,14 @@ const focusCursor = () => {
 const focusBox = () => barRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus()
 const focusBottomHandle = () => gridEl.value?.querySelector<HTMLElement>('.wk-handle.is-bottom')?.focus()
 
-// Popups open beside the release point, or at the bottom on phones
-const placePopup = (x: number, y: number) => {
-  barPos.value = popupAt(x, y, window.innerWidth, window.innerHeight)
+// The bar and the menu open beside the run's day column, so they never cover its handles; on phones at the bottom of the screen
+const placeBar = () => {
+  const range = selection.value
+  const column = range ? gridEl.value?.querySelector<HTMLElement>(`.wk-day[data-day="${range.day}"]`) : null
+  if (!range || !column) return
+
+  const rect = column.getBoundingClientRect()
+  barPos.value = popupBeside({ left: rect.left, right: rect.right }, rect.top + (hourTop.value[range.start] ?? 0), { width: window.innerWidth, height: window.innerHeight })
 }
 
 const openBar = () => {
@@ -352,8 +357,8 @@ const onPointerMove = (event: PointerEvent) => {
   if (hit.cell.hour !== press.cell.hour) press.dragging = true
 }
 
-const placeAt = (x: number, y: number) => {
-  placePopup(x, y)
+const placeAt = () => {
+  placeBar()
   openBar()
 }
 
@@ -364,7 +369,7 @@ const onPointerUp = (event: PointerEvent) => {
 
   if (current.pointerType === 'mouse' && current.dragging) {
     baseline.value = selection.value ? { ...selection.value } : null
-    placeAt(event.clientX, event.clientY)
+    placeAt()
     return
   }
 
@@ -372,7 +377,7 @@ const onPointerUp = (event: PointerEvent) => {
   endEdit()
   selection.value = current.block ?? singleCell(current.cell)
   baseline.value = { ...selection.value }
-  placeAt(event.clientX, event.clientY)
+  placeAt()
 }
 
 const onPointerCancel = () => {
@@ -415,8 +420,7 @@ const onKeydown = (event: KeyboardEvent) => {
       selection.value = blockOf(cursor.value) ?? singleCell(cursor.value)
       baseline.value = { ...selection.value }
     }
-    const rect = target.getBoundingClientRect()
-    placeAt(rect.right, rect.top)
+    placeAt()
   }
 }
 
