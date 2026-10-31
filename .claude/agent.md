@@ -21,9 +21,12 @@ Nuxt 4, Vue 3, Pinia, Vuetify (neutralised, see the style spec), TypeScript. Sta
 npm run dev                 # dev server (dev-only 404s for Vuetify/mdi @fs CSS are known and harmless)
 npm run build               # production build; must stay clean
 npx nuxi typecheck          # must stay at 0 errors
+npm test                    # unit tests (Vitest, tests/unit): must stay green; npm run test:watch to watch
 ```
 
 If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @vue/language-core@3` (never commit that to `package.json` or the lockfile).
+
+CI (`.github/workflows/ci.yml`) runs on pull requests and on pushes to `main`: `npm ci`, `npm test`, the same typecheck (with vue-tsc installed for the run) and the build. Keep all four green. Unit tests cover the pure modules in `app/utils` (`tests/unit/*.test.ts`, shared data in `tests/unit/fixtures.ts`); new pure logic gets a test there, and tests pass dates explicitly (no clock).
 
 ## Where things are
 
@@ -96,6 +99,7 @@ Shell and shared code:
 ## Current state
 
 - Branch `feat/goals-week-defaults` from `main`, not pushed: the Goals list shows every life area with its target status and entry counts (no fold, FR-GOALS-25); the Planner Year section, the Week grid and Activities and habits open by default and collapse (FR-PLAN-13, FR-YEAR-7). Storage version unchanged (8).
+- Branch `chore/tests-ci` from `origin/main`, not pushed: Vitest unit tests for the pure utils (`npm test`, `vitest.config.ts`, `tests/unit/`) and the CI workflow. No app code changed; storage version unchanged (8).
 - Branch `feat/insights-adherence` from `feat/home-checks` (stacked on PR #42), not pushed: Insights gets an "Adherence" choice beside Bars and Donut (FR-INS-P6): the headline, bars by weekday, ISO week or month, life areas, habits kept up or slipping, the journal nudge and the empty state. Pure rules in `utils/adherence.ts`, view in `insights/AdherenceView.vue`. Storage version unchanged (8).
 - Branch `refactor/remove-plan-vs-need` from `main`, not pushed: the planned-against-needed comparison is removed from Insights, Goals and the calculations (owner decision 2026-10-29: circular). The donut and available time stay; each habit keeps its plain need text; the tour card and intro scene 4 no longer name the comparison. PRD FR-GOALS-16, FR-GOALS-P1, FR-GOALS-P2 and FR-INS-P4 are removed. Storage version unchanged (8). Supersedes the `feat/insights-plan-vs-need` comparison below.
 - Branch `feat/insights-plan-vs-need` from `main`, not pushed: planned against needed moves to Insights over the range shown, as the Needed and Planned bars and a status line in the Life areas list (FR-INS-P4); Goals keeps a yearly badge and "See in Insights" (FR-GOALS-P2); the weekly bars leave Goals. Storage version unchanged (8). Owner to confirm: the comparison no longer reads around time off.
