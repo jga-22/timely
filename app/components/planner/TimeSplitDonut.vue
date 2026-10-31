@@ -231,9 +231,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 }
 .donut-sub {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Wraps rather than cuts: the hole of the ring is narrow and "72 h planned of 105 h" must read in full */
+  text-wrap: balance;
   font-size: var(--fs-xs);
   line-height: 1.3;
   color: var(--ink-3);
