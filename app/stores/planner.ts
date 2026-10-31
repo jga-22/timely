@@ -23,7 +23,10 @@ import {
 import { shortCodeFor } from '~/utils/onboarding'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { restoreSlots } from '~/utils/store/undo'
-import { isDateKey, isDoneKey, sanitiseDone } from '~/utils/done'
+import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
+import { setAmbition, updateAmbition } from '~/utils/store/ambition'
+import { setJournalEntry, toggleDone } from '~/utils/store/daily'
+import { replaceStateInto } from '~/utils/store/lifecycle'
 import { localDateKey } from '~/utils/dates'
 import {
   ALL_NIGHTS,
@@ -82,12 +85,7 @@ export const usePlannerStore = defineStore('planner', {
 
     /** Replaces the whole state in one step, so nothing of the previous state (a journal, a stale onboarding flag) carries over */
     replaceState(next: PlannerState) {
-      this.$patch(current => {
-        Object.assign(current, next)
-        if (next.onboarding === undefined) delete current.onboarding
-        // Done ticks are per user (FR-HOME-14): a save without them, or a malformed map, starts with none
-        current.done = sanitiseDone(next.done)
-      })
+      this.$patch(current => replaceStateInto(current, next))
     },
 
     /** Ends the first-run onboarding without creating data (FR-ONB-3, Start empty) */
@@ -562,23 +560,12 @@ export const usePlannerStore = defineStore('planner', {
     // Weeks
     // ---------------------------------------------------------------
     setWeekTemplate(startDate: string, templateId: string | null) {
-      const existing = this.appliedWeeks.find(w => w.startDate === startDate)
-      if (templateId === null) {
-        this.appliedWeeks = this.appliedWeeks.filter(w => w.startDate !== startDate)
-      } else if (existing) {
-        existing.templateId = templateId
-      } else {
-        this.appliedWeeks.push({
-          id: `${templateId}-${startDate}`,
-          startDate,
-          templateId
-        })
-      }
+      setWeekTemplate(this.$state, startDate, templateId)
     },
 
     /** Applies one week type (or none, with null) to a range of weeks, such as a vacation (FR-YEAR-7) */
     setWeeksTemplate(startDates: string[], templateId: string | null) {
-      for (const startDate of startDates) this.setWeekTemplate(startDate, templateId)
+      setWeeksTemplate(this.$state, startDates, templateId)
     },
 
     setProjectionYears(years: number) {
@@ -589,20 +576,12 @@ export const usePlannerStore = defineStore('planner', {
     // Ambition
     // ---------------------------------------------------------------
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
-      if (this.ambition) Object.assign(this.ambition, changes)
+      updateAmbition(this.$state, changes)
     },
 
     /** Writes the 5-year ambition: creates it when the state has none (Start empty). A blank statement creates nothing */
     setAmbition(statement: string) {
-      if (this.ambition) {
-        this.updateAmbition({ statement })
-        return
-      }
-
-      const trimmed = statement.trim()
-      if (!trimmed) return
-
-      this.ambition = { id: `ambition-${Date.now()}`, statement: trimmed, horizonYears: 5 }
+      setAmbition(this.$state, statement, Date.now())
     },
 
     // ---------------------------------------------------------------
@@ -779,11 +758,7 @@ export const usePlannerStore = defineStore('planner', {
     // ---------------------------------------------------------------
     /** Journal experiment (FR-HOME-11): a blank note removes the entry, so the saved state stays small */
     setJournalEntry(dateKey: string, text: string) {
-      if (text.trim()) {
-        this.journal[dateKey] = text
-      } else {
-        delete this.journal[dateKey]
-      }
+      setJournalEntry(this.$state, dateKey, text)
     },
 
     // ---------------------------------------------------------------
@@ -792,14 +767,7 @@ export const usePlannerStore = defineStore('planner', {
     /** Done tick on Home (FR-HOME-14): adds or removes a block or habit key of a date. A date with no ticks left is removed.
      * A future date (after today, local) or a malformed key is refused */
     toggleDone(date: string, key: string) {
-      if (!isDateKey(date) || !isDoneKey(key) || date > localDateKey()) return
-
-      const keys = this.done?.[date] ?? []
-      const next = keys.includes(key) ? keys.filter(item => item !== key) : [...keys, key]
-
-      if (!this.done) this.done = {}
-      if (next.length) this.done[date] = next
-      else delete this.done[date]
+      toggleDone(this.$state, date, key, localDateKey())
     },
   }
 })
