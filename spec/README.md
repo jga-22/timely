@@ -35,12 +35,14 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-mobile-light.png` | 400 px wide | Goals, light: the category list at phone width, full page, each row with its 5-year goal (refreshed 2026-10-31) |
 | `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: the 5-year goal, the 1-year target, the entries with "Needs 6 h a week" (refreshed 2026-10-29) |
 | `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Activities and habits" with each habit's schedule and "Needs 6 h a week" (refreshed 2026-10-29) |
-| `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
+| `planner-grid-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 2-hour block applied to an empty run; its box is open with the handles, Change…, the pencil (Edit activity), Delete, Save (disabled until an edge moves) and Cancel, and the undo line (2026-11-05; replaces `week-apply-edit-desktop-light.png`, retired) |
 | `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
 | `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
+| `planner-grid-block-selected-desktop-light.png` | 1280 px wide | Week, light: a block tapped, its edge handles at once, and the action bar beside its day column (Change…, the pencil, Delete, Save disabled, Cancel) (2026-11-05) |
+| `planner-grid-block-selected-mobile-light.png` | 400 px wide | Week, light: the same block on a phone; the action bar at the bottom of the screen and the handles on the block's edges (2026-11-05) |
 | `planner-desktop-light.png` | 1280 px wide | Week, light, full page, sample data: the week type bar, the week grid, "+ Add activity" and "Sleep hours" (10 PM to 7 AM) under it, the Time split; no Activities list (2026-11-04) |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
@@ -129,6 +131,13 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Week grid edit box (2026-11-05, branch `feat/grid-edit-box`, stacked on `feat/ux-round-3`, not pushed)
+
+- The edge handles come with the selection: a run that holds an activity shows them at once (a click or tap on a block, a keyboard run, an Apply). There is no Edit range step (FR-PLAN-23). The action bar holds Change…, Edit (the entry's form, FR-ITEM-3), Delete, Save (enabled once an edge moved) and Cancel; it opens beside the run's day column, never over the run.
+- Touch handles are 44px and reach out of the run, so a scroll that starts in a one-hour block still scrolls. The box and the entry form close each other.
+- Checks: `npm test` 536 pass, typecheck 0 errors, production build clean. Headless Edge: 54 checks at 1280 (mouse) and 53 at 400 (touch), light and dark, all passing. The grid capture compared with the untouched build: differences only in steps that show the box or the handles; the saved state identical. Storage version unchanged (8).
+- Screens: `planner-grid-block-selected-desktop-light.png` and `planner-grid-block-selected-mobile-light.png` are new, and `planner-grid-apply-edit-desktop-light.png` replaces `week-apply-edit-desktop-light.png`, which is retired (it showed Edit range).
 
 ### Time split and Home ring (2026-11-02, branch `feat/time-split-home-ring`, stacked on the Year tab, not pushed)
 
