@@ -24,10 +24,13 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 9 done" at the right end with the small day ring beside it (a green check when everything is done), the activities with their done checks, the Habits list with weekly progress (a weekly habit already met this week is left out), the journal card |
-| `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state with the adherence ring |
-| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row at the right end |
-| `home-mobile-dark.png` | 400 px wide | Today, dark, full page |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, one block ticked: the hour bar (7h to 22h), "1 of 4 done" with the small day ring beside it (blocks only), the Activities rows, and the Habits summary "0 of 10 ticked", collapsed; the linked habits with a block this week are not listed (2026-11-06) |
+| `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state (2026-11-06) |
+| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row at the right end, the Habits summary collapsed (2026-11-06) |
+| `home-mobile-dark.png` | 400 px wide | Today, dark, full page (2026-11-06) |
+| `home-all-done-desktop-light.png` | 1280 px wide | Today, light, every block ticked: the ring is a green check with "All done for today"; the Habits summary has no check, its habits unticked (2026-11-06) |
+| `home-all-done-mobile-light.png` | 400 px wide | Today, light, every block ticked, phone width (2026-11-06) |
+| `home-habits-done-desktop-light.png` | 1280 px wide | Today, light, every listed habit ticked with the Habits section open: "10 of 10 ticked" with its own green check and "All ticked"; the blocks are not all done ("0 of 4 done", the ring) (2026-11-06) |
 | `home-yesterday-desktop-light.png` | 1280 px wide | The previous day (Wednesday 28 October): the day label as title, "Today" button shown, its own ticks |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 5-year goal (a target icon under the name) and each 1-year target status (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
@@ -131,6 +134,14 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Home habits split (2026-11-06, branch `feat/home-habits-split`, from `main`, not pushed)
+
+- A habit with a day assigned (its linked activity has a block in the week's template) is shown through its block on that day and never as a Habits row. The Habits list keeps only the habits with no day assigned (FR-HOME-15).
+- The day's ring and "x of y done" count the scheduled blocks only (FR-HOME-17, 19). The Habits section has its own "N of M ticked" and, when every listed habit is ticked, a green check with "All ticked".
+- Checks: `npm test` 540 pass, `npx nuxi typecheck` 0 errors, `npm run build` clean. Headless Edge on the production build at 1280 and 400 px, light and dark: the Habits list equal to an independent calculation from the saved state (10 habits on Saturday 31 October; 12 on a Sunday with no blocks); the blocks-only ring, the all-done and all-ticked states, a past day with its own wording, a day with no blocks; no console errors, no overflow.
+- Insights adherence (FR-INS-P6) reads the same habit list, so a day-assigned habit no longer expects ticks on the other days of its week.
+- Screens: `home-desktop-*`, `home-mobile-*`, `home-all-done-*` and `home-habits-done-desktop-light.png` refreshed. Storage version unchanged (8); no data-model change.
 
 ### Week grid edit box (2026-11-05, branch `feat/grid-edit-box`, stacked on `feat/ux-round-3`, not pushed)
 
