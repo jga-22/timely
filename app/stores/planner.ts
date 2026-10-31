@@ -1,9 +1,5 @@
 import { defineStore } from 'pinia'
-import {
-  freeShortCode,
-  newWeekSlots,
-  replacedText
-} from '~/utils/plannerStore'
+import { freeShortCode, newWeekSlots } from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   DESIGN_COLORS,
@@ -18,6 +14,7 @@ import {
 } from '~/utils/planner'
 import { addActivity, createRoleActivity, ensureSleepActivity, ownActivityFor, removeActivity, updateActivity } from '~/utils/store/activities'
 import { addHabit, removeHabit, setHabitActivity, setHabitFrequency, updateHabit } from '~/utils/store/habits'
+import { setSleep, setupSleep } from '~/utils/store/sleepSetup'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { restoreSlots } from '~/utils/store/undo'
 import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
@@ -26,15 +23,7 @@ import { setJournalEntry, toggleDone } from '~/utils/store/daily'
 import { replaceStateInto } from '~/utils/store/lifecycle'
 import { addCategory, moveCategory, removeCategory, seedHaradaGoals, setCategoryColor, updateCategory } from '~/utils/store/categories'
 import { localDateKey } from '~/utils/dates'
-import {
-  ALL_NIGHTS,
-  DEFAULT_SLEEP,
-  paintSleep,
-  sleepActivityId,
-  sleepWindowError,
-  windowLabel,
-  type SleepGroup
-} from '~/utils/sleep'
+import type { SleepGroup } from '~/utils/sleep'
 import {
   blockHours,
   entryDraftOf,
@@ -334,20 +323,7 @@ export const usePlannerStore = defineStore('planner', {
      * over whatever holds them. Returns the result text and the undo, or null when a window is refused or there is no Sleep activity
      */
     setSleep(templateId: string, groups: SleepGroup[]): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
-      const template = getTemplateById(this.$state, templateId)
-      const sleepId = sleepActivityId(this.$state)
-
-      if (!template || !sleepId || !isHourlyTemplate(template) || groups.some(group => sleepWindowError(group.window))) return null
-
-      const before = [...template.slots]
-      const { slots, replaced } = paintSleep(template.slots, sleepId, groups)
-      template.slots = slots
-
-      const text = groups.length === 1
-        ? `Sleep set to ${windowLabel(groups[0]!.window)}.`
-        : `Sleep set to ${windowLabel(groups[0]!.window)} on weekdays and ${windowLabel(groups[1]!.window)} at weekends.`
-
-      return { text: `${text}${replacedText(replaced, this.activities)}`, undo: [{ templateId, slots: before }] }
+      return setSleep(this.$state, templateId, groups)
     },
 
     /**
@@ -355,20 +331,7 @@ export const usePlannerStore = defineStore('planner', {
      * type. Null when there is no life area or the active week type is not hourly. The undo puts the hours back; the activity stays
      */
     setupSleep(): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
-      const template = this.activeTemplate
-      if (!template || !isHourlyTemplate(template)) return null
-
-      const sleepId = this.ensureSleepActivity()
-      if (!sleepId) return null
-
-      const before = [...template.slots]
-      const { slots, replaced } = paintSleep(template.slots, sleepId, [{ days: ALL_NIGHTS, window: DEFAULT_SLEEP }])
-      template.slots = slots
-
-      return {
-        text: `Sleep set up: ${windowLabel(DEFAULT_SLEEP)} every night in ${template.name}.${replacedText(replaced, this.activities)}`,
-        undo: [{ templateId: template.id, slots: before }]
-      }
+      return setupSleep(this.$state, Date.now())
     },
 
     // ---------------------------------------------------------------
