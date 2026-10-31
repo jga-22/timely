@@ -24,15 +24,15 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 7 done" with the small day ring beside it (a green check when everything is done), the activities with their done checks, the Habits list with weekly progress, the journal card |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 9 done" at the right end with the small day ring beside it (a green check when everything is done), the activities with their done checks, the Habits list with weekly progress (a weekly habit already met this week is left out), the journal card |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state with the adherence ring |
-| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row, Details still on screen |
+| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row at the right end |
 | `home-mobile-dark.png` | 400 px wide | Today, dark, full page |
 | `home-yesterday-desktop-light.png` | 1280 px wide | The previous day (Wednesday 28 October): the day label as title, "Today" button shown, its own ticks |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 1-year target (no time comparison since 2026-10-29) |
+| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 5-year goal (a target icon under the name) and each 1-year target status (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list at phone width, full page (refreshed 2026-10-29) |
+| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list at phone width, full page, each row with its 5-year goal (refreshed 2026-10-31) |
 | `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: the 5-year goal, the 1-year target, the entries with "Needs 6 h a week" (refreshed 2026-10-29) |
 | `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Activities and habits" with each habit's schedule and "Needs 6 h a week" (refreshed 2026-10-29) |
 | `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
@@ -40,7 +40,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
-| `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows with "Add a goal", no target or bar lines; the List \| Grid toggle is hidden |
+| `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
