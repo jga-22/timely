@@ -17,6 +17,7 @@ import {
   type PaintMode
 } from '~/utils/planner'
 import { addActivity, createRoleActivity, ensureSleepActivity, ownActivityFor, removeActivity, updateActivity } from '~/utils/store/activities'
+import { addHabit, removeHabit, setHabitActivity, setHabitFrequency, updateHabit } from '~/utils/store/habits'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { restoreSlots } from '~/utils/store/undo'
 import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
@@ -403,47 +404,23 @@ export const usePlannerStore = defineStore('planner', {
     // ---------------------------------------------------------------
     /** Adds a habit to a category. Returns its id, or null when the name is blank or the category is unknown */
     addHabit(categoryId: string, name: string): string | null {
-      const trimmedName = name.trim()
-
-      if (!trimmedName || !this.categories.some(category => category.id === categoryId)) {
-        return null
-      }
-
-      const id = `habit-${Date.now()}`
-
-      this.habits.push({
-        id,
-        categoryId,
-        name: trimmedName,
-        frequency: { count: 1, period: 'week' }
-      })
-
-      return id
+      return addHabit(this.$state, categoryId, name, Date.now())
     },
 
     updateHabit(habitId: string, changes: Partial<Pick<Habit, 'name' | 'minutesPerOccurrence'>>) {
-      const habit = this.habits.find(item => item.id === habitId)
-      if (habit) Object.assign(habit, changes)
+      updateHabit(this.$state, habitId, changes)
     },
 
     setHabitFrequency(habitId: string, count: number, period: HabitPeriod) {
-      const habit = this.habits.find(item => item.id === habitId)
-      if (habit) habit.frequency = { count: Math.max(count, 0), period }
+      setHabitFrequency(this.$state, habitId, count, period)
     },
 
     setHabitActivity(habitId: string, activityId: string | null) {
-      const habit = this.habits.find(item => item.id === habitId)
-
-      if (!habit) {
-        return
-      }
-
-      if (activityId) habit.activityId = activityId
-      else delete habit.activityId
+      setHabitActivity(this.$state, habitId, activityId)
     },
 
     removeHabit(habitId: string) {
-      this.habits = this.habits.filter(habit => habit.id !== habitId)
+      removeHabit(this.$state, habitId)
     },
 
     // ---------------------------------------------------------------
