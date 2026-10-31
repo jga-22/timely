@@ -1503,6 +1503,19 @@ a { color: var(--accent); text-underline-offset: 3px; }
   font-size: var(--fs-sm);
   color: var(--ink-2);
 }
+/* Time split (Week tab): the ring and the life areas list side by side from 768px, stacked below it */
+.time-split {
+  display: grid;
+  gap: var(--space-5);
+  align-items: center;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .time-split {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+}
 .act-detail {
   display: flex;
   align-items: center;
