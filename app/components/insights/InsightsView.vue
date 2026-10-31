@@ -5,23 +5,19 @@ import { usePlannerFill } from '~/composables/usePlannerFill'
 import { adherenceMode, adherenceReport } from '~/utils/adherence'
 import { localDateKey } from '~/utils/dates'
 import {
-  GRANULARITIES,
   UNITS,
   capacityLabel,
   availableShares,
   categoryShares,
-  chartScale,
   formatInUnit,
   NOT_PLANNED_KEY,
   insightsBars,
-  rangeYears,
-  type InsightsBar,
   type InsightsGranularity,
   type InsightsUnit
 } from '~/utils/insights'
 
 // Read-only (PRD FR-INS). The controls only change this view: the shared year, the granularity, the range and the unit.
-// Month and Week are on the first row; Quarter, Year, the range and the unit sit behind More options (FR-INS-P2)
+// The range controls (RangeControls) hold Month and Week, then More options; the chart and the life areas list are here.
 const planner = usePlannerStore()
 const { year } = usePlannerYear()
 const { link } = useNav()
@@ -33,27 +29,11 @@ const { showSleep } = useShowSleep()
 const granularity = ref<InsightsGranularity>('month')
 const span = ref<'one' | 'several'>('one')
 const unit = ref<InsightsUnit>('hours')
-
-// The disclosure stays open for the session once opened; it starts closed
-const moreOpen = useState('insights-more', () => false)
-const FIRST_ROW = GRANULARITIES.filter(option => option.id === 'month' || option.id === 'week')
-const MORE_GRANULARITIES = GRANULARITIES.filter(option => option.id === 'quarter' || option.id === 'year')
-
-// Several years: the selected year and the projection horizon after it. Future years follow their templates
-const horizon = computed({
-  get: () => Math.max(2, planner.settings.projectionDefaults.years),
-  set: (value: number) => planner.setProjectionYears(value)
-})
-const HORIZON_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-const years = computed(() => (year.value === null ? [] : rangeYears(year.value, span.value === 'several' ? horizon.value : 1)))
-const rangeLabel = computed(() => (years.value.length > 1 ? `${years.value[0]} to ${years.value[years.value.length - 1]}` : `${year.value ?? ''}`))
+const { years, rangeLabel } = useRangeYears(span)
 
 const bars = computed(() => (years.value.length ? insightsBars(planner.$state, granularity.value, years.value, showSleep.value) : []))
 const shares = computed(() => categoryShares(bars.value))
 
-// The axis top covers the largest planned or available value, so the capacity line is always on the chart
-const scale = computed(() => chartScale(bars.value))
 const unitShort = computed(() => UNITS.find(option => option.id === unit.value)!.short)
 const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShort.value}`
 
@@ -81,6 +61,21 @@ const donutSlices = computed(() => available.value.rows.map(row => ({
 const donutPlannedPct = computed(() => 100 - available.value.notPlannedShare)
 const donutLabel = computed(() => `Planned time as a share of the available time, ${rangeLabel.value}: ${donutPlannedPct.value}% planned, ${available.value.notPlannedShare}% not planned`)
 
+// The life areas list: the same rows as the donut, linking to Goals; the not planned rest is its own row
+const shareRows = computed(() => available.value.rows.map(row => ({
+  key: row.categoryId,
+  label: nameOf(row.categoryId),
+  color: colorOf(row.categoryId),
+  value: amount(row.hours),
+  pct: row.share,
+  to: link('goals', { item: row.categoryId })
+})))
+const restRow = computed(() => ({
+  key: NOT_PLANNED_KEY,
+  value: amount(available.value.notPlannedHours),
+  pct: available.value.notPlannedShare
+}))
+
 // The selected slice (FR-INS-P5): a session choice, set by a slice or a list row in the donut view. It clears when the view changes,
 // and when its slice is no longer in the chart (another range or a different set of life areas)
 const selectedKey = ref<string | null>(null)
@@ -102,48 +97,9 @@ const selectedDetail = computed(() => {
 const selectSlice = (key: string | null) => {
   selectedKey.value = key
 }
-// A list row selects its slice in the donut view (a link inside it still goes to Goals); rows with no slice do nothing
-const onRowClick = (event: MouseEvent, key: string) => {
-  if (chartView.value !== 'donut' || !donutKeys.value.includes(key) || (event.target as HTMLElement).closest('a')) return
-  selectedKey.value = selectedKey.value === key ? null : key
-}
-
-// The disclosure's button names the settings it hides when they are not the defaults, so they are not lost from view
-const moreSummary = computed(() => [
-  granularity.value === 'quarter' || granularity.value === 'year' ? GRANULARITIES.find(option => option.id === granularity.value)!.label : '',
-  span.value === 'several' ? `${years.value.length} years` : '',
-  unit.value !== 'hours' && chartView.value !== 'adherence' ? UNITS.find(option => option.id === unit.value)!.label : ''
-].filter(Boolean).join(', '))
-
-const heightPct = (hours: number) => `${(hours / scale.value) * 100}%`
 
 // The chart header: what the red lines are, for the granularity (FR-INS-4)
 const capacityText = computed(() => capacityLabel(granularity.value, bars.value, unit.value))
-
-// Week numbers label every fourth week (1, 5, 9 ...); the other granularities label every bar
-const tickLabel = (bar: InsightsBar) => {
-  if (granularity.value === 'week') return bar.week % 4 === 1 ? bar.label : ''
-  return bar.label
-}
-
-// A year label sits under the first bar of each year when the range spans several years
-const yearLabel = (index: number) => {
-  if (years.value.length < 2) return ''
-  const bar = bars.value[index]!
-  return index === 0 || bars.value[index - 1]!.year !== bar.year ? `${bar.year}` : ''
-}
-
-// Tooltip and aria text: planned and free time first, then each category in the unit
-const barTitle = (bar: InsightsBar) => {
-  const head = granularity.value === 'year'
-    ? bar.label
-    : granularity.value === 'week' ? `Week ${bar.week}, ${bar.year}` : `${bar.label} ${bar.year}`
-  const parts = bar.segments.map(segment => `${nameOf(segment.categoryId)} ${amount(segment.hours)}`)
-
-  return [`${head}: planned ${amount(bar.total)}, free ${amount(bar.free)}`, ...parts].join('\n')
-}
-
-const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}, ${rangeLabel.value}, with the available time per period`)
 </script>
 
 <template>
@@ -153,68 +109,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
     </header>
 
     <template v-if="year !== null">
-      <div class="insights-controls">
-        <div class="insights-toolbar">
-          <YearNav />
-          <div class="segmented" role="group" aria-label="Granularity">
-            <button
-              v-for="option in FIRST_ROW"
-              :key="option.id"
-              type="button"
-              :data-active="granularity === option.id"
-              :aria-pressed="granularity === option.id"
-              @click="granularity = option.id"
-            >{{ option.label }}</button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm insights-more-toggle"
-            aria-controls="insights-more"
-            :aria-expanded="moreOpen"
-            @click="moreOpen = !moreOpen"
-          >
-            More options<span v-if="moreSummary && !moreOpen" class="insights-more-summary">: {{ moreSummary }}</span>
-          </button>
-        </div>
-
-        <div v-if="moreOpen" id="insights-more" class="insights-more">
-          <div class="insights-toolbar">
-            <div class="segmented" role="group" aria-label="Granularity, longer periods">
-              <button
-                v-for="option in MORE_GRANULARITIES"
-                :key="option.id"
-                type="button"
-                :data-active="granularity === option.id"
-                :aria-pressed="granularity === option.id"
-                @click="granularity = option.id"
-              >{{ option.label }}</button>
-            </div>
-            <div class="segmented" role="group" aria-label="Range">
-              <button type="button" :data-active="span === 'one'" :aria-pressed="span === 'one'" @click="span = 'one'">One year</button>
-              <button type="button" :data-active="span === 'several'" :aria-pressed="span === 'several'" @click="span = 'several'">Several years</button>
-            </div>
-            <div v-if="span === 'several'" class="insights-horizon">
-              <label class="field-label" for="insights-horizon">Years</label>
-              <select id="insights-horizon" v-model.number="horizon" class="timely-select">
-                <option v-for="count in HORIZON_OPTIONS" :key="count" :value="count">{{ count }}</option>
-              </select>
-              <span class="insights-range">{{ rangeLabel }}</span>
-            </div>
-          </div>
-          <div v-if="chartView !== 'adherence'" class="insights-toolbar">
-            <div class="segmented" role="group" aria-label="Show in">
-              <button
-                v-for="option in UNITS"
-                :key="option.id"
-                type="button"
-                :data-active="unit === option.id"
-                :aria-pressed="unit === option.id"
-                @click="unit = option.id"
-              >{{ option.label }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <RangeControls
+        v-model:granularity="granularity"
+        v-model:span="span"
+        v-model:unit="unit"
+        state-key="insights"
+        :with-unit="chartView !== 'adherence'"
+      />
 
       <section v-if="shares.total || chartView === 'adherence'" class="section">
         <div class="insights-chart-head">
@@ -234,34 +135,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
           :mode="adherenceBarMode"
           :granularity="granularity"
         />
-        <div v-else-if="chartView === 'bars'" class="insights-chart" role="img" :aria-label="chartLabel">
-          <div class="insights-axis" aria-hidden="true">
-            <span class="insights-axis-top">{{ formatInUnit(scale, unit) }}</span>
-            <span class="insights-axis-mid">{{ formatInUnit(scale / 2, unit) }}</span>
-            <span class="insights-axis-zero">0</span>
-          </div>
-          <div class="insights-plot">
-            <div class="insights-bars">
-              <div v-for="bar in bars" :key="bar.key" class="insights-bar" :title="barTitle(bar)">
-                <div class="insights-stack" :style="{ height: heightPct(bar.total) }">
-                  <span
-                    v-for="segment in bar.segments"
-                    :key="segment.categoryId"
-                    class="insights-seg"
-                    :style="{ flexGrow: segment.hours, background: colorOf(segment.categoryId) }"
-                  />
-                </div>
-                <span class="insights-cap" :style="{ bottom: heightPct(bar.capacity) }" />
-              </div>
-            </div>
-            <div class="insights-ticks" aria-hidden="true">
-              <span v-for="bar in bars" :key="bar.key" class="insights-tick">{{ tickLabel(bar) }}</span>
-            </div>
-            <div v-if="years.length > 1" class="insights-ticks is-years" aria-hidden="true">
-              <span v-for="(bar, index) in bars" :key="bar.key" class="insights-tick is-year">{{ yearLabel(index) }}</span>
-            </div>
-          </div>
-        </div>
+        <YearPlannedBars
+          v-else-if="chartView === 'bars'"
+          :bars="bars"
+          :granularity="granularity"
+          :unit="unit"
+          :years="years"
+        />
         <InsightsAvailableDonut
           v-else
           class="insights-donut"
@@ -282,34 +162,13 @@ const chartLabel = computed(() => `Planned ${unit.value} by ${granularity.value}
           <h2 class="section-title">Life areas</h2>
         </div>
 
-        <ul class="share-list">
-          <li
-            v-for="row in available.rows"
-            :key="row.categoryId"
-            class="share-row"
-            :class="{ 'is-selected': selectedKey === row.categoryId, 'is-clickable': chartView === 'donut' && donutKeys.includes(row.categoryId) }"
-            @click="onRowClick($event, row.categoryId)"
-          >
-            <span class="share-name">
-              <span class="dot" :style="{ background: colorOf(row.categoryId) }" aria-hidden="true" />
-              <NuxtLink class="share-link" :to="link('goals', { item: row.categoryId })">{{ nameOf(row.categoryId) }}</NuxtLink>
-            </span>
-            <span class="share-value">{{ amount(row.hours) }}</span>
-            <span class="share-pct">{{ row.share }}%</span>
-          </li>
-          <li
-            class="share-row share-row-free"
-            :class="{ 'is-selected': selectedKey === NOT_PLANNED_KEY, 'is-clickable': chartView === 'donut' }"
-            @click="onRowClick($event, NOT_PLANNED_KEY)"
-          >
-            <span class="share-name">
-              <span class="dot dot-free" aria-hidden="true" />
-              <span class="share-free">Not planned</span>
-            </span>
-            <span class="share-value">{{ amount(available.notPlannedHours) }}</span>
-            <span class="share-pct">{{ available.notPlannedShare }}%</span>
-          </li>
-        </ul>
+        <ShareList
+          :rows="shareRows"
+          :rest="restRow"
+          :selectable="chartView === 'donut'"
+          :selected="selectedKey"
+          @select="selectSlice"
+        />
       </section>
 
       <section v-else-if="chartView !== 'adherence'" class="section insights-empty-state">

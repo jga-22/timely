@@ -1,16 +1,21 @@
 import { defineStore } from 'pinia'
+import {
+  freeShortCode,
+  newWeekSlots,
+  numberCategories,
+  presetCategoryId,
+  replacedText
+} from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   DESIGN_COLORS,
   applyActivityCells,
-  createEmptySlots,
   createHaradaSeed,
   createOnboardingState,
   getActiveTemplate,
   getTemplateById,
   isHourlyTemplate,
   nextTemplateColor,
-  SHORT_CODE_PATTERN,
   rangeConflicts,
   validateActivityFields,
   type ActivityFieldErrors,
@@ -28,7 +33,6 @@ import {
   SLEEP_ID,
   SLEEP_NAME,
   isSleepActivity,
-  paintDefaultSleep,
   paintSleep,
   sleepActivityId,
   sleepWindowError,
@@ -56,48 +60,6 @@ import {
   type RoleMap
 } from '~/utils/presets'
 
-/** Sorts by order and renumbers from 1, so reorders and removals leave no gaps */
-const numberCategories = (categories: Category[]): Category[] =>
-  [...categories].sort((a, b) => a.order - b.order).map((category, index) => ({ ...category, order: index + 1 }))
-
-/** Empty slots of a new week type. In an hourly planner that has a Sleep activity, the default night is painted (FR-SLEEP-2) */
-const newWeekSlots = (state: PlannerState, granularityMinutes: 60 | 30): string[] => {
-  const slots = createEmptySlots(granularityMinutes)
-  const sleepId = sleepActivityId(state)
-
-  return sleepId && granularityMinutes === 60 ? paintDefaultSleep(slots, sleepId) : slots
-}
-
-/** " Replaced 1 h of Focused work and 2 h of Exercise." after a paint over other hours; empty when none were replaced */
-const replacedText = (replaced: Array<{ activityId: string; hours: number }>, activities: Activity[]): string => {
-  if (!replaced.length) return ''
-
-  const parts = replaced.map(item => `${item.hours} h of ${activities.find(activity => activity.id === item.activityId)?.name ?? 'another activity'}`)
-  return ` Replaced ${parts.join(' and ')}.`
-}
-
-/** Short code for a new activity named `name`: the default one from its first word, else one cut from its letters. Null when none is free (FR-GOALS-24). SLP is kept for Sleep */
-const freeShortCode = (state: PlannerState, name: string): string | null => {
-  const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase()
-  const taken = new Set([...state.activities.map(activity => activity.shortCode.toUpperCase()), SLEEP_CODE])
-  const candidates = [shortCodeFor(name)]
-
-  for (const size of [3, 2, 1]) {
-    for (let start = 0; start + size <= letters.length; start += 1) candidates.push(letters.slice(start, start + size))
-  }
-
-  return candidates.find(code => SHORT_CODE_PATTERN.test(code) && !taken.has(code)) ?? null
-}
-
-/** The life area a preset's activity goes to: Physical for sleep and exercise, Professional for work, else the first area (FR-TPL-8) */
-const presetCategoryId = (categories: Category[], role: PresetRole): string | undefined => {
-  const byId = role === 'work' ? 'professionnelle' : 'physique'
-  const byName = role === 'work' ? /professional/i : /physical/i
-  const match = categories.find(category => category.id === byId) ?? categories.find(category => byName.test(category.name))
-
-  return (match ?? [...categories].sort((a, b) => a.order - b.order)[0])?.id
-}
-
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
   // `done` is listed so the storage watcher can track it (FR-HOME-14)
@@ -108,12 +70,16 @@ export const usePlannerStore = defineStore('planner', {
     doneOn: state => (date: string): string[] => state.done?.[date] ?? [],
   },
   actions: {
+    // ---------------------------------------------------------------
+    // Lifecycle
+    // ---------------------------------------------------------------
     hydrate(state: PlannerState | null) {
       if (state) {
         this.replaceState(state)
         this.ensureActiveTemplate()
       }
     },
+
     /** Replaces the whole state in one step, so nothing of the previous state (a journal, a stale onboarding flag) carries over */
     replaceState(next: PlannerState) {
       this.$patch(current => {
@@ -123,14 +89,20 @@ export const usePlannerStore = defineStore('planner', {
         current.done = sanitiseDone(next.done)
       })
     },
+
     /** Ends the first-run onboarding without creating data (FR-ONB-3, Start empty) */
     finishOnboarding() {
       this.onboarding = 'done'
     },
+
+    // ---------------------------------------------------------------
+    // Week types
+    // ---------------------------------------------------------------
     ensureActiveTemplate() {
       const template = this.activeTemplate
       this.settings.activeTemplateId = template?.id ?? null
     },
+
     selectTemplate(templateId: string) {
       const template = getTemplateById(this.$state, templateId)
 
@@ -140,6 +112,7 @@ export const usePlannerStore = defineStore('planner', {
 
       this.settings.activeTemplateId = template.id
     },
+
     createTemplate() {
       const source = this.activeTemplate
       const templateId = `template-${Date.now()}`
@@ -155,6 +128,7 @@ export const usePlannerStore = defineStore('planner', {
       })
       this.settings.activeTemplateId = templateId
     },
+
     /** Copies a week type's hours into a new one with the next unused colour, and makes it active (FR-TPL-6). Returns its id, or null when the source is unknown */
     duplicateTemplate(sourceId: string, name: string): string | null {
       const source = getTemplateById(this.$state, sourceId)
@@ -176,6 +150,7 @@ export const usePlannerStore = defineStore('planner', {
 
       return templateId
     },
+
     /**
      * Creates a week type from a preset (FR-TPL-8) and makes it active. A role set to 'create' gets a new activity, unless one
      * already has its name (then that one is used) or its short code is taken (then the role is left empty). Returns the id, or null for an unknown preset
@@ -209,6 +184,221 @@ export const usePlannerStore = defineStore('planner', {
 
       return templateId
     },
+
+    /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals reads a working week type instead */
+    setTemplateKind(templateId: string, kind: 'break' | undefined) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template) return
+
+      if (kind) template.kind = kind
+      else delete template.kind
+    },
+
+    deleteTemplate(templateId: string) {
+      const templateIndex = this.templates.findIndex(template => template.id === templateId)
+
+      if (templateIndex === -1) {
+        return false
+      }
+
+      if (this.templates.length <= 1) {
+        return false
+      }
+
+      const nextTemplates = this.templates.filter(template => template.id !== templateId)
+      const nextAppliedWeeks = this.appliedWeeks.filter(week => week.templateId !== templateId)
+      const fallbackTemplateId = nextTemplates[0]?.id ?? null
+
+      this.$patch({
+        templates: nextTemplates,
+        appliedWeeks: nextAppliedWeeks,
+        settings: {
+          ...this.settings,
+          activeTemplateId: this.settings.activeTemplateId === templateId
+            ? fallbackTemplateId
+            : this.settings.activeTemplateId
+        }
+      })
+
+      return true
+    },
+
+    /** Renames a template; a blank name keeps the old one */
+    renameTemplate(templateId: string, name: string) {
+      const template = getTemplateById(this.$state, templateId)
+      const trimmed = name.trim()
+
+      if (template && trimmed) template.name = trimmed
+    },
+
+    setTemplateColor(templateId: string, color: string) {
+      const template = getTemplateById(this.$state, templateId)
+      if (template) template.color = color
+    },
+
+    renameActiveTemplate(name: string) {
+      const template = this.activeTemplate
+
+      if (!template) {
+        return
+      }
+
+      template.name = name.trim() || template.name
+    },
+
+    // ---------------------------------------------------------------
+    // Slots
+    // ---------------------------------------------------------------
+    /**
+     * Paints one activity's hours in one hourly template (FR-PLAN-17, 18). `add` takes hours held by other
+     * activities only when `reassign` is true; otherwise nothing changes and the conflicts are returned for confirmation.
+     * Returns [] when the change was applied.
+     */
+    setActivitySlots(templateId: string, activityId: string, cells: number[], mode: PaintMode, reassign = false): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template || template.granularityMinutes !== 60 || !this.activities.some(activity => activity.id === activityId)) {
+        return []
+      }
+
+      const conflicts = mode === 'add' ? rangeConflicts(template.slots, cells, activityId) : []
+
+      if (conflicts.length && !reassign) {
+        return conflicts
+      }
+
+      template.slots = applyActivityCells(template.slots, cells, activityId, mode)
+      return []
+    },
+
+    /**
+     * Paints cells with one activity, replacing whatever other activities hold them (FR-PLAN-17). With a null activity the cells
+     * are erased. Returns the hours taken from each holder, for the undo notice. Nothing is checked or confirmed first.
+     */
+    paintCells(templateId: string, cells: number[], activityId: string | null): HourConflict[] {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (!template || template.granularityMinutes !== 60) return []
+      if (activityId && !this.activities.some(activity => activity.id === activityId)) return []
+
+      const taken = rangeConflicts(template.slots, cells, activityId ?? '')
+      template.slots = template.slots.map((holder, index) => (cells.includes(index) ? (activityId ?? '') : holder))
+      return taken
+    },
+
+    /** Puts back a template's slots as they were before the last paint (single-step undo) */
+    restoreSlots(templateId: string, slots: string[]) {
+      const template = getTemplateById(this.$state, templateId)
+
+      if (template && template.slots.length === slots.length) template.slots = [...slots]
+    },
+
+    // ---------------------------------------------------------------
+    // Categories
+    // ---------------------------------------------------------------
+    /** Adds a category at the end of the list. Returns its id, or null when the name is blank */
+    addCategory(name: string, color: string): string | null {
+      const trimmedName = name.trim()
+
+      if (!trimmedName) {
+        return null
+      }
+
+      const id = `category-${Date.now()}`
+
+      this.categories.push({
+        id,
+        name: trimmedName,
+        color,
+        order: Math.max(0, ...this.categories.map(category => category.order)) + 1
+      })
+
+      return id
+    },
+
+    updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
+      const category = this.categories.find(item => item.id === categoryId)
+      if (category) Object.assign(category, changes)
+    },
+
+    setCategoryColor(categoryId: string, color: string) {
+      const category = this.categories.find(item => item.id === categoryId)
+
+      if (!category) {
+        return
+      }
+
+      // A6: only activities still on the old category colour follow the change; hand-picked colours stay
+      const previous = category.color?.toLowerCase()
+      category.color = color
+      for (const activity of this.activities) {
+        if (activity.categoryId === categoryId && previous && activity.color.toLowerCase() === previous) {
+          activity.color = color
+        }
+      }
+    },
+
+    moveCategory(categoryId: string, offset: -1 | 1) {
+      const ordered = numberCategories(this.categories)
+      const index = ordered.findIndex(category => category.id === categoryId)
+      const targetIndex = index + offset
+
+      if (index === -1 || targetIndex < 0 || targetIndex >= ordered.length) {
+        return
+      }
+
+      const current = ordered[index]!
+      ordered[index] = ordered[targetIndex]!
+      ordered[targetIndex] = current
+      // Renumber in the swapped order; sorting by the old order numbers would undo the swap
+      this.categories = ordered.map((category, position) => ({ ...category, order: position + 1 }))
+    },
+
+    /** Removes a category; its activities and habits must first move to another category */
+    removeCategory(categoryId: string, targetCategoryId?: string): boolean {
+      if (!this.categories.some(category => category.id === categoryId)) {
+        return false
+      }
+
+      // Only primary links need a new home
+      const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
+        || this.habits.some(habit => habit.categoryId === categoryId)
+      const target = targetCategoryId && targetCategoryId !== categoryId
+        && this.categories.some(category => category.id === targetCategoryId)
+        ? targetCategoryId
+        : null
+
+      if (hasContent && !target) {
+        return false
+      }
+
+      if (target) {
+        for (const activity of this.activities) {
+          if (activity.categoryId === categoryId) activity.categoryId = target
+        }
+
+        for (const habit of this.habits) {
+          if (habit.categoryId === categoryId) habit.categoryId = target
+        }
+      }
+
+      this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
+      return true
+    },
+
+    /** Starter grid for an empty planner; existing categories and activities are never replaced */
+    seedHaradaGoals() {
+      if (this.categories.length) {
+        return
+      }
+
+      this.$patch(createHaradaSeed())
+    },
+
+    // ---------------------------------------------------------------
+    // Activities
+    // ---------------------------------------------------------------
     /** An activity for a preset role: the existing one with the same name, else a new one. Null when it cannot be created */
     createRoleActivity(role: PresetRole, index: number): string | null {
       // Sleep is the one activity with a key: it is found by its code, or created with it (FR-SLEEP-1, 2)
@@ -241,192 +431,7 @@ export const usePlannerStore = defineStore('planner', {
 
       return id
     },
-    /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals reads a working week type instead */
-    setTemplateKind(templateId: string, kind: 'break' | undefined) {
-      const template = getTemplateById(this.$state, templateId)
 
-      if (!template) return
-
-      if (kind) template.kind = kind
-      else delete template.kind
-    },
-    deleteTemplate(templateId: string) {
-      const templateIndex = this.templates.findIndex(template => template.id === templateId)
-
-      if (templateIndex === -1) {
-        return false
-      }
-
-      if (this.templates.length <= 1) {
-        return false
-      }
-
-      const nextTemplates = this.templates.filter(template => template.id !== templateId)
-      const nextAppliedWeeks = this.appliedWeeks.filter(week => week.templateId !== templateId)
-      const fallbackTemplateId = nextTemplates[0]?.id ?? null
-
-      this.$patch({
-        templates: nextTemplates,
-        appliedWeeks: nextAppliedWeeks,
-        settings: {
-          ...this.settings,
-          activeTemplateId: this.settings.activeTemplateId === templateId
-            ? fallbackTemplateId
-            : this.settings.activeTemplateId
-        }
-      })
-
-      return true
-    },
-    /** Renames a template; a blank name keeps the old one */
-    renameTemplate(templateId: string, name: string) {
-      const template = getTemplateById(this.$state, templateId)
-      const trimmed = name.trim()
-
-      if (template && trimmed) template.name = trimmed
-    },
-    setTemplateColor(templateId: string, color: string) {
-      const template = getTemplateById(this.$state, templateId)
-      if (template) template.color = color
-    },
-    renameActiveTemplate(name: string) {
-      const template = this.activeTemplate
-
-      if (!template) {
-        return
-      }
-
-      template.name = name.trim() || template.name
-    },
-    /**
-     * Paints one activity's hours in one hourly template (FR-PLAN-17, 18). `add` takes hours held by other
-     * activities only when `reassign` is true; otherwise nothing changes and the conflicts are returned for confirmation.
-     * Returns [] when the change was applied.
-     */
-    setActivitySlots(templateId: string, activityId: string, cells: number[], mode: PaintMode, reassign = false): HourConflict[] {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template || template.granularityMinutes !== 60 || !this.activities.some(activity => activity.id === activityId)) {
-        return []
-      }
-
-      const conflicts = mode === 'add' ? rangeConflicts(template.slots, cells, activityId) : []
-
-      if (conflicts.length && !reassign) {
-        return conflicts
-      }
-
-      template.slots = applyActivityCells(template.slots, cells, activityId, mode)
-      return []
-    },
-    /**
-     * Paints cells with one activity, replacing whatever other activities hold them (FR-PLAN-17). With a null activity the cells
-     * are erased. Returns the hours taken from each holder, for the undo notice. Nothing is checked or confirmed first.
-     */
-    paintCells(templateId: string, cells: number[], activityId: string | null): HourConflict[] {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template || template.granularityMinutes !== 60) return []
-      if (activityId && !this.activities.some(activity => activity.id === activityId)) return []
-
-      const taken = rangeConflicts(template.slots, cells, activityId ?? '')
-      template.slots = template.slots.map((holder, index) => (cells.includes(index) ? (activityId ?? '') : holder))
-      return taken
-    },
-    /** Puts back a template's slots as they were before the last paint (single-step undo) */
-    restoreSlots(templateId: string, slots: string[]) {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (template && template.slots.length === slots.length) template.slots = [...slots]
-    },
-    setProjectionYears(years: number) {
-      this.settings.projectionDefaults.years = years
-    },
-    /** Adds a category at the end of the list. Returns its id, or null when the name is blank */
-    addCategory(name: string, color: string): string | null {
-      const trimmedName = name.trim()
-
-      if (!trimmedName) {
-        return null
-      }
-
-      const id = `category-${Date.now()}`
-
-      this.categories.push({
-        id,
-        name: trimmedName,
-        color,
-        order: Math.max(0, ...this.categories.map(category => category.order)) + 1
-      })
-
-      return id
-    },
-    updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
-      const category = this.categories.find(item => item.id === categoryId)
-      if (category) Object.assign(category, changes)
-    },
-    setCategoryColor(categoryId: string, color: string) {
-      const category = this.categories.find(item => item.id === categoryId)
-
-      if (!category) {
-        return
-      }
-
-      // A6: only activities still on the old category colour follow the change; hand-picked colours stay
-      const previous = category.color?.toLowerCase()
-      category.color = color
-      for (const activity of this.activities) {
-        if (activity.categoryId === categoryId && previous && activity.color.toLowerCase() === previous) {
-          activity.color = color
-        }
-      }
-    },
-    moveCategory(categoryId: string, offset: -1 | 1) {
-      const ordered = numberCategories(this.categories)
-      const index = ordered.findIndex(category => category.id === categoryId)
-      const targetIndex = index + offset
-
-      if (index === -1 || targetIndex < 0 || targetIndex >= ordered.length) {
-        return
-      }
-
-      const current = ordered[index]!
-      ordered[index] = ordered[targetIndex]!
-      ordered[targetIndex] = current
-      // Renumber in the swapped order; sorting by the old order numbers would undo the swap
-      this.categories = ordered.map((category, position) => ({ ...category, order: position + 1 }))
-    },
-    /** Removes a category; its activities and habits must first move to another category */
-    removeCategory(categoryId: string, targetCategoryId?: string): boolean {
-      if (!this.categories.some(category => category.id === categoryId)) {
-        return false
-      }
-
-      // Only primary links need a new home
-      const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
-        || this.habits.some(habit => habit.categoryId === categoryId)
-      const target = targetCategoryId && targetCategoryId !== categoryId
-        && this.categories.some(category => category.id === targetCategoryId)
-        ? targetCategoryId
-        : null
-
-      if (hasContent && !target) {
-        return false
-      }
-
-      if (target) {
-        for (const activity of this.activities) {
-          if (activity.categoryId === categoryId) activity.categoryId = target
-        }
-
-        for (const habit of this.habits) {
-          if (habit.categoryId === categoryId) habit.categoryId = target
-        }
-      }
-
-      this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
-      return true
-    },
     /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
     addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
       const fields = { name, shortCode, categoryId }
@@ -448,6 +453,7 @@ export const usePlannerStore = defineStore('planner', {
 
       return id
     },
+
     /**
      * The activity a habit gets from its name (FR-GOALS-24): the activity of that name in the life area when there is one, else a new
      * activity with the life area colour and a free short code. Returns its id, or the error; nothing is added on error
@@ -469,6 +475,7 @@ export const usePlannerStore = defineStore('planner', {
       const id = this.addActivity(trimmed, shortCode, categoryId)
       return id ? { id } : { error: 'The activity could not be added. Check the life area.' }
     },
+
     /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
     updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
       const activity = this.activities.find(item => item.id === activityId)
@@ -492,59 +499,7 @@ export const usePlannerStore = defineStore('planner', {
 
       return {}
     },
-    /** The Sleep activity, created when the planner has none: Sleep, SLP, the quiet purple, in Physical (FR-SLEEP-2). Null when there is no life area */
-    ensureSleepActivity(): string | null {
-      const existing = sleepActivityId(this.$state)
-      if (existing) return existing
 
-      const area = presetCategoryId(this.categories, 'sleep')
-      if (!area) return null
-
-      const id = this.activities.some(activity => activity.id === SLEEP_ID) ? `activity-${Date.now()}` : SLEEP_ID
-      this.activities.push({ id, name: SLEEP_NAME, shortCode: SLEEP_CODE, categoryId: area, color: SLEEP_COLOR })
-
-      return id
-    },
-    /**
-     * Paints the Sleep activity's nights in the given hourly week type (FR-SLEEP-5): its old hours go, and the groups' nights are painted
-     * over whatever holds them. Returns the result text and the undo, or null when a window is refused or there is no Sleep activity
-     */
-    setSleep(templateId: string, groups: SleepGroup[]): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
-      const template = getTemplateById(this.$state, templateId)
-      const sleepId = sleepActivityId(this.$state)
-
-      if (!template || !sleepId || !isHourlyTemplate(template) || groups.some(group => sleepWindowError(group.window))) return null
-
-      const before = [...template.slots]
-      const { slots, replaced } = paintSleep(template.slots, sleepId, groups)
-      template.slots = slots
-
-      const text = groups.length === 1
-        ? `Sleep set to ${windowLabel(groups[0]!.window)}.`
-        : `Sleep set to ${windowLabel(groups[0]!.window)} on weekdays and ${windowLabel(groups[1]!.window)} at weekends.`
-
-      return { text: `${text}${replacedText(replaced, this.activities)}`, undo: [{ templateId, slots: before }] }
-    },
-    /**
-     * Sets up Sleep in a save that has none (FR-SLEEP-2): creates the Sleep activity, then paints the default night in the active week
-     * type. Null when there is no life area or the active week type is not hourly. The undo puts the hours back; the activity stays
-     */
-    setupSleep(): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
-      const template = this.activeTemplate
-      if (!template || !isHourlyTemplate(template)) return null
-
-      const sleepId = this.ensureSleepActivity()
-      if (!sleepId) return null
-
-      const before = [...template.slots]
-      const { slots, replaced } = paintSleep(template.slots, sleepId, [{ days: ALL_NIGHTS, window: DEFAULT_SLEEP }])
-      template.slots = slots
-
-      return {
-        text: `Sleep set up: ${windowLabel(DEFAULT_SLEEP)} every night in ${template.name}.${replacedText(replaced, this.activities)}`,
-        undo: [{ templateId: template.id, slots: before }]
-      }
-    },
     removeActivity(activityId: string) {
       // The Sleep activity cannot be deleted: it is built in, and hiding it is the way to keep it out of view (FR-SLEEP-3)
       if (isSleepActivity(this.activities.find(activity => activity.id === activityId))) return
@@ -565,6 +520,69 @@ export const usePlannerStore = defineStore('planner', {
         if (habit.activityId === activityId) delete habit.activityId
       }
     },
+
+    // ---------------------------------------------------------------
+    // Sleep
+    // ---------------------------------------------------------------
+    /** The Sleep activity, created when the planner has none: Sleep, SLP, the quiet purple, in Physical (FR-SLEEP-2). Null when there is no life area */
+    ensureSleepActivity(): string | null {
+      const existing = sleepActivityId(this.$state)
+      if (existing) return existing
+
+      const area = presetCategoryId(this.categories, 'sleep')
+      if (!area) return null
+
+      const id = this.activities.some(activity => activity.id === SLEEP_ID) ? `activity-${Date.now()}` : SLEEP_ID
+      this.activities.push({ id, name: SLEEP_NAME, shortCode: SLEEP_CODE, categoryId: area, color: SLEEP_COLOR })
+
+      return id
+    },
+
+    /**
+     * Paints the Sleep activity's nights in the given hourly week type (FR-SLEEP-5): its old hours go, and the groups' nights are painted
+     * over whatever holds them. Returns the result text and the undo, or null when a window is refused or there is no Sleep activity
+     */
+    setSleep(templateId: string, groups: SleepGroup[]): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
+      const template = getTemplateById(this.$state, templateId)
+      const sleepId = sleepActivityId(this.$state)
+
+      if (!template || !sleepId || !isHourlyTemplate(template) || groups.some(group => sleepWindowError(group.window))) return null
+
+      const before = [...template.slots]
+      const { slots, replaced } = paintSleep(template.slots, sleepId, groups)
+      template.slots = slots
+
+      const text = groups.length === 1
+        ? `Sleep set to ${windowLabel(groups[0]!.window)}.`
+        : `Sleep set to ${windowLabel(groups[0]!.window)} on weekdays and ${windowLabel(groups[1]!.window)} at weekends.`
+
+      return { text: `${text}${replacedText(replaced, this.activities)}`, undo: [{ templateId, slots: before }] }
+    },
+
+    /**
+     * Sets up Sleep in a save that has none (FR-SLEEP-2): creates the Sleep activity, then paints the default night in the active week
+     * type. Null when there is no life area or the active week type is not hourly. The undo puts the hours back; the activity stays
+     */
+    setupSleep(): { text: string; undo: Array<{ templateId: string; slots: string[] }> } | null {
+      const template = this.activeTemplate
+      if (!template || !isHourlyTemplate(template)) return null
+
+      const sleepId = this.ensureSleepActivity()
+      if (!sleepId) return null
+
+      const before = [...template.slots]
+      const { slots, replaced } = paintSleep(template.slots, sleepId, [{ days: ALL_NIGHTS, window: DEFAULT_SLEEP }])
+      template.slots = slots
+
+      return {
+        text: `Sleep set up: ${windowLabel(DEFAULT_SLEEP)} every night in ${template.name}.${replacedText(replaced, this.activities)}`,
+        undo: [{ templateId: template.id, slots: before }]
+      }
+    },
+
+    // ---------------------------------------------------------------
+    // Weeks
+    // ---------------------------------------------------------------
     setWeekTemplate(startDate: string, templateId: string | null) {
       const existing = this.appliedWeeks.find(w => w.startDate === startDate)
       if (templateId === null) {
@@ -579,21 +597,23 @@ export const usePlannerStore = defineStore('planner', {
         })
       }
     },
+
     /** Applies one week type (or none, with null) to a range of weeks, such as a vacation (FR-YEAR-7) */
     setWeeksTemplate(startDates: string[], templateId: string | null) {
       for (const startDate of startDates) this.setWeekTemplate(startDate, templateId)
     },
-    /** Starter grid for an empty planner; existing categories and activities are never replaced */
-    seedHaradaGoals() {
-      if (this.categories.length) {
-        return
-      }
 
-      this.$patch(createHaradaSeed())
+    setProjectionYears(years: number) {
+      this.settings.projectionDefaults.years = years
     },
+
+    // ---------------------------------------------------------------
+    // Ambition
+    // ---------------------------------------------------------------
     updateAmbition(changes: Partial<Pick<Ambition, 'statement' | 'horizonYears'>>) {
       if (this.ambition) Object.assign(this.ambition, changes)
     },
+
     /** Writes the 5-year ambition: creates it when the state has none (Start empty). A blank statement creates nothing */
     setAmbition(statement: string) {
       if (this.ambition) {
@@ -606,6 +626,10 @@ export const usePlannerStore = defineStore('planner', {
 
       this.ambition = { id: `ambition-${Date.now()}`, statement: trimmed, horizonYears: 5 }
     },
+
+    // ---------------------------------------------------------------
+    // Habits
+    // ---------------------------------------------------------------
     /** Adds a habit to a category. Returns its id, or null when the name is blank or the category is unknown */
     addHabit(categoryId: string, name: string): string | null {
       const trimmedName = name.trim()
@@ -625,14 +649,17 @@ export const usePlannerStore = defineStore('planner', {
 
       return id
     },
+
     updateHabit(habitId: string, changes: Partial<Pick<Habit, 'name' | 'minutesPerOccurrence'>>) {
       const habit = this.habits.find(item => item.id === habitId)
       if (habit) Object.assign(habit, changes)
     },
+
     setHabitFrequency(habitId: string, count: number, period: HabitPeriod) {
       const habit = this.habits.find(item => item.id === habitId)
       if (habit) habit.frequency = { count: Math.max(count, 0), period }
     },
+
     setHabitActivity(habitId: string, activityId: string | null) {
       const habit = this.habits.find(item => item.id === habitId)
 
@@ -643,9 +670,14 @@ export const usePlannerStore = defineStore('planner', {
       if (activityId) habit.activityId = activityId
       else delete habit.activityId
     },
+
     removeHabit(habitId: string) {
       this.habits = this.habits.filter(habit => habit.id !== habitId)
     },
+
+    // ---------------------------------------------------------------
+    // Entries
+    // ---------------------------------------------------------------
     /**
      * Saves one entry of the one form (FR-ITEM-2): its habit, its activity and the activity's hours, in one step. Nothing changes when the
      * draft has errors. A timed draft writes the activity; the hours are repainted only when the schedule changed, and the result carries
@@ -757,11 +789,16 @@ export const usePlannerStore = defineStore('planner', {
 
       return { errors: {}, habitId, activityId, text, undo }
     },
+
     /** Removes an entry as the form's Delete does: a habit leaves its activity in place (its own entry from then on); an activity clears its hours and unlinks its habits */
     removeEntry(habitId: string | null, activityId: string | null) {
       if (habitId) this.removeHabit(habitId)
       else if (activityId) this.removeActivity(activityId)
     },
+
+    // ---------------------------------------------------------------
+    // Journal
+    // ---------------------------------------------------------------
     /** Journal experiment (FR-HOME-11): a blank note removes the entry, so the saved state stays small */
     setJournalEntry(dateKey: string, text: string) {
       if (text.trim()) {
@@ -770,6 +807,10 @@ export const usePlannerStore = defineStore('planner', {
         delete this.journal[dateKey]
       }
     },
+
+    // ---------------------------------------------------------------
+    // Done
+    // ---------------------------------------------------------------
     /** Done tick on Home (FR-HOME-14): adds or removes a block or habit key of a date. A date with no ticks left is removed.
      * A future date (after today, local) or a malformed key is refused */
     toggleDone(date: string, key: string) {

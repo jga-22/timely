@@ -16,6 +16,7 @@ import {
   needText,
   newEntryDraft,
   paintResultText,
+  resolveEntry,
   scheduleChanged,
   type EntryDraft,
 } from '~/utils/entries'
@@ -312,5 +313,32 @@ describe('entryLines', () => {
     const habit: Habit = { id: 'calls', categoryId: 'relationnelle', name: 'Calls', frequency: { count: 2, period: 'week' }, minutesPerOccurrence: 30 }
 
     expect(entryLines(withHabits(empty(), [habit]), 'calls', null)).toEqual(['2 a week', 'Needs 1 h a week'])
+  })
+})
+
+describe('resolveEntry', () => {
+  it('reads a habit with its linked activity, and that activity with the habit that links it', () => {
+    const state = withHabits(planned(), [focus])
+
+    expect(resolveEntry(state, 'focus')).toEqual({ habitId: 'focus', activityId: 'work' })
+    expect(resolveEntry(state, 'work')).toEqual({ habitId: 'focus', activityId: 'work' })
+  })
+
+  it('leaves the activity side empty when the habit has none, or its activity was deleted', () => {
+    const state = withHabits(planned(), [{ ...focus, activityId: 'gone' }])
+
+    expect(resolveEntry(state, 'focus')).toEqual({ habitId: 'focus', activityId: null })
+    const walk: Habit = { id: 'walk', categoryId: 'physique', name: 'Walk', frequency: { count: 1, period: 'day' } }
+    expect(resolveEntry(withHabits(empty(), [walk]), 'walk')).toEqual({ habitId: 'walk', activityId: null })
+  })
+
+  it('leaves the habit side empty for an activity no habit links to', () => {
+    expect(resolveEntry(planned(), 'work')).toEqual({ habitId: null, activityId: 'work' })
+  })
+
+  it('returns null for no key or an id that is neither a habit nor an activity', () => {
+    expect(resolveEntry(planned(), null)).toBeNull()
+    expect(resolveEntry(planned(), undefined)).toBeNull()
+    expect(resolveEntry(planned(), 'nope')).toBeNull()
   })
 })
