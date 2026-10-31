@@ -1,11 +1,8 @@
 import { defineStore } from 'pinia'
-import { freeShortCode } from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   createOnboardingState,
   getActiveTemplate,
-  getTemplateById,
-  isHourlyTemplate,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
@@ -19,22 +16,13 @@ import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
 import { createTemplate, createTemplateFromPreset, deleteTemplate, duplicateTemplate, ensureActiveTemplate, renameActiveTemplate, renameTemplate, selectTemplate, setTemplateColor, setTemplateKind } from '~/utils/store/weekTypes'
 import { setAmbition, updateAmbition } from '~/utils/store/ambition'
 import { setJournalEntry, toggleDone } from '~/utils/store/daily'
+import { removeEntry, saveEntry } from '~/utils/store/entrySave'
 import { replaceStateInto } from '~/utils/store/lifecycle'
 import { addCategory, moveCategory, removeCategory, seedHaradaGoals, setCategoryColor, updateCategory } from '~/utils/store/categories'
 import { localDateKey } from '~/utils/dates'
 import type { SleepGroup } from '~/utils/sleep'
 import type { PresetRole } from '~/utils/presets'
-import {
-  blockHours,
-  entryDraftOf,
-  entryErrors,
-  frequencyChanged,
-  frequencyOf,
-  paintResultText,
-  scheduleChanged,
-  type EntryDraft,
-  type EntrySaveResult
-} from '~/utils/entries'
+import type { EntryDraft, EntrySaveResult } from '~/utils/entries'
 
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
@@ -285,116 +273,12 @@ export const usePlannerStore = defineStore('planner', {
      * the undo. An untimed draft drops the activity: its hours go and its habit keeps no link, unless another habit still uses it.
      */
     saveEntry(draft: EntryDraft): EntrySaveResult {
-      const initial = entryDraftOf(this.$state, draft.habitId, draft.activityId)
-      const errors = entryErrors(this.$state, draft)
-      const timed = draft.durationMinutes > 0
-      const name = draft.name.trim()
-      const code = draft.shortCode.trim().toUpperCase()
-
-      // A new activity with no code takes the first free one from its name (FR-GOALS-24); none free is an error
-      if (timed && !draft.activityId && !errors.shortCode && !code && !freeShortCode(this.$state, name)) {
-        errors.shortCode = 'No short code is free for this name. Type one.'
-      }
-
-      if (Object.keys(errors).length) return { errors }
-
-      // Every entry has a habit, except an activity that stays timed: it is an entry on its own (FR-ITEM-1)
-      const needsHabit = !!draft.habitId || !draft.activityId || !timed
-
-      let activityId = draft.activityId
-      if (timed) {
-        if (activityId) {
-          this.updateActivity(activityId, {
-            name,
-            categoryId: draft.categoryId,
-            color: draft.color,
-            ...(code ? { shortCode: code } : {})
-          })
-        } else {
-          activityId = this.addActivity(name, code || freeShortCode(this.$state, name) || '', draft.categoryId, draft.color) ?? null
-          if (!activityId) return { errors: { shortCode: 'The activity could not be added. Check the life area.' } }
-        }
-      }
-
-      let habitId: string | undefined
-      if (needsHabit) {
-        habitId = draft.habitId ?? undefined
-
-        if (habitId) {
-          const habit = this.habits.find(item => item.id === habitId)
-          if (habit) Object.assign(habit, { name, categoryId: draft.categoryId })
-        } else {
-          habitId = this.addHabit(draft.categoryId, name) ?? undefined
-          if (!habitId) return { errors: { name: 'Name can\'t be empty' } }
-        }
-
-        const habit = this.habits.find(item => item.id === habitId)!
-
-        if (!draft.habitId || frequencyChanged(draft, initial)) {
-          const frequency = frequencyOf(draft)
-          this.setHabitFrequency(habitId, frequency.count, frequency.period)
-        }
-
-        if (timed) {
-          if (!draft.habitId || draft.durationMinutes !== initial.durationMinutes) this.updateHabit(habitId, { minutesPerOccurrence: draft.durationMinutes })
-          this.setHabitActivity(habitId, activityId)
-        } else {
-          delete habit.minutesPerOccurrence
-          // Another habit still uses the activity: only this habit lets go of it. Otherwise the activity goes with its hours
-          if (draft.activityId && this.habits.some(item => item.activityId === draft.activityId && item.id !== habitId)) {
-            this.setHabitActivity(habitId, null)
-          } else if (draft.activityId) {
-            this.removeActivity(draft.activityId)
-          }
-        }
-      }
-
-      if (!timed || !activityId || !scheduleChanged(draft, initial)) {
-        return { errors: {}, habitId, activityId: timed ? activityId ?? undefined : undefined }
-      }
-
-      // Repaint: the activity's hours leave every hourly week type, then the checked ones get the days, whole hours and start
-      const hours = blockHours(draft.durationMinutes)
-      const cells = draft.days.flatMap(day => Array.from({ length: hours }, (_, offset) => day * 24 + draft.start + offset))
-      const hourly = this.templates.filter(template => isHourlyTemplate(template))
-      const undo = hourly
-        .filter(template => template.slots.includes(activityId!) || draft.templateIds.includes(template.id))
-        .map(template => ({ templateId: template.id, slots: [...template.slots] }))
-
-      const cleared: string[] = []
-      for (const template of hourly) {
-        if (!template.slots.includes(activityId)) continue
-        if (!draft.templateIds.includes(template.id)) cleared.push(template.name)
-        template.slots = template.slots.map(slot => (slot === activityId ? '' : slot))
-      }
-
-      const added: string[] = []
-      const replaced = new Map<string, number>()
-      for (const templateId of draft.templateIds) {
-        const template = getTemplateById(this.$state, templateId)
-        if (!template || !isHourlyTemplate(template)) continue
-
-        for (const conflict of this.paintCells(templateId, cells, activityId)) {
-          replaced.set(conflict.activityId, (replaced.get(conflict.activityId) ?? 0) + conflict.hours)
-        }
-        added.push(template.name)
-      }
-
-      const text = paintResultText({
-        added,
-        days: draft.days.length,
-        hours,
-        replaced: [...replaced].map(([id, count]) => ({ name: this.activities.find(item => item.id === id)?.name ?? 'another activity', hours: count })),
-        cleared
-      })
-
-      return { errors: {}, habitId, activityId, text, undo }
+      return saveEntry(this.$state, draft, Date.now())
     },
 
     /** Removes an entry as the form's Delete does: a habit leaves its activity in place (its own entry from then on); an activity clears its hours and unlinks its habits */
     removeEntry(habitId: string | null, activityId: string | null) {
-      if (habitId) this.removeHabit(habitId)
-      else if (activityId) this.removeActivity(activityId)
+      removeEntry(this.$state, habitId, activityId)
     },
 
     // ---------------------------------------------------------------

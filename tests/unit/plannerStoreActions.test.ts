@@ -1555,30 +1555,10 @@ describe('entries', () => {
     expect(snapshot(store.$state)).toEqual(before)
   })
 
-  it('pins: saveEntry ignores the errors that updateActivity returns, and still saves the habit', () => {
-    const store = load(empty())
-    const first = store.saveEntry(runDraft(store))
-    const spy = vi.spyOn(store, 'updateActivity').mockReturnValue({ shortCode: 'MOCKED' })
-
-    const result = store.saveEntry({ ...entryDraftOf(store.$state, first.habitId!, first.activityId!), name: 'Jog' })
-
-    expect(spy).toHaveBeenCalledTimes(1)
-    expect(result.errors).toEqual({})
-    expect(store.activities.find(item => item.id === first.activityId)!.name).toBe('Run')
-    expect(habit(store, first.habitId!).name).toBe('Jog')
-  })
-
-  it('pins: when addHabit fails after the activity was written, the activity stays and nothing is painted', () => {
-    const store = load(empty())
-    vi.spyOn(store, 'addHabit').mockReturnValue(null)
-
-    const result = store.saveEntry(runDraft(store))
-
-    expect(result).toEqual({ errors: { name: 'Name can\'t be empty' } })
-    expect(store.activities.find(item => item.name === 'Run')).toMatchObject({ shortCode: 'RUN', categoryId: 'physique' })
-    expect(store.habits).toEqual([])
-    expect(tpl(store).slots[7]).toBe('')
-  })
+  // Two pins moved out (2026-10-31, lead decision): they spied on this.updateActivity and this.addHabit, which saveEntry no longer calls
+  // through the store. Both branches are unreachable through saveEntry: entryErrors rejects a clashing or reserved short code, a blank name
+  // and an unknown life area before any write, so updateActivity and addHabit cannot fail there. The op-level equivalents are in
+  // tests/unit/storeEntrySave.test.ts (writeEntryActivity ignores updateActivity errors; writeEntryHabit returns the name error).
 })
 
 // ---------------------------------------------------------------------
