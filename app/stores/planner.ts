@@ -9,20 +9,20 @@ import {
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   DESIGN_COLORS,
-  applyActivityCells,
   createHaradaSeed,
   createOnboardingState,
   getActiveTemplate,
   getTemplateById,
   isHourlyTemplate,
   nextTemplateColor,
-  rangeConflicts,
   validateActivityFields,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
 } from '~/utils/planner'
 import { shortCodeFor } from '~/utils/onboarding'
+import { paintCells, setActivitySlots } from '~/utils/store/slots'
+import { restoreSlots } from '~/utils/store/undo'
 import { isDateKey, isDoneKey, sanitiseDone } from '~/utils/done'
 import { localDateKey } from '~/utils/dates'
 import {
@@ -256,20 +256,7 @@ export const usePlannerStore = defineStore('planner', {
      * Returns [] when the change was applied.
      */
     setActivitySlots(templateId: string, activityId: string, cells: number[], mode: PaintMode, reassign = false): HourConflict[] {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template || template.granularityMinutes !== 60 || !this.activities.some(activity => activity.id === activityId)) {
-        return []
-      }
-
-      const conflicts = mode === 'add' ? rangeConflicts(template.slots, cells, activityId) : []
-
-      if (conflicts.length && !reassign) {
-        return conflicts
-      }
-
-      template.slots = applyActivityCells(template.slots, cells, activityId, mode)
-      return []
+      return setActivitySlots(this.$state, templateId, activityId, cells, mode, reassign)
     },
 
     /**
@@ -277,21 +264,12 @@ export const usePlannerStore = defineStore('planner', {
      * are erased. Returns the hours taken from each holder, for the undo notice. Nothing is checked or confirmed first.
      */
     paintCells(templateId: string, cells: number[], activityId: string | null): HourConflict[] {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template || template.granularityMinutes !== 60) return []
-      if (activityId && !this.activities.some(activity => activity.id === activityId)) return []
-
-      const taken = rangeConflicts(template.slots, cells, activityId ?? '')
-      template.slots = template.slots.map((holder, index) => (cells.includes(index) ? (activityId ?? '') : holder))
-      return taken
+      return paintCells(this.$state, templateId, cells, activityId)
     },
 
     /** Puts back a template's slots as they were before the last paint (single-step undo) */
     restoreSlots(templateId: string, slots: string[]) {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (template && template.slots.length === slots.length) template.slots = [...slots]
+      restoreSlots(this.$state, templateId, slots)
     },
 
     // ---------------------------------------------------------------
