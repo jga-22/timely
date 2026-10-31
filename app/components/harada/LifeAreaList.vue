@@ -43,6 +43,19 @@ function onListKeydown(event: KeyboardEvent) {
           <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
           <span class="cat-main">
             <span class="cat-row-name">{{ category.name }}</span>
+            <!-- The 5-year target (FR-GOALS-15): a target icon and its text, two lines at most; the full text is in the title -->
+            <span
+              class="cat-goal"
+              :class="{ 'is-empty': !category.goal5y?.trim() }"
+              :title="category.goal5y?.trim() || undefined"
+            >
+              <svg class="cat-goal-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <circle cx="8" cy="8" r="6.5" />
+                <circle cx="8" cy="8" r="3.5" />
+                <circle class="cat-goal-dot" cx="8" cy="8" r="1" />
+              </svg>
+              <span class="cat-goal-text">{{ category.goal5y?.trim() || 'No 5-year goal yet' }}</span>
+            </span>
             <span class="cat-meta">
               <span :class="{ 'is-warn': targetStatus(category).warn }">{{ targetStatus(category).text }}</span>
               <span aria-hidden="true"> · </span>
@@ -121,6 +134,50 @@ function onListKeydown(event: KeyboardEvent) {
 .cat-add-goal {
   flex-shrink: 0;
   margin-right: var(--space-3);
+}
+
+/* The 5-year target under the name: a 16px target icon (concentric rings, a centre dot) and the text, at most two lines; an empty one reads quieter */
+.cat-goal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.cat-goal-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  color: var(--ink-3);
+}
+
+.cat-goal-dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+.cat-goal-text {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.cat-goal.is-empty {
+  color: var(--ink-3);
+}
+
+.cat-row[aria-current="true"] .cat-goal {
+  color: var(--ink-2);
 }
 
 /* Names, statuses and entry counts wrap: the list row grows with its text, nothing is cut off */
