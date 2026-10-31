@@ -4,11 +4,12 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { DESIGN_COLORS, aggregateTemplate, formatHour } from '~/utils/planner'
-import { dayText, durationText, entryDraftOf, frequencyText } from '~/utils/entries'
+import { dayText, durationText, entryDraftOf, frequencyText, resolveEntry } from '~/utils/entries'
 import { PRESETS, PRESET_ROLES, ROLE_LABELS, getPreset, matchRole, type PresetRole } from '~/utils/presets'
 import { inkOn } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
-import { clockLabel, isSleepActivity, readSleep, sleepActivityId, sleepSummary } from '~/utils/sleep'
+import { weekRangeError, yearRows } from '~/utils/yearGrid'
+import { isSleepActivity, readSleep, sleepActivityId, sleepSummary } from '~/utils/sleep'
 
 const planner = usePlannerStore()
 const { activeTemplate, templates, appliedWeeks } = storeToRefs(planner)
@@ -51,23 +52,9 @@ const yearLine = computed(() => {
   return `Every week of ${year.value} uses ${uses}.`
 })
 const templateById = computed(() => new Map(templates.value.map(t => [t.id, t])))
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-/** Weeks per year-grid row: 13 columns, so each row is a quarter-year of weeks */
-const WEEKS_PER_ROW = 13
 
-/** Rows of the year grid, each with a label: the months its first and last week start in */
-const yearRows = computed(() => {
-  const rows: { label: string; weeks: { startDate: string; wi: number }[] }[] = []
-
-  for (let start = 0; start < weeks.value.length; start += WEEKS_PER_ROW) {
-    const cells = weeks.value.slice(start, start + WEEKS_PER_ROW).map((startDate, offset) => ({ startDate, wi: start + offset }))
-    const first = MONTHS[Number(cells[0]!.startDate.slice(5, 7)) - 1]
-    const last = MONTHS[Number(cells[cells.length - 1]!.startDate.slice(5, 7)) - 1]
-    rows.push({ label: first === last ? first! : `${first}–${last}`, weeks: cells })
-  }
-
-  return rows
-})
+/** Rows of the year grid (13 weeks each), with their month labels */
+const gridRows = computed(() => yearRows(weeks.value))
 
 function paintWeek(wi: number) {
   const startDate = weeks.value[wi]
@@ -175,8 +162,8 @@ const weekRangeChoice = computed({
 const weekFrom = ref(1)
 const weekTo = ref(1)
 const weekFromInput = ref<HTMLInputElement | null>(null)
-const weekRangeError = ref('')
-const weekRangeResult = ref('')
+const rangeError = ref('')
+const rangeResult = ref('')
 const weekCount = computed(() => weeks.value.length)
 
 function openYearFor(templateId: string) {
@@ -192,24 +179,17 @@ function applyWeekRange() {
 
   if (!count) return
 
-  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > count) {
-    weekRangeError.value = `Enter week numbers from 1 to ${count}.`
-    weekRangeResult.value = ''
+  rangeError.value = weekRangeError(from, to, count)
+  if (rangeError.value) {
+    rangeResult.value = ''
     return
   }
 
-  if (from > to) {
-    weekRangeError.value = 'The first week must not come after the last one.'
-    weekRangeResult.value = ''
-    return
-  }
-
-  weekRangeError.value = ''
   const templateId = weekRangeChoice.value || null
   planner.setWeeksTemplate(weeks.value.slice(from - 1, to), templateId)
 
   const name = templateId ? (templateById.value.get(templateId)?.name ?? '') : ''
-  weekRangeResult.value = templateId ? `Weeks ${from} to ${to} use ${name}.` : `Weeks ${from} to ${to} have no week type.`
+  rangeResult.value = templateId ? `Weeks ${from} to ${to} use ${name}.` : `Weeks ${from} to ${to} have no week type.`
 }
 
 // Inline confirmation (FR-TPL-5, FR-UX-7): nothing is deleted before the second button
@@ -260,23 +240,7 @@ const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : 
 const activeHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
 
 /** The selected entry: a habit and its activity (null when it has none), or an activity and the habit that links it (null when none does) */
-const selected = computed<{ habitId: string | null; activityId: string | null } | null>(() => {
-  const id = item.value
-  if (!id) return null
-
-  const habit = planner.habits.find(entry => entry.id === id)
-  if (habit) {
-    const activityId = planner.activities.some(activity => activity.id === habit.activityId) ? habit.activityId ?? null : null
-    return { habitId: habit.id, activityId }
-  }
-
-  const activity = planner.activities.find(entry => entry.id === id)
-  if (activity) {
-    return { habitId: planner.habits.find(entry => entry.activityId === activity.id)?.id ?? null, activityId: activity.id }
-  }
-
-  return null
-})
+const selected = computed(() => resolveEntry(planner.$state, item.value))
 
 const selectedDraft = computed(() => (selected.value ? entryDraftOf(planner.$state, selected.value.habitId, selected.value.activityId) : null))
 const editing = computed(() => !!selected.value && edit.value)
@@ -691,7 +655,7 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
                 inputmode="numeric"
                 min="1"
                 :max="weekCount"
-                :aria-invalid="!!weekRangeError"
+                :aria-invalid="!!rangeError"
                 aria-describedby="weeks-error"
               />
               <label class="weeks-part" for="weeks-to">to</label>
@@ -703,18 +667,18 @@ function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slo
                 inputmode="numeric"
                 min="1"
                 :max="weekCount"
-                :aria-invalid="!!weekRangeError"
+                :aria-invalid="!!rangeError"
                 aria-describedby="weeks-error"
               />
               <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
             </div>
-            <p v-if="weekRangeError" id="weeks-error" class="field-error" role="alert">{{ weekRangeError }}</p>
-            <p v-else-if="weekRangeResult" class="weeks-result" role="status">{{ weekRangeResult }}</p>
+            <p v-if="rangeError" id="weeks-error" class="field-error" role="alert">{{ rangeError }}</p>
+            <p v-else-if="rangeResult" class="weeks-result" role="status">{{ rangeResult }}</p>
           </div>
 
           <div v-if="weeks.length" class="year-grid-scroll">
             <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
-              <div v-for="(row, r) in yearRows" :key="r" class="year-row">
+              <div v-for="(row, r) in gridRows" :key="r" class="year-row">
                 <span class="year-row-label">{{ row.label }}</span>
                 <div
                   v-for="week in row.weeks"
