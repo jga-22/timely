@@ -114,7 +114,7 @@ function applyWeekRange() {
   <section class="section year-section" aria-labelledby="year-title">
     <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
       <summary class="year-summary">
-        <h2 id="year-title" class="section-title">Year</h2>
+        <h2 id="year-title" class="section-title">Plan your year</h2>
         <span v-if="year !== null" class="year-count">{{ assignedInYear }} of {{ weeks.length }} weeks assigned</span>
       </summary>
 

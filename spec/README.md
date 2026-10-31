@@ -38,8 +38,6 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `week-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 3-hour block applied to an empty run and open in Edit range (handles, duration, Save and Cancel), with the undo line (fix/ux-batch-5) |
 | `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
 | `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
-| `week-schedule-open-mobile-light.png` | 400 px wide | Week, light: the activity detail with "Schedule in the week" open, its Close button (fix/ux-batch-5) |
-| `week-schedule-open-desktop-light.png` | 1280 px wide | Week, light: the same at 1280 px (fix/ux-batch-5) |
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows with "Add a goal", no target or bar lines; the List \| Grid toggle is hidden |

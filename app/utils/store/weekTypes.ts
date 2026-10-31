@@ -1,7 +1,7 @@
 /**
  * Week type ops: making, copying, presetting, renaming, colouring, marking as time off and deleting a week type, and which one is
  * active. Owns ensureActiveTemplate, selectTemplate, createTemplate, duplicateTemplate, createTemplateFromPreset, setTemplateKind,
- * deleteTemplate, renameTemplate, setTemplateColor and renameActiveTemplate
+ * deleteTemplate, renameTemplate, setTemplateColor and renameActiveTemplate, and uniqueName (the numbered names)
  */
 import type { PlannerState } from '~/types/planner'
 import { DESIGN_COLORS, getActiveTemplate, getTemplateById, nextTemplateColor } from '~/utils/planner'
@@ -9,6 +9,27 @@ import { newWeekSlots } from '~/utils/plannerStore'
 import { PRESET_ROLES, buildPresetSlots, getPreset, presetTemplateFields, type PresetRole, type RoleMap } from '~/utils/presets'
 import { createRoleActivity } from '~/utils/store/activities'
 import { newId } from '~/utils/store/ids'
+
+/**
+ * The name a week type gets among the others: the name as given when no other week type has it (case-insensitive, trimmed), otherwise
+ * the first free "Name 2", "Name 3" and so on. Pure: the caller passes the names of the other week types
+ */
+export const uniqueName = (existing: string[], name: string): string => {
+  const base = name.trim()
+  const taken = new Set(existing.map(item => item.trim().toLowerCase()))
+
+  if (!taken.has(base.toLowerCase())) {
+    return name
+  }
+
+  let suffix = 2
+
+  while (taken.has(`${base} ${suffix}`.toLowerCase())) {
+    suffix += 1
+  }
+
+  return `${base} ${suffix}`
+}
 
 export const ensureActiveTemplate = (d: PlannerState) => {
   const template = getActiveTemplate(d)
@@ -32,7 +53,7 @@ export const createTemplate = (d: PlannerState, stamp: number) => {
 
   d.templates.unshift({
     id: templateId,
-    name: `New week type ${d.templates.length + 1}`,
+    name: uniqueName(d.templates.map(template => template.name), `New week type ${d.templates.length + 1}`),
     description: 'Empty week type — paint your ideal week.',
     granularityMinutes: granularity,
     color: source?.color,
@@ -53,7 +74,7 @@ export const duplicateTemplate = (d: PlannerState, sourceId: string, name: strin
 
   d.templates.unshift({
     id: templateId,
-    name: name.trim() || `Copy of ${source.name}`,
+    name: uniqueName(d.templates.map(template => template.name), name.trim() || `Copy of ${source.name}`),
     granularityMinutes: source.granularityMinutes,
     color: nextTemplateColor(d.templates) ?? source.color,
     slots: [...source.slots]
@@ -94,7 +115,7 @@ export const createTemplateFromPreset = (
 
   d.templates.unshift({
     id: templateId,
-    name: name.trim() || preset.name,
+    name: uniqueName(d.templates.map(template => template.name), name.trim() || preset.name),
     color: nextTemplateColor(d.templates) ?? DESIGN_COLORS[0]!.bg,
     slots,
     ...presetTemplateFields(preset)
@@ -139,18 +160,22 @@ export const deleteTemplate = (d: PlannerState, templateId: string): boolean => 
   return true
 }
 
-/** Renames a template; a blank name keeps the old one */
+/** Renames a template; a blank name keeps the old one, and a name another week type has gets a number (uniqueName) */
 export const renameTemplate = (d: PlannerState, templateId: string, name: string) => {
   const template = getTemplateById(d, templateId)
   const trimmed = name.trim()
 
-  if (template && trimmed) template.name = trimmed
+  if (template && trimmed) template.name = uniqueName(otherNames(d, templateId), trimmed)
 }
 
 export const setTemplateColor = (d: PlannerState, templateId: string, color: string) => {
   const template = getTemplateById(d, templateId)
   if (template) template.color = color
 }
+
+/** The names of the week types other than this one */
+const otherNames = (d: PlannerState, templateId: string): string[] =>
+  d.templates.filter(template => template.id !== templateId).map(template => template.name)
 
 export const renameActiveTemplate = (d: PlannerState, name: string) => {
   const template = getActiveTemplate(d)
@@ -159,5 +184,7 @@ export const renameActiveTemplate = (d: PlannerState, name: string) => {
     return
   }
 
-  template.name = name.trim() || template.name
+  const trimmed = name.trim()
+
+  if (trimmed) template.name = uniqueName(otherNames(d, template.id), trimmed)
 }
