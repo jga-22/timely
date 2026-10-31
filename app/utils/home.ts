@@ -66,19 +66,30 @@ export const dayRange = (state: PlannerState, date: string, showSleep = false): 
 }
 
 /**
- * Habits listed under the day (FR-HOME-15): every habit that is not already a scheduled block of the date. A habit with no
- * activity, or whose activity has no block that day, is a candidate. A habit of the Sleep activity is left out while sleep is hidden.
- * A candidate is listed when it is due on the day (`habitDue`): a daily habit always, a weekly or monthly one only while it
- * needs more ticks in its period
+ * Whether a habit has a day assigned in the week of the date (FR-HOME-15): its linked activity has at least one block in the
+ * effective template of that week (the same template as `dayBlocks`). A habit with no linked activity, or whose activity has
+ * no block that week, has no day. The habit then belongs to its day as a block (in the activities list), never as a habit row
+ */
+export const habitHasDay = (state: PlannerState, habit: Habit, date: string): boolean => {
+  if (!habit.activityId || !getActivityMap(state.activities).has(habit.activityId)) return false
+
+  const template = effectiveTemplate(state, date)
+
+  return !!template && template.slots.includes(habit.activityId)
+}
+
+/**
+ * Habits listed under the day (FR-HOME-15): the habits with no day assigned in the week of the date (`habitHasDay`). A habit of
+ * the Sleep activity is left out while sleep is hidden. A candidate is listed when it is due on the day (`habitDue`): a daily
+ * habit always, a weekly or monthly one only while it needs more ticks in its period
  */
 export const dayHabits = (state: PlannerState, date: string, showSleep = false): Habit[] => {
   const sleepId = showSleep ? null : sleepActivityId(state)
-  const scheduled = new Set(dayBlocks(state, date, showSleep).map(block => block.activityId))
 
   return state.habits.filter(habit => {
     if (sleepId && habit.activityId === sleepId) return false
 
-    if (habit.activityId && scheduled.has(habit.activityId)) return false
+    if (habitHasDay(state, habit, date)) return false
 
     return habitDue(state, habit, date)
   })
