@@ -15,6 +15,21 @@ watch(templateEditOpen, (open) => {
   if (edit.value) setSelection({ item: item.value ?? undefined }, true)
 })
 
+// The week grid's box or menu and the entry form are one editor at a time (PRD 11.2): each one opening closes the other, and the week type panel closes too
+const gridCloseToken = ref(0)
+const formCloseToken = ref(0)
+function onGridOpen() {
+  templateEditOpen.value = false
+  addedTemplateId.value = null
+  formCloseToken.value += 1
+}
+
+function onFormOpen() {
+  templateEditOpen.value = false
+  addedTemplateId.value = null
+  gridCloseToken.value += 1
+}
+
 function onTemplateCreated(templateId: string) {
   addedTemplateId.value = templateId
 }
@@ -39,11 +54,11 @@ function onTemplateCreated(templateId: string) {
     <!-- Week grid: the original range-select grid, with its action bar and menu teleported to the body -->
     <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
     <ClientOnly>
-      <PlannerActivityGrid />
+      <PlannerActivityGrid :close-token="gridCloseToken" @open="onGridOpen" />
     </ClientOnly>
 
     <!-- Add an activity and set sleep: the one form opens under these buttons (entries are edited from Goals) -->
-    <PlannerEntryActions @form-open="templateEditOpen = false; addedTemplateId = null" />
+    <PlannerEntryActions :close-token="formCloseToken" @form-open="onFormOpen" />
 
     <!-- Time split: the typical week of the active week type (client only, like the grid: it reads the saved planner) -->
     <ClientOnly>

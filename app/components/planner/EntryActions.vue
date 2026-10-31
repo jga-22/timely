@@ -9,6 +9,8 @@ import { readSleep, sleepActivityId, sleepSummary } from '~/utils/sleep'
  * ?item=<id>&edit=1 (the form opens on that entry). Opening a form emits form-open, so the parent closes the week type editor (one item
  * in edit mode per screen). The result of a save, with its Undo, shows under the buttons.
  */
+/** closeToken: the parent bumps it when the week grid's box or menu opens, so the form closes (one editor at a time, PRD 11.2) */
+const props = defineProps<{ closeToken?: number }>()
 const emit = defineEmits<{ 'form-open': [] }>()
 
 const planner = usePlannerStore()
@@ -47,6 +49,14 @@ watch([adding, editing], ([isAdding, isEditing]) => {
   if (isAdding || isEditing) emit('form-open')
 })
 
+// The grid's box opened: the form closes, without moving focus
+watch(() => props.closeToken, () => {
+  if (!adding.value && !editing.value) return
+
+  adding.value = false
+  setSelection({}, true)
+})
+
 function openAdd() {
   adding.value = true
   if (editing.value) setSelection({}, true)
@@ -59,11 +69,14 @@ function openSleep() {
   setSelection({ item: sleepId.value, edit: true })
 }
 
-// Done, Cancel, Escape and a removal leave the form here; focus returns to the button that opened it
+// The grid cell with the keyboard focus: where a form opened from the grid's box returns focus
+const gridCell = () => document.querySelector<HTMLElement>('.wk-body .wk-slot[tabindex="0"]')
+
+// Done, Cancel, Escape and a removal leave the form here; focus returns to the control that opened it: Add, Sleep hours, or the grid
+// (an entry's Edit in the grid's box)
 function closeForm() {
-  const opener = !adding.value && selected.value?.activityId && selected.value.activityId === sleepId.value
-    ? sleepButton.value
-    : addButton.value
+  const fromSleep = !adding.value && !!sleepId.value && selected.value?.activityId === sleepId.value
+  const opener = adding.value ? addButton.value : fromSleep ? sleepButton.value : (gridCell() ?? addButton.value)
 
   adding.value = false
   setSelection({}, true).then(() => nextTick(() => (opener ?? addButton.value)?.focus()))
