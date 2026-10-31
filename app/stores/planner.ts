@@ -2,14 +2,12 @@ import { defineStore } from 'pinia'
 import {
   freeShortCode,
   newWeekSlots,
-  numberCategories,
   presetCategoryId,
   replacedText
 } from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
   DESIGN_COLORS,
-  createHaradaSeed,
   createOnboardingState,
   getActiveTemplate,
   getTemplateById,
@@ -27,6 +25,7 @@ import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
 import { setAmbition, updateAmbition } from '~/utils/store/ambition'
 import { setJournalEntry, toggleDone } from '~/utils/store/daily'
 import { replaceStateInto } from '~/utils/store/lifecycle'
+import { addCategory, moveCategory, removeCategory, seedHaradaGoals, setCategoryColor, updateCategory } from '~/utils/store/categories'
 import { localDateKey } from '~/utils/dates'
 import {
   ALL_NIGHTS,
@@ -275,101 +274,29 @@ export const usePlannerStore = defineStore('planner', {
     // ---------------------------------------------------------------
     /** Adds a category at the end of the list. Returns its id, or null when the name is blank */
     addCategory(name: string, color: string): string | null {
-      const trimmedName = name.trim()
-
-      if (!trimmedName) {
-        return null
-      }
-
-      const id = `category-${Date.now()}`
-
-      this.categories.push({
-        id,
-        name: trimmedName,
-        color,
-        order: Math.max(0, ...this.categories.map(category => category.order)) + 1
-      })
-
-      return id
+      return addCategory(this.$state, name, color, Date.now())
     },
 
     updateCategory(categoryId: string, changes: Partial<Pick<Category, 'name' | 'goal5y' | 'target1y' | 'targetTbd'>>) {
-      const category = this.categories.find(item => item.id === categoryId)
-      if (category) Object.assign(category, changes)
+      updateCategory(this.$state, categoryId, changes)
     },
 
     setCategoryColor(categoryId: string, color: string) {
-      const category = this.categories.find(item => item.id === categoryId)
-
-      if (!category) {
-        return
-      }
-
-      // A6: only activities still on the old category colour follow the change; hand-picked colours stay
-      const previous = category.color?.toLowerCase()
-      category.color = color
-      for (const activity of this.activities) {
-        if (activity.categoryId === categoryId && previous && activity.color.toLowerCase() === previous) {
-          activity.color = color
-        }
-      }
+      setCategoryColor(this.$state, categoryId, color)
     },
 
     moveCategory(categoryId: string, offset: -1 | 1) {
-      const ordered = numberCategories(this.categories)
-      const index = ordered.findIndex(category => category.id === categoryId)
-      const targetIndex = index + offset
-
-      if (index === -1 || targetIndex < 0 || targetIndex >= ordered.length) {
-        return
-      }
-
-      const current = ordered[index]!
-      ordered[index] = ordered[targetIndex]!
-      ordered[targetIndex] = current
-      // Renumber in the swapped order; sorting by the old order numbers would undo the swap
-      this.categories = ordered.map((category, position) => ({ ...category, order: position + 1 }))
+      moveCategory(this.$state, categoryId, offset)
     },
 
     /** Removes a category; its activities and habits must first move to another category */
     removeCategory(categoryId: string, targetCategoryId?: string): boolean {
-      if (!this.categories.some(category => category.id === categoryId)) {
-        return false
-      }
-
-      // Only primary links need a new home
-      const hasContent = this.activities.some(activity => activity.categoryId === categoryId)
-        || this.habits.some(habit => habit.categoryId === categoryId)
-      const target = targetCategoryId && targetCategoryId !== categoryId
-        && this.categories.some(category => category.id === targetCategoryId)
-        ? targetCategoryId
-        : null
-
-      if (hasContent && !target) {
-        return false
-      }
-
-      if (target) {
-        for (const activity of this.activities) {
-          if (activity.categoryId === categoryId) activity.categoryId = target
-        }
-
-        for (const habit of this.habits) {
-          if (habit.categoryId === categoryId) habit.categoryId = target
-        }
-      }
-
-      this.categories = numberCategories(this.categories.filter(category => category.id !== categoryId))
-      return true
+      return removeCategory(this.$state, categoryId, targetCategoryId)
     },
 
     /** Starter grid for an empty planner; existing categories and activities are never replaced */
     seedHaradaGoals() {
-      if (this.categories.length) {
-        return
-      }
-
-      this.$patch(createHaradaSeed())
+      seedHaradaGoals(this.$state)
     },
 
     // ---------------------------------------------------------------
