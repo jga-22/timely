@@ -2,16 +2,11 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
+import { useGridUndo } from '~/composables/useGridUndo'
 import { inkOn } from '~/utils/palette'
-import {
-  DAYS,
-  aggregateTemplate,
-  formatHour,
-  isHourlyTemplate,
-  slotsToBlocks,
-  type TimeBlock
-} from '~/utils/planner'
+import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks, type TimeBlock } from '~/utils/planner'
 import { clockLabel, isSleepActivity, sleepActivityId } from '~/utils/sleep'
+import { HOURS, type Cell, type Range, bandOf, blockAt, cellsOf, collapsedHours, flowRows, hourAtY, hourTops, nearestShown, rangeLabel, singleCell, stepHour } from '~/utils/weekGrid'
 
 /** Height of one hour row in px, as in the original week grid */
 const HOUR_PX = 28
@@ -19,16 +14,9 @@ const HOUR_PX = 28
 const GAP_PX = 14
 /** A touch that moves further than this (px) is a scroll, not a tap */
 const TOUCH_SLOP = 8
-/** The undo line stays this long (ms) */
-const UNDO_MS = 8000
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-/** A run of hours in one day column; end is exclusive */
-interface Range { day: number; start: number; end: number }
-interface Cell { day: number; hour: number }
 interface Press { pointerId: number; pointerType: string; x: number; y: number; cell: Cell; block: Range | null; dragging: boolean }
-interface Undo { text: string; templateId: string; slots: string[] }
 
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
@@ -48,96 +36,24 @@ const blocksByDay = computed(() => DAYS.map((_, day) => slotsToBlocks(shownSlots
 const menuActivities = computed(() => planner.activities.filter(activity => showSleep.value || !isSleepActivity(activity)))
 const activityMap = computed(() => new Map(planner.activities.map(activity => [activity.id, activity])))
 const activityHours = computed(() => (activeTemplate.value ? aggregateTemplate(activeTemplate.value, planner.activities) : new Map<string, number>()))
-const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : hours.toFixed(1))
 
 /**
  * Hours that are sleep on all seven days while sleep is hidden: their rows collapse, so the grid is shorter (FR-SLEEP-5).
- * Never all 24: with nothing shown there would be no grid to edit
+ * The rules are in utils/weekGrid.ts; the component reads the store and lays the rows out
  */
-const collapsed = computed<boolean[]>(() => {
-  const none = HOURS.map(() => false)
-  if (!sleepHidden.value) return none
-
-  const hidden = HOURS.map(hour => DAYS.every((_, day) => slots.value[day * 24 + hour] === sleepId.value))
-  return hidden.every(Boolean) ? none : hidden
-})
+const collapsed = computed(() => collapsedHours(slots.value, sleepHidden.value ? sleepId.value : null))
 const isCollapsed = (hour: number) => collapsed.value[hour] === true
 const shownHours = computed(() => HOURS.filter(hour => !isCollapsed(hour)))
 const firstShown = computed(() => shownHours.value[0] ?? 0)
 const lastShown = computed(() => shownHours.value[shownHours.value.length - 1] ?? 23)
 
-/** The rows of the grid in order: each shown hour, and one thin band for each run of collapsed hours between shown ones. The leading and trailing runs sit in the bands above and below */
-type FlowRow = { kind: 'hour'; hour: number } | { kind: 'gap'; from: number; to: number }
-const flow = computed<FlowRow[]>(() => {
-  const rows: FlowRow[] = []
-
-  for (const hour of HOURS) {
-    if (!isCollapsed(hour)) {
-      rows.push({ kind: 'hour', hour })
-      continue
-    }
-
-    const last = rows[rows.length - 1]
-    if (!last) continue
-
-    if (last.kind === 'gap') last.to = hour + 1
-    else rows.push({ kind: 'gap', from: hour, to: hour + 1 })
-  }
-
-  if (rows[rows.length - 1]?.kind === 'gap') rows.pop()
-  return rows
-})
-
-/** Top of each shown hour inside the day columns, in px; collapsed hours have none */
-const hourTop = computed<number[]>(() => {
-  const tops: number[] = []
-  let y = 0
-
-  for (const row of flow.value) {
-    if (row.kind === 'hour') {
-      tops[row.hour] = y
-      y += HOUR_PX
-    } else {
-      y += GAP_PX
-    }
-  }
-
-  return tops
-})
-
-/** The run of shown hours that holds an hour: a selection, a drag and an edge never cross a collapsed run */
-const bandOf = (hour: number) => {
-  let start = hour
-  while (start > 0 && !isCollapsed(start - 1)) start -= 1
-
-  let end = hour + 1
-  while (end < 24 && !isCollapsed(end)) end += 1
-
-  return { start, end }
-}
-
-/** The shown hour at a y offset in the day columns; a gap maps to the hour above it; null above the first row */
-const hourAtY = (y: number): number | null => {
-  let found: number | null = null
-
-  for (const hour of HOURS) {
-    const top = hourTop.value[hour]
-    if (top !== undefined && top <= y) found = hour
-  }
-
-  return found
-}
-
-/** The shown hour nearest to an hour (a collapsed hour moves to a shown neighbour) */
-const nearestShown = (hour: number) => shownHours.value.reduce((best, item) => (Math.abs(item - hour) < Math.abs(best - hour) ? item : best), firstShown.value)
-
-/** The next shown hour one step up or down, or the same hour at the grid's edge */
-const stepHour = (hour: number, direction: -1 | 1): number => {
-  let next = hour + direction
-  while (next >= 0 && next < 24 && isCollapsed(next)) next += direction
-
-  return next >= 0 && next < 24 ? next : hour
-}
+/** The rows of the grid: each shown hour, and one thin band for each run of collapsed hours between shown ones */
+const flow = computed(() => flowRows(collapsed.value))
+/** Top of each shown hour inside the day columns, in px */
+const hourTop = computed<number[]>(() => hourTops(flow.value, HOUR_PX, GAP_PX))
+const bandAt = (hour: number) => bandOf(collapsed.value, hour)
+const hourAt = (y: number) => hourAtY(hourTop.value, y)
+const nearestShownHour = (hour: number) => nearestShown(shownHours.value, hour)
 
 // The bands above and below the rows say which hours are collapsed; clicking one shows sleep
 const topBand = computed(() => (firstShown.value > 0 ? `${clockLabel(0)} to ${clockLabel(firstShown.value)}` : ''))
@@ -157,28 +73,21 @@ const editSnapshot = ref<Range | null>(null)
 const editActivityId = ref<string | null>(null)
 // True while the edit that Apply opened is open: its undo step is the Apply's, and Save extends that step
 const editFromApply = ref(false)
-const undo = ref<Undo | null>(null)
+const { undo, dismissUndo, restartUndoTimer, stopUndoTimer, commit, undoLast: undoChange } = useGridUndo()
 // Keyboard: the focused hour, and the start of a Shift-arrow selection
 const cursor = ref<Cell>({ day: 0, hour: 8 })
 const anchor = ref<Cell | null>(null)
 const gridEl = ref<HTMLElement | null>(null)
-const barEl = ref<HTMLElement | null>(null)
-const menuEl = ref<HTMLElement | null>(null)
+const barRef = ref<{ el: HTMLElement | null } | null>(null)
+const menuRef = ref<{ el: HTMLElement | null } | null>(null)
 
 let press: Press | null = null
-let undoTimer: ReturnType<typeof setTimeout> | undefined
 let resizeDay: HTMLElement | null = null
 let resizeSide: 'top' | 'bottom' | null = null
 
-const cellsOf = (range: Range) => Array.from({ length: range.end - range.start }, (_, offset) => range.day * 24 + range.start + offset)
-const rangeLabel = (range: Range) => `${DAYS[range.day]} ${formatHour(range.start)} – ${formatHour(range.end)}`
 const selectionHasActivity = computed(() => !!selection.value && cellsOf(selection.value).some(index => shownSlots.value[index]))
 const firstActivityIn = (range: Range) => cellsOf(range).map(index => shownSlots.value[index]).find(Boolean) ?? null
-const blockAt = (cell: Cell): Range | null => {
-  const block = blocksByDay.value[cell.day]?.find((item: TimeBlock) => cell.hour >= item.start && cell.hour < item.end)
-  return block ? { day: cell.day, start: block.start, end: block.end } : null
-}
-const singleCell = (cell: Cell): Range => ({ day: cell.day, start: cell.hour, end: cell.hour + 1 })
+const blockOf = (cell: Cell) => blockAt(shownSlots.value, cell)
 const { fill } = usePlannerFill()
 const blockColor = (block: TimeBlock) => fill(activityMap.value.get(block.activityId)?.color ?? '#999999')
 /** A block prints the activity's short code (1 to 3 letters), so no name is cut off; the full name is in the block's title */
@@ -188,40 +97,10 @@ const setCursor = (cell: Cell) => {
   cursor.value = { day: cell.day, hour: cell.hour }
 }
 
-// Undo: one step back for the last change; the line dismisses itself
-const dismissUndo = () => {
-  undo.value = null
-  clearTimeout(undoTimer)
-}
-
-const restartUndoTimer = () => {
-  clearTimeout(undoTimer)
-  undoTimer = setTimeout(dismissUndo, UNDO_MS)
-}
-
-/** Runs a change to the active template as one undoable step. Nothing is recorded when no hour changed */
-const commit = (text: string, change: () => void) => {
-  const template = activeTemplate.value
-  if (!template) return
-
-  const before = [...template.slots]
-  change()
-
-  if (!template.slots.some((holder, index) => holder !== before[index])) return
-
-  undo.value = { text: `${text}.`, templateId: template.id, slots: before }
-  restartUndoTimer()
-}
-
-const undoLast = () => {
-  const last = undo.value
-  if (!last) return
-
-  // Undo leaves an open edit first, then restores the week from before the change
+/** Undo leaves an open edit first, then restores the week from before the change */
+const undoLast = () => undoChange(() => {
   if (editing.value) closeAll()
-  planner.restoreSlots(last.templateId, last.slots)
-  dismissUndo()
-}
+})
 
 const focusCursor = () => {
   nextTick(() => gridEl.value?.querySelector<HTMLElement>(`.wk-slot[data-day="${cursor.value.day}"][data-hour="${cursor.value.hour}"]`)?.focus())
@@ -238,7 +117,7 @@ const placePopup = (x: number, y: number) => {
 const openBar = () => {
   menuOpen.value = false
   barOpen.value = true
-  nextTick(() => barEl.value?.querySelector<HTMLButtonElement>('button')?.focus())
+  nextTick(() => barRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus())
 }
 
 const closeAll = () => {
@@ -258,7 +137,7 @@ const closeAll = () => {
 
 // The menu stays on screen: it moves up when its bottom would pass the screen edge, and its list scrolls inside it
 const fitMenu = () => {
-  const menu = menuEl.value
+  const menu = menuRef.value?.el
   if (!menu) return
 
   const height = menu.getBoundingClientRect().height
@@ -270,7 +149,7 @@ const pickFromBar = () => {
   menuOpen.value = true
   nextTick(() => {
     fitMenu()
-    menuEl.value?.querySelector<HTMLButtonElement>('button')?.focus()
+    menuRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus()
   })
 }
 
@@ -284,7 +163,7 @@ const applyActivity = (activityId: string) => {
   const changes = cellsOf(range).some(index => slots.value[index] !== activityId)
   // Hidden sleep in the run is replaced, and the result says so (FR-SLEEP-5)
   const replacedSleep = sleepHidden.value ? cellsOf(range).filter(index => slots.value[index] === sleepId.value).length : 0
-  commit(`${name} set on ${rangeLabel(range)}${replacedSleep ? `. Replaced ${replacedSleep} h of Sleep` : ''}`, () => {
+  commit(`${name} set on ${rangeLabel(range)}${replacedSleep ? `. Replaced ${replacedSleep} h of Sleep` : ''}`, template.id, () => {
     planner.paintCells(template.id, cellsOf(range), activityId)
   })
 
@@ -295,7 +174,7 @@ const applyActivity = (activityId: string) => {
 
   // The new block opens in edit mode at once, so its start and end change without selecting it again (FR-PLAN-23).
   // Its undo step waits for the edit: Save extends it, Cancel and Escape keep the block as applied
-  clearTimeout(undoTimer)
+  stopUndoTimer()
   barOpen.value = false
   menuOpen.value = false
   editSnapshot.value = { ...range }
@@ -312,7 +191,7 @@ const clearRange = (range: Range) => {
   // A change made outside the edit (clear day, a block's delete) ends the edit first
   if (editing.value) closeAll()
 
-  commit(`Cleared ${rangeLabel(range)}`, () => {
+  commit(`Cleared ${rangeLabel(range)}`, template.id, () => {
     planner.paintCells(template.id, clearableCells(range), null)
   })
 }
@@ -370,7 +249,7 @@ const saveEdit = () => {
         undo.value = { ...undo.value, text: `Moved to ${rangeLabel(range)}.` }
       }
     } else {
-      commit(`Moved to ${rangeLabel(range)}`, move)
+      commit(`Moved to ${rangeLabel(range)}`, template.id, move)
     }
   }
 
@@ -382,7 +261,7 @@ const setEdge = (side: 'top' | 'bottom', hour: number) => {
   const range = selection.value
   if (!range) return
 
-  const band = bandOf(range.start)
+  const band = bandAt(range.start)
 
   selection.value = side === 'top'
     ? { ...range, start: Math.max(band.start, Math.min(hour, range.end - 1)) }
@@ -391,7 +270,7 @@ const setEdge = (side: 'top' | 'bottom', hour: number) => {
 
 /** The hour line of one edge nearest to a y offset in the day columns, among the lines its shown run allows */
 const edgeHourAt = (side: 'top' | 'bottom', y: number, range: Range): number => {
-  const band = bandOf(range.start)
+  const band = bandAt(range.start)
   const lines = side === 'top'
     ? Array.from({ length: range.end - band.start }, (_, offset) => band.start + offset).map(hour => ({ hour, px: hourTop.value[hour] ?? 0 }))
     : Array.from({ length: band.end - range.start }, (_, offset) => range.start + 1 + offset).map(hour => ({ hour, px: (hourTop.value[hour - 1] ?? 0) + HOUR_PX }))
@@ -453,11 +332,11 @@ const cellAt = (x: number, y: number): { cell: Cell; block: Range | null } | nul
   if (!column) return null
 
   const rect = column.getBoundingClientRect()
-  const hour = hourAtY(y - rect.top)
+  const hour = hourAt(y - rect.top)
   if (hour === null) return null
 
   const cell = { day: Number(column.dataset.day), hour }
-  return { cell, block: blockAt(cell) }
+  return { cell, block: blockOf(cell) }
 }
 
 const onPointerDown = (event: PointerEvent) => {
@@ -494,7 +373,7 @@ const onPointerMove = (event: PointerEvent) => {
   if (!hit || hit.cell.day !== press.cell.day) return
 
   // A drag stops at the edge of its shown run: it never selects across a collapsed run
-  const band = bandOf(press.cell.hour)
+  const band = bandAt(press.cell.hour)
   const start = Math.max(band.start, Math.min(press.cell.hour, hit.cell.hour))
   const end = Math.min(band.end, Math.max(press.cell.hour, hit.cell.hour) + 1)
 
@@ -533,8 +412,8 @@ const stepFor = (key: string, cell: Cell): Cell | null => {
   switch (key) {
     case 'ArrowLeft': return { day: Math.max(0, cell.day - 1), hour: cell.hour }
     case 'ArrowRight': return { day: Math.min(6, cell.day + 1), hour: cell.hour }
-    case 'ArrowUp': return { day: cell.day, hour: stepHour(cell.hour, -1) }
-    case 'ArrowDown': return { day: cell.day, hour: stepHour(cell.hour, 1) }
+    case 'ArrowUp': return { day: cell.day, hour: stepHour(collapsed.value, cell.hour, -1) }
+    case 'ArrowDown': return { day: cell.day, hour: stepHour(collapsed.value, cell.hour, 1) }
     default: return null
   }
 }
@@ -549,7 +428,7 @@ const onKeydown = (event: KeyboardEvent) => {
     event.preventDefault()
     const from = event.shiftKey ? (anchor.value ?? cursor.value) : null
     anchor.value = from ? { ...from } : null
-    selection.value = from && from.day === step.day && bandOf(from.hour).start === bandOf(step.hour).start
+    selection.value = from && from.day === step.day && bandAt(from.hour).start === bandAt(step.hour).start
       ? { day: step.day, start: Math.min(from.hour, step.hour), end: Math.max(from.hour, step.hour) + 1 }
       : null
     setCursor(step)
@@ -559,7 +438,7 @@ const onKeydown = (event: KeyboardEvent) => {
 
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
-    selection.value = selection.value ?? blockAt(cursor.value) ?? singleCell(cursor.value)
+    selection.value = selection.value ?? blockOf(cursor.value) ?? singleCell(cursor.value)
     const rect = target.getBoundingClientRect()
     placeAt(rect.right, rect.top)
   }
@@ -579,7 +458,7 @@ watch(() => activeTemplate.value?.id, () => {
 // Rows collapse or come back with Show sleep: the cursor moves to a shown hour; a selection that now covers a collapsed hour is dropped.
 // Showing sleep again restores every row and keeps the selection
 watch(collapsed, () => {
-  if (isCollapsed(cursor.value.hour)) setCursor({ day: cursor.value.day, hour: nearestShown(cursor.value.hour) })
+  if (isCollapsed(cursor.value.hour)) setCursor({ day: cursor.value.day, hour: nearestShownHour(cursor.value.hour) })
 
   const range = selection.value
   if (range && HOURS.some(hour => hour >= range.start && hour < range.end && isCollapsed(hour))) closeAll()
@@ -603,7 +482,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointercancel', onPointerCancel)
   window.removeEventListener('keydown', onWindowKeydown)
   window.removeEventListener('pointermove', onResizeMove)
-  clearTimeout(undoTimer)
 })
 </script>
 
@@ -772,64 +650,29 @@ onBeforeUnmount(() => {
       <!-- Closes on pointerdown, not click: the click that follows a tap would otherwise land on the overlay that the tap just opened -->
       <div v-if="barOpen || menuOpen" class="wk-overlay" @pointerdown="closeAll" @contextmenu.prevent="closeAll" />
 
-      <div
+      <PlannerWeekGridBar
         v-if="barOpen && selection"
-        ref="barEl"
-        class="wk-pop wk-bar"
-        role="group"
-        :aria-label="`Selected ${rangeLabel(selection)}`"
-        :style="{ left: `${barPos.x}px`, top: `${barPos.y}px` }"
-        @click.stop
-      >
-        <div class="wk-pop-head">
-          <span class="wk-pop-day">{{ DAYS[selection.day] }}</span>
-          <span class="wk-pop-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
-          <span class="wk-pop-dur">{{ selection.end - selection.start }}h</span>
-        </div>
-        <div class="wk-pop-actions">
-          <button type="button" class="btn btn-sm btn-primary" @click="pickFromBar">
-            {{ selectionHasActivity ? 'Change…' : 'Apply…' }}
-          </button>
-          <EditButton label="Edit range" :disabled="!selectionHasActivity" @click="startEdit" />
-          <button v-if="selectionHasActivity" type="button" class="btn btn-sm btn-danger" @click="clearSelection">Delete</button>
-          <button type="button" class="btn btn-sm btn-ghost" @click="closeAll">Cancel</button>
-        </div>
-      </div>
+        ref="barRef"
+        :selection="selection"
+        :pos="barPos"
+        :has-activity="selectionHasActivity"
+        @pick="pickFromBar"
+        @edit="startEdit"
+        @delete="clearSelection"
+        @cancel="closeAll"
+      />
 
-      <div
+      <PlannerWeekGridMenu
         v-if="menuOpen && selection"
-        ref="menuEl"
-        class="wk-pop wk-menu"
-        role="group"
-        :aria-label="`Activities for ${rangeLabel(selection)}`"
-        :style="{ left: `${barPos.x}px`, top: `${barPos.y}px` }"
-        @click.stop
-      >
-        <div class="wk-pop-head">
-          <span class="wk-pop-day">{{ DAYS[selection.day] }}</span>
-          <span class="wk-pop-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
-          <span class="wk-pop-dur">{{ selection.end - selection.start }}h</span>
-        </div>
-        <div class="wk-menu-list">
-          <button
-            v-for="activity in menuActivities"
-            :key="activity.id"
-            type="button"
-            class="wk-menu-item"
-            @click="applyActivity(activity.id)"
-          >
-            <span class="dot" :style="{ background: activity.color }" />
-            <span class="wk-menu-name">{{ activity.name }}</span>
-            <span class="wk-menu-hrs">{{ hoursText(activityHours.get(activity.id) ?? 0) }}h</span>
-          </button>
-          <p v-if="!planner.activities.length" class="wk-menu-empty">No activities yet. Add one below the week.</p>
-          <div class="wk-menu-divider" />
-          <button type="button" class="wk-menu-item is-clear" @click="clearSelection">
-            <span class="dot wk-dot-clear" />
-            <span class="wk-menu-name">Clear these hours</span>
-          </button>
-        </div>
-      </div>
+        ref="menuRef"
+        :selection="selection"
+        :pos="barPos"
+        :activities="menuActivities"
+        :hours="activityHours"
+        :has-any="planner.activities.length > 0"
+        @apply="applyActivity"
+        @clear="clearSelection"
+      />
     </Teleport>
   </section>
 </template>
