@@ -41,24 +41,26 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
-| `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
+| `planner-desktop-light.png` | 1280 px wide | Week, light, full page, sample data: the week type bar, the week grid, "+ Add activity" and "Sleep hours" (10 PM to 7 AM) under it, the Time split; no Activities list (2026-11-04) |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
-| `year-desktop-light.png` | 1280 px wide | Year, light: the painter open with its paint tools, the Weeks row, the planned hours by month stacked by life area with the available-time key, and the Life areas list ending in "Not planned" (sample data, the seed plus ticks) |
+| `year-desktop-light.png` | 1280 px wide | Year, light: the painter with its paint tools and the closed "Apply to several weeks" button, the planned hours by month stacked by life area with the available-time key, and the Life areas list ending in "Not planned" (sample data, the seed plus ticks) |
 | `year-desktop-dark.png` | 1280 px wide | Year, dark, the same layout |
+| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: "Apply to several weeks" open under the paint tools: "for weeks" 1 to 1, Apply, and the hint "Applies Standard Week to these weeks." (2026-11-04) |
+| `year-apply-several-mobile-light.png` | 400 px wide | Year, light, the same options at phone width: the panel took focus, not the field (FR-UX-9) |
 | `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width: the painter wraps, the chart and the Life areas list fit with no overflow |
 | `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width |
-| `year-more-options-desktop-light.png` | 1280 px wide | Year, light, More options open: Year or Quarter, one year or several, and the unit Hours, Days or Weeks |
-| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the Weeks row preselects Vacation (`?tab=year&item=<id>`) |
+| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the new week type is chosen in Paint with and the options are open (`?tab=year&item=<id>`; this copy is named "Vacation 2" because the sample already has a Vacation) |
 | `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, Start empty: "0 of 53 weeks assigned", no planned hours, and "Plan the week in Week and the hours show here." with Open Week |
 | `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
-| `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
-| `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section open by default, with the one line "Every week of 2026 uses …" (FR-YEAR-7) |
-| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: an entry open in the unified edit form ("Edit Read for inspiration", sample data), with Save, Cancel and Delete; More options closed (refreshed 2026-10-29: the "Also counts toward" field is gone; Escape and Cancel close it and return focus to Edit, FR-PLAN-26) |
+| `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page, the same layout |
+| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
+| `planner-add-activity-desktop-light.png` | 1280 px wide | Week, light: "+ Add activity" open, the form "New activity or habit" under the buttons with its name focused (2026-11-04) |
+| `planner-sleep-hours-desktop-light.png` | 1280 px wide | Week, light: "Sleep hours" open, the Sleep form ("Edit Sleep") with the editor for every night (2026-11-04) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
-| `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
-| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: the Time split under Activities and habits for Standard Week: the ring of the typical week's available time and the life areas list with hours and percent, Not planned last |
+| `planner-mobile-light.png` | 400 px wide | Week, light, full page at 400 px: the grid scrolls sideways inside its box, the two buttons wrap under it, no page overflow |
+| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: the Time split under the entry buttons for Standard Week: the ring of the typical week's available time and the life areas list with hours and percent, Not planned last |
 | `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: the Time split |
 | `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: the Time split |
 | `planner-time-split-selected-desktop-light.png` | 1280 px wide | Week, light: the Time split with Professional selected: the others dimmed, the centre names it (40%, 42 h), its row marked |
@@ -185,7 +187,7 @@ Sleep is the activity whose code is SLP (FR-SLEEP-1 to 8). It is built in (not d
 
 ### Unified item form (2026-10-28, branch `feat/unified-item-form`, not pushed)
 
-One form and one list for activities and habits (FR-ITEM-1 to 5). The Week tab shows "Activities and habits": timed chips with their hours, a Habits list for entries with no time, and "+ Add". The Goals life area shows one list with the schedule, the week types and the time planned against the need; its rows and "+ Add" open the same form. `ActivityForm.vue` holds the fields (name, life area, duration, days or times, start and week types, More options) and saves through `saveEntry`; a repaint reports its result with Undo for 8 s. The separate schedule panel, the Activities add form, `HabitForm.vue` and `HabitList.vue` are removed. Storage version unchanged (8). Checks: build clean, typecheck 0 errors, 13 tsx checks of the store and rules, headless Edge at 1280 and 400 px, light and dark, 22 browser checks, no overflow, no console errors. New screenshots: `spec/screens/unified-week-add-1280.png`, `unified-week-add-400.png`, `unified-goals-detail-1280.png`, `unified-goals-form-dark-1280.png`, `unified-no-time-confirm-1280.png`.
+One form and one list for activities and habits (FR-ITEM-1 to 5). The Week tab shows "Activities and habits": timed chips with their hours, a Habits list for entries with no time, and "+ Add". The Goals life area shows one list with the schedule, the week types and the time planned against the need; its rows and "+ Add" open the same form. `ActivityForm.vue` holds the fields (name, life area, duration, days or times, start and week types, More options) and saves through `saveEntry`; a repaint reports its result with Undo for 8 s. The separate schedule panel, the Activities add form, `HabitForm.vue` and `HabitList.vue` are removed. Storage version unchanged (8). Checks: build clean, typecheck 0 errors, 13 tsx checks of the store and rules, headless Edge at 1280 and 400 px, light and dark, 22 browser checks, no overflow, no console errors. New screenshots: `spec/screens/unified-week-add-1280.png`, `unified-week-add-400.png` (retired 2026-11-04), `unified-goals-detail-1280.png`, `unified-goals-form-dark-1280.png`, `unified-no-time-confirm-1280.png`.
 
 ### Account avatar (2026-10-28, branch `fix/ux-batch-5`, not pushed)
 
