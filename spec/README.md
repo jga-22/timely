@@ -7,7 +7,7 @@ This folder holds the product and design specification for Timely. The code is t
 | Path | What it is | How to use it |
 | --- | --- | --- |
 | `README.md` | This index, plus a short changelog. | Start here. |
-| `weekly_planner_prd_and_design_doc.md` | The product requirements and design document (v3): the four-screen product (Home, Goals, Planner, Visualization). Requirements have IDs and a status (Done, Partial, Not built, Planned (v3), Superseded, Dropped) with evidence for each Done or Partial item. Includes the UX rules, the see-only-once matrix, the old-Insights mapping, the implementation slices, assumptions and open questions. | Read before changing behaviour. Update statuses and the backlog when a feature ships or a decision changes. |
+| `weekly_planner_prd_and_design_doc.md` | The product requirements and design document (v3): the five-screen product (Home, Goals, Week, Year, Insights). Requirements have IDs and a status (Done, Partial, Not built, Planned (v3), Superseded, Dropped) with evidence for each Done or Partial item. Includes the UX rules, the see-only-once matrix, the old-Insights mapping, the implementation slices, assumptions and open questions. | Read before changing behaviour. Update statuses and the backlog when a feature ships or a decision changes. |
 | `frontend-design.md` | The current visual style, derived from the code: tokens, layout, breakpoints, component catalogue (sections 4.9 to 4.17 cover the current screens), accessibility, voice, do and don't, verification, known gaps. | Read before any UI change. Update it with the code in the same change. |
 | `build-plan.md` | Slice-by-slice plan to build the v3 structure: rules every slice follows, definition of done, slice scopes, status log and what remains. | Read before starting or reviewing a slice; update the status log as slices ship. |
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/main.css` remain the source of truth. |
@@ -44,36 +44,28 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows with "Add a goal", no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-desktop-light.png` | 1280 px wide | Planner, light, full page, clean seed: title "Planner", week grid, activities, year grid |
-| `planner-schedule-desktop-light.png` | 1280 px wide | Week, light: the "Schedule in the week" block under Training, three days at 6PM for 1 h, with the result line and Undo (FR-PLAN-25) |
-| `planner-schedule-mobile-light.png` | 400 px wide | The same block at 400 px: one column of days, duration and start |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
+| `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
+| `year-desktop-light.png` | 1280 px wide | Year, light: the painter open with its paint tools, the Weeks row, the planned hours by month stacked by life area with the available-time key, and the Life areas list ending in "Not planned" (sample data, the seed plus ticks) |
+| `year-desktop-dark.png` | 1280 px wide | Year, dark, the same layout |
+| `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width: the painter wraps, the chart and the Life areas list fit with no overflow |
+| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width |
+| `year-more-options-desktop-light.png` | 1280 px wide | Year, light, More options open: Year or Quarter, one year or several, and the unit Hours, Days or Weeks |
+| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the Weeks row preselects Vacation (`?tab=year&item=<id>`) |
+| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, Start empty: "0 of 53 weeks assigned", no planned hours, and "Plan the week in Week and the hours show here." with Open Week |
+| `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
 | `planner-desktop-dark.png` | 1280 px wide | Planner, dark, full page |
 | `planner-one-type-desktop-light.png` | 1280 px wide | Planner, light, one week type, full page: the "Week type" bar with no delete, the week grid, and the Year section open by default, with the one line "Every week of 2026 uses …" (FR-YEAR-7) |
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light: an entry open in the unified edit form ("Edit Read for inspiration", sample data), with Save, Cancel and Delete; More options closed (refreshed 2026-10-29: the "Also counts toward" field is gone; Escape and Cancel close it and return focus to Edit, FR-PLAN-26) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Planner, light, full page at 400 px |
-| `insights-desktop-light.png` | 1280 px wide | Insights, light: one year by month, stacked by category, categories with hours and share |
-| `insights-desktop-dark.png` | 1280 px wide | Insights, dark |
-| `insights-mobile-light.png` | 400 px wide | Insights, light, full page |
-| `insights-mobile-dark.png` | 400 px wide | Insights, dark, full page |
-| `insights-more-options-desktop-light.png` | 1280 px wide | Insights, light, More options open at Year: Year or Quarter, One year or Several years, Hours, Days (24 h), Weeks (168 h); the chart header key reads "Available per year" (2026-10-28) |
-| `insights-bars-desktop-light.png` | 1280 px wide, full page | Insights, light, Bars view: the planned hours by month stacked by life area, the Life areas list with hours and percent of the available time and "Not planned" (refreshed 2026-10-29) |
-| `insights-bars-desktop-dark.png` | 1280 px wide, full page | Insights, dark, Bars view, the same list |
-| `insights-donut-desktop-light.png` | 1280 px wide | Insights, light, Donut view: the whole range as a ring (76% planned of the available time, "4,232 h planned of 5,565 h"), with the Life areas list beside it ending in "Not planned" (refreshed 2026-10-29) |
-| `insights-donut-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view |
-| `insights-bars-mobile-light.png` | 400 px wide, full page | Insights, light, Bars view at phone width (refreshed 2026-10-29) |
-| `insights-donut-mobile-light.png` | 400 px wide | Insights, light, Donut view at phone width, full page |
-| `insights-donut-selected-desktop-light.png` | 1280 px wide | Insights, light, Donut view with Physical selected: its slice drawn thicker, the others dimmed, its list row marked, the centre showing Physical, 7%, 361 h (refreshed 2026-10-29) |
-| `insights-donut-selected-desktop-dark.png` | 1280 px wide | Insights, dark, Donut view with Physical selected |
-| `insights-donut-selected-mobile-light.png` | 400 px wide | Insights, light, Donut view with Physical selected, at phone width, full page |
 | `insights-adherence-desktop-light.png` | 1280 px wide | Insights, light, Adherence view (month, one year): the headline "Done 5% of planned", the week bars with dashed future weeks, By life area, Habits, the journal nudge. Sample data: the seed plus ticks over the last three weeks (from 9 to 29 October 2026); the chart starts at the first tick and ends at the current week, so earlier weeks are not drawn |
 | `insights-adherence-desktop-dark.png` | 1280 px wide | Insights, dark, Adherence view (month) |
 | `insights-adherence-week-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with Week: one bar per weekday, Monday to Sunday |
 | `insights-adherence-mobile-light.png` | 400 px wide | Insights, light, Adherence view at phone width, full page |
 | `insights-adherence-mobile-dark.png` | 400 px wide | Insights, dark, Adherence view at phone width, full page |
 | `insights-adherence-empty-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with no tick in the range: the empty state with "Open Home" |
-| `insights-start-empty-desktop-light.png` | 1280 px wide | Insights, light, Start empty: the year switcher, Month or Week, More options, and "Plan the week in Planner and the hours show here." with an Open Planner button (refreshed 2026-10-29) |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
 
@@ -84,7 +76,7 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `onboarding-goals-desktop-light.png` | 1280 px wide | Step 2 of 5, Goals and habits with one goal: the Physical chip, the habit Run, "Add a second goal" |
 | `onboarding-goals-two-desktop-light.png` | 1280 px wide | Step 2 of 5 with two goals: the chip the first goal uses is disabled in the second; Remove on goal 2 |
 | `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Card 3 Plan your week on Week, after Replay tour: "Timely placed 68 h for Physical and 0 h for Spiritual" and "Goals keeps the why" (refreshed 2026-10-29) |
-| `onboarding-tour-insights-desktop-light.png` | 1280 px wide | Step 4 of 5 on Insights: the planned-time bars of the new week |
+| `onboarding-tour-year-desktop-light.png` | 1280 px wide | Card 2 "Your year" after Replay tour and Next, over the Year tab: the card names the planned hours stacked by life area and the week type each week uses |
 | `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
 | `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the headline and its supporting line, the intro player (scene 1 of 5, paused behind a Play button, frameless), the Google sign-in button and the consent line |
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in page, dark, the same layout |
@@ -133,6 +125,13 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Year tab (2026-11-01, branch `feat/year-tab`, from `main`, not pushed)
+
+- A fifth tab, Year (route id `year`), holds the year painter and the Weeks row (FR-YEAR-7, FR-YEAR-8), the planned hours with their range controls (Month or Week, More options, the unit Hours, Days or Weeks) and the Life areas list. The Week tab loses its Year section: after a new week type it says "X added. Choose its weeks in Year", with a link to the Year tab (`item` is the week type id).
+- Insights is the Adherence view only (FR-INS-P7), with its own range controls and no unit. The range donut is kept unused (`AvailableDonut.vue`) for the Time split step on the Week tab.
+- Tour card 2 is "Your year" and links to Year; intro scene 5 is "Your year and daily follow-up". Storage version unchanged (8).
+- Screens: `year-*`, `topbar-five-tabs-mobile-light.png`, `planner-vacation-added-desktop-light.png`, `onboarding-tour-year-desktop-light.png`. The Insights bars, donut and tour-insights screens and the Schedule in the week screens are retired.
 
 ### Goals list and Planner defaults (2026-10-30, branch `feat/goals-week-defaults`, from `main`, not pushed)
 
