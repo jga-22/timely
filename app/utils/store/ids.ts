@@ -1,5 +1,5 @@
 /**
- * Id helper of the store ops. Ops never read the clock: the store passes a stamp (Date.now()) once per action
+ * Id helper of the store ops. Ops never read the clock: the store reads the clock once per action and passes it as a stamp
  */
 
 /** A new id from its prefix and a stamp, with an optional suffix (`activity-1700000000000-0`) */

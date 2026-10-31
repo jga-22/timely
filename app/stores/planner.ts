@@ -1,13 +1,11 @@
 import { defineStore } from 'pinia'
-import { freeShortCode, newWeekSlots } from '~/utils/plannerStore'
+import { freeShortCode } from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
 import {
-  DESIGN_COLORS,
   createOnboardingState,
   getActiveTemplate,
   getTemplateById,
   isHourlyTemplate,
-  nextTemplateColor,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
@@ -18,12 +16,14 @@ import { setSleep, setupSleep } from '~/utils/store/sleepSetup'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { restoreSlots } from '~/utils/store/undo'
 import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
+import { createTemplate, createTemplateFromPreset, deleteTemplate, duplicateTemplate, ensureActiveTemplate, renameActiveTemplate, renameTemplate, selectTemplate, setTemplateColor, setTemplateKind } from '~/utils/store/weekTypes'
 import { setAmbition, updateAmbition } from '~/utils/store/ambition'
 import { setJournalEntry, toggleDone } from '~/utils/store/daily'
 import { replaceStateInto } from '~/utils/store/lifecycle'
 import { addCategory, moveCategory, removeCategory, seedHaradaGoals, setCategoryColor, updateCategory } from '~/utils/store/categories'
 import { localDateKey } from '~/utils/dates'
 import type { SleepGroup } from '~/utils/sleep'
+import type { PresetRole } from '~/utils/presets'
 import {
   blockHours,
   entryDraftOf,
@@ -35,14 +35,6 @@ import {
   type EntryDraft,
   type EntrySaveResult
 } from '~/utils/entries'
-import {
-  PRESET_ROLES,
-  buildPresetSlots,
-  getPreset,
-  presetTemplateFields,
-  type PresetRole,
-  type RoleMap
-} from '~/utils/presets'
 
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */
@@ -78,56 +70,20 @@ export const usePlannerStore = defineStore('planner', {
     // Week types
     // ---------------------------------------------------------------
     ensureActiveTemplate() {
-      const template = this.activeTemplate
-      this.settings.activeTemplateId = template?.id ?? null
+      ensureActiveTemplate(this.$state)
     },
 
     selectTemplate(templateId: string) {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template) {
-        return
-      }
-
-      this.settings.activeTemplateId = template.id
+      selectTemplate(this.$state, templateId)
     },
 
     createTemplate() {
-      const source = this.activeTemplate
-      const templateId = `template-${Date.now()}`
-      const granularity = source?.granularityMinutes ?? 60
-
-      this.templates.unshift({
-        id: templateId,
-        name: `New week type ${this.templates.length + 1}`,
-        description: 'Empty week type — paint your ideal week.',
-        granularityMinutes: granularity,
-        color: source?.color,
-        slots: newWeekSlots(this.$state, granularity)
-      })
-      this.settings.activeTemplateId = templateId
+      createTemplate(this.$state, Date.now())
     },
 
     /** Copies a week type's hours into a new one with the next unused colour, and makes it active (FR-TPL-6). Returns its id, or null when the source is unknown */
     duplicateTemplate(sourceId: string, name: string): string | null {
-      const source = getTemplateById(this.$state, sourceId)
-
-      if (!source) {
-        return null
-      }
-
-      const templateId = `template-${Date.now()}`
-
-      this.templates.unshift({
-        id: templateId,
-        name: name.trim() || `Copy of ${source.name}`,
-        granularityMinutes: source.granularityMinutes,
-        color: nextTemplateColor(this.templates) ?? source.color,
-        slots: [...source.slots]
-      })
-      this.settings.activeTemplateId = templateId
-
-      return templateId
+      return duplicateTemplate(this.$state, sourceId, name, Date.now())
     },
 
     /**
@@ -135,95 +91,29 @@ export const usePlannerStore = defineStore('planner', {
      * already has its name (then that one is used) or its short code is taken (then the role is left empty). Returns the id, or null for an unknown preset
      */
     createTemplateFromPreset(name: string, presetId: string, roleMap: Partial<Record<PresetRole, string | 'create' | null>>, keepHabits: boolean): string | null {
-      const preset = getPreset(presetId)
-
-      if (!preset) {
-        return null
-      }
-
-      const resolved: RoleMap = {}
-
-      PRESET_ROLES.forEach((role, index) => {
-        const choice = roleMap[role]
-        resolved[role] = choice === 'create' ? this.createRoleActivity(role, index) : (choice ?? null)
-      })
-
-      // Built before the new week type exists, so the habit hours come from the week type Goals reads now
-      const slots = buildPresetSlots(this.$state, preset, resolved, keepHabits)
-      const templateId = `template-${Date.now()}`
-
-      this.templates.unshift({
-        id: templateId,
-        name: name.trim() || preset.name,
-        color: nextTemplateColor(this.templates) ?? DESIGN_COLORS[0]!.bg,
-        slots,
-        ...presetTemplateFields(preset)
-      })
-      this.settings.activeTemplateId = templateId
-
-      return templateId
+      return createTemplateFromPreset(this.$state, name, presetId, roleMap, keepHabits, Date.now())
     },
 
     /** Sets or clears a week type's time-off mark (FR-TPL-8). Goals reads a working week type instead */
     setTemplateKind(templateId: string, kind: 'break' | undefined) {
-      const template = getTemplateById(this.$state, templateId)
-
-      if (!template) return
-
-      if (kind) template.kind = kind
-      else delete template.kind
+      setTemplateKind(this.$state, templateId, kind)
     },
 
-    deleteTemplate(templateId: string) {
-      const templateIndex = this.templates.findIndex(template => template.id === templateId)
-
-      if (templateIndex === -1) {
-        return false
-      }
-
-      if (this.templates.length <= 1) {
-        return false
-      }
-
-      const nextTemplates = this.templates.filter(template => template.id !== templateId)
-      const nextAppliedWeeks = this.appliedWeeks.filter(week => week.templateId !== templateId)
-      const fallbackTemplateId = nextTemplates[0]?.id ?? null
-
-      this.$patch({
-        templates: nextTemplates,
-        appliedWeeks: nextAppliedWeeks,
-        settings: {
-          ...this.settings,
-          activeTemplateId: this.settings.activeTemplateId === templateId
-            ? fallbackTemplateId
-            : this.settings.activeTemplateId
-        }
-      })
-
-      return true
+    deleteTemplate(templateId: string): boolean {
+      return deleteTemplate(this.$state, templateId)
     },
 
     /** Renames a template; a blank name keeps the old one */
     renameTemplate(templateId: string, name: string) {
-      const template = getTemplateById(this.$state, templateId)
-      const trimmed = name.trim()
-
-      if (template && trimmed) template.name = trimmed
+      renameTemplate(this.$state, templateId, name)
     },
 
     setTemplateColor(templateId: string, color: string) {
-      const template = getTemplateById(this.$state, templateId)
-      if (template) template.color = color
+      setTemplateColor(this.$state, templateId, color)
     },
 
     renameActiveTemplate(name: string) {
-      const template = this.activeTemplate
-
-      if (!template) {
-        return
-      }
-
-      template.name = name.trim() || template.name
+      renameActiveTemplate(this.$state, name)
     },
 
     // ---------------------------------------------------------------
