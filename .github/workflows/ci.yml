@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      # vue-tsc is not in package.json (it is installed here only, as the local setup does)
+      - name: Install type checker
+        run: npm i --no-save vue-tsc@3 @vue/language-core@3
+
+      - name: Type check
+        run: npx nuxi typecheck
+
+      - name: Build
+        run: npm run build
