@@ -1,9 +1,15 @@
 import { DAYS, formatHour, slotsToBlocks, type TimeBlock } from '~/utils/planner'
+import { clockLabel } from '~/utils/sleep'
 
 /**
- * The week grid's pure rules (FR-PLAN-19, FR-PLAN-23, FR-SLEEP-5): which hours collapse, the rows and their heights, and the hour
- * under a point or a key. The component lays them out and reads the store.
+ * The week grid's pure rules (FR-PLAN-19, FR-PLAN-23, FR-SLEEP-5): which hours collapse, the rows and their heights, the hour
+ * under a point or a key, and the runs a drag, an edge or a key makes. The components lay them out and read the store.
  */
+
+/** Height of one hour row in px, as in the original week grid */
+export const HOUR_PX = 28
+/** Height of the thin band that stands for a run of collapsed hours between two shown rows (FR-SLEEP-5) */
+export const GAP_PX = 14
 
 /** The hours of a day, 0 to 23 */
 export const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
@@ -13,6 +19,9 @@ export interface Range { day: number; start: number; end: number }
 
 /** One hour in one day column */
 export interface Cell { day: number; hour: number }
+
+/** The shown hours a run may cover: from start inclusive to end exclusive (a run of shown hours between collapsed ones) */
+export interface Band { start: number; end: number }
 
 /** A row of the grid: a shown hour, or one thin band for a run of collapsed hours (from inclusive, to exclusive) */
 export type FlowRow = { kind: 'hour'; hour: number } | { kind: 'gap'; from: number; to: number }
@@ -117,3 +126,72 @@ export const blockAt = (slots: string[], cell: Cell): Range | null => {
 
 /** A run as the popups and the live region read it, e.g. "Tue 10AM – 1PM" */
 export const rangeLabel = (range: Range) => `${DAYS[range.day]} ${formatHour(range.start)} – ${formatHour(range.end)}`
+
+/** The cells a clear takes out: while sleep is hidden its hours stay (sleep is edited in its own editor) */
+export const clearableCells = (range: Range, slots: string[], sleepId: string | null, showSleep: boolean): number[] =>
+  cellsOf(range).filter(index => showSleep || slots[index] !== sleepId)
+
+/** The slots as the grid shows them while sleep is hidden: its hours read as empty (FR-SLEEP-3) */
+export const withoutSleep = (slots: string[], sleepId: string | null): string[] => slots.map(holder => (holder === sleepId ? '' : holder))
+
+/** The labels of the bands above and below the rows while sleep is hidden: the leading and trailing collapsed hours */
+export const collapsedBandLabels = (firstShown: number, lastShown: number) => ({
+  top: firstShown > 0 ? `${clockLabel(0)} to ${clockLabel(firstShown)}` : '',
+  bottom: lastShown < 23 ? `${clockLabel(lastShown + 1)} to ${clockLabel(24)}` : '',
+})
+
+/** Moves one edge of a run to an hour line (0 to 24); the run keeps at least one hour and stays in its band (FR-SLEEP-5) */
+export const setEdge = (range: Range, side: 'top' | 'bottom', hour: number, band: Band): Range => (side === 'top'
+  ? { ...range, start: Math.max(band.start, Math.min(hour, range.end - 1)) }
+  : { ...range, end: Math.min(band.end, Math.max(hour, range.start + 1)) })
+
+/** The hour line of one edge nearest to a y offset in the day columns, among the lines its band allows */
+export const edgeHourAt = (side: 'top' | 'bottom', y: number, range: Range, band: Band, tops: number[]): number => {
+  const lines = side === 'top'
+    ? Array.from({ length: range.end - band.start }, (_, offset) => band.start + offset).map(hour => ({ hour, px: tops[hour] ?? 0 }))
+    : Array.from({ length: band.end - range.start }, (_, offset) => range.start + 1 + offset).map(hour => ({ hour, px: (tops[hour - 1] ?? 0) + HOUR_PX }))
+
+  let best = side === 'top' ? range.start : range.end
+  let bestDistance = Infinity
+
+  for (const line of lines) {
+    const distance = Math.abs(y - line.px)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      best = line.hour
+    }
+  }
+
+  return best
+}
+
+/** The run a drag covers from the cell it started on to the cell under the pointer: one day column, and it stops at the edge of its band */
+export const dragRange = (from: Cell, over: Cell, band: Band): Range => ({
+  day: from.day,
+  start: Math.max(band.start, Math.min(from.hour, over.hour)),
+  end: Math.min(band.end, Math.max(from.hour, over.hour) + 1),
+})
+
+/** The run a Shift-arrow selection covers from its anchor to the cursor; null across two days or across a collapsed run */
+export const keyRange = (from: Cell, to: Cell, collapsed: boolean[]): Range | null => (from.day === to.day && bandOf(collapsed, from.hour).start === bandOf(collapsed, to.hour).start
+  ? { day: to.day, start: Math.min(from.hour, to.hour), end: Math.max(from.hour, to.hour) + 1 }
+  : null)
+
+/** The cell an arrow key moves the cursor to: left and right change the day, up and down the shown hour; null for any other key */
+export const stepFor = (key: string, cell: Cell, collapsed: boolean[]): Cell | null => {
+  switch (key) {
+    case 'ArrowLeft': return { day: Math.max(0, cell.day - 1), hour: cell.hour }
+    case 'ArrowRight': return { day: Math.min(6, cell.day + 1), hour: cell.hour }
+    case 'ArrowUp': return { day: cell.day, hour: stepHour(collapsed, cell.hour, -1) }
+    case 'ArrowDown': return { day: cell.day, hour: stepHour(collapsed, cell.hour, 1) }
+    default: return null
+  }
+}
+
+/** Where a popup opens in a viewport: beside the release point, or at the bottom on phones (480 px and under) */
+export const popupAt = (x: number, y: number, width: number, height: number): { x: number; y: number } => (width <= 480
+  ? { x: 16, y: height - 160 }
+  : { x: Math.min(x + 16, width - 276), y: Math.max(16, Math.min(y - 10, height - 200)) })
+
+/** The top of the menu: it moves up when its bottom would pass the screen edge */
+export const menuTop = (y: number, menuHeight: number, height: number): number => Math.max(8, Math.min(y, height - menuHeight - 8))

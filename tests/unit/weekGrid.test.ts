@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blockAt, bandOf, cellsOf, collapsedHours, flowRows, hourAtY, hourTops, nearestShown, stepHour } from '~/utils/weekGrid'
+import { bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
 
 const SLEEP = 'sleep'
 const WORK = 'work'
@@ -94,5 +94,141 @@ describe('bandOf and hourAtY', () => {
     expect(bandOf(collapsed, 10)).toEqual({ start: 7, end: 22 })
     expect(hourAtY(hourTops(flowRows(collapsed), 28, 14), 0)).toBe(7)
     expect(nearestShown([7, 8, 21], 1)).toBe(7)
+  })
+})
+
+describe('setEdge', () => {
+  const band = { start: 7, end: 22 }
+  const run = { day: 1, start: 10, end: 13 }
+
+  it('moves the top edge and keeps at least one hour', () => {
+    expect(setEdge(run, 'top', 8, band)).toEqual({ day: 1, start: 8, end: 13 })
+    expect(setEdge(run, 'top', 13, band)).toEqual({ day: 1, start: 12, end: 13 })
+  })
+
+  it('moves the bottom edge and keeps at least one hour', () => {
+    expect(setEdge(run, 'bottom', 15, band)).toEqual({ day: 1, start: 10, end: 15 })
+    expect(setEdge(run, 'bottom', 10, band)).toEqual({ day: 1, start: 10, end: 11 })
+  })
+
+  it('stops each edge at its band', () => {
+    expect(setEdge(run, 'top', 2, band)).toEqual({ day: 1, start: 7, end: 13 })
+    expect(setEdge(run, 'bottom', 24, band)).toEqual({ day: 1, start: 10, end: 22 })
+  })
+})
+
+describe('edgeHourAt', () => {
+  // Tops with one 28 px row per hour, so hour h starts at 28 * h
+  const tops = Array.from({ length: 24 }, (_, hour) => hour * 28)
+  const band = { start: 0, end: 24 }
+
+  it('picks the nearest top line of the run', () => {
+    expect(edgeHourAt('top', 60, { day: 0, start: 10, end: 13 }, band, tops)).toBe(2)
+    expect(edgeHourAt('top', 2 * 28 + 13, { day: 0, start: 10, end: 13 }, band, tops)).toBe(2)
+  })
+
+  it('picks the nearest bottom line of the run', () => {
+    expect(edgeHourAt('bottom', 14 * 28, { day: 0, start: 10, end: 13 }, band, tops)).toBe(14)
+    expect(edgeHourAt('bottom', 11 * 28 + 5, { day: 0, start: 10, end: 13 }, band, tops)).toBe(11)
+  })
+
+  it('only offers the lines inside its band', () => {
+    expect(edgeHourAt('top', 0, { day: 0, start: 10, end: 13 }, { start: 9, end: 12 }, tops)).toBe(9)
+    expect(edgeHourAt('bottom', 24 * 28, { day: 0, start: 10, end: 13 }, { start: 9, end: 12 }, tops)).toBe(12)
+  })
+})
+
+describe('dragRange', () => {
+  const band = { start: 7, end: 22 }
+
+  it('covers the hours from the press to the pointer, in the press day', () => {
+    expect(dragRange({ day: 2, hour: 10 }, { day: 2, hour: 12 }, band)).toEqual({ day: 2, start: 10, end: 13 })
+    expect(dragRange({ day: 2, hour: 12 }, { day: 2, hour: 10 }, band)).toEqual({ day: 2, start: 10, end: 13 })
+  })
+
+  it('stops at the edge of the band', () => {
+    expect(dragRange({ day: 2, hour: 10 }, { day: 2, hour: 2 }, band)).toEqual({ day: 2, start: 7, end: 11 })
+    expect(dragRange({ day: 2, hour: 10 }, { day: 2, hour: 23 }, band)).toEqual({ day: 2, start: 10, end: 22 })
+  })
+})
+
+describe('keyRange', () => {
+  const collapsed = collapsedHours(nightWeek(), SLEEP)
+
+  it('selects the hours between the anchor and the cursor in one day', () => {
+    expect(keyRange({ day: 1, hour: 10 }, { day: 1, hour: 12 }, collapsed)).toEqual({ day: 1, start: 10, end: 13 })
+    expect(keyRange({ day: 1, hour: 12 }, { day: 1, hour: 10 }, collapsed)).toEqual({ day: 1, start: 10, end: 13 })
+  })
+
+  it('selects nothing across two days or across a collapsed run', () => {
+    expect(keyRange({ day: 1, hour: 10 }, { day: 2, hour: 10 }, collapsed)).toBeNull()
+    const split = Array.from({ length: 24 }, (_, hour) => hour === 12)
+    expect(keyRange({ day: 1, hour: 10 }, { day: 1, hour: 13 }, split)).toBeNull()
+  })
+})
+
+describe('stepFor', () => {
+  const collapsed = collapsedHours(nightWeek(), SLEEP)
+
+  it('moves one day left or right, within the week', () => {
+    expect(stepFor('ArrowLeft', { day: 0, hour: 9 }, collapsed)).toEqual({ day: 0, hour: 9 })
+    expect(stepFor('ArrowRight', { day: 6, hour: 9 }, collapsed)).toEqual({ day: 6, hour: 9 })
+    expect(stepFor('ArrowRight', { day: 2, hour: 9 }, collapsed)).toEqual({ day: 3, hour: 9 })
+  })
+
+  it('moves one shown hour up or down', () => {
+    expect(stepFor('ArrowUp', { day: 2, hour: 7 }, collapsed)).toEqual({ day: 2, hour: 7 })
+    expect(stepFor('ArrowDown', { day: 2, hour: 21 }, collapsed)).toEqual({ day: 2, hour: 21 })
+    expect(stepFor('ArrowDown', { day: 2, hour: 8 }, collapsed)).toEqual({ day: 2, hour: 9 })
+  })
+
+  it('returns null for keys that do not move the cursor', () => {
+    expect(stepFor('Enter', { day: 2, hour: 8 }, collapsed)).toBeNull()
+  })
+})
+
+describe('withoutSleep and clearableCells', () => {
+  const slots = nightWeek()
+
+  it('reads hidden sleep as empty and keeps the other hours', () => {
+    const shown = withoutSleep(slots, SLEEP)
+
+    expect(shown[0]).toBe('')
+    expect(shown[9]).toBe(WORK)
+    expect(shown.filter(Boolean)).toHaveLength(4)
+  })
+
+  it('keeps sleep out of a clear while it is hidden, and clears it when shown', () => {
+    const range = { day: 0, start: 6, end: 10 }
+
+    expect(clearableCells(range, slots, SLEEP, false)).toEqual([7, 8, 9])
+    expect(clearableCells(range, slots, SLEEP, true)).toEqual([6, 7, 8, 9])
+  })
+})
+
+describe('collapsedBandLabels', () => {
+  it('names the leading and trailing collapsed hours', () => {
+    expect(collapsedBandLabels(7, 21)).toEqual({ top: '12 AM to 7 AM', bottom: '10 PM to 12 AM' })
+  })
+
+  it('leaves a band empty when nothing is collapsed on its side', () => {
+    expect(collapsedBandLabels(0, 23)).toEqual({ top: '', bottom: '' })
+  })
+})
+
+describe('popupAt and menuTop', () => {
+  it('opens a popup beside the release point on desktop, inside the viewport', () => {
+    expect(popupAt(400, 300, 1280, 900)).toEqual({ x: 416, y: 290 })
+    expect(popupAt(1200, 880, 1280, 900)).toEqual({ x: 1004, y: 700 })
+  })
+
+  it('opens a popup at the bottom on phones', () => {
+    expect(popupAt(100, 300, 400, 800)).toEqual({ x: 16, y: 640 })
+  })
+
+  it('moves a menu up when its bottom would pass the screen edge', () => {
+    expect(menuTop(600, 200, 900)).toBe(600)
+    expect(menuTop(800, 200, 900)).toBe(692)
+    expect(menuTop(-50, 200, 900)).toBe(8)
   })
 })

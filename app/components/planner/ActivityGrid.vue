@@ -6,12 +6,8 @@ import { useGridUndo } from '~/composables/useGridUndo'
 import { inkOn } from '~/utils/palette'
 import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks, type TimeBlock } from '~/utils/planner'
 import { clockLabel, isSleepActivity, sleepActivityId } from '~/utils/sleep'
-import { HOURS, type Cell, type Range, bandOf, blockAt, cellsOf, collapsedHours, flowRows, hourAtY, hourTops, nearestShown, rangeLabel, singleCell, stepHour } from '~/utils/weekGrid'
+import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, rangeLabel, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
 
-/** Height of one hour row in px, as in the original week grid */
-const HOUR_PX = 28
-/** Height of the thin band that stands for a run of collapsed hours between two shown rows (FR-SLEEP-5) */
-const GAP_PX = 14
 /** A touch that moves further than this (px) is a scroll, not a tap */
 const TOUCH_SLOP = 8
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -26,7 +22,7 @@ const { showSleep, setShowSleep } = useShowSleep()
 const sleepId = computed(() => sleepActivityId(planner.$state))
 const sleepHidden = computed(() => !!sleepId.value && !showSleep.value)
 const slots = computed(() => activeTemplate.value?.slots ?? [])
-const shownSlots = computed(() => (sleepHidden.value ? slots.value.map(holder => (holder === sleepId.value ? '' : holder)) : slots.value))
+const shownSlots = computed(() => (sleepHidden.value ? withoutSleep(slots.value, sleepId.value) : slots.value))
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
 const templateName = computed(() => activeTemplate.value?.name ?? 'no week type')
 const plannedHours = computed(() => shownSlots.value.filter(Boolean).length)
@@ -56,11 +52,7 @@ const hourAt = (y: number) => hourAtY(hourTop.value, y)
 const nearestShownHour = (hour: number) => nearestShown(shownHours.value, hour)
 
 // The bands above and below the rows say which hours are collapsed; clicking one shows sleep
-const topBand = computed(() => (firstShown.value > 0 ? `${clockLabel(0)} to ${clockLabel(firstShown.value)}` : ''))
-const bottomBand = computed(() => (lastShown.value < 23 ? `${clockLabel(lastShown.value + 1)} to ${clockLabel(24)}` : ''))
-
-/** The cells a clear takes out: while sleep is hidden its hours stay (sleep is edited in its own editor) */
-const clearableCells = (range: Range) => cellsOf(range).filter(index => showSleep.value || slots.value[index] !== sleepId.value)
+const bands = computed(() => collapsedBandLabels(firstShown.value, lastShown.value))
 
 // Selection: one run of hours in one day column, set by drag, click, tap or the keyboard
 const selection = ref<Range | null>(null)
@@ -108,10 +100,7 @@ const focusCursor = () => {
 
 // Popups open beside the release point, or at the bottom on phones
 const placePopup = (x: number, y: number) => {
-  const small = window.innerWidth <= 480
-  barPos.value = small
-    ? { x: 16, y: window.innerHeight - 160 }
-    : { x: Math.min(x + 16, window.innerWidth - 276), y: Math.max(16, Math.min(y - 10, window.innerHeight - 200)) }
+  barPos.value = popupAt(x, y, window.innerWidth, window.innerHeight)
 }
 
 const openBar = () => {
@@ -141,7 +130,7 @@ const fitMenu = () => {
   if (!menu) return
 
   const height = menu.getBoundingClientRect().height
-  barPos.value = { ...barPos.value, y: Math.max(8, Math.min(barPos.value.y, window.innerHeight - height - 8)) }
+  barPos.value = { ...barPos.value, y: menuTop(barPos.value.y, height, window.innerHeight) }
 }
 
 const pickFromBar = () => {
@@ -192,7 +181,7 @@ const clearRange = (range: Range) => {
   if (editing.value) closeAll()
 
   commit(`Cleared ${rangeLabel(range)}`, template.id, () => {
-    planner.paintCells(template.id, clearableCells(range), null)
+    planner.paintCells(template.id, clearableCells(range, slots.value, sleepId.value, showSleep.value), null)
   })
 }
 
@@ -238,7 +227,7 @@ const saveEdit = () => {
   if (snapshot && range && template) {
     const moved = range.day !== snapshot.day || range.start !== snapshot.start || range.end !== snapshot.end
     const move = () => {
-      planner.paintCells(template.id, clearableCells(snapshot), null)
+      planner.paintCells(template.id, clearableCells(snapshot, slots.value, sleepId.value, showSleep.value), null)
       if (activityId) planner.paintCells(template.id, cellsOf(range), activityId)
     }
 
@@ -256,39 +245,6 @@ const saveEdit = () => {
   closeAll()
 }
 
-/** Moves one edge of the selection to an hour line (0 to 24); the run keeps at least one hour and stays in its shown run (FR-SLEEP-5) */
-const setEdge = (side: 'top' | 'bottom', hour: number) => {
-  const range = selection.value
-  if (!range) return
-
-  const band = bandAt(range.start)
-
-  selection.value = side === 'top'
-    ? { ...range, start: Math.max(band.start, Math.min(hour, range.end - 1)) }
-    : { ...range, end: Math.min(band.end, Math.max(hour, range.start + 1)) }
-}
-
-/** The hour line of one edge nearest to a y offset in the day columns, among the lines its shown run allows */
-const edgeHourAt = (side: 'top' | 'bottom', y: number, range: Range): number => {
-  const band = bandAt(range.start)
-  const lines = side === 'top'
-    ? Array.from({ length: range.end - band.start }, (_, offset) => band.start + offset).map(hour => ({ hour, px: hourTop.value[hour] ?? 0 }))
-    : Array.from({ length: band.end - range.start }, (_, offset) => range.start + 1 + offset).map(hour => ({ hour, px: (hourTop.value[hour - 1] ?? 0) + HOUR_PX }))
-
-  let best = side === 'top' ? range.start : range.end
-  let bestDistance = Infinity
-
-  for (const line of lines) {
-    const distance = Math.abs(y - line.px)
-    if (distance < bestDistance) {
-      bestDistance = distance
-      best = line.hour
-    }
-  }
-
-  return best
-}
-
 const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
   event.stopPropagation()
   event.preventDefault()
@@ -302,8 +258,10 @@ const startResize = (side: 'top' | 'bottom', event: PointerEvent) => {
 const onResizeMove = (event: PointerEvent) => {
   if (!resizeDay || !resizeSide || !selection.value) return
 
+  const range = selection.value
+  const band = bandAt(range.start)
   const y = event.clientY - resizeDay.getBoundingClientRect().top
-  setEdge(resizeSide, edgeHourAt(resizeSide, y, selection.value))
+  selection.value = setEdge(range, resizeSide, edgeHourAt(resizeSide, y, range, band, hourTop.value), band)
 }
 
 const endResize = () => {
@@ -322,7 +280,7 @@ const onHandleKey = (side: 'top' | 'bottom', event: KeyboardEvent) => {
   const range = selection.value
   if (!range) return
 
-  setEdge(side, (side === 'top' ? range.start : range.end) + (event.key === 'ArrowUp' ? -1 : 1))
+  selection.value = setEdge(range, side, (side === 'top' ? range.start : range.end) + (event.key === 'ArrowUp' ? -1 : 1), bandAt(range.start))
 }
 
 // Pointer: press on an hour, drag down the same day column, release to open the bar.
@@ -373,12 +331,10 @@ const onPointerMove = (event: PointerEvent) => {
   if (!hit || hit.cell.day !== press.cell.day) return
 
   // A drag stops at the edge of its shown run: it never selects across a collapsed run
-  const band = bandAt(press.cell.hour)
-  const start = Math.max(band.start, Math.min(press.cell.hour, hit.cell.hour))
-  const end = Math.min(band.end, Math.max(press.cell.hour, hit.cell.hour) + 1)
+  const range = dragRange(press.cell, hit.cell, bandAt(press.cell.hour))
 
-  if (!selection.value || selection.value.start !== start || selection.value.end !== end) {
-    selection.value = { day: press.cell.day, start, end }
+  if (!selection.value || selection.value.start !== range.start || selection.value.end !== range.end) {
+    selection.value = range
   }
 
   if (hit.cell.hour !== press.cell.hour) press.dragging = true
@@ -408,29 +364,17 @@ const onPointerCancel = () => {
 }
 
 // Keyboard: arrows move the focused hour, Shift with arrows selects within one day, Enter or Space opens the bar
-const stepFor = (key: string, cell: Cell): Cell | null => {
-  switch (key) {
-    case 'ArrowLeft': return { day: Math.max(0, cell.day - 1), hour: cell.hour }
-    case 'ArrowRight': return { day: Math.min(6, cell.day + 1), hour: cell.hour }
-    case 'ArrowUp': return { day: cell.day, hour: stepHour(collapsed.value, cell.hour, -1) }
-    case 'ArrowDown': return { day: cell.day, hour: stepHour(collapsed.value, cell.hour, 1) }
-    default: return null
-  }
-}
-
 const onKeydown = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement
   if (!hourly.value || editing.value || !target.dataset.hour) return
 
-  const step = stepFor(event.key, cursor.value)
+  const step = stepFor(event.key, cursor.value, collapsed.value)
 
   if (step) {
     event.preventDefault()
     const from = event.shiftKey ? (anchor.value ?? cursor.value) : null
     anchor.value = from ? { ...from } : null
-    selection.value = from && from.day === step.day && bandAt(from.hour).start === bandAt(step.hour).start
-      ? { day: step.day, start: Math.min(from.hour, step.hour), end: Math.max(from.hour, step.hour) + 1 }
-      : null
+    selection.value = from ? keyRange(from, step, collapsed.value) : null
     setCursor(step)
     focusCursor()
     return
@@ -520,8 +464,8 @@ onBeforeUnmount(() => {
               </div>
 
               <!-- The band above the rows: the leading run of collapsed hours (sleep hidden), clicking it shows sleep -->
-              <button v-if="topBand" type="button" class="wk-band is-top" @click="setShowSleep(true)">
-                <span>Sleep hidden: {{ topBand }}</span>
+              <button v-if="bands.top" type="button" class="wk-band is-top" @click="setShowSleep(true)">
+                <span>Sleep hidden: {{ bands.top }}</span>
                 <span class="wk-band-action">Show sleep</span>
               </button>
 
@@ -633,8 +577,8 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- The band below the rows: the trailing run of collapsed hours -->
-          <button v-if="bottomBand" type="button" class="wk-band is-bottom" @click="setShowSleep(true)">
-            <span>Sleep hidden: {{ bottomBand }}</span>
+          <button v-if="bands.bottom" type="button" class="wk-band is-bottom" @click="setShowSleep(true)">
+            <span>Sleep hidden: {{ bands.bottom }}</span>
             <span class="wk-band-action">Show sleep</span>
           </button>
 
