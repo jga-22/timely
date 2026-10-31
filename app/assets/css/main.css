@@ -2479,12 +2479,15 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .home-row-progress { font-variant-numeric: tabular-nums; }
 /* The progress line above the list: a count, or a check and "All done" when complete (no streak, no motion) */
 /* The progress line and, on today, the adherence ring: one row that wraps on a phone (FR-HOME-19) */
-/* Day progress (FR-HOME-17, 19): a 28px ring filled by the share of the day done, or a green check when all is done; one line of text beside it */
+/* Day progress (FR-HOME-17, 19): a 28px ring filled by the share of the day done, or a green check when all is done; one line of text
+   before it, the whole line sits at the right end of the row */
 .home-progress {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-2) auto;
+  max-width: 100%;
   font-size: var(--fs-sm);
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
