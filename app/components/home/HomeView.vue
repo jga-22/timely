@@ -86,7 +86,7 @@ const dayRows = computed(() => {
   })
 })
 
-// Habits not already a block of the day (FR-HOME-15), with their period progress (FR-HOME-16)
+// Habits with no day assigned in the week (FR-HOME-15), with their period progress (FR-HOME-16)
 const habitRows = computed(() => {
   if (!viewed.value) return []
 
@@ -100,15 +100,17 @@ const habitRows = computed(() => {
   }))
 })
 
-// Progress of the day (FR-HOME-17): the blocks and the habits listed for the day, so "All done" leaves nothing visible undone.
+// Progress of the day (FR-HOME-17): the scheduled blocks of the day only. Habits have their own count in their section (FR-HOME-15).
 // Only this day counts, never the week or overall
-const habitsDone = computed(() => habitRows.value.filter(row => row.done).length)
-const total = computed(() => dayRows.value.length + habitRows.value.length)
-const doneCount = computed(() => dayRows.value.filter(row => row.done).length + habitsDone.value)
+const total = computed(() => dayRows.value.length)
+const doneCount = computed(() => dayRows.value.filter(row => row.done).length)
 const allDone = computed(() => total.value > 0 && doneCount.value === total.value)
 const completeFor = computed(() => (isToday.value ? 'today' : formatDayLabel(viewed.value ?? '')))
 // The ring's arc (FR-HOME-19): the share of the day's items done, in percent; null when nothing is planned
 const donePercent = computed(() => (total.value ? (doneCount.value / total.value) * 100 : null))
+// The Habits list's own count (FR-HOME-15): the habits listed for the day, and whether all of them are ticked
+const habitsDone = computed(() => habitRows.value.filter(row => row.done).length)
+const habitsAllDone = computed(() => habitRows.value.length > 0 && habitsDone.value === habitRows.value.length)
 
 const toggle = (key: string) => {
   if (viewed.value) planner.toggleDone(viewed.value, key)
@@ -191,8 +193,8 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
         </div>
       </div>
 
-      <!-- Progress of the day (FR-HOME-17, 19): a ring filled by the share done; all done turns it into a green check. Only this day.
-           Right-aligned: the text, then the ring or the check -->
+      <!-- Progress of the day's blocks (FR-HOME-17, 19): a ring filled by the share done; all done turns it into a green check.
+           Only this day, and hidden when nothing is planned. Right-aligned: the text, then the ring or the check -->
       <div v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" role="status">
         <span>{{ allDone ? 'All done for ' + completeFor : doneCount + ' of ' + total + ' done' }}</span>
         <span v-if="allDone" class="home-progress-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span>
@@ -241,9 +243,13 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
         </p>
       </template>
 
-      <!-- Habits not already a block of the day (FR-HOME-15): ticked for the day, progress for weekly and monthly habits -->
+      <!-- Habits with no day assigned (FR-HOME-15): ticked for the day, progress for weekly and monthly habits. Their own count and
+           green check, apart from the day's blocks -->
       <details v-if="habitRows.length" class="disclosure home-habits">
-        <summary>Habits <span class="home-habits-count">{{ habitsDone }} of {{ habitRows.length }} ticked</span></summary>
+        <summary>
+          Habits <span class="home-habits-count">{{ habitsDone }} of {{ habitRows.length }} ticked</span>
+          <span v-if="habitsAllDone" class="home-habits-done"><span class="home-habits-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span> All ticked</span>
+        </summary>
         <ol class="home-rows" aria-label="Habits">
           <li
             v-for="row in habitRows"

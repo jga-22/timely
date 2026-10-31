@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannerState } from '~/types/planner'
-import { dayBlocks, dayHabits, dayHours, dayRange, formatDayLabel, habitProgressText, habitTicked } from '~/utils/home'
+import { dayBlocks, dayHabits, dayHours, dayRange, formatDayLabel, habitHasDay, habitProgressText, habitTicked } from '~/utils/home'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
-import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots } from './fixtures'
+import { activity, applyWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots, withTemplate } from './fixtures'
 
 // 2026-10-26 is a Monday (day 0 of the week), 2026-10-27 a Tuesday
 const MONDAY = '2026-10-26'
@@ -107,11 +107,29 @@ describe('dayHabits', () => {
     expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual(['walk'])
   })
 
-  it('leaves out a linked habit that is already a block of the day, but not on other days', () => {
+  it('leaves out a linked habit whose activity has a block that week, on its own day and on the others', () => {
     const state = withHabits(withActivities(planned([work]), [deepWorkActivity]), [focus])
 
     expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual([])
+    expect(dayHabits(state, TUESDAY).map(habit => habit.id)).toEqual([])
+  })
+
+  it('lists a linked habit whose activity has no block that week', () => {
+    const state = withHabits(withActivities(planned([]), [deepWorkActivity]), [focus])
+
+    expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual(['focus'])
     expect(dayHabits(state, TUESDAY).map(habit => habit.id)).toEqual(['focus'])
+  })
+
+  it('judges a day-assigned habit by the template of its own week', () => {
+    const linkedWalk = { ...walk, activityId: 'work' }
+    const base = withHabits(withActivities(planned([work]), [deepWorkActivity]), [linkedWalk])
+    const template = planned([]).templates.find(item => item.id === ONBOARDING_TEMPLATE_ID)!
+    // The week of 2 November uses a week type without the activity (the copy starts from the unpainted night)
+    const state = applyWeek(withTemplate(base, { ...template, id: 'quiet', name: 'Quiet' }), '2026-11-02', 'quiet')
+
+    expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual([])
+    expect(dayHabits(state, '2026-11-02').map(habit => habit.id)).toEqual(['walk'])
   })
 
   it('leaves out a habit of the Sleep activity while sleep is hidden, and a sleep habit whose block is shown', () => {
@@ -119,6 +137,27 @@ describe('dayHabits', () => {
 
     expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual([])
     expect(dayHabits(state, MONDAY, true).map(habit => habit.id)).toEqual([])
+  })
+})
+
+describe('habitHasDay', () => {
+  const linked = { id: 'focus', categoryId: 'professionnelle', name: 'Focus', frequency: { count: 3, period: 'week' as const }, activityId: 'work' }
+
+  it('is true when the linked activity has a block in the week of the date, on any day of it', () => {
+    const state = withHabits(withActivities(planned([{ ...work, day: 4 }]), [deepWorkActivity]), [linked])
+
+    expect(habitHasDay(state, linked, MONDAY)).toBe(true)
+    expect(habitHasDay(state, linked, '2026-10-30')).toBe(true)
+  })
+
+  it('is false with no linked activity, an unknown activity, or no block that week', () => {
+    const unlinked = { ...linked, activityId: undefined }
+    const ghost = { ...linked, activityId: 'ghost' }
+    const state = withActivities(planned([work]), [deepWorkActivity])
+
+    expect(habitHasDay(state, unlinked, MONDAY)).toBe(false)
+    expect(habitHasDay(state, ghost, MONDAY)).toBe(false)
+    expect(habitHasDay(withActivities(planned([]), [deepWorkActivity]), linked, MONDAY)).toBe(false)
   })
 })
 

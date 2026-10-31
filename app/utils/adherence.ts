@@ -18,7 +18,8 @@ import { getActivityMap } from '~/utils/planner'
  * Blocks: each date's planned blocks are `dayBlocks` (its effective template, so week types and time off apply). A block is done
  * when its key is ticked that day. Blocks are weighted by hours.
  *
- * Habits: a habit that has a block on a date is judged through that block and not again (`dayHabits` leaves it out, as Home does).
+ * Habits: a habit with a day assigned in its week (its linked activity has a block that week) is judged through that block and not
+ * again (`dayHabits` leaves it out, as Home does).
  * On every other elapsed date the habit expects its share of its target: a daily habit 1 per day; a weekly habit its count spread
  * over the 7 days of the week; a monthly habit its count spread over the days of the month. Expected is prorated by the elapsed
  * days it covers, so a period still running expects only its days so far. Ticks count on those dates. Each habit's ticks are capped
