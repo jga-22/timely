@@ -2491,6 +2491,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .home-progress.is-complete { color: var(--ink); }
 .home-progress .adh-ring { flex: none; }
+/* The small day ring needs a track that shows at 0 of N: the Insights track (bg-3) is nearly the page colour at 28px */
+.home-progress .adh-ring-track { stroke: var(--bg-4); }
 .home-progress-check {
   display: inline-flex;
   flex: none;
