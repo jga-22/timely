@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { usePlannerFill } from '~/composables/usePlannerFill'
 import { useGridUndo } from '~/composables/useGridUndo'
-import { inkOn } from '~/utils/palette'
-import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks, type TimeBlock } from '~/utils/planner'
-import { clockLabel, isSleepActivity, sleepActivityId } from '~/utils/sleep'
+import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks } from '~/utils/planner'
+import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
 import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, rangeLabel, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
 
 /** A touch that moves further than this (px) is a scroll, not a tap */
@@ -80,11 +78,6 @@ let resizeSide: 'top' | 'bottom' | null = null
 const selectionHasActivity = computed(() => !!selection.value && cellsOf(selection.value).some(index => shownSlots.value[index]))
 const firstActivityIn = (range: Range) => cellsOf(range).map(index => shownSlots.value[index]).find(Boolean) ?? null
 const blockOf = (cell: Cell) => blockAt(shownSlots.value, cell)
-const { fill } = usePlannerFill()
-const blockColor = (block: TimeBlock) => fill(activityMap.value.get(block.activityId)?.color ?? '#999999')
-/** A block prints the activity's short code (1 to 3 letters), so no name is cut off; the full name is in the block's title */
-const blockCode = (block: TimeBlock) => activityMap.value.get(block.activityId)?.shortCode ?? ''
-const isCursor = (day: number, hour: number) => cursor.value.day === day && cursor.value.hour === hour
 const setCursor = (cell: Cell) => {
   cursor.value = { day: cell.day, hour: cell.hour }
 }
@@ -483,95 +476,26 @@ onBeforeUnmount(() => {
                   </template>
                 </div>
 
-                <div v-for="(day, dayIndex) in DAYS" :key="day" class="wk-day" :data-day="dayIndex">
-                  <!-- Slots: the interaction layer, one focus stop at a time; a collapsed run is a thin band between them -->
-                  <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
-                    <div
-                      v-if="row.kind === 'gap'"
-                      class="wk-gap"
-                      :title="`Sleep hidden: ${clockLabel(row.from)} to ${clockLabel(row.to)}`"
-                    />
-                    <div
-                      v-else
-                      class="wk-slot"
-                      :class="{ 'is-major': row.hour % 3 === 0 }"
-                      role="button"
-                      :tabindex="isCursor(dayIndex, row.hour) ? 0 : -1"
-                      :data-day="dayIndex"
-                      :data-hour="row.hour"
-                      :aria-label="`${DAY_NAMES[dayIndex]} ${formatHour(row.hour)}, ${shownSlots[dayIndex * 24 + row.hour] ? activityMap.get(shownSlots[dayIndex * 24 + row.hour]!)?.name : 'free'}`"
-                      @focus="setCursor({ day: dayIndex, hour: row.hour })"
-                    />
-                  </template>
-
-                  <!-- Blocks: the painted hours, drawn over the slots; hover shows the delete button -->
-                  <div
-                    v-for="block in blocksByDay[dayIndex]"
-                    :key="`${block.start}-${block.activityId}`"
-                    class="wk-block"
-                    :class="{ 'is-short': block.end - block.start === 1 }"
-                    :style="{
-                      top: `${hourTop[block.start] ?? 0}px`,
-                      height: `${(block.end - block.start) * HOUR_PX - 2}px`,
-                      background: blockColor(block),
-                      color: inkOn(blockColor(block)),
-                    }"
-                  >
-                    <span class="wk-block-name" :title="activityMap.get(block.activityId)?.name">{{ blockCode(block) }}</span>
-                    <span class="wk-block-time">{{ formatHour(block.start) }}–{{ formatHour(block.end) }}</span>
-                    <button
-                      type="button"
-                      class="wk-block-del"
-                      title="Clear these hours"
-                      :aria-label="`Clear ${activityMap.get(block.activityId)?.name ?? 'hours'}, ${DAY_NAMES[dayIndex]} ${formatHour(block.start)} to ${formatHour(block.end)}`"
-                      @click="clearRange({ day: dayIndex, start: block.start, end: block.end })"
-                    >✕</button>
-                  </div>
-
-                  <!-- Selection: the highlighted run; in edit mode it carries the resize handles -->
-                  <div
-                    v-if="selection && selection.day === dayIndex"
-                    class="wk-sel"
-                    :style="{
-                      top: `${hourTop[selection.start] ?? 0}px`,
-                      height: `${(selection.end - selection.start) * HOUR_PX}px`,
-                    }"
-                  >
-                    <template v-if="editing">
-                      <button
-                        type="button"
-                        class="wk-handle is-top"
-                        aria-label="Change start: drag, or Up and Down arrows"
-                        @pointerdown="startResize('top', $event)"
-                        @keydown="onHandleKey('top', $event)"
-                      ><span /></button>
-                      <button
-                        type="button"
-                        class="wk-handle is-bottom"
-                        aria-label="Change end: drag, or Up and Down arrows"
-                        @pointerdown="startResize('bottom', $event)"
-                        @keydown="onHandleKey('bottom', $event)"
-                      ><span /></button>
-                    </template>
-                    <span class="wk-dur">{{ selection.end - selection.start }}h</span>
-                    <div v-if="editing" class="wk-confirm">
-                      <button
-                        type="button"
-                        class="wk-round is-cancel"
-                        title="Cancel change"
-                        aria-label="Cancel change"
-                        @click="cancelEdit"
-                      >✕</button>
-                      <button
-                        type="button"
-                        class="wk-round is-ok"
-                        title="Save change"
-                        aria-label="Save change"
-                        @click="saveEdit"
-                      >✓</button>
-                    </div>
-                  </div>
-                </div>
+                <PlannerWeekGridDay
+                  v-for="(day, dayIndex) in DAYS"
+                  :key="day"
+                  :day="dayIndex"
+                  :name="DAY_NAMES[dayIndex] ?? ''"
+                  :flow="flow"
+                  :tops="hourTop"
+                  :shown-slots="shownSlots"
+                  :activities="activityMap"
+                  :blocks="blocksByDay[dayIndex] ?? []"
+                  :cursor="cursor"
+                  :selection="selection"
+                  :editing="editing"
+                  @focus-cell="setCursor"
+                  @clear="clearRange"
+                  @resize="startResize"
+                  @handle-key="onHandleKey"
+                  @cancel="cancelEdit"
+                  @save="saveEdit"
+                />
               </div>
             </div>
           </div>
