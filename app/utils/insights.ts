@@ -1,4 +1,4 @@
-import type { PlannerState } from '~/types/planner'
+import type { PlannerState, WeekTemplate } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
 import { aggregateTemplate, aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
 import { sleepActivityId } from '~/utils/sleep'
@@ -273,3 +273,31 @@ export const availableShares = (bars: InsightsBar[]): AvailableShares => {
 
 /** The key of the "Not planned" slice and row (FR-INS-P5): it is not a life area, so it has no category id */
 export const NOT_PLANNED_KEY = 'not-planned'
+
+/* ── Time split (Week tab): the typical week of one week type, as one bar and the same shares ── */
+
+/**
+ * The typical week of a week type: one bar of its slots, counted as a week of the bars is (sleep left out unless `showSleep` is on,
+ * and then its hours come off the 168 available). The shares are availableShares' shares of that one bar.
+ */
+export const templateSplit = (state: PlannerState, template: WeekTemplate, showSleep = false): AvailableShares => {
+  const sleepId = showSleep ? null : sleepActivityId(state)
+  const visible = sleepId ? { ...template, slots: template.slots.map(holder => (holder === sleepId ? '' : holder)) } : template
+  const sleep = sleepId ? aggregateTemplate(template, state.activities).get(sleepId) ?? 0 : 0
+  const segments = [...aggregateTemplateByCategory(visible, state)].map(([categoryId, hours]) => ({ categoryId, hours }))
+  const total = segments.reduce((sum, segment) => sum + segment.hours, 0)
+  const capacity = HOURS_PER_WEEK - sleep
+
+  return availableShares([{
+    key: template.id,
+    label: template.name,
+    year: 0,
+    week: 0,
+    weeks: 1,
+    days: 7,
+    capacity,
+    total,
+    free: Math.max(0, capacity - total),
+    segments
+  }])
+}
