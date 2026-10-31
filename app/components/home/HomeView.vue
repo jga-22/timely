@@ -248,7 +248,7 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
       <details v-if="habitRows.length" class="disclosure home-habits">
         <summary>
           Habits <span class="home-habits-count">{{ habitsDone }} of {{ habitRows.length }} ticked</span>
-          <span v-if="habitsAllDone" class="home-habits-done"><span class="home-habits-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span>All ticked</span>
+          <span v-if="habitsAllDone" class="home-habits-done"><span class="home-habits-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span> All ticked</span>
         </summary>
         <ol class="home-rows" aria-label="Habits">
           <li
