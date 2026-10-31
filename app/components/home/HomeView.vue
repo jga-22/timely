@@ -198,7 +198,7 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
 
       <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->
       <p v-if="!planner.activities.length" class="home-empty">
-        No activities yet. <NuxtLink :to="link('planner')">Add activities in Planner</NuxtLink>.
+        No activities yet. <NuxtLink :to="link('planner')">Add activities in Week</NuxtLink>.
       </p>
 
       <template v-else>
@@ -234,7 +234,7 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
           </li>
         </ol>
         <p v-else class="home-empty">
-          {{ isToday ? 'Nothing planned today.' : 'Nothing planned on this day.' }} <NuxtLink :to="link('planner')">Plan your time in Planner</NuxtLink>.
+          {{ isToday ? 'Nothing planned today.' : 'Nothing planned on this day.' }} <NuxtLink :to="link('planner')">Plan your time in Week</NuxtLink>.
         </p>
       </template>
 
