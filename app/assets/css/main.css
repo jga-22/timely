@@ -1334,11 +1334,12 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .wk-handle:hover span,
 .wk-handle:focus-visible span { background: var(--ink); }
-/* Touch: each edge has a 44px target (the pill stays on the edge). The top handle wins where two overlap on a one-hour run */
+/* Touch: each edge has a 44px target that reaches out of the run, only 6px into it, so a scroll that starts in the middle of a
+   one-hour block still scrolls. The pill sits on the edge */
 @media (pointer: coarse) {
   .wk-handle { height: 44px; }
-  .wk-handle.is-top { top: -22px; }
-  .wk-handle.is-bottom { bottom: -22px; }
+  .wk-handle.is-top { top: -38px; align-items: flex-end; padding-bottom: 2px; }
+  .wk-handle.is-bottom { bottom: -38px; align-items: flex-start; padding-top: 2px; }
 }
 
 /* Undo: one quiet line under the grid after a change, gone after a few seconds */
