@@ -151,7 +151,8 @@ export const entryDraftOf = (state: PlannerState, habitId: string | null, activi
     days: !activity && period === 'day' ? [0, 1, 2, 3, 4, 5, 6] : days,
     orCount: habit && period !== 'day' ? habit.frequency.count : 1,
     orPeriod: period === 'month' ? 'month' : 'week',
-    durationMinutes: activity ? habit?.minutesPerOccurrence ?? blockMinutes : habit?.minutesPerOccurrence ?? 0,
+    // The painted hours are the truth for an activity; the habit's own time is the fallback when nothing is painted yet
+    durationMinutes: activity ? (lengths.length ? blockMinutes : habit?.minutesPerOccurrence ?? blockMinutes) : habit?.minutesPerOccurrence ?? 0,
     start: mostCommon(starts) ?? DEFAULT_START,
     templateIds: activity
       ? state.templates.filter(template => isHourlyTemplate(template) && template.slots.includes(activity.id)).map(template => template.id)
