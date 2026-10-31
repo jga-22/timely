@@ -67,7 +67,9 @@ export const dayRange = (state: PlannerState, date: string, showSleep = false): 
 
 /**
  * Habits listed under the day (FR-HOME-15): every habit that is not already a scheduled block of the date. A habit with no
- * activity, or whose activity has no block that day, is listed. A habit of the Sleep activity is left out while sleep is hidden
+ * activity, or whose activity has no block that day, is a candidate. A habit of the Sleep activity is left out while sleep is hidden.
+ * A candidate is listed when it is due on the day (`habitDue`): a daily habit always, a weekly or monthly one only while it
+ * needs more ticks in its period
  */
 export const dayHabits = (state: PlannerState, date: string, showSleep = false): Habit[] => {
   const sleepId = showSleep ? null : sleepActivityId(state)
@@ -76,7 +78,9 @@ export const dayHabits = (state: PlannerState, date: string, showSleep = false):
   return state.habits.filter(habit => {
     if (sleepId && habit.activityId === sleepId) return false
 
-    return !(habit.activityId && scheduled.has(habit.activityId))
+    if (habit.activityId && scheduled.has(habit.activityId)) return false
+
+    return habitDue(state, habit, date)
   })
 }
 
@@ -93,6 +97,19 @@ export const habitProgressText = (state: PlannerState, habit: Habit, date: strin
 /** Whether a habit is ticked on a date (FR-HOME-15) */
 export const habitTicked = (state: PlannerState, habit: Habit, date: string): boolean =>
   isDone(state, date, habitDoneKey(habit.id))
+
+/**
+ * Whether a habit belongs on the list of a date (FR-HOME-15). Habits have no weekday, so a weekly or monthly habit is shown
+ * only while it is short of its count in the week or month of that date, or when it is ticked on that date itself (so the
+ * tick can be undone). A habit met earlier in the period and not ticked on the date is left out. A daily habit is always due
+ */
+export const habitDue = (state: PlannerState, habit: Habit, date: string): boolean => {
+  const { count, period } = habit.frequency
+
+  if (period === 'day' || habitTicked(state, habit, date)) return true
+
+  return (period === 'week' ? weekTicks(state, habit.id, date) : monthTicks(state, habit.id, date)) < count
+}
 
 /** "Sunday 25 October 2026" */
 export const formatDayLabel = (key: string): string => {

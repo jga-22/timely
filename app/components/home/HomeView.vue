@@ -96,15 +96,15 @@ const habitRows = computed(() => {
     name: habit.name,
     category: categoryMap.value.get(habit.categoryId),
     progress: habitProgressText(planner.$state, habit, viewed.value!),
-    done: habitTicked(planner.$state, habit, viewed.value!),
-    daily: habit.frequency.period === 'day'
+    done: habitTicked(planner.$state, habit, viewed.value!)
   }))
 })
 
-// Progress of the day (FR-HOME-17): the blocks and the daily habits of the day. Only this day counts, never the week or overall
+// Progress of the day (FR-HOME-17): the blocks and the habits listed for the day, so "All done" leaves nothing visible undone.
+// Only this day counts, never the week or overall
 const habitsDone = computed(() => habitRows.value.filter(row => row.done).length)
-const total = computed(() => dayRows.value.length + habitRows.value.filter(row => row.daily).length)
-const doneCount = computed(() => dayRows.value.filter(row => row.done).length + habitRows.value.filter(row => row.daily && row.done).length)
+const total = computed(() => dayRows.value.length + habitRows.value.length)
+const doneCount = computed(() => dayRows.value.filter(row => row.done).length + habitsDone.value)
 const allDone = computed(() => total.value > 0 && doneCount.value === total.value)
 const completeFor = computed(() => (isToday.value ? 'today' : formatDayLabel(viewed.value ?? '')))
 // The ring's arc (FR-HOME-19): the share of the day's items done, in percent; null when nothing is planned
@@ -191,11 +191,12 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
         </div>
       </div>
 
-      <!-- Progress of the day (FR-HOME-17, 19): a ring filled by the share done; all done turns it into a green check. Only this day -->
+      <!-- Progress of the day (FR-HOME-17, 19): a ring filled by the share done; all done turns it into a green check. Only this day.
+           Right-aligned: the text, then the ring or the check -->
       <div v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" role="status">
+        <span>{{ allDone ? 'All done for ' + completeFor : doneCount + ' of ' + total + ' done' }}</span>
         <span v-if="allDone" class="home-progress-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span>
         <AdherenceRing v-else :percent="donePercent" :size="28" :show-value="false" />
-        <span>{{ allDone ? 'All done for ' + completeFor : doneCount + ' of ' + total + ' done' }}</span>
       </div>
 
       <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->

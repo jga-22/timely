@@ -122,6 +122,70 @@ describe('dayHabits', () => {
   })
 })
 
+describe('dayHabits: habits due on the day', () => {
+  const daily = { id: 'walk', categoryId: 'physique', name: 'Walk', frequency: { count: 1, period: 'day' as const } }
+  const weekly = { id: 'focus', categoryId: 'professionnelle', name: 'Focus', frequency: { count: 3, period: 'week' as const } }
+  const monthly = { id: 'mentor', categoryId: 'professionnelle', name: 'Mentor', frequency: { count: 4, period: 'month' as const } }
+  const sleepy = { id: 'sleepy', categoryId: 'physique', name: 'Go to bed', frequency: { count: 1, period: 'day' as const }, activityId: 'sleep' }
+  const ids = (state: PlannerState, date: string, showSleep = false) => dayHabits(state, date, showSleep).map(habit => habit.id)
+
+  it('always lists a daily habit, ticked or not, on any day', () => {
+    const state = withDone(withHabits(empty(), [daily]), '2026-10-27', ['h:walk'])
+
+    expect(ids(state, '2026-10-27')).toEqual(['walk'])
+    expect(ids(state, '2026-10-28')).toEqual(['walk'])
+  })
+
+  it('lists a weekly habit while it is short of its count in the week', () => {
+    const state = withDone(withHabits(empty(), [weekly]), '2026-10-26', ['h:focus'])
+
+    // Wednesday 28 October: one of three ticks so far this week
+    expect(ids(state, '2026-10-28')).toEqual(['focus'])
+  })
+
+  it('hides a weekly habit that has met its count earlier in the week and is not ticked on the day', () => {
+    const state = withDone(withHabits(empty(), [weekly]), '2026-10-26', ['h:focus'])
+    const met = withDone(withDone(state, '2026-10-27', ['h:focus']), '2026-10-28', ['h:focus'])
+
+    // Thursday 29 October: three ticks already, none today
+    expect(ids(met, '2026-10-29')).toEqual([])
+  })
+
+  it('keeps a weekly habit that has met its count when it is ticked on the day, so the tick can be undone', () => {
+    const met = withDone(withDone(withDone(withHabits(empty(), [weekly]), '2026-10-26', ['h:focus']), '2026-10-27', ['h:focus']), '2026-10-28', ['h:focus'])
+
+    expect(ids(met, '2026-10-28')).toEqual(['focus'])
+    expect(ids(met, '2026-10-29')).toEqual([])
+  })
+
+  it('lists a monthly habit while it is short of its count in the month, and hides it once met unless ticked on the day', () => {
+    const short = withDone(withDone(withHabits(empty(), [monthly]), '2026-10-01', ['h:mentor']), '2026-10-05', ['h:mentor'])
+    const met = withDone(withDone(short, '2026-10-10', ['h:mentor']), '2026-10-15', ['h:mentor'])
+
+    expect(ids(short, '2026-10-20')).toEqual(['mentor'])
+    expect(ids(met, '2026-10-20')).toEqual([])
+    expect(ids(met, '2026-10-15')).toEqual(['mentor'])
+  })
+
+  it('judges a past day by the week or month of that date, not by today', () => {
+    const state = withDone(withDone(withHabits(empty(), [weekly]), '2026-10-27', ['h:focus']), '2026-10-28', ['h:focus'])
+    const later = withDone(state, '2026-10-29', ['h:focus'])
+
+    // Monday 26 October: the week had two ticks on 27 and 28, so it is still short, not ticked that day
+    expect(ids(state, '2026-10-26')).toEqual(['focus'])
+    // The same Monday once the third tick of that week is on 29 October: the week was met, so the day's list hides it
+    expect(ids(later, '2026-10-26')).toEqual([])
+  })
+
+  it('leaves a sleep habit out while sleep is hidden, whatever its frequency and count', () => {
+    const sleepyWeekly = { ...sleepy, id: 'sleepy-week', frequency: { count: 5, period: 'week' as const } }
+    const state = withHabits(planned([]), [sleepy, sleepyWeekly])
+
+    expect(ids(state, MONDAY)).toEqual([])
+    expect(ids(state, TUESDAY)).toEqual([])
+  })
+})
+
 describe('habitProgressText', () => {
   const weekly = { id: 'focus', categoryId: 'professionnelle', name: 'Focus', frequency: { count: 3, period: 'week' as const } }
   const monthly = { id: 'mentor', categoryId: 'professionnelle', name: 'Mentor', frequency: { count: 4, period: 'month' as const } }
