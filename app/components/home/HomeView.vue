@@ -4,6 +4,7 @@ import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { addDays, isoWeekOf } from '~/utils/dates'
 import { blockDoneKey, habitDoneKey, isDone } from '~/utils/done'
+import { homeAdherence } from '~/utils/adherence'
 import { formatHour } from '~/utils/planner'
 import { dayBlocks, dayHabits, dayHours, dayRange, formatDayLabel, habitProgressText, habitTicked } from '~/utils/home'
 
@@ -108,6 +109,10 @@ const doneCount = computed(() => dayRows.value.filter(row => row.done).length + 
 const allDone = computed(() => total.value > 0 && doneCount.value === total.value)
 const completeFor = computed(() => (isToday.value ? 'today' : formatDayLabel(viewed.value ?? '')))
 
+// This week and overall adherence (FR-HOME-19): today only, counted from the first tick; null hides the ring. Reads the done ticks, so it follows each tick
+const adherence = computed(() => (isToday.value && today.value ? homeAdherence(planner.$state, today.value) : null))
+const percentText = (percent: number | null) => (percent === null ? '-' : `${percent}%`)
+
 const toggle = (key: string) => {
   if (viewed.value) planner.toggleDone(viewed.value, key)
 }
@@ -190,11 +195,19 @@ const axisLeft = (hour: number) => `${((hour - range.value.start) / (range.value
       </div>
 
       <!-- Progress of the day's blocks and daily habits (FR-HOME-17): a quiet line, no streak -->
-      <p v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" aria-live="polite">
-        <svg v-if="allDone" class="home-progress-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
-        <span v-if="allDone">All done for {{ completeFor }}</span>
-        <span v-else>{{ doneCount }} of {{ total }} done</span>
-      </p>
+      <!-- The adherence ring and its figures sit on the right of the line (FR-HOME-19): today only, once a tick exists -->
+      <div v-if="total || adherence" class="home-progress-row">
+        <p v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" aria-live="polite">
+          <svg v-if="allDone" class="home-progress-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
+          <span v-if="allDone">All done for {{ completeFor }}</span>
+          <span v-else>{{ doneCount }} of {{ total }} done</span>
+        </p>
+        <div v-if="adherence" class="home-adherence">
+          <AdherenceRing :percent="adherence.week.percent" :basis="adherence.week.basis" :size="28" :show-value="false" />
+          <p class="home-adherence-text">This week {{ percentText(adherence.week.percent) }} · Overall {{ percentText(adherence.overall.percent) }}</p>
+          <NuxtLink class="home-adherence-link" :to="link('insights')">Details</NuxtLink>
+        </div>
+      </div>
 
       <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->
       <p v-if="!planner.activities.length" class="home-empty">

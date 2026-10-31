@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
-import { adherenceMode, adherenceReport, adherenceSpan, basisOf, calendarDays, trackingStartOf } from '~/utils/adherence'
+import { adherenceMode, adherenceReport, adherenceSpan, basisOf, calendarDays, homeAdherence, trackingStartOf } from '~/utils/adherence'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
 import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withJournal, withSlots } from './fixtures'
 
@@ -254,5 +254,23 @@ describe('adherenceSpan', () => {
     expect(span.trackingStart).toBe(MONDAY)
     expect(span.elapsedDays).toBe(0)
     expect(span.percent).toBeNull()
+  })
+})
+
+describe('homeAdherence', () => {
+  it('is null without a tick, so Home shows no ring', () => {
+    expect(homeAdherence(planned(), TODAY)).toBeNull()
+  })
+
+  it('gives this week (Monday to today) and overall (first tick to today) apart', () => {
+    // The work block is planned on Mondays: ticked on 26 October, not on 2 November. Today is Tuesday 3 November
+    const state = withDone(withDone(planned(), MONDAY, ['a:work@8']), TUESDAY, ['h:walk'])
+    const figures = homeAdherence(state, '2026-11-03')
+
+    expect(figures?.week.trackingStart).toBe(MONDAY)
+    expect(figures?.week.elapsedDays).toBe(2)
+    expect(figures?.week.percent).toBe(0)
+    expect(figures?.overall.elapsedDays).toBe(9)
+    expect(figures?.overall.percent).toBe(50)
   })
 })

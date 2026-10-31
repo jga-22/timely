@@ -2,7 +2,7 @@
 import type { AdherenceReport } from '~/utils/adherence'
 
 // The adherence ring (PRD FR-INS-P6, FR-HOME-19): a donut of the percent done of planned. Decorative, so the figure is said in
-// text next to it. The arc is the accent for planned blocks and the ok colour for the habits basis. Size is the largest width in px.
+// text next to it. The arc is the accent for planned blocks and the ok colour for the habits basis. Size is the width in px, shrinking on a narrow screen.
 withDefaults(defineProps<{
   percent: number | null
   basis?: AdherenceReport['basis']
@@ -12,7 +12,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="adh-ring" :style="{ width: `min(${size}px, 100%)` }" aria-hidden="true">
+  <div class="adh-ring" :style="{ width: `${size}px`, maxWidth: '100%' }" aria-hidden="true">
     <svg viewBox="0 0 200 200" class="adh-ring-svg">
       <circle class="adh-ring-track" cx="100" cy="100" r="70" />
       <circle

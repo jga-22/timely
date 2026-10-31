@@ -1,5 +1,5 @@
 import type { Habit, PlannerState } from '~/types/planner'
-import { addDays, daysInMonth, isoWeekOf, weekdayOf } from '~/utils/dates'
+import { addDays, daysInMonth, isoWeekOf, mondayOf, weekdayOf } from '~/utils/dates'
 import { blockDoneKey, doneKeysOn, habitDoneKey, isDone } from '~/utils/done'
 import { dayBlocks, dayHabits } from '~/utils/home'
 import type { InsightsGranularity } from '~/utils/insights'
@@ -366,4 +366,16 @@ export const adherenceSpan = (state: PlannerState, from: string, to: string, tod
   const measure = measureOf(records)
 
   return { measure, elapsedDays: records.length, trackingStart, ...basisOf(measure) }
+}
+
+/** Home's figures (FR-HOME-19): this week, Monday to today, and overall, from the first tick to today. Null without a tick, so no ring */
+export const homeAdherence = (state: PlannerState, today: string): { week: AdherenceSpan; overall: AdherenceSpan } | null => {
+  const trackingStart = trackingStartOf(state, today)
+
+  if (!trackingStart) return null
+
+  return {
+    week: adherenceSpan(state, mondayOf(today), today, today),
+    overall: adherenceSpan(state, trackingStart, today, today)
+  }
 }
