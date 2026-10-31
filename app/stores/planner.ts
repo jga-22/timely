@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import {
   freeShortCode,
   newWeekSlots,
-  presetCategoryId,
   replacedText
 } from '~/utils/plannerStore'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
@@ -13,12 +12,11 @@ import {
   getTemplateById,
   isHourlyTemplate,
   nextTemplateColor,
-  validateActivityFields,
   type ActivityFieldErrors,
   type HourConflict,
   type PaintMode
 } from '~/utils/planner'
-import { shortCodeFor } from '~/utils/onboarding'
+import { addActivity, createRoleActivity, ensureSleepActivity, ownActivityFor, removeActivity, updateActivity } from '~/utils/store/activities'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { restoreSlots } from '~/utils/store/undo'
 import { setWeekTemplate, setWeeksTemplate } from '~/utils/store/weeks'
@@ -30,11 +28,6 @@ import { localDateKey } from '~/utils/dates'
 import {
   ALL_NIGHTS,
   DEFAULT_SLEEP,
-  SLEEP_CODE,
-  SLEEP_COLOR,
-  SLEEP_ID,
-  SLEEP_NAME,
-  isSleepActivity,
   paintSleep,
   sleepActivityId,
   sleepWindowError,
@@ -54,7 +47,6 @@ import {
 } from '~/utils/entries'
 import {
   PRESET_ROLES,
-  ROLE_LABELS,
   buildPresetSlots,
   getPreset,
   presetTemplateFields,
@@ -304,57 +296,12 @@ export const usePlannerStore = defineStore('planner', {
     // ---------------------------------------------------------------
     /** An activity for a preset role: the existing one with the same name, else a new one. Null when it cannot be created */
     createRoleActivity(role: PresetRole, index: number): string | null {
-      // Sleep is the one activity with a key: it is found by its code, or created with it (FR-SLEEP-1, 2)
-      if (role === 'sleep') return this.ensureSleepActivity()
-
-      const label = ROLE_LABELS[role]
-      const existing = this.activities.find(activity => activity.name.trim().toLowerCase() === label.toLowerCase())
-
-      if (existing) {
-        return existing.id
-      }
-
-      const categoryId = presetCategoryId(this.categories, role)
-      const shortCode = shortCodeFor(label)
-
-      if (!categoryId || Object.keys(validateActivityFields(this.$state, { name: label, shortCode, categoryId })).length) {
-        return null
-      }
-
-      const usedColors = new Set(this.activities.map(activity => activity.color.toLowerCase()))
-      const id = `activity-${Date.now()}-${index}`
-
-      this.activities.push({
-        id,
-        name: label,
-        shortCode,
-        categoryId,
-        color: DESIGN_COLORS.find(color => !usedColors.has(color.bg.toLowerCase()))?.bg ?? DESIGN_COLORS[0]!.bg
-      })
-
-      return id
+      return createRoleActivity(this.$state, role, index, Date.now())
     },
 
     /** Adds an activity; it takes the category colour unless one is given. Returns the new id, or null when invalid */
     addActivity(name: string, shortCode: string, categoryId: string, color?: string): string | null {
-      const fields = { name, shortCode, categoryId }
-
-      if (Object.keys(validateActivityFields(this.$state, fields)).length) {
-        return null
-      }
-
-      const category = this.categories.find(item => item.id === categoryId)
-      const id = `activity-${Date.now()}`
-
-      this.activities.push({
-        id,
-        name: name.trim(),
-        shortCode: shortCode.trim().toUpperCase(),
-        categoryId,
-        color: color ?? category?.color ?? '#685847'
-      })
-
-      return id
+      return addActivity(this.$state, name, shortCode, categoryId, color, Date.now())
     },
 
     /**
@@ -362,66 +309,16 @@ export const usePlannerStore = defineStore('planner', {
      * activity with the life area colour and a free short code. Returns its id, or the error; nothing is added on error
      */
     ownActivityFor(categoryId: string, name: string): { id: string } | { error: string } {
-      const trimmed = name.trim()
-      const existing = this.activities.find(activity => activity.categoryId === categoryId && activity.name.trim().toLowerCase() === trimmed.toLowerCase())
-
-      if (existing) {
-        return { id: existing.id }
-      }
-
-      const shortCode = freeShortCode(this.$state, trimmed)
-
-      if (!shortCode) {
-        return { error: 'No short code is free for this name. Link an existing activity instead.' }
-      }
-
-      const id = this.addActivity(trimmed, shortCode, categoryId)
-      return id ? { id } : { error: 'The activity could not be added. Check the life area.' }
+      return ownActivityFor(this.$state, categoryId, name, Date.now())
     },
 
     /** Changes any of the given fields at once. Returns the field errors; nothing changes when there are any */
     updateActivity(activityId: string, changes: Partial<Pick<Activity, 'name' | 'shortCode' | 'categoryId' | 'color'>>): ActivityFieldErrors {
-      const activity = this.activities.find(item => item.id === activityId)
-
-      if (!activity) {
-        return {}
-      }
-
-      const errors = validateActivityFields(this.$state, changes, activityId)
-
-      if (Object.keys(errors).length) {
-        return errors
-      }
-
-      // Changing the category moves the activity's hours with it; its slots and habit links stay as they are
-      Object.assign(activity, {
-        ...changes,
-        ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
-        ...(changes.shortCode !== undefined ? { shortCode: changes.shortCode.trim().toUpperCase() } : {})
-      })
-
-      return {}
+      return updateActivity(this.$state, activityId, changes)
     },
 
     removeActivity(activityId: string) {
-      // The Sleep activity cannot be deleted: it is built in, and hiding it is the way to keep it out of view (FR-SLEEP-3)
-      if (isSleepActivity(this.activities.find(activity => activity.id === activityId))) return
-
-      const nextActivities = this.activities.filter(activity => activity.id !== activityId)
-
-      if (nextActivities.length === this.activities.length) {
-        return
-      }
-
-      this.activities = nextActivities
-
-      for (const template of this.templates) {
-        template.slots = template.slots.map(slot => slot === activityId ? '' : slot)
-      }
-
-      for (const habit of this.habits) {
-        if (habit.activityId === activityId) delete habit.activityId
-      }
+      removeActivity(this.$state, activityId)
     },
 
     // ---------------------------------------------------------------
@@ -429,18 +326,8 @@ export const usePlannerStore = defineStore('planner', {
     // ---------------------------------------------------------------
     /** The Sleep activity, created when the planner has none: Sleep, SLP, the quiet purple, in Physical (FR-SLEEP-2). Null when there is no life area */
     ensureSleepActivity(): string | null {
-      const existing = sleepActivityId(this.$state)
-      if (existing) return existing
-
-      const area = presetCategoryId(this.categories, 'sleep')
-      if (!area) return null
-
-      const id = this.activities.some(activity => activity.id === SLEEP_ID) ? `activity-${Date.now()}` : SLEEP_ID
-      this.activities.push({ id, name: SLEEP_NAME, shortCode: SLEEP_CODE, categoryId: area, color: SLEEP_COLOR })
-
-      return id
+      return ensureSleepActivity(this.$state, Date.now())
     },
-
     /**
      * Paints the Sleep activity's nights in the given hourly week type (FR-SLEEP-5): its old hours go, and the groups' nights are painted
      * over whatever holds them. Returns the result text and the undo, or null when a window is refused or there is no Sleep activity
