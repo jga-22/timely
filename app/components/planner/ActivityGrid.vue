@@ -609,7 +609,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="section wk-section" aria-labelledby="week-title">
-    <!-- Collapsible like the Year section (open by default, in memory only); the Show sleep button sits beside the summary, not in it -->
+    <!-- Collapsible like the Year section (open by default, in memory only); the Show sleep button is inside it, above the grid -->
     <div class="wk-head-line">
       <details class="wk-details" :open="weekOpen" @toggle="weekOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="section-summary wk-summary">
@@ -620,6 +620,10 @@ onBeforeUnmount(() => {
         <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
 
         <template v-else>
+          <div v-if="sleepId" class="wk-tools">
+            <SleepToggle />
+          </div>
+
           <div class="wk-scroll">
             <div class="wk" :data-editing="editing ? 'true' : 'false'">
               <div class="wk-head">
@@ -762,8 +766,6 @@ onBeforeUnmount(() => {
           </p>
         </template>
       </details>
-
-      <SleepToggle v-if="sleepId" />
     </div>
 
     <Teleport to="body">
