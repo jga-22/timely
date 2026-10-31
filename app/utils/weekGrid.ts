@@ -195,3 +195,12 @@ export const popupAt = (x: number, y: number, width: number, height: number): { 
 
 /** The top of the menu: it moves up when its bottom would pass the screen edge */
 export const menuTop = (y: number, menuHeight: number, height: number): number => Math.max(8, Math.min(y, height - menuHeight - 8))
+
+/** Whether a run has moved from the run it was made on: a handle changed an edge. Save is enabled only then (FR-PLAN-23) */
+export const isMoved = (from: Range | null, to: Range | null): boolean => !!from && !!to && (from.day !== to.day || from.start !== to.start || from.end !== to.end)
+
+/** What Save does: nothing when the run has not moved; a move made by an Apply's edit extends that Apply's undo step; any other move is one new undo step */
+export const saveAction = (moved: boolean, extendsApply: boolean): 'none' | 'extend' | 'commit' => (!moved ? 'none' : extendsApply ? 'extend' : 'commit')
+
+/** What Cancel does in the edit box: a moved edge goes back to the run it was made on and the box stays; a clean selection closes the box (an Apply's block stays as applied) */
+export const cancelAction = (moved: boolean): 'revert' | 'close' => (moved ? 'revert' : 'close')

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
+import { bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupAt, saveAction, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
 
 const SLEEP = 'sleep'
 const WORK = 'work'
@@ -230,5 +230,38 @@ describe('popupAt and menuTop', () => {
     expect(menuTop(600, 200, 900)).toBe(600)
     expect(menuTop(800, 200, 900)).toBe(692)
     expect(menuTop(-50, 200, 900)).toBe(8)
+  })
+})
+
+describe('isMoved', () => {
+  const block = { day: 1, start: 10, end: 13 }
+
+  it('is false for the same run and for a missing side', () => {
+    expect(isMoved(block, { ...block })).toBe(false)
+    expect(isMoved(null, block)).toBe(false)
+    expect(isMoved(block, null)).toBe(false)
+  })
+
+  it('is true when either edge or the day changes', () => {
+    expect(isMoved(block, { ...block, start: 9 })).toBe(true)
+    expect(isMoved(block, { ...block, end: 12 })).toBe(true)
+    expect(isMoved(block, { ...block, day: 2 })).toBe(true)
+  })
+})
+
+describe('saveAction and cancelAction', () => {
+  it('saves nothing when the run has not moved', () => {
+    expect(saveAction(false, false)).toBe('none')
+    expect(saveAction(false, true)).toBe('none')
+  })
+
+  it('extends the Apply undo step for a move made by an Apply edit, and commits any other move', () => {
+    expect(saveAction(true, true)).toBe('extend')
+    expect(saveAction(true, false)).toBe('commit')
+  })
+
+  it('reverts a moved edge, and closes a clean selection', () => {
+    expect(cancelAction(true)).toBe('revert')
+    expect(cancelAction(false)).toBe('close')
   })
 })
