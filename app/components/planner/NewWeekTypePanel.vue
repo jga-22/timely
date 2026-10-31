@@ -9,7 +9,7 @@ import { focusEditField } from '~/utils/focus'
  * mapping and habit switch). It is mounted when it opens, so each opening starts from the defaults. created reports the new week type;
  * close is Cancel, Escape and a closed panel without a week type.
  */
-const emit = defineEmits<{ close: []; created: [templateId: string, kind?: 'break'] }>()
+const emit = defineEmits<{ close: []; created: [templateId: string] }>()
 
 const planner = usePlannerStore()
 const { activeTemplate, templates } = storeToRefs(planner)
@@ -63,7 +63,7 @@ function handleNewTemplate() {
 
   if (!templateId) return
 
-  emit('created', templateId, preset?.kind)
+  emit('created', templateId)
 }
 </script>
 
