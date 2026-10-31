@@ -1281,7 +1281,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .wk-block-del { display: none; }
 }
 
-/* Selection: a tinted run with a hairline frame; in edit mode it gets handles and Save / Cancel */
+/* Selection: a tinted run with a hairline frame. A run that holds an activity gets its edge handles (Save and Cancel are in the action bar) */
 .wk-sel {
   position: absolute;
   left: 0;
@@ -1323,7 +1323,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   pointer-events: auto;
   touch-action: none;
 }
-.wk-handle.is-top { top: -12px; }
+.wk-handle.is-top { top: -12px; z-index: 6; }
 .wk-handle.is-bottom { bottom: -12px; }
 .wk-handle span {
   width: 28px;
@@ -1334,33 +1334,13 @@ a { color: var(--accent); text-underline-offset: 3px; }
 }
 .wk-handle:hover span,
 .wk-handle:focus-visible span { background: var(--ink); }
-.wk-confirm {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  z-index: 6;
-  display: flex;
-  gap: 4px;
-  pointer-events: auto;
+/* Touch: each edge has a 44px target that reaches out of the run, only 6px into it, so a scroll that starts in the middle of a
+   one-hour block still scrolls. The pill sits on the edge */
+@media (pointer: coarse) {
+  .wk-handle { height: 44px; }
+  .wk-handle.is-top { top: -38px; align-items: flex-end; padding-bottom: 2px; }
+  .wk-handle.is-bottom { bottom: -38px; align-items: flex-start; padding-top: 2px; }
 }
-.wk-round {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--control-border);
-  border-radius: 50%;
-  background: var(--bg);
-  color: var(--ink-2);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.wk-round.is-ok { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.wk-round.is-cancel:hover { color: var(--danger); border-color: var(--danger); }
 
 /* Undo: one quiet line under the grid after a change, gone after a few seconds */
 .wk-undo {

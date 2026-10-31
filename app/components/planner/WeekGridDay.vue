@@ -29,8 +29,8 @@ const props = defineProps<{
   cursor: Cell
   /** The selected run, if it is in this day */
   selection: Range | null
-  /** Edit mode: the selection carries its handles and Save and Cancel */
-  editing: boolean
+  /** The selection holds an activity: it carries its edge handles (Save and Cancel are in the action bar) */
+  handles: boolean
 }>()
 
 const emit = defineEmits<{
@@ -38,8 +38,6 @@ const emit = defineEmits<{
   clear: [range: Range]
   resize: [side: 'top' | 'bottom', event: PointerEvent]
   'handle-key': [side: 'top' | 'bottom', event: KeyboardEvent]
-  cancel: []
-  save: []
 }>()
 
 const { fill } = usePlannerFill()
@@ -95,7 +93,7 @@ const isCursor = (hour: number) => props.cursor.day === props.day && props.curso
       >✕</button>
     </div>
 
-    <!-- Selection: the highlighted run; in edit mode it carries the resize handles -->
+    <!-- Selection: the highlighted run; with an activity it carries the resize handles -->
     <div
       v-if="selection && selection.day === day"
       class="wk-sel"
@@ -104,7 +102,7 @@ const isCursor = (hour: number) => props.cursor.day === props.day && props.curso
         height: `${(selection.end - selection.start) * HOUR_PX}px`,
       }"
     >
-      <template v-if="editing">
+      <template v-if="handles">
         <button
           type="button"
           class="wk-handle is-top"
@@ -121,22 +119,6 @@ const isCursor = (hour: number) => props.cursor.day === props.day && props.curso
         ><span /></button>
       </template>
       <span class="wk-dur">{{ selection.end - selection.start }}h</span>
-      <div v-if="editing" class="wk-confirm">
-        <button
-          type="button"
-          class="wk-round is-cancel"
-          title="Cancel change"
-          aria-label="Cancel change"
-          @click="emit('cancel')"
-        >✕</button>
-        <button
-          type="button"
-          class="wk-round is-ok"
-          title="Save change"
-          aria-label="Save change"
-          @click="emit('save')"
-        >✓</button>
-      </div>
     </div>
   </div>
 </template>

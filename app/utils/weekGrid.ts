@@ -188,10 +188,29 @@ export const stepFor = (key: string, cell: Cell, collapsed: boolean[]): Cell | n
   }
 }
 
-/** Where a popup opens in a viewport: beside the release point, or at the bottom on phones (480 px and under) */
-export const popupAt = (x: number, y: number, width: number, height: number): { x: number; y: number } => (width <= 480
-  ? { x: 16, y: height - 160 }
-  : { x: Math.min(x + 16, width - 276), y: Math.max(16, Math.min(y - 10, height - 200)) })
+/** The width of the action bar and the menu, as the CSS sets it */
+export const POPUP_PX = 260
+
+/**
+ * Where the action bar or the menu opens for a run: beside its day column (to the right, or to the left when there is no room), its top level
+ * with the run and kept on the screen. It never covers the run's handles. On phones (480 px and under) it opens at the bottom of the screen
+ */
+export const popupBeside = (column: { left: number; right: number }, runTop: number, viewport: { width: number; height: number }): { x: number; y: number } => {
+  if (viewport.width <= 480) return { x: 16, y: viewport.height - 160 }
+
+  const right = column.right + 12
+  const x = right + POPUP_PX <= viewport.width - 16 ? right : Math.max(16, column.left - 12 - POPUP_PX)
+  return { x, y: Math.max(16, Math.min(runTop, viewport.height - 200)) }
+}
 
 /** The top of the menu: it moves up when its bottom would pass the screen edge */
 export const menuTop = (y: number, menuHeight: number, height: number): number => Math.max(8, Math.min(y, height - menuHeight - 8))
+
+/** Whether a run has moved from the run it was made on: a handle changed an edge. Save is enabled only then (FR-PLAN-23) */
+export const isMoved = (from: Range | null, to: Range | null): boolean => !!from && !!to && (from.day !== to.day || from.start !== to.start || from.end !== to.end)
+
+/** What Save does: nothing when the run has not moved; a move made by an Apply's edit extends that Apply's undo step; any other move is one new undo step */
+export const saveAction = (moved: boolean, extendsApply: boolean): 'none' | 'extend' | 'commit' => (!moved ? 'none' : extendsApply ? 'extend' : 'commit')
+
+/** What Cancel does in the edit box: a moved edge goes back to the run it was made on and the box stays; a clean selection closes the box (an Apply's block stays as applied) */
+export const cancelAction = (moved: boolean): 'revert' | 'close' => (moved ? 'revert' : 'close')

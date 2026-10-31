@@ -4,7 +4,7 @@ import { usePlannerStore } from '~/stores/planner'
 import { useGridUndo } from '~/composables/useGridUndo'
 import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks } from '~/utils/planner'
 import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
-import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, rangeLabel, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
+import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, rangeLabel, saveAction, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
 
 /** A touch that moves further than this (px) is a scroll, not a tap */
 const TOUCH_SLOP = 8
@@ -12,8 +12,16 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 
 interface Press { pointerId: number; pointerType: string; x: number; y: number; cell: Cell; block: Range | null; dragging: boolean }
 
+/**
+ * closeToken: the parent bumps it when another editor opens (the entry form), so a box or menu open here closes (PRD 11.2).
+ * open: a box or menu opened here, so the parent closes its own editors (the week type panel and the entry form)
+ */
+const props = defineProps<{ closeToken?: number }>()
+const emit = defineEmits<{ open: [] }>()
+
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
+const { setSelection } = useNav()
 
 // Sleep (FR-SLEEP-3 to 5): while hidden it reads as empty, is not counted, and its rows collapse. The real slots stay the undo's source
 const { showSleep, setShowSleep } = useShowSleep()
@@ -52,15 +60,13 @@ const nearestShownHour = (hour: number) => nearestShown(shownHours.value, hour)
 // The bands above and below the rows say which hours are collapsed; clicking one shows sleep
 const bands = computed(() => collapsedBandLabels(firstShown.value, lastShown.value))
 
-// Selection: one run of hours in one day column, set by drag, click, tap or the keyboard
+// Selection: one run of hours in one day column, set by drag, click, tap or the keyboard. Its edge handles move it
 const selection = ref<Range | null>(null)
+// The run as it is in the week, as the selection was made (a release, a key or an Apply). Moving a handle changes the selection only: Save and Cancel compare with this
+const baseline = ref<Range | null>(null)
 const barOpen = ref(false)
 const barPos = ref({ x: 0, y: 0 })
 const menuOpen = ref(false)
-// Edit mode resizes the selection with its handles; Save applies the new range, Cancel restores the old one
-const editing = ref(false)
-const editSnapshot = ref<Range | null>(null)
-const editActivityId = ref<string | null>(null)
 // True while the edit that Apply opened is open: its undo step is the Apply's, and Save extends that step
 const editFromApply = ref(false)
 const { undo, dismissUndo, restartUndoTimer, stopUndoTimer, commit, undoLast: undoChange } = useGridUndo()
@@ -74,63 +80,86 @@ const menuRef = ref<{ el: HTMLElement | null } | null>(null)
 let press: Press | null = null
 let resizeDay: HTMLElement | null = null
 let resizeSide: 'top' | 'bottom' | null = null
+// Whether the press that starts a click was inside the editor (the grid, its box or its handles)
+let pressInside = false
 
 const selectionHasActivity = computed(() => !!selection.value && cellsOf(selection.value).some(index => shownSlots.value[index]))
+// The edge handles show on a selection that holds an activity, at once: a click or tap on a block, a keyboard run, an Apply (FR-PLAN-23).
+// They hide under the menu. Save and Cancel are in the box
+const handles = computed(() => !!selection.value && selectionHasActivity.value && !menuOpen.value)
+const moved = computed(() => isMoved(baseline.value, selection.value))
 const firstActivityIn = (range: Range) => cellsOf(range).map(index => shownSlots.value[index]).find(Boolean) ?? null
 const blockOf = (cell: Cell) => blockAt(shownSlots.value, cell)
 const setCursor = (cell: Cell) => {
   cursor.value = { day: cell.day, hour: cell.hour }
 }
 
-/** Undo leaves an open edit first, then restores the week from before the change */
+/** Undo leaves an open box first, then restores the week from before the change */
 const undoLast = () => undoChange(() => {
-  if (editing.value) closeAll()
+  if (selection.value) closeAll()
 })
 
 const focusCursor = () => {
   nextTick(() => gridEl.value?.querySelector<HTMLElement>(`.wk-slot[data-day="${cursor.value.day}"][data-hour="${cursor.value.hour}"]`)?.focus())
 }
 
-// Popups open beside the release point, or at the bottom on phones
-const placePopup = (x: number, y: number) => {
-  barPos.value = popupAt(x, y, window.innerWidth, window.innerHeight)
+const focusBox = () => barRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus()
+const focusBottomHandle = () => gridEl.value?.querySelector<HTMLElement>('.wk-handle.is-bottom')?.focus()
+
+// The bar and the menu open beside the run's day column, so they never cover its handles; on phones at the bottom of the screen
+const placeBar = () => {
+  const range = selection.value
+  const column = range ? gridEl.value?.querySelector<HTMLElement>(`.wk-day[data-day="${range.day}"]`) : null
+  if (!range || !column) return
+
+  const rect = column.getBoundingClientRect()
+  barPos.value = popupBeside({ left: rect.left, right: rect.right }, rect.top + (hourTop.value[range.start] ?? 0), { width: window.innerWidth, height: window.innerHeight })
 }
 
 const openBar = () => {
   menuOpen.value = false
   barOpen.value = true
-  nextTick(() => barRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus())
+  emit('open')
+  nextTick(focusBox)
 }
 
-const closeAll = () => {
+/** Ends the selection and any box or menu. An Apply's undo step, which waited for its edit, resumes its timer */
+const endEdit = () => {
   const endsApplyEdit = editFromApply.value
   barOpen.value = false
   menuOpen.value = false
-  editing.value = false
-  editSnapshot.value = null
-  editActivityId.value = null
   editFromApply.value = false
   selection.value = null
+  baseline.value = null
   anchor.value = null
-  // The undo line of an Apply has waited for its edit; it now dismisses itself as usual
   if (endsApplyEdit && undo.value) restartUndoTimer()
-  focusCursor()
 }
 
-// The menu stays on screen: it moves up when its bottom would pass the screen edge, and its list scrolls inside it
-const fitMenu = () => {
-  const menu = menuRef.value?.el
-  if (!menu) return
+const closeAll = ({ focus = true }: { focus?: boolean } = {}) => {
+  endEdit()
+  if (focus) focusCursor()
+}
 
-  const height = menu.getBoundingClientRect().height
+// A popup stays on the screen: it moves up when its bottom would pass the screen edge
+const fitPopup = (el: HTMLElement | null | undefined) => {
+  if (!el) return
+
+  const height = el.getBoundingClientRect().height
   barPos.value = { ...barPos.value, y: menuTop(barPos.value.y, height, window.innerHeight) }
 }
 
+/** Change, Edit and Delete act on the block as it is in the week: unsaved edge moves are dropped first */
+const toBlock = () => {
+  if (baseline.value) selection.value = { ...baseline.value }
+}
+
 const pickFromBar = () => {
+  toBlock()
   barOpen.value = false
   menuOpen.value = true
+  emit('open')
   nextTick(() => {
-    fitMenu()
+    fitPopup(menuRef.value?.el)
     menuRef.value?.el?.querySelector<HTMLButtonElement>('button')?.focus()
   })
 }
@@ -154,85 +183,81 @@ const applyActivity = (activityId: string) => {
     return
   }
 
-  // The new block opens in edit mode at once, so its start and end change without selecting it again (FR-PLAN-23).
-  // Its undo step waits for the edit: Save extends it, Cancel and Escape keep the block as applied
+  // The new block is edited at once: its box shows the edge handles, Save and Cancel. Its undo step waits for the edit:
+  // Save extends it, Cancel and Escape keep the block as applied
   stopUndoTimer()
-  barOpen.value = false
   menuOpen.value = false
-  editSnapshot.value = { ...range }
-  editActivityId.value = activityId
+  baseline.value = { ...range }
   editFromApply.value = true
-  editing.value = true
-  nextTick(() => gridEl.value?.querySelector<HTMLElement>('.wk-handle.is-top')?.focus())
+  barOpen.value = true
+  emit('open')
+  nextTick(() => {
+    fitPopup(barRef.value?.el)
+    gridEl.value?.querySelector<HTMLElement>('.wk-handle.is-top')?.focus()
+  })
 }
 
 const clearRange = (range: Range) => {
   const template = activeTemplate.value
   if (!template) return
 
-  // A change made outside the edit (clear day, a block's delete) ends the edit first
-  if (editing.value) closeAll()
+  // A change made outside the box (clear day, a block's delete) ends the box first
+  if (selection.value) closeAll({ focus: false })
 
   commit(`Cleared ${rangeLabel(range)}`, template.id, () => {
     planner.paintCells(template.id, clearableCells(range, slots.value, sleepId.value, showSleep.value), null)
   })
 }
 
+// Delete takes out the block as it is in the week; unsaved edge moves are dropped
 const clearSelection = () => {
-  if (selection.value) clearRange(selection.value)
+  const range = baseline.value ?? selection.value
+  if (range) clearRange(range)
   closeAll()
 }
 
 const clearDay = (day: number) => clearRange({ day, start: 0, end: 24 })
 
-// Edit: the selection gets handles; Save clears the old range and applies the activity to the new one
-const startEdit = () => {
-  const range = selection.value
-  if (!range || !selectionHasActivity.value) return
+// Edit opens the entry's form (ActivityForm) through the URL, as Goals and the Week's entry buttons do; the box closes first
+const editActivity = () => {
+  const range = baseline.value
+  const activityId = range ? firstActivityIn(range) : null
+  if (!activityId) return
 
-  editSnapshot.value = { ...range }
-  editActivityId.value = firstActivityIn(range)
-  editing.value = true
-  barOpen.value = false
-  nextTick(() => gridEl.value?.querySelector<HTMLElement>('.wk-round.is-ok')?.focus())
+  closeAll({ focus: false })
+  setSelection({ item: activityId, edit: true })
 }
 
+// Cancel with a moved edge puts it back and keeps the box; a clean one closes the box (an Apply's block stays as applied)
 const cancelEdit = () => {
-  // The edit that Apply opened leaves the block as applied
-  if (editFromApply.value) {
-    closeAll()
+  if (cancelAction(moved.value) === 'revert') {
+    selection.value = baseline.value ? { ...baseline.value } : null
     return
   }
 
-  if (editSnapshot.value) selection.value = { ...editSnapshot.value }
-  editing.value = false
-  editSnapshot.value = null
-  editActivityId.value = null
-  openBar()
+  closeAll()
 }
 
+// Save writes the moved block: the run it was made on is cleared, and the new run takes the activity that held the old one
 const saveEdit = () => {
-  const snapshot = editSnapshot.value
+  const from = baseline.value
   const range = selection.value
   const template = activeTemplate.value
-  const activityId = editActivityId.value
+  const activityId = from ? firstActivityIn(from) : null
+  if (!from || !range || !template || !activityId) return
 
-  if (snapshot && range && template) {
-    const moved = range.day !== snapshot.day || range.start !== snapshot.start || range.end !== snapshot.end
-    const move = () => {
-      planner.paintCells(template.id, clearableCells(snapshot, slots.value, sleepId.value, showSleep.value), null)
-      if (activityId) planner.paintCells(template.id, cellsOf(range), activityId)
-    }
+  const action = saveAction(moved.value, editFromApply.value && !!undo.value)
+  const move = () => {
+    planner.paintCells(template.id, clearableCells(from, slots.value, sleepId.value, showSleep.value), null)
+    planner.paintCells(template.id, cellsOf(range), activityId)
+  }
 
-    if (editFromApply.value && undo.value) {
-      // The Apply's step still restores the week from before the Apply, so a move extends that step instead of adding one
-      if (moved) {
-        move()
-        undo.value = { ...undo.value, text: `Moved to ${rangeLabel(range)}.` }
-      }
-    } else {
-      commit(`Moved to ${rangeLabel(range)}`, template.id, move)
-    }
+  if (action === 'extend' && undo.value) {
+    // The Apply's step still restores the week from before the Apply, so a move extends that step instead of adding one
+    move()
+    undo.value = { ...undo.value, text: `Moved to ${rangeLabel(range)}.` }
+  } else if (action === 'commit') {
+    commit(`Moved to ${rangeLabel(range)}`, template.id, move)
   }
 
   closeAll()
@@ -291,7 +316,7 @@ const cellAt = (x: number, y: number): { cell: Cell; block: Range | null } | nul
 }
 
 const onPointerDown = (event: PointerEvent) => {
-  if (!hourly.value || editing.value || event.button !== 0) return
+  if (!hourly.value || event.button !== 0) return
 
   // Buttons inside the grid (clear day, block delete) handle their own clicks
   if ((event.target as HTMLElement).closest('button')) return
@@ -299,9 +324,8 @@ const onPointerDown = (event: PointerEvent) => {
   const hit = cellAt(event.clientX, event.clientY)
   if (!hit) return
 
-  barOpen.value = false
-  menuOpen.value = false
-  anchor.value = null
+  // A mouse press starts a new selection now. A touch waits for its tap, so a scroll leaves the box as it is
+  if (event.pointerType === 'mouse') endEdit()
   setCursor(hit.cell)
   press = { pointerId: event.pointerId, pointerType: event.pointerType, x: event.clientX, y: event.clientY, cell: hit.cell, block: hit.block, dragging: false }
 
@@ -333,8 +357,8 @@ const onPointerMove = (event: PointerEvent) => {
   if (hit.cell.hour !== press.cell.hour) press.dragging = true
 }
 
-const placeAt = (x: number, y: number) => {
-  placePopup(x, y)
+const placeAt = () => {
+  placeBar()
   openBar()
 }
 
@@ -344,12 +368,16 @@ const onPointerUp = (event: PointerEvent) => {
   if (!current || current.pointerId !== event.pointerId) return
 
   if (current.pointerType === 'mouse' && current.dragging) {
-    placeAt(event.clientX, event.clientY)
+    baseline.value = selection.value ? { ...selection.value } : null
+    placeAt()
     return
   }
 
+  // A click or tap selects its block, or its hour: this run is what the box opens on
+  endEdit()
   selection.value = current.block ?? singleCell(current.cell)
-  placeAt(event.clientX, event.clientY)
+  baseline.value = { ...selection.value }
+  placeAt()
 }
 
 const onPointerCancel = () => {
@@ -359,15 +387,28 @@ const onPointerCancel = () => {
 // Keyboard: arrows move the focused hour, Shift with arrows selects within one day, Enter or Space opens the bar
 const onKeydown = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement
-  if (!hourly.value || editing.value || !target.dataset.hour) return
+
+  // Tab from the bottom handle goes to the box: the box is teleported, so the order is set here
+  if (target.classList.contains('wk-handle')) {
+    if (event.key === 'Tab' && !event.shiftKey && target.classList.contains('is-bottom') && barOpen.value) {
+      event.preventDefault()
+      focusBox()
+    }
+    return
+  }
+
+  if (!hourly.value || !target.dataset.hour) return
 
   const step = stepFor(event.key, cursor.value, collapsed.value)
 
   if (step) {
     event.preventDefault()
     const from = event.shiftKey ? (anchor.value ?? cursor.value) : null
+    const range = from ? keyRange(from, step, collapsed.value) : null
+    endEdit()
     anchor.value = from ? { ...from } : null
-    selection.value = from ? keyRange(from, step, collapsed.value) : null
+    selection.value = range
+    baseline.value = range ? { ...range } : null
     setCursor(step)
     focusCursor()
     return
@@ -375,21 +416,46 @@ const onKeydown = (event: KeyboardEvent) => {
 
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
-    selection.value = selection.value ?? blockOf(cursor.value) ?? singleCell(cursor.value)
-    const rect = target.getBoundingClientRect()
-    placeAt(rect.right, rect.top)
+    if (!selection.value) {
+      selection.value = blockOf(cursor.value) ?? singleCell(cursor.value)
+      baseline.value = { ...selection.value }
+    }
+    placeAt()
   }
+}
+
+// Shift+Tab from the box's first button goes back to the bottom handle, when the handles show
+const onBarKey = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab' || !event.shiftKey || !handles.value) return
+  if (event.target !== barRef.value?.el?.querySelector('button')) return
+
+  event.preventDefault()
+  focusBottomHandle()
 }
 
 const onWindowKeydown = (event: KeyboardEvent) => {
   if (event.key !== 'Escape') return
-  if (editing.value || barOpen.value || menuOpen.value || selection.value) closeAll()
+  if (selection.value || barOpen.value || menuOpen.value) closeAll()
+}
+
+// A click outside the grid and its box ends the selection. The press that began inside (a drag from a handle, released outside) is not one
+const insideEditor = (target: EventTarget | null) => target instanceof Element && !!target.closest('.wk-body, .wk-pop, .wk-handle')
+const onWindowPointerDown = (event: PointerEvent) => {
+  pressInside = insideEditor(event.target)
+}
+const onWindowClick = (event: MouseEvent) => {
+  const startedInside = pressInside
+  pressInside = false
+  if (!selection.value && !barOpen.value && !menuOpen.value) return
+  if (startedInside || insideEditor(event.target)) return
+
+  closeAll({ focus: false })
 }
 
 // Switching template closes any open popup and forgets the undo step (it belongs to the old template)
 watch(() => activeTemplate.value?.id, () => {
   dismissUndo()
-  if (barOpen.value || menuOpen.value || editing.value) closeAll()
+  if (selection.value || barOpen.value || menuOpen.value) closeAll()
 })
 
 // Rows collapse or come back with Show sleep: the cursor moves to a shown hour; a selection that now covers a collapsed hour is dropped.
@@ -405,19 +471,28 @@ watch(collapsed, () => {
 // the selection and the cursor stay and show again when it opens
 const weekOpen = ref(true)
 watch(weekOpen, (open) => {
-  if (!open && (barOpen.value || menuOpen.value || editing.value)) closeAll()
+  if (!open && (selection.value || barOpen.value || menuOpen.value)) closeAll()
+})
+
+// Another editor opened (the entry form, through the parent): this box or menu closes without moving focus
+watch(() => props.closeToken, () => {
+  if (selection.value || barOpen.value || menuOpen.value) closeAll({ focus: false })
 })
 
 onMounted(() => {
+  window.addEventListener('pointerdown', onWindowPointerDown)
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('pointercancel', onPointerCancel)
   window.addEventListener('keydown', onWindowKeydown)
+  window.addEventListener('click', onWindowClick)
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('pointerdown', onWindowPointerDown)
   window.removeEventListener('pointerup', onPointerUp)
   window.removeEventListener('pointercancel', onPointerCancel)
   window.removeEventListener('keydown', onWindowKeydown)
+  window.removeEventListener('click', onWindowClick)
   window.removeEventListener('pointermove', onResizeMove)
 })
 </script>
@@ -440,7 +515,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="wk-scroll">
-            <div class="wk" :data-editing="editing ? 'true' : 'false'">
+            <div class="wk" :data-editing="handles ? 'true' : 'false'">
               <div class="wk-head">
                 <div class="wk-corner" aria-hidden="true" />
                 <div v-for="(day, index) in DAYS" :key="day" class="wk-day-head">
@@ -488,13 +563,11 @@ onBeforeUnmount(() => {
                   :blocks="blocksByDay[dayIndex] ?? []"
                   :cursor="cursor"
                   :selection="selection"
-                  :editing="editing"
+                  :handles="handles"
                   @focus-cell="setCursor"
                   @clear="clearRange"
                   @resize="startResize"
                   @handle-key="onHandleKey"
-                  @cancel="cancelEdit"
-                  @save="saveEdit"
                 />
               </div>
             </div>
@@ -515,8 +588,9 @@ onBeforeUnmount(() => {
     </div>
 
     <Teleport to="body">
-      <!-- Closes on pointerdown, not click: the click that follows a tap would otherwise land on the overlay that the tap just opened -->
-      <div v-if="barOpen || menuOpen" class="wk-overlay" @pointerdown="closeAll" @contextmenu.prevent="closeAll" />
+      <!-- Closes on pointerdown, not click: the click that follows a tap would otherwise land on the overlay that the tap just opened.
+           With handles the grid stays live under the box, so a handle can be dragged -->
+      <div v-if="menuOpen || (barOpen && !handles)" class="wk-overlay" @pointerdown="closeAll()" @contextmenu.prevent="closeAll()" />
 
       <PlannerWeekGridBar
         v-if="barOpen && selection"
@@ -524,10 +598,13 @@ onBeforeUnmount(() => {
         :selection="selection"
         :pos="barPos"
         :has-activity="selectionHasActivity"
+        :can-save="moved"
         @pick="pickFromBar"
-        @edit="startEdit"
+        @edit="editActivity"
         @delete="clearSelection"
-        @cancel="closeAll"
+        @save="saveEdit"
+        @cancel="cancelEdit"
+        @keydown="onBarKey"
       />
 
       <PlannerWeekGridMenu

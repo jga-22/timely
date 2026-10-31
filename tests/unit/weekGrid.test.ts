@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandOf, blockAt, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, keyRange, menuTop, nearestShown, popupAt, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
+import { bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, saveAction, setEdge, stepFor, stepHour, withoutSleep } from '~/utils/weekGrid'
 
 const SLEEP = 'sleep'
 const WORK = 'work'
@@ -216,19 +216,56 @@ describe('collapsedBandLabels', () => {
   })
 })
 
-describe('popupAt and menuTop', () => {
-  it('opens a popup beside the release point on desktop, inside the viewport', () => {
-    expect(popupAt(400, 300, 1280, 900)).toEqual({ x: 416, y: 290 })
-    expect(popupAt(1200, 880, 1280, 900)).toEqual({ x: 1004, y: 700 })
+describe('popupBeside and menuTop', () => {
+  it('opens a popup beside its day column on desktop, level with the run', () => {
+    expect(popupBeside({ left: 400, right: 540 }, 300, { width: 1280, height: 900 })).toEqual({ x: 552, y: 300 })
+  })
+
+  it('opens to the left of the column when the right has no room, and keeps it on the screen', () => {
+    expect(popupBeside({ left: 1100, right: 1240 }, 300, { width: 1280, height: 900 })).toEqual({ x: 828, y: 300 })
+    expect(popupBeside({ left: 400, right: 540 }, 880, { width: 1280, height: 900 })).toEqual({ x: 552, y: 700 })
   })
 
   it('opens a popup at the bottom on phones', () => {
-    expect(popupAt(100, 300, 400, 800)).toEqual({ x: 16, y: 640 })
+    expect(popupBeside({ left: 100, right: 240 }, 300, { width: 400, height: 800 })).toEqual({ x: 16, y: 640 })
   })
 
   it('moves a menu up when its bottom would pass the screen edge', () => {
     expect(menuTop(600, 200, 900)).toBe(600)
     expect(menuTop(800, 200, 900)).toBe(692)
     expect(menuTop(-50, 200, 900)).toBe(8)
+  })
+})
+
+describe('isMoved', () => {
+  const block = { day: 1, start: 10, end: 13 }
+
+  it('is false for the same run and for a missing side', () => {
+    expect(isMoved(block, { ...block })).toBe(false)
+    expect(isMoved(null, block)).toBe(false)
+    expect(isMoved(block, null)).toBe(false)
+  })
+
+  it('is true when either edge or the day changes', () => {
+    expect(isMoved(block, { ...block, start: 9 })).toBe(true)
+    expect(isMoved(block, { ...block, end: 12 })).toBe(true)
+    expect(isMoved(block, { ...block, day: 2 })).toBe(true)
+  })
+})
+
+describe('saveAction and cancelAction', () => {
+  it('saves nothing when the run has not moved', () => {
+    expect(saveAction(false, false)).toBe('none')
+    expect(saveAction(false, true)).toBe('none')
+  })
+
+  it('extends the Apply undo step for a move made by an Apply edit, and commits any other move', () => {
+    expect(saveAction(true, true)).toBe('extend')
+    expect(saveAction(true, false)).toBe('commit')
+  })
+
+  it('reverts a moved edge, and closes a clean selection', () => {
+    expect(cancelAction(true)).toBe('revert')
+    expect(cancelAction(false)).toBe('close')
   })
 })

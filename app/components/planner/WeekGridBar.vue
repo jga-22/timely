@@ -3,11 +3,12 @@ import { DAYS, formatHour } from '~/utils/planner'
 import { rangeLabel, type Range } from '~/utils/weekGrid'
 
 /**
- * The action bar of the week grid (FR-PLAN-23): the selected run, then Change or Apply, Edit range, Delete and Cancel.
- * It opens where the parent sets pos (beside the release point, or at the bottom on phones). The parent focuses its first button through el.
+ * The action bar of the week grid (FR-PLAN-23). On an empty run: Apply… and Cancel. On a block: Change…, Edit (a word button that opens the entry's form),
+ * Delete, Save (enabled once an edge has moved) and Cancel. It opens where the parent sets pos (beside the release point, or at the bottom
+ * on phones). The parent focuses its first button through el.
  */
-defineProps<{ selection: Range; pos: { x: number; y: number }; hasActivity: boolean }>()
-defineEmits<{ pick: []; edit: []; delete: []; cancel: [] }>()
+defineProps<{ selection: Range; pos: { x: number; y: number }; hasActivity: boolean; canSave: boolean }>()
+defineEmits<{ pick: []; edit: []; delete: []; save: []; cancel: [] }>()
 
 const el = ref<HTMLElement | null>(null)
 defineExpose({ el })
@@ -31,8 +32,9 @@ defineExpose({ el })
       <button type="button" class="btn btn-sm btn-primary" @click="$emit('pick')">
         {{ hasActivity ? 'Change…' : 'Apply…' }}
       </button>
-      <EditButton label="Edit range" :disabled="!hasActivity" @click="$emit('edit')" />
+      <button v-if="hasActivity" type="button" class="btn btn-sm btn-outline" aria-label="Edit activity" @click="$emit('edit')">Edit</button>
       <button v-if="hasActivity" type="button" class="btn btn-sm btn-danger" @click="$emit('delete')">Delete</button>
+      <button v-if="hasActivity" type="button" class="btn btn-sm btn-outline" :disabled="!canSave" @click="$emit('save')">Save</button>
       <button type="button" class="btn btn-sm btn-ghost" @click="$emit('cancel')">Cancel</button>
     </div>
   </div>
