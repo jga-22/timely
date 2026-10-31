@@ -42,7 +42,7 @@ const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : 
         <span class="wk-menu-name">{{ activity.name }}</span>
         <span class="wk-menu-hrs">{{ hoursText(hours.get(activity.id) ?? 0) }}h</span>
       </button>
-      <p v-if="!hasAny" class="wk-menu-empty">No activities yet. Add one below the week.</p>
+      <p v-if="!hasAny" class="wk-menu-empty">No activities yet. Add one under the week grid.</p>
       <div class="wk-menu-divider" />
       <button type="button" class="wk-menu-item is-clear" @click="$emit('clear')">
         <span class="dot wk-dot-clear" />
