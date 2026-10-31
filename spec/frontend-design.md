@@ -327,11 +327,18 @@ Slice 3 (FR-GOALS-13 to 22). Page: `h1` "Goals" and a lede. Order top to bottom:
 
 The comparison of what the habits need with the time planned for each life area (`PlanComparison.vue` in Insights, `PlanBadge.vue` in Goals) was removed on 2026-10-29. The owner judged it circular: both sides come from the same habits. Nothing of it remains in the screens. The Year tab keeps the available time (the Life areas list, 4.11a); the donut is kept unused (4.9c); Goals keeps each habit's plain need text (4.10). A time budget per life area is the later idea, not built.
 
-### 4.9c Available-time donut (`app/components/insights/AvailableDonut.vue`, FR-INS-P5: kept unused)
+### 4.9c Time split (Week tab, `app/components/planner/TimeSplit.vue`, FR-PLAN-27)
 
-Not on any screen since feat/year-tab (2026-11-01): the Insights chart choice (`Bars | Donut`) went with the chart. The component is kept unused and returns as "Time split" on the Week tab in the next step. As it stands, it draws the whole range as a ring instead of the period bars. One slice per life area with planned hours, in its planned colour, starting at 12 o'clock in list order; the rest of the ring is "Not planned" (`--bg-3`). Each slice and the ring have a `<title>` with the name, hours and percent. The centre shows the percent planned of the available time (`.donut-value`, 28px 600) and "X h planned of Y h" (`.donut-sub`, 12px ink-3). Width 240px at most, centred; SVG only (`pathLength="100"`), no animation, so reduced motion needs no rule. The Life areas list beside it is the legend (dot, name, hours, percent); "Not planned" is its last row with a hollow dot. The chart label names both shares. Dark mode uses the same tokens.
+The Time split closes the Week tab, after Activities and habits. It shows how the typical week of the active week type divides its available time: 168 hours, less the sleep when Show sleep is off. It is one section, open by default (`details.acts-details`, title "Time split", and on the right `.wk-meta` "{week type} · a typical week"). With no active week type it is not drawn; with nothing planned in the week type it reads "Nothing planned in this week type yet." (`.acts-empty`).
 
-Selection (2026-10-29, follow-up): a click or tap on a slice or on the Not planned ring selects it (`.donut-seg`, `.donut-rest`, `role="button"`, `aria-pressed`, `aria-label` with name, hours and percent of the available time, `data-slice` with the life area id or `not-planned`). The selected slice is drawn 34 units wide (the others 28) and the others are dimmed to opacity 0.5; the words in the centre say which slice is selected, so the state is never colour alone. Selected: the centre shows the name (`.donut-name`, 14px 600, one line with ellipsis and a title), the percent (`.donut-value`, 24px) and the hours (`.donut-sub`), inside a 64px padding each side so it sits in the hole. The centre is an `aria-live="polite"` region and a button that clears the selection while one is selected. A second click on the selected slice, a click on the centre or Escape (anywhere on the page) clears it. Keyboard: Tab moves between the slices (the drawn ones, then Not planned), Enter or Space toggles, the Left and Right arrows (Up and Down too) move focus around the ring, focus-visible is a 2px `--accent` outline. In the Life areas list the selected row has a 3px accent bar on its left and the `--bg-2` tint; a click on a row with a slice selects it (a link in the row still goes to Goals). The selection clears when the view changes, and when its slice is no longer in the chart (another range or life area set); a unit or sleep change keeps it while the slice exists. Motion: the emphasis and dimming fade over 0.15 s only without `prefers-reduced-motion`. Note: the dimmed slices (opacity 0.5) fall below the 3:1 planned-fill rule (section 5.2); the selected one keeps it. Owner to decide whether dimmed slices must keep 3:1.
+- Ring (`planner/TimeSplitDonut.vue`, moved from `insights/AvailableDonut.vue`; same look): one slice per life area with planned hours, in its colour, starting at 12 o'clock in list order; the rest is "Not planned" (`--bg-3`). Width 240px at most. SVG only (`pathLength="100"`), no animation. Each slice and the ring have a `<title>` with name, hours and percent. Classes `.donut-*` and `.insights-donut`.
+- Layout (`.time-split`): the ring and the list side by side from 768px (ring column `minmax(220px, 280px)`), stacked on a phone.
+- Centre: the planned percent of the available time (`.donut-value`) and "X h planned of Y h" (`.donut-sub`).
+- List (`ShareList`, selectable): one row per life area with its dot, name (a link to its Goals item), hours and percent of the available time; "Not planned" is the last row, with a hollow dot. The shares add up to 100.
+- Sleep: hidden, its hours are taken off the 168 available and count as neither planned nor free. Shown, it counts under Physical and a `.page-meta` note reads "Sleep is counted under Physical.".
+- Selection: a click or tap on a slice or a list row selects it. The others dim (opacity 0.5), the selected slice is drawn 34 units wide, its row is marked, and the centre names it (name, percent, hours in an `aria-live` region). A second click, a click on the centre or Escape clears it. Keyboard: Tab, Enter or Space, arrow keys. The selection clears when the week type changes or when its slice leaves the ring. Session state, not saved. The dimmed slices fall below the 3:1 planned-fill rule (section 5.2); the owner has not decided whether they must keep it.
+- Rules: `templateSplit(state, template, showSleep)` in `app/utils/insights.ts` gives one typical week of the template (its 168 slots) as one bar of `availableShares`.
+- Screens: `screens/planner-time-split-*`.
 
 ### 4.9d Insights adherence (`app/components/insights/AdherenceView.vue`, FR-INS-P6; rules in `app/utils/adherence.ts`)
 
@@ -346,6 +353,10 @@ This is the whole Insights page (since feat/year-tab, FR-INS-P7; there is no cha
 - **Empty state.** No tick in the range: "Tick activities on Home and your adherence shows here." and "Open Home" (`.adh-empty`). The other parts are not shown.
 
 Wording stays neutral: no streaks, no "missed", no red. A quarter or year choice shows a note: "Quarter and Year show one bar per month." Verified at 1280 and 400 px, light and dark, with real mouse clicks; see the PRD row FR-INS-P6.
+### 4.9e Adherence ring (`app/components/AdherenceRing.vue`)
+
+A shared donut of an adherence percent. Props: `percent` (null shows "-" and no arc), `basis` (`habits` draws the arc in `--ok`, else `--accent`), `size` (px, 240 by default, shrinking on a narrow screen) and `showValue` (default true). viewBox 200, r 70, stroke 28, `pathLength="100"`, track `--bg-3`. `aria-hidden`: the figure is in the text beside it. Used on Insights (Adherence, 240px with its value) and on Home (28px, no value).
+
 ### 4.10 Category detail (`CategoryDetail.vue`, scoped; its list is 4.20)
 
 `HaradaCategoryDetail` (FR-GOALS-16 to 18; FR-GOALS-20 is not built). Keyed by the category, so its drafts reset on change.
@@ -384,7 +395,7 @@ The fourth tab, route id `year` (feat/year-tab, 2026-11-01). Title "Year" (`.pag
 - **Life areas** (`ShareList.vue`, not selectable): one row per life area with its dot, its name (a link to its Goals item), its hours in the unit and its percent of the available time (`availableShares`, shares add up to 100), then "Not planned" as the last row without a bar.
 - **Empty.** No planned hours in the range: "Plan the week in Week and the hours show here." with a `.btn-outline` "Open Week" link to the Week tab, in place of the chart and the list.
 
-The range donut (`insights/AvailableDonut.vue`) is not on this tab: it is kept unused (4.9c) until the Time split step on the Week tab.
+The range donut is not on this tab: it is the Time split of the Week tab (4.9c, FR-PLAN-27).
 
 ### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `main.css`)
 
@@ -458,6 +469,7 @@ Today or a past day, with done ticks (FR-HOME-1, FR-HOME-14 to 18). The journal 
 - Check (`.home-check`): a 44px tap area around a 22px box (`.home-check-box`, 1.5px `--control-border`; checked: `--accent` fill and a check mark). Space and Enter toggle it; focus ring `--focus-ring`.
 - Empty day: `.home-empty` with a link to Week. No activities at all: "No activities yet." with a link to Week.
 - Phones: rows wrap as before; the check stays at the row end.
+- Adherence ring (`.home-progress-row`, `.home-adherence`, FR-HOME-19): on today, once a tick exists, the progress line sits beside a small ring (`AdherenceRing.vue` at 28px, no value; accent for the blocks basis, `--ok` for habits) with "This week N% · Overall N%" and a "Details" link to Insights. This week runs from Monday to today; overall from the first tick to today (`homeAdherence` and `adherenceSpan` in `app/utils/adherence.ts`, the rules of FR-INS-P6). "-" where nothing is planned. Hidden on past days and before the first tick. The row wraps on a phone. The ring keeps a fixed pixel width with `max-width: 100%`: a percentage width made the row claim half of its width during layout. The figures follow each tick.
 
 ### 4.17 Activities under the week (`PlannerView.vue`, `.acts`, `.act-*` in `main.css`)
 
