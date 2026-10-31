@@ -24,7 +24,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 7 done" with the adherence ring "This week 63% · Overall 80%" and its Details link on the right, the activities with their done checks, the Habits list with weekly progress, the journal card |
+| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, nothing ticked yet: the hour bar (7h to 22h), the progress line "0 of 7 done" with the small day ring beside it (a green check when everything is done), the activities with their done checks, the Habits list with weekly progress, the journal card |
 | `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state with the adherence ring |
 | `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row, Details still on screen |
 | `home-mobile-dark.png` | 400 px wide | Today, dark, full page |
