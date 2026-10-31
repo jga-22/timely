@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The Week tab: the week type bar, the week grid and Activities and habits. Each part is its own component; this view holds what they
+// The Week tab: the week type bar, the week grid, Activities and habits and the Time split. Each part is its own component; this view holds what they
 // share: the Edit week type panel's open state and the week type added last. The Year (the painter and the Weeks row) is the Year tab.
 const { item, edit, setSelection, link } = useNav()
 const planner = usePlannerStore()
@@ -43,5 +43,10 @@ function onTemplateCreated(templateId: string) {
     </ClientOnly>
 
     <PlannerEntryList @form-open="templateEditOpen = false; addedTemplateId = null" />
+
+    <!-- Time split: the typical week of the active week type (client only, like the grid: it reads the saved planner) -->
+    <ClientOnly>
+      <PlannerTimeSplit />
+    </ClientOnly>
   </div>
 </template>
