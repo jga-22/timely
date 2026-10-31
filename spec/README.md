@@ -131,7 +131,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 ### Time split and Home ring (2026-11-02, branch `feat/time-split-home-ring`, stacked on the Year tab, not pushed)
 
 - The Week tab ends with a Time split (FR-PLAN-27): the typical week of the active week type as a ring of its available time and the life areas list, sleep left out unless Show sleep is on. The range donut moved here from Insights.
-- Home shows this week and overall adherence beside the progress line, on today once a tick exists, with a Details link to Insights (FR-HOME-19). The figures come from `adherenceSpan` and `homeAdherence` in `app/utils/adherence.ts`; the ring is `app/components/AdherenceRing.vue`, shared with Insights.
+- Home shows the progress of the day shown as one ring beside "x of y done", turning into a green check with "All done for today" when all is done (FR-HOME-19). Week and overall adherence are no longer on Home (2026-11-03); the figures stay in Insights. The ring is `app/components/AdherenceRing.vue`, shared with Insights.
 - Checks: `npm test` 528 pass, typecheck 0 errors, production build clean. Headless Edge at 1280 and 400 px, light and dark: 82 Home checks with ticks and 64 with none (each figure equal to an independent calculation from the saved state), no console errors, no overflow. The Adherence view DOM matches the build before the ring extraction, apart from the ring's inline width.
 - Screens: `home-*` refreshed on the adherence seed, `planner-time-split-*` new, and the Week screens `planner-desktop-*` and `planner-mobile-light.png` re-shot. Storage version unchanged (8).
 
