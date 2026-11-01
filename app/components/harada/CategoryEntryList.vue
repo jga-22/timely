@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
-import { categoryEntryRows } from '~/utils/entries'
+import { categoryEntryRows } from '~/utils/entries/rows'
 
 // ── Activities and habits (FR-ITEM-4): one list of entries of a life area, in both modes of HaradaCategoryDetail. A row is a habit of
 // this life area (with its activity, wherever that lies), or an activity of this life area that no habit links to

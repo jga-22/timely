@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PlannerState, WeekTemplate } from '~/types/planner'
-import { entryDraftOf, newEntryDraft, type EntryDraft } from '~/utils/entries'
+import { entryDraftOf, newEntryDraft, type EntryDraft } from '~/utils/entries/draft'
 import { DESIGN_COLORS } from '~/utils/planner/templates'
 import { ONBOARDING_TEMPLATE_ID, createHaradaSeed } from '~/utils/planner/seed'
 import { createEmptySlots } from '~/utils/planner/slots'

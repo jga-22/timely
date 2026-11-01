@@ -19,7 +19,7 @@ import { addCategory, moveCategory, removeCategory, seedHaradaGoals, setCategory
 import { localDateKey } from '~/utils/dates'
 import type { SleepGroup } from '~/utils/sleep'
 import type { PresetRole } from '~/utils/presets'
-import type { EntryDraft, EntrySaveResult } from '~/utils/entries'
+import type { EntryDraft, EntrySaveResult } from '~/utils/entries/draft'
 
 export const usePlannerStore = defineStore('planner', {
   /** The empty onboarding state, so server and first client render match for a new user (FR-ONB-2) */

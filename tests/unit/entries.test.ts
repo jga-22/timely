@@ -1,26 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
-import {
-  DURATION_OPTIONS,
-  blockHours,
-  categoryEntryCounts,
-  categoryEntryRows,
-  categoryEntryText,
-  dayText,
-  durationText,
-  entryDraftOf,
-  entryErrors,
-  entryLines,
-  frequencyChanged,
-  frequencyOf,
-  frequencyText,
-  needText,
-  newEntryDraft,
-  paintResultText,
-  resolveEntry,
-  scheduleChanged,
-  type EntryDraft,
-} from '~/utils/entries'
+import { DURATION_OPTIONS, blockHours, entryDraftOf, frequencyChanged, frequencyOf, newEntryDraft, scheduleChanged, type EntryDraft } from '~/utils/entries/draft'
+import { categoryEntryCounts, categoryEntryText } from '~/utils/entries/counts'
+import { categoryEntryRows, entryLines } from '~/utils/entries/rows'
+import { dayText, durationText, frequencyText, needText, paintResultText } from '~/utils/entries/text'
+import { entryErrors } from '~/utils/entries/validate'
+import { resolveEntry } from '~/utils/entries/resolve'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { SLEEP_CODE, SLEEP_ID } from '~/utils/sleep'
 import { activity, empty, seed, slotsWith, withActivities, withHabits, withSlots, type Run } from './fixtures'

@@ -6,18 +6,9 @@
 import type { PlannerState } from '~/types/planner'
 import { getTemplateById, isHourlyTemplate } from '~/utils/planner/templates'
 import { freeShortCode } from '~/utils/plannerStore'
-import {
-  blockHours,
-  entryDraftOf,
-  entryErrors,
-  frequencyChanged,
-  frequencyOf,
-  paintResultText,
-  scheduleChanged,
-  type EntryDraft,
-  type EntryErrors,
-  type EntrySaveResult
-} from '~/utils/entries'
+import { blockHours, entryDraftOf, frequencyChanged, frequencyOf, scheduleChanged, type EntryDraft, type EntryErrors, type EntrySaveResult } from '~/utils/entries/draft'
+import { entryErrors } from '~/utils/entries/validate'
+import { paintResultText } from '~/utils/entries/text'
 import { addActivity, removeActivity, updateActivity } from '~/utils/store/activities'
 import { addHabit, removeHabit, setHabitActivity, setHabitFrequency, updateHabit } from '~/utils/store/habits'
 import { paintCells } from '~/utils/store/slots'

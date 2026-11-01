@@ -2,16 +2,8 @@
 import { usePlannerStore } from '~/stores/planner'
 import { DAYS, formatHour } from '~/utils/planner/format'
 import { DESIGN_COLORS, isHourlyTemplate } from '~/utils/planner/templates'
-import {
-  DURATION_OPTIONS,
-  blockHours,
-  entryDraftOf,
-  newEntryDraft,
-  removalImpact,
-  scheduleChanged,
-  type EntryDraft,
-  type EntryErrors
-} from '~/utils/entries'
+import { DURATION_OPTIONS, blockHours, entryDraftOf, newEntryDraft, scheduleChanged, type EntryDraft, type EntryErrors } from '~/utils/entries/draft'
+import { removalImpact } from '~/utils/entries/validate'
 import { focusEditField } from '~/utils/focus'
 import { shortCodeFor } from '~/utils/onboarding'
 import { isSleepActivity } from '~/utils/sleep'
