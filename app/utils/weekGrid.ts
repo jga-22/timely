@@ -215,3 +215,24 @@ export const saveAction = (moved: boolean, extendsApply: boolean): 'none' | 'ext
 
 /** What Cancel does in the edit box: a moved edge goes back to the run it was made on and the box stays; a clean selection closes the box (an Apply's block stays as applied) */
 export const cancelAction = (moved: boolean): 'revert' | 'close' => (moved ? 'revert' : 'close')
+
+/** The first activity in a run, in its order (null when the run holds none): the name an Apply uses, and the entry an Edit opens */
+export const firstActivityIn = (range: Range, slots: string[]): string | null => cellsOf(range).map(index => slots[index]).find(Boolean) ?? null
+
+/** Whether a run holds an activity: its edge handles show then (FR-PLAN-23) */
+export const rangeHasActivity = (range: Range, slots: string[]): boolean => cellsOf(range).some(index => !!slots[index])
+
+/** Whether applying an activity to a run changes any of its hours: applying the activity that already fills the run changes nothing */
+export const appliesChange = (range: Range, slots: string[], activityId: string): boolean => cellsOf(range).some(index => slots[index] !== activityId)
+
+/** How many hours of a run are Sleep: the hours an Apply replaces while sleep is hidden (FR-SLEEP-5) */
+export const sleepHoursIn = (range: Range, slots: string[], sleepId: string | null): number => cellsOf(range).filter(index => slots[index] === sleepId).length
+
+/** The line an Apply leaves in its undo step: the activity, its run, and the Sleep hours it replaced */
+export const applyLabel = (name: string, range: Range, replacedSleep: number): string => `${name} set on ${rangeLabel(range)}${replacedSleep ? `. Replaced ${replacedSleep} h of Sleep` : ''}`
+
+/** Whether a pointer has moved further than the slop from where it went down: a scroll, not a tap (touch only) */
+export const touchMovedBeyond = (from: { x: number; y: number }, to: { x: number; y: number }, slop: number): boolean => Math.abs(to.x - from.x) > slop || Math.abs(to.y - from.y) > slop
+
+/** Whether a run covers a collapsed hour (sleep hidden): such a selection is dropped when the rows change */
+export const coversCollapsed = (range: Range, collapsed: boolean[]): boolean => HOURS.some(hour => hour >= range.start && hour < range.end && collapsed[hour] === true)
