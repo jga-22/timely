@@ -182,9 +182,4 @@ function onRemoved() {
   font-weight: 500;
   color: var(--warn);
 }
-
-.row-confirm {
-  display: inline-flex;
-  gap: var(--space-2);
-}
 </style>
