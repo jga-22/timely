@@ -1,0 +1,41 @@
+/* Sign-in page (LoginGate.vue) and the quiet intro player used there. */
+/* Sign-in page (LoginGate.vue, Supabase mode, signed out): one centred column, 640px at most, full width minus the gutters on phones.
+   Order: the mark and headline, the intro (frameless, on the page surface), the sign-in block, the consent line. No card frame */
+.login-gate {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-6) var(--space-4) var(--space-5);
+}
+@media (min-width: 900px) {
+  .login-gate { padding: var(--space-7) 40px var(--space-6); }
+}
+.login-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.login-intro { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
+.login-heading { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 600; line-height: 1.2; color: var(--ink); }
+.login-lede { max-width: 520px; margin: 0; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); }
+.login-showcase { min-width: 0; }
+.login-action-block { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
+.login-consent {
+  width: 100%;
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink-3);
+  text-align: center;
+}
+.login-title { margin: 0; font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+.login-action { min-width: 240px; }
+
+/* The intro on the sign-in page (IntroPlayer `quiet`): no frame, a hairline tone on the page surface, text controls, the thin progress line */
+.is-quiet .onb-intro-stage { border: 0; border-radius: 8px; }
+.is-quiet .onb-intro-progress { margin-top: var(--space-3); }
+.is-quiet .onb-intro-controls { justify-content: center; gap: var(--space-4); margin-top: var(--space-2); }
+

@@ -1,0 +1,45 @@
+/* Reset, base elements, focus rings, and the Vuetify neutralisation (the VApp root only). */
+/* ── Reset and base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #__nuxt {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-weight: 600; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+button { cursor: pointer; background: none; border: none; padding: 0; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* A panel that takes focus itself (FR-UX-9, focusEditField) shows no ring after a tap; a keyboard user still sees it */
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+a { color: var(--accent); text-underline-offset: 3px; }
+
+.muted { color: var(--ink-3); }
+
+/* ── Vuetify neutralisation: the VApp root (app.vue) takes the same family and colours. No Vuetify components are rendered ── */
+.v-application {
+  background: transparent !important;
+  font-family: var(--font-ui) !important;
+  color: var(--ink) !important;
+}
+.v-application__wrap { min-height: unset !important; }
+.v-application input,
+.v-application textarea { font-family: inherit !important; }
+

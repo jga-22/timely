@@ -1,0 +1,156 @@
+/* Form fields, chips, colour swatches, entry form actions and field errors. */
+/* ── Form fields ── */
+.habit-form { display: flex; flex-direction: column; gap: var(--space-3); }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.check-row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  cursor: pointer;
+}
+.check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+
+.timely-input,
+.timely-select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.timely-input::placeholder { color: var(--ink-3); }
+.timely-input:focus,
+.timely-select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+.field .timely-input,
+.field .timely-select { width: 100%; }
+.timely-select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 11px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+/* ── Chips: template pills, paint tools, category filters ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 32px;
+  max-width: 220px;
+  padding: 0 var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.chip:hover { color: var(--ink); background: var(--bg-4); }
+.chip[data-active="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.chip .t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .pill-count { font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.chip-add {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.chip-add:hover { text-decoration: underline; }
+
+/* Round colour dots and swatches */
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--control-border);
+}
+.dot-lg { width: 16px; height: 16px; }
+.dot-action { cursor: pointer; }
+
+.color-pop {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  width: 248px;
+  padding: var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.color-pop-inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  box-shadow: none;
+}
+/* 24px hit area; the 2px padding is transparent, so the visible swatch stays 20px */
+.color-pop button {
+  width: 24px;
+  height: 24px;
+  padding: 2px;
+  background-clip: content-box;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--control-border);
+}
+.color-pop button[data-active="true"] {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+.act-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.act-delete {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rule-2);
+}
+.act-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}
+.act-confirm-text { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.act-confirm .act-actions { margin-top: 0; }
+.field-error { margin: 0; font-size: var(--fs-sm); color: var(--danger); }
+

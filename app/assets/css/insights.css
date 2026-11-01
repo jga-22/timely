@@ -1,0 +1,221 @@
+/* Insights: range controls, planned-hours bars, life area shares and the donut view. */
+/* ── Insights: range and granularity controls, planned-hours bars, category shares ── */
+.insights-controls {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.insights-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.insights-horizon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.insights-horizon .timely-select { width: auto; min-width: 72px; }
+.insights-range {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+/* More options: a quiet panel under the first row; the summary after the button says what it hides when closed */
+.insights-more {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--radius);
+}
+.insights-more-summary {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+/* The chart header: the key of the red available-time lines (its label), and the Show sleep toggle */
+.insights-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.insights-cap-key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--attention);
+  font-variant-numeric: tabular-nums;
+}
+.insights-cap-swatch {
+  flex: none;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--attention);
+}
+
+/* Bars are flex columns scaled to the largest total; hour labels are HTML so they keep the 12px minimum */
+.insights-chart {
+  position: relative;
+  padding-left: 40px;
+}
+.insights-axis {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 200px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.insights-axis span {
+  position: absolute;
+  right: 0;
+  line-height: 1;
+}
+.insights-axis-top { top: 0; }
+.insights-axis-mid { bottom: 50%; transform: translateY(50%); }
+.insights-axis-zero { bottom: 0; }
+.insights-plot { min-width: 0; }
+.insights-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 200px;
+  border-bottom: 1px solid var(--cell-line);
+}
+.insights-bar {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+.insights-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  min-height: 0;
+}
+.insights-seg {
+  flex: 1 1 0;
+  min-height: 0;
+}
+/* Available time: a 2px attention line per bar at its capacity, and its value at the right end (PRD FR-INS-4) */
+.insights-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--attention);
+  pointer-events: none;
+}
+.insights-ticks {
+  display: flex;
+  gap: 2px;
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.insights-ticks.is-years { margin-top: 2px; }
+.insights-tick {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+.insights-tick.is-year {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.insights-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.share-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.share-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 52px;
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--rule-2);
+  font-size: var(--fs-sm);
+}
+.share-row:last-child { border-bottom: none; }
+.share-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.share-link {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+.share-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.share-value,
+.share-pct {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.share-value { color: var(--ink-2); }
+.share-pct { color: var(--ink-3); }
+/* Not planned: the last row of the list, no bars; a hollow dot marks it, since it has no colour of its own */
+.share-row-free .share-free { color: var(--ink-2); }
+/* The selected slice in the donut view: its list row is marked (a bar on the left, a tint) and the row is clickable */
+.share-row.is-clickable { cursor: pointer; }
+.share-row.is-selected {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--bg-2);
+  margin-inline: -12px;
+  padding-inline: 12px;
+}
+.dot-free {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1.5px var(--control-border);
+}
+/* Chart header tools: the Bars | Donut choice beside the Show sleep toggle */
+.insights-chart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.insights-donut {
+  margin: var(--space-4) 0 var(--space-2);
+}
+.insights-empty {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+

@@ -1,0 +1,122 @@
+/* Week type switcher, the year painter controls and the year grid cells. */
+/* ── Planner: template switcher ── */
+.template-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+.template-switch .field-label { margin-right: var(--space-2); font-weight: 400; color: var(--ink-3); }
+.template-chip-wrap { position: relative; }
+.pill-input {
+  height: 32px;
+  width: 150px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.unit {
+  margin-left: 2px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.year-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.year-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.year-label {
+  min-width: 3.5em;
+  text-align: center;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* Quiet stepper: 28px targets, control border, tint on hover; focus uses the global outline */
+.year-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-md);
+  line-height: 1;
+  cursor: pointer;
+}
+.year-step:hover:not(:disabled) { background: var(--bg-3); color: var(--ink); }
+.year-step:disabled { opacity: 0.5; cursor: default; }
+.paint-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.paint-tools .field-label { margin-right: var(--space-2); font-weight: 400; color: var(--ink-3); }
+.dot-erase {
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
+}
+
+.year-grid-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* Year cells use the same tokens as the week grid and Home: empty = --cell-empty with a --cell-line hairline;
+   planned = the template fill (--c, from utils/palette.ts) with its text colour (--c-ink) */
+.week-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 3px;
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  transition: background 0.1s;
+}
+.week-cell:hover { background: var(--bg-3); color: var(--ink); }
+.week-cell.is-filled {
+  background: var(--c);
+  box-shadow: none;
+  color: var(--c-ink);
+}
+/* Current week: a 2px accent outline drawn outside the cell, on empty and planned cells alike */
+.week-cell.is-current {
+  z-index: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  font-weight: 600;
+}
+.week-readout {
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.week-readout .muted { font-style: italic; }
+

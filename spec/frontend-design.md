@@ -1,6 +1,6 @@
 # Timely front-end design spec
 
-This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/main.css`, the component `<style>` blocks, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
+This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/` (`tokens.css` and the feature files), the component `<style>` blocks, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
 
 Source of truth: the code. The old `design/` folder (terracotta and serif look) is a stale export and must not be used. The Harada prototype in `spec/references/grille-harada-meilleure-version.html` is the origin of the blue palette and the Goals layout; it is a reference only.
 
@@ -35,8 +35,8 @@ Reference screenshots (current build, headless Edge, light unless noted):
 
 | Layer | File | Notes |
 | --- | --- | --- |
-| Light palette and all non-colour tokens | `app/assets/css/main.css`, `:root` | Colours, font, type scale, spacing, radius, `--shadow`, `--focus-ring`. |
-| Dark palette | `app/assets/css/main.css`, `html[data-theme="dark"]` | Redefines the colour tokens only; also sets `color-scheme: dark`. |
+| Light palette and all non-colour tokens | `app/assets/css/tokens.css`, `:root` | Colours, font, type scale, spacing, radius, `--shadow`, `--focus-ring`. |
+| Dark palette | `app/assets/css/tokens.css`, `html[data-theme="dark"]` | Redefines the colour tokens only; also sets `color-scheme: dark`. |
 | Vuetify themes | `vuetify.config.ts`, themes `timely` (light) and `timelyDark` | Hex values copied by hand from the CSS tokens. The file comment says "keep in sync"; nothing enforces it. |
 | Category palette (data) | `app/utils/planner/templates.ts`, `DESIGN_COLORS` | 16 swatches offered for categories, activities and templates. Data, not UI chrome. |
 | Hard-coded fallbacks | components and store | `#ccc` (chart segment), `#888` (category/activity dot), `#999` (block), `#5d6b7a` (template colour), `#685847` (new activity when its category has no colour, `app/stores/planner.ts`). |
@@ -55,7 +55,7 @@ Fonts: `nuxt.config.ts` loads `IBM Plex Sans` 400, 500, 600 with `display=swap` 
 
 ### 2.3 Colour tokens
 
-Contrast ratios were computed with the WCAG 2.x formula from the hex values in `main.css` (script run in the scratchpad, not committed). "On bg" means against `--bg`. Text needs 4.5:1 (normal size) or 3:1 (large text and non-text UI).
+Contrast ratios were computed with the WCAG 2.x formula from the hex values in `tokens.css` (script run in the scratchpad, not committed). "On bg" means against `--bg`. Text needs 4.5:1 (normal size) or 3:1 (large text and non-text UI).
 
 | Token | Light | Dark | Use | Contrast (light / dark) |
 | --- | --- | --- | --- | --- |
@@ -194,12 +194,12 @@ The side gutter is 16px at 400px, which meets the minimum.
 
 | Breakpoint | Where | Effect |
 | --- | --- | --- |
-| 1280px | `main.css` | `.view` padding |
-| 1024px | `main.css` | `.view` padding |
-| 768px | `main.css` | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; The Year chart defaults to monthly (`YearView.vue`) |
+| 1280px | `layout.css` | `.view` padding |
+| 1024px | `layout.css` | `.view` padding |
+| 768px | `shell.css`, `shared.css`, others | Topbar wraps; page title 18px; year grid min width 360px; metrics one column; goal rows and category rows compact; The Year chart defaults to monthly (`YearView.vue`) |
 | 1100px | `HaradaView.vue` (scoped) | The List / Grid toggle (`.goals-view-toggle`) shows from here up; the Harada matrix is the Grid view (opt-in) and hidden (`display: none`) below. The list is the default view and the only one below 1100px |
-| 480px | `main.css` | Home: period selector full width, Day rows put the time on its own line |
-| `(hover: none)` | `main.css` | Block hover actions hidden on touch devices |
+| 480px | `home.css`, `shared.css`, others | Home: period selector full width, Day rows put the time on its own line |
+| `(hover: none)` | `home.css`, `week-grid.css` | Block hover actions hidden on touch devices |
 
 
 ### 3.5 Phone behaviour at 400px
@@ -222,7 +222,7 @@ Rule: only tables, the year grid and charts may be wider than the viewport, and 
 
 ## 4. Component catalogue
 
-Class names below are the ones in `main.css` unless a file is given. Components with a `<style scoped>` block are noted.
+Class names below are in the feature files in `app/assets/css/` (the file is named where it matters) unless a file is given. Components with a `<style scoped>` block are noted.
 
 ### 4.1 Page header (`.page-head`)
 
@@ -258,7 +258,7 @@ Base `.btn`: inline flex, centred, gap 8px, height 36px, padding 0 16px, radius 
 | Extra small | `.btn-xs` | 26px high, padding 0 8px, 12px text | | Life area move and delete, week type delete |
 | Disabled | `:disabled` | Opacity 0.45, hover reset | | Quiet and outline lose their hover; primary keeps its accent fill at the same 0.45 opacity |
 
-Vuetify buttons (`v-btn`) are used in the Goals view only: "Load starter grid" (primary, flat, `mdi-sprout-outline`), "Add habit" (primary, flat, `mdi-plus`, disabled while empty), and "Remove" in habit details (text, error colour, small, `mdi-delete-outline`). `main.css` neutralises them: `font-family: inherit`, `text-transform: none`, `letter-spacing: normal`, radius 6px.
+Vuetify buttons (`v-btn`) are used in the Goals view only: "Load starter grid" (primary, flat, `mdi-sprout-outline`), "Add habit" (primary, flat, `mdi-plus`, disabled while empty), and "Remove" in habit details (text, error colour, small, `mdi-delete-outline`). `base.css` neutralises them: `font-family: inherit`, `text-transform: none`, `letter-spacing: normal`, radius 6px.
 
 Rules: one primary action per block. Destructive actions are text-coloured, never filled red. Icon-only buttons need `aria-label`.
 
@@ -297,7 +297,7 @@ Paint tools (`.paint-tools`, Planner year section): same chip style, with a `.do
 - Disabled: primary button only; inputs have no disabled style.
 - Error: no inline error style exists (see gaps).
 
-Habit fields are different. Inside habit details, count, period, minutes, and linked activity use Vuetify `v-text-field` and `v-select` with `variant="outlined"` and `density="compact"`. They do not use `.timely-input`. Their outline uses `--control-border` and their labels use `--ink-2` at full opacity (set in `main.css`), so they match the other fields in colour, but their heights and radii still differ (see gaps).
+Habit fields are different. Inside habit details, count, period, minutes, and linked activity use Vuetify `v-text-field` and `v-select` with `variant="outlined"` and `density="compact"`. They do not use `.timely-input`. Their outline uses `--control-border` and their labels use `--ink-2` at full opacity (no stylesheet rule sets it today; the Vuetify neutralisation is in `base.css`), so they match the other fields in colour, but their heights and radii still differ (see gaps).
 
 ### 4.8 AutoTextarea (`app/components/AutoTextarea.vue`, scoped)
 
@@ -375,7 +375,7 @@ A shared donut of an adherence percent. Props: `percent` (null shows "-" and no 
   - Activities: the read-only rows above.
   - Move up and Move down (`.btn-sm`, disabled at the ends); Remove life area (`.btn-danger`) opens an inline confirmation (`.inline-confirm`) that names the impact: "Its N activities and M habits must move to another category before X is removed." with a select of the other categories and "Move and remove"; with no content, "Remove X? It has no activities or habits." Without another category: "Add another category first, then remove X." Removal selects nothing afterwards.
 - Removed 2026-10-29: the "Time against need" block and its "See in Insights" link. The habit lines keep "Needs 6 h a week" as plain text (`entries.ts`, `needText`).
-- Shared classes (`main.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
+- Shared classes (`forms.css`, `shared.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
 
 ### 4.11 Insights (`app/components/insights/InsightsView.vue`, the Adherence view)
 
@@ -397,7 +397,7 @@ The fourth tab, route id `year` (feat/year-tab, 2026-11-01). Title "Year" (`.pag
 
 The range donut is not on this tab: it is the Time split of the Week tab (4.9c, FR-PLAN-27).
 
-### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `main.css`)
+### 4.12 Week grid (`app/components/planner/ActivityGrid.vue`, styles `.wk-*` in `week-grid.css` and `week-grid-select.css`)
 
 The day columns are `app/components/planner/WeekGridDay.vue`; the pure rules are in `app/utils/weekGrid.ts`.
 
@@ -470,7 +470,7 @@ Today or a past day, with done ticks (FR-HOME-1, FR-HOME-14 to 18). The journal 
 - Empty day: `.home-empty` with a link to Week. No activities at all: "No activities yet." with a link to Week.
 - Phones: rows wrap as before; the check stays at the row end.
 
-### 4.17 Entry buttons under the week (`app/components/planner/EntryActions.vue`, `.entry-actions` in `main.css`)
+### 4.17 Entry buttons under the week (`app/components/planner/EntryActions.vue`, `.entry-actions` in `app/assets/css/`)
 
 Since 2026-11-04 the Week tab has no Activities list. Under the week grid, one row of quiet outline buttons (`.btn-sm.btn-outline`):
 
@@ -481,7 +481,7 @@ Since 2026-11-04 the Week tab has no Activities list. Under the week grid, one r
 - Opening the week type editor, an entry form or the week grid's box closes the others (one item in edit mode per screen, 2026-11-05). The grid's Edit activity opens the entry's form; a form opened from the grid returns focus to the grid cell.
 - Phones: the buttons wrap, the form takes the full width, and the panel takes focus, not the name field (FR-UX-9).
 
-### 4.17b Week type panels (`PlannerView.vue`, `.sched-*`, `.new-template-panel`, `.role-*`, `.weeks-*` in `main.css`). The schedule panel is retired: its fields are in the one form (4.20)
+### 4.17b Week type panels (`PlannerView.vue`, `.sched-*`, `.new-template-panel`, `.role-*` in `week-panels.css`, `.weeks-*` in `sections.css`). The schedule panel is retired: its fields are in the one form (4.20)
 
 Added 2026-10-28 (FR-PLAN-25, FR-TPL-8, FR-YEAR-7). All three use existing tokens and the `.act-panel` surface.
 
@@ -495,7 +495,7 @@ Added 2026-10-28 (FR-PLAN-25, FR-TPL-8, FR-YEAR-7). All three use existing token
 - Apply to several weeks (2026-11-04; `.weeks-row`, `.weeks-toggle-row`, on the Year tab under the paint tools): a `.btn-outline` toggle with `aria-expanded` and `aria-controls="weeks-panel"`, closed by default. Open, the panel (`#weeks-panel`, shown with `v-show`) holds one line of `.weeks-part` text and controls, "for weeks [from] to [to] [Apply]" (two `.timely-input.weeks-num` number fields, 72px, and the Apply `.btn-primary`), then the hint (`.weeks-hint`: "Applies {week type} to these weeks." or "Erase clears these weeks.", from the paint tool) and the result (`.weeks-result`, role status: "Weeks 2 to 5 use {week type}." or "... have no week type."). It wraps under 400px. Errors are `.field-error` (role alert). Escape or the button closes it and focus returns to the button; opening focuses "for weeks" on a desktop and the panel on a phone (FR-UX-9). There is no "Use" choice: the paint tool is the week type.
 - Keyboard and touch: every control is a native control with its label; no drag. Focus moves to the new week type's Weeks "from" field after a Vacation preset.
 
-### 4.18 First-run onboarding (`app/components/onboarding/`, `.onb-*` in `main.css`)
+### 4.18 First-run onboarding (`app/components/onboarding/`, `.onb-*` in `onboarding.css`)
 
 Feature FR-ONB (PRD 9.13). Session state only (`useOnboarding`, Nuxt `useState`); nothing here is saved. Client only (`ClientOnly` in `app.vue`).
 
@@ -546,20 +546,20 @@ Experiment (FR-HOME-11 to 13). The last block on Home, shown for today in every 
 - Reading column: `.legal-body` is 70ch wide, the rest of the `.view` is empty. Section headings are `h2` at 18px 600 (`--fs-lg`), 32px above and 8px below. Body text is 15px `--ink-2` at line height 1.6; bullet lists use 24px indent with 8px between items; `strong` is `--ink` 600.
 - Links in running text use `.legal-link` (`--accent`, underlined 1px, 2px offset; `--accent-deep` on hover). The same class is used for the consent line.
 - Consent line (`.login-consent`, under the sign-in block): 13px `--ink-3`, centred, as wide as the sign-in column (640px). Its two links carry `white-space: nowrap`, so each link wraps as a unit.
-- **Sign-in page** (`LoginGate.vue`, Supabase mode, signed out; `.login-*` in `main.css`): one centred column, 640px at most, full width minus the gutters on phones, no card frame. In order: the heading `h1.login-heading` "Your goals decide your week" (clamp 24 to 32px, 600, `--ink`) and one line `.login-lede` (15px, `--ink-2`, 1.6), all centred; then `.login-showcase` with `OnboardingIntroPlayer loop quiet`; then `.login-action-block` (h2 "Sign in to Timely" 16px 600, the Google button `.btn-primary` at least 240px wide, the error text); then the consent line. The `quiet` variant of the player (`.is-quiet`) has no stage frame (no border; a tone shift to `--bg-2` and an 8px radius), its controls are `.onb-link` text links centred under the stage, and the five segments are the thin progress line. Looping; it opens paused behind the Play overlay (no autoplay), no sound, no tabs, no inputs. On phones the Google button and the player controls are 44px high.
+- **Sign-in page** (`LoginGate.vue`, Supabase mode, signed out; `.login-*` in `auth.css`): one centred column, 640px at most, full width minus the gutters on phones, no card frame. In order: the heading `h1.login-heading` "Your goals decide your week" (clamp 24 to 32px, 600, `--ink`) and one line `.login-lede` (15px, `--ink-2`, 1.6), all centred; then `.login-showcase` with `OnboardingIntroPlayer loop quiet`; then `.login-action-block` (h2 "Sign in to Timely" 16px 600, the Google button `.btn-primary` at least 240px wide, the error text); then the consent line. The `quiet` variant of the player (`.is-quiet`) has no stage frame (no border; a tone shift to `--bg-2` and an 8px radius), its controls are `.onb-link` text links centred under the stage, and the five segments are the thin progress line. Looping; it opens paused behind the Play overlay (no autoplay), no sound, no tabs, no inputs. On phones the Google button and the player controls are 44px high.
 - Footer (`footer.app-footer`): "Terms · Privacy" in 13px `--ink-3` (hover `--ink`, underline), 1px `--rule-2` top border, padding 24px top and bottom, and sides that follow the page gutter (40px, 32px at 1280px, 28px at 1024px, 16px at 768px and below). Shown in local mode, on the sign-in page and for signed-in users; hidden only while the session loads. It wraps without causing overflow.
 - Legal pages are shown without a session: `app/app.vue` renders them instead of the gate, and the planner tabs stay hidden for a signed-out user.
 - Onboarding overlays (Welcome, tour) are not rendered on the legal pages, so they do not cover the text. The state is kept, so they appear again on Home.
 - Verified in headless Edge on the production build: 1280 and 400 px, light and dark, no horizontal overflow, no console errors; in dev no hydration warnings (only the known dev-only 404s for Vuetify and MDI CSS). Screenshots `spec/screens/legal-*`.
 
-### 4.20 Activities and habits: the one form and the one list (`app/components/ActivityForm.vue`, `.entry-*`, `.row-*` in `main.css`)
+### 4.20 Activities and habits: the one form and the one list (`app/components/ActivityForm.vue`, `.entry-*` in `app/assets/css/`, `.row-*` in `lists.css`)
 
 - **The form** is a `.act-panel` (the same panel as the other editors) with a title ("New activity or habit" or "Edit <name>"). Fields in order: Name (the Enter key saves), Life area and Duration in a two-column `.form-row` from 480 px (one column on a phone), Days (seven `.chip` buttons with `aria-pressed`), "Or: N times a week or month" only when no day is chosen and the entry is not timed, then for a timed entry Start (`.timely-select`) and Week types (checkboxes). "More options" is a native `<details>` with Short code and Colour (timed only).
 - **Hints and errors** use `.form-hint` (quiet, `--ink-3`) and `.field-error` (role alert). A paint of a duration that is not whole hours shows the whole-hour hint. The repaint note appears only when the schedule changed on an existing entry.
 - **Confirmations** use `.act-confirm` inside the panel: No time names the hours and the activity it removes; Delete names what goes. Buttons: Save and Cancel; Delete sits apart at the foot (`.act-delete`).
 - **The list** (the Goals life area) is `.row-list` / `.row-item` / `.row-main` with a name and quiet `.row-meta` lines, the `EditButton` pencil at the end. Goals: one list, each row followed by its open form. The Week tab has no list since 2026-11-04 (4.17).
 - **Result line:** `.sched-result` under the list, role status, with its Undo button, for 8 s (`useEntryResult`).
-### 4.21 Sleep: the Show sleep button, the Sleep row, the editor and the hidden grid (`app/components/SleepToggle.vue`, `planner/SleepEditor.vue`, `.sleep-*`, `.wk-band`, `.wk-gap`, `.home-sleep-line` in `main.css`)
+### 4.21 Sleep: the Show sleep button, the Sleep row, the editor and the hidden grid (`app/components/SleepToggle.vue`, `planner/SleepEditor.vue`, `.sleep-*` in `app/assets/css/`, `.wk-band`, `.wk-gap` in `week-grid.css`, `.home-sleep-line` in `home.css`)
 
 - **Show sleep button.** `SleepToggle.vue`: a `.btn.btn-sm.btn-outline` with `aria-pressed` (an outline since 2026-10-28, so Hide reads as a control), labelled "Show sleep" while hidden and "Hide sleep" while shown. It sits in the Week disclosure above the grid (`.wk-tools`), the Home line above the timeline and the Year chart header. The state is one shared value (`useShowSleep`). Home says "Sleep is hidden: its hours are left off the bar, and a nap counts as unplanned." in `.page-meta` beside it; Year says "Sleep is counted under Physical." under the chart while shown, and nothing while hidden.
 - **Sleep hours (Week).** The "Sleep hours" button under the week grid (4.17) opens the Sleep form; the nights of the active week type show beside it (`.entry-actions-when`: "10 PM to 7 AM", or "... on weekdays, ... at weekends"). Without a Sleep activity the button reads "Set up sleep".
@@ -573,7 +573,7 @@ One logical palette covers every place where time is painted: the Home timeline,
 
 ### 5.1 Semantic tokens (planned time)
 
-Defined in `main.css` (`--cell-empty`, `--cell-line`) and computed in `app/utils/palette.ts` (planned fills). The surface is the page, so the empty surface is `--bg` in both themes.
+Defined in `tokens.css` (`--cell-empty`, `--cell-line`) and computed in `app/utils/palette.ts` (planned fills). The surface is the page, so the empty surface is `--bg` in both themes.
 
 | Semantic state | Token or rule | Light | Dark | Use | Contrast (light / dark) |
 | --- | --- | --- | --- | --- | --- |
@@ -648,7 +648,7 @@ Text on a planned fill: the lowest contrast is teal at 4.33:1 (both themes), jus
 
 Do:
 
-- Use the existing tokens. Add a token to `main.css` `:root` and to `html[data-theme="dark"]` together, then mirror it in `vuetify.config.ts` if Vuetify needs it.
+- Use the existing tokens. Add a token to `tokens.css` `:root` and to `html[data-theme="dark"]` together, then mirror it in `vuetify.config.ts` if Vuetify needs it.
 - Use `var(--space-*)` and `var(--fs-*)`. Use `tabular-nums` for any number.
 - Use `.btn`, `.btn-primary`, `.btn-outline`, `.btn-danger` and the size modifiers. Use `.chip` for selectable pills and `.timely-input` or `.timely-select` for fields.
 - Separate sections with hairlines (`.section`, `.goal-row`, `.cat-row`).
@@ -708,7 +708,7 @@ These are facts about the code as it is today. They are not requirements for new
 8. No `prefers-reduced-motion` handling.
 9. Theme is light by default and does not follow the OS setting.
 10. Resolved: `DESIGN_COLORS` no longer has an `fg` field; text on a planned fill is `inkOn` (section 5.2). Known limit: teal (`#4a8683`) reaches only 4.33:1 with its text, below 4.5:1 for 13px text, in both themes.
-11. The tokens in `vuetify.config.ts` are duplicated by hand from `main.css`. Only the `VApp` root uses them; no Vuetify component is rendered.
+11. The tokens in `vuetify.config.ts` are duplicated by hand from `tokens.css`. Only the `VApp` root uses them; no Vuetify component is rendered.
 12. The 12px chart text is hard-coded rather than a token.
 13. Disabled buttons keep the 0.45 opacity rule, so "Add category" and "Add activity" are 2.44 to 3.05:1. Disabled controls are exempt; the dark one is faint but readable.
 14. The journal experiment on Home (FR-HOME-11 to 13) is not built; it is slice 6.
@@ -717,7 +717,7 @@ These are facts about the code as it is today. They are not requirements for new
 
 ## 11. Verification log for this spec
 
-- Read in full: `app/assets/css/main.css`, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/components/AutoTextarea.vue`, `app/components/harada/HaradaView.vue`, `app/components/harada/HabitList.vue`, `app/components/planner/PlannerView.vue`, the old Insights and legend views (removed in slices 1 and 3). Read in part: `app/utils/planner.ts` (palette, constants, seed, state check) and `app/stores/planner.ts` (actions relevant to colour and categories).
+- Read in full: `app/assets/css/` (all files), `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/components/AutoTextarea.vue`, `app/components/harada/HaradaView.vue`, `app/components/harada/HabitList.vue`, `app/components/planner/PlannerView.vue`, the old Insights and legend views (removed in slices 1 and 3). Read in part: `app/utils/planner.ts` (palette, constants, seed, state check) and `app/stores/planner.ts` (actions relevant to colour and categories).
 - Contrast ratios: computed from the hex values in the code with the WCAG formula. Block tint contrast: computed over the 16-swatch palette with the same mixing as `color-mix(in srgb, …)`.
 - Overflow and layout at 400px and 1280px: measured in headless Edge against the production build, all four tabs.
 - Screenshots: captured from the production build at the widths listed in `spec/screens/`.
@@ -734,7 +734,7 @@ These are facts about the code as it is today. They are not requirements for new
 - Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (a Goals script in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `screens/goals-desktop-light.png`, `screens/goals-detail-edit-desktop-light.png`, `screens/goals-mobile-light.png`.
 - Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.
 - Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `screens/planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`.
-- Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `main.css` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
+- Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `app/assets/css/` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
 
 ## 12. UX polish batch (feat/ux-polish)
 
