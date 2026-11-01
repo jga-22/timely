@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { appliesChange, applyLabel, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, coversCollapsed, dragRange, edgeHourAt, firstActivityIn, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, rangeHasActivity, rangeLabel, saveAction, setEdge, sleepHoursIn, stepFor, stepHour, touchMovedBeyond, withoutSleep } from '~/utils/weekGrid'
+import { appliesChange, applyLabel, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, coversCollapsed, dragRange, edgeHourAt, edgeStep, firstActivityIn, flowRows, hourAtY, hourTops, isInEditor, isMoved, keyEdge, keyRange, menuTop, nearestShown, popupBeside, rangeHasActivity, rangeLabel, resizedRange, saveAction, setEdge, sleepHoursIn, stepFor, stepHour, touchMovedBeyond, withoutSleep } from '~/utils/weekGrid'
 
 const SLEEP = 'sleep'
 const WORK = 'work'
@@ -313,5 +313,58 @@ describe('run rules for the grid edit', () => {
     expect(coversCollapsed({ day: 0, start: 5, end: 8 }, collapsed)).toBe(true)
     expect(coversCollapsed({ day: 0, start: 7, end: 22 }, collapsed)).toBe(false)
     expect(coversCollapsed({ day: 0, start: 21, end: 23 }, collapsed)).toBe(true)
+  })
+})
+
+describe('resizedRange, keyEdge and edgeStep', () => {
+  // Hour lines of an unbroken day: hour h starts 28 px below hour h - 1
+  const tops = Array.from({ length: 24 }, (_, hour) => hour * 28)
+  const none = Array.from({ length: 24 }, () => false)
+  const run = { day: 0, start: 10, end: 13 }
+
+  it('resizedRange moves the dragged edge to the nearest hour line and keeps the other edge', () => {
+    expect(resizedRange(run, 'top', 2 * 28, none, tops)).toEqual({ day: 0, start: 2, end: 13 })
+    expect(resizedRange(run, 'bottom', 14 * 28, none, tops)).toEqual({ day: 0, start: 10, end: 14 })
+    expect(resizedRange(run, 'top', 13 * 28, none, tops)).toEqual({ day: 0, start: 12, end: 13 })
+  })
+
+  it('resizedRange stays in the band of the run when hours are collapsed', () => {
+    const collapsed = none.map((_, hour) => hour < 9)
+    expect(resizedRange(run, 'top', 0, collapsed, tops)).toEqual({ day: 0, start: 9, end: 13 })
+  })
+
+  it('edgeStep reads Up as -1 and Down as 1, and other keys as null', () => {
+    expect(edgeStep('ArrowUp')).toBe(-1)
+    expect(edgeStep('ArrowDown')).toBe(1)
+    expect(edgeStep('ArrowLeft')).toBeNull()
+    expect(edgeStep('Enter')).toBeNull()
+  })
+
+  it('keyEdge moves the top or bottom edge by one step', () => {
+    expect(keyEdge(run, 'top', -1, none)).toEqual({ day: 0, start: 9, end: 13 })
+    expect(keyEdge(run, 'top', 1, none)).toEqual({ day: 0, start: 11, end: 13 })
+    expect(keyEdge(run, 'bottom', 1, none)).toEqual({ day: 0, start: 10, end: 14 })
+    expect(keyEdge({ day: 0, start: 10, end: 11 }, 'bottom', -1, none)).toEqual({ day: 0, start: 10, end: 11 })
+  })
+
+  it('keyEdge does not cross a collapsed run', () => {
+    const collapsed = none.map((_, hour) => hour < 10)
+    expect(keyEdge(run, 'top', -1, collapsed)).toEqual({ day: 0, start: 10, end: 13 })
+  })
+})
+
+describe('isInEditor', () => {
+  // Stands in for an Element: closest finds the editor selector only
+  const inside = { closest: (query: string) => (query === '.wk-body, .wk-pop, .wk-handle' ? {} : null) } as unknown as EventTarget
+  const outside = { closest: () => null } as unknown as EventTarget
+
+  it('is true for a target inside the grid body, a popup or a handle', () => {
+    expect(isInEditor(inside)).toBe(true)
+  })
+
+  it('is false outside the editor and for no target', () => {
+    expect(isInEditor(outside)).toBe(false)
+    expect(isInEditor(null)).toBe(false)
+    expect(isInEditor({} as EventTarget)).toBe(false)
   })
 })

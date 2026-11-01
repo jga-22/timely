@@ -236,3 +236,21 @@ export const touchMovedBeyond = (from: { x: number; y: number }, to: { x: number
 
 /** Whether a run covers a collapsed hour (sleep hidden): such a selection is dropped when the rows change */
 export const coversCollapsed = (range: Range, collapsed: boolean[]): boolean => HOURS.some(hour => hour >= range.start && hour < range.end && collapsed[hour] === true)
+
+/** The run with one edge moved to where a drag at `y` (px, in the day column) puts it; collapsed hours are skipped */
+export const resizedRange = (range: Range, side: 'top' | 'bottom', y: number, collapsed: boolean[], tops: number[]): Range => {
+  const band = bandOf(collapsed, range.start)
+  return setEdge(range, side, edgeHourAt(side, y, range, band, tops), band)
+}
+
+/** The step an arrow key takes an edge handle: Up is -1 hour, Down is +1 hour; null for any other key */
+export const edgeStep = (key: string): -1 | 1 | null => {
+  if (key === 'ArrowUp') return -1
+  return key === 'ArrowDown' ? 1 : null
+}
+
+/** The run with one edge moved by `step` hours from where it is; collapsed hours are skipped */
+export const keyEdge = (range: Range, side: 'top' | 'bottom', step: -1 | 1, collapsed: boolean[]): Range => setEdge(range, side, (side === 'top' ? range.start : range.end) + step, bandOf(collapsed, range.start))
+
+/** Whether a press or click started inside the editor: the grid body, the box or menu, or an edge handle (duck-typed, so it runs outside the DOM) */
+export const isInEditor = (target: EventTarget | null): boolean => !!(target as Element | null)?.closest?.('.wk-body, .wk-pop, .wk-handle')

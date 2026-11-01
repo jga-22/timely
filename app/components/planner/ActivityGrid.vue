@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
+import { useGridEdge } from '~/composables/useGridEdge'
 import { useGridEdit } from '~/composables/useGridEdit'
+import { useGridPopups } from '~/composables/useGridPopups'
 import { useGridSelection } from '~/composables/useGridSelection'
 import { DAYS, formatHour } from '~/utils/planner/format'
 import { aggregateTemplate } from '~/utils/planner/aggregate'
@@ -64,24 +66,24 @@ const anchor = ref<Cell | null>(null)
 const cursor = ref<Cell>({ day: 0, hour: 8 })
 const gridEl = ref<HTMLElement | null>(null)
 
-// The box and menu, the edit and the undo line (composables/useGridEdit.ts); the selection (composables/useGridSelection.ts)
+// The box and menu (composables/useGridPopups.ts), the edge handles (useGridEdge.ts), the edit and the undo line (useGridEdit.ts);
+// the selection (useGridSelection.ts). The popups and the edge come first: the edit composes them
+const popups = useGridPopups({ selection, cursor, gridEl, hourTop, onOpen: () => emit('open') })
+const edge = useGridEdge({ selection, baseline, gridEl, shownSlots, collapsed, hourTop, popups })
 const edit = useGridEdit({
   selection,
   baseline,
   anchor,
-  cursor,
-  gridEl,
   activeTemplate,
   slots,
   shownSlots,
   sleepId,
   sleepHidden,
   showSleep,
-  collapsed,
-  hourTop,
   activityMap,
   paintCells: (templateId, cells, activityId) => planner.paintCells(templateId, cells, activityId),
-  onOpen: () => emit('open'),
+  popups,
+  edge,
 })
 const { barRef, menuRef, barOpen, menuOpen, barPos, editing, handles, moved, selectionHasActivity, undo, dismissUndo, undoLast, focusCursor, placeAt, endEdit, closeAll, pickFromBar, applyActivity, clearRange, clearSelection, clearDay, editActivity, cancelEdit, saveEdit, startResize, onHandleKey, onHandleTab, onBarKey } = edit
 
