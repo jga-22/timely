@@ -19,7 +19,7 @@ import {
   sleepWindowError,
   windowLabel,
 } from '~/utils/sleep'
-import { createEmptySlots } from '~/utils/planner'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { seed } from './fixtures'
 
 const SLEEP = 'sleep'

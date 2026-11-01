@@ -762,7 +762,7 @@ app/components/planner/PlannerView.vue   template bar, activity list and detail,
 app/components/planner/ActivityGrid.vue  new 24x7 grid (overview, view, edit, keyboard)
 app/components/insights/InsightsView.vue charts moved from InsightsView
 app/utils/dates.ts                       new: ISO weeks, weeks of a year, Monday of a date, local date key
-app/utils/planner.ts                     seed, validation, effective template, period and year totals
+app/utils/planner/                       seed, state validation, effective template, period and year totals (one module per area)
 ```
 
 Persistence unchanged (load, validate, patch, write back, deep-watch save; versioned reset, no migrations), minus the `ensureDefaultWeek` call. Unit tests need a runner (for example Vitest); adding it is a dependency change the owner must approve.

@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
-import { DESIGN_COLORS } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
 import { focusEditField } from '~/utils/focus'
 import type { WeekTemplate } from '~/types/planner'
 

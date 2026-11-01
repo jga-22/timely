@@ -1,16 +1,9 @@
 import type { Habit, PlannerState, WeekTemplate } from '~/types/planner'
-import {
-  DAYS,
-  DESIGN_COLORS,
-  formatHour,
-  getActiveTemplate,
-  goalsTemplate,
-  hoursLabel,
-  isHourlyTemplate,
-  scheduledWeeklyMinutesForActivity,
-  slotsToBlocks,
-  validateActivityFields
-} from '~/utils/planner'
+import { DAYS, formatHour, hoursLabel } from '~/utils/planner/format'
+import { DESIGN_COLORS, getActiveTemplate, goalsTemplate, isHourlyTemplate } from '~/utils/planner/templates'
+import { scheduledWeeklyMinutesForActivity } from '~/utils/planner/aggregate'
+import { slotsToBlocks } from '~/utils/planner/slots'
+import { validateActivityFields } from '~/utils/planner/activities'
 import { isSleepActivity } from '~/utils/sleep'
 
 /**

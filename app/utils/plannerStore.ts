@@ -2,7 +2,8 @@
  * Pure helpers of the planner store (app/stores/planner.ts): no Pinia and no state writes. Moved out verbatim so the store reads as its actions
  */
 import type { Activity, Category, PlannerState } from '~/types/planner'
-import { SHORT_CODE_PATTERN, createEmptySlots } from '~/utils/planner'
+import { SHORT_CODE_PATTERN } from '~/utils/planner/activities'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { shortCodeFor } from '~/utils/onboarding'
 import { SLEEP_CODE, paintDefaultSleep, sleepActivityId } from '~/utils/sleep'
 import type { PresetRole } from '~/utils/presets'

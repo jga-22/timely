@@ -1,13 +1,9 @@
 import type { Habit, PlannerState } from '~/types/planner'
 import { weekdayOf } from '~/utils/dates'
 import { habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
-import {
-  HOURS_PER_DAY,
-  effectiveTemplate,
-  getActivityMap,
-  slotsToBlocks,
-  type TimeBlock
-} from '~/utils/planner'
+import { HOURS_PER_DAY, slotsToBlocks, type TimeBlock } from '~/utils/planner/slots'
+import { effectiveTemplate } from '~/utils/planner/templates'
+import { getActivityMap } from '~/utils/planner/activities'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**

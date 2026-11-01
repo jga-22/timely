@@ -1,4 +1,5 @@
-import { DAYS, formatHour, slotsToBlocks, type TimeBlock } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
+import { slotsToBlocks, type TimeBlock } from '~/utils/planner/slots'
 import { clockLabel } from '~/utils/sleep'
 
 /**

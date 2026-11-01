@@ -4,7 +4,7 @@
  * deleteTemplate, renameTemplate, setTemplateColor and renameActiveTemplate, and uniqueName (the numbered names)
  */
 import type { PlannerState } from '~/types/planner'
-import { DESIGN_COLORS, getActiveTemplate, getTemplateById, nextTemplateColor } from '~/utils/planner'
+import { DESIGN_COLORS, getActiveTemplate, getTemplateById, nextTemplateColor } from '~/utils/planner/templates'
 import { newWeekSlots } from '~/utils/plannerStore'
 import { PRESET_ROLES, buildPresetSlots, getPreset, presetTemplateFields, type PresetRole, type RoleMap } from '~/utils/presets'
 import { createRoleActivity } from '~/utils/store/activities'

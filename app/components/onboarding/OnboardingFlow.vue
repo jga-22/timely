@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createLifeAreas } from '~/utils/planner'
+import { createLifeAreas } from '~/utils/planner/seed'
 import { MAX_ONBOARDING_GOALS } from '~/utils/onboarding'
 import { focusEditField } from '~/utils/focus'
 

@@ -2,7 +2,10 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { useGridUndo } from '~/composables/useGridUndo'
-import { DAYS, aggregateTemplate, formatHour, isHourlyTemplate, slotsToBlocks } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
+import { aggregateTemplate } from '~/utils/planner/aggregate'
+import { isHourlyTemplate } from '~/utils/planner/templates'
+import { slotsToBlocks } from '~/utils/planner/slots'
 import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
 import { GAP_PX, HOUR_PX, HOURS, type Cell, type Range, bandOf, blockAt, cancelAction, cellsOf, clearableCells, collapsedBandLabels, collapsedHours, dragRange, edgeHourAt, flowRows, hourAtY, hourTops, isMoved, keyRange, menuTop, nearestShown, popupBeside, rangeLabel, saveAction, setEdge, singleCell, stepFor, withoutSleep } from '~/utils/weekGrid'
 

@@ -3,7 +3,7 @@
  * (FR-SLEEP-2). Owns setSleep and setupSleep; their undo lists come from undo.ts
  */
 import type { PlannerState } from '~/types/planner'
-import { getActiveTemplate, getTemplateById, isHourlyTemplate } from '~/utils/planner'
+import { getActiveTemplate, getTemplateById, isHourlyTemplate } from '~/utils/planner/templates'
 import { replacedText } from '~/utils/plannerStore'
 import { ALL_NIGHTS, DEFAULT_SLEEP, paintSleep, sleepActivityId, sleepWindowError, windowLabel, type SleepGroup } from '~/utils/sleep'
 import { ensureSleepActivity } from '~/utils/store/activities'

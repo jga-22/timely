@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, countLabel } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
+import { countLabel } from '~/utils/planner/format'
 import { entryLines } from '~/utils/entries'
 import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'

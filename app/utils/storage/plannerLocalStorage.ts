@@ -1,6 +1,6 @@
 import type { PlannerState } from '~/types/planner'
 import type { PlannerStorage, SaveResult } from '~/utils/storage/types'
-import { isPlannerState } from '~/utils/planner'
+import { isPlannerState } from '~/utils/planner/state'
 
 export const PLANNER_STORAGE_KEY = 'timely-planner-state'
 

@@ -4,7 +4,7 @@
  * the hours; the undo of the repaint is taken before the hours are cleared
  */
 import type { PlannerState } from '~/types/planner'
-import { getTemplateById, isHourlyTemplate } from '~/utils/planner'
+import { getTemplateById, isHourlyTemplate } from '~/utils/planner/templates'
 import { freeShortCode } from '~/utils/plannerStore'
 import {
   blockHours,

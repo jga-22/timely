@@ -83,7 +83,7 @@ The repository has no PostgreSQL tooling and no new dependencies were added for 
 
 ## Regenerating the seed
 
-The seed block in `schema.sql` was generated from the app's seed (`createInitialState(2026)` in `app/utils/planner.ts`). If the seed changes, regenerate it or edit the function by hand, and keep the counts above in step.
+The seed block in `schema.sql` was generated from the app's seed (`createInitialState(2026)` in `app/utils/planner/seed.ts`). If the seed changes, regenerate it or edit the function by hand, and keep the counts above in step.
 
 ## Status and next steps
 
@@ -91,7 +91,7 @@ The seed block in `schema.sql` was generated from the app's seed (`createInitial
 2. Phase 0 spike: apply `schema.sql` on a local Supabase, read the seed from the app, measure a 168-slot paint.
 3. Then the phases in `effort-evaluation.md`.
 
-Related: `../weekly_planner_prd_and_design_doc.md` (product requirements), `../../app/types/planner.ts` (the model this schema mirrors), `../../app/utils/planner.ts` (seed and validation).
+Related: `../weekly_planner_prd_and_design_doc.md` (product requirements), `../../app/types/planner.ts` (the model this schema mirrors), `../../app/utils/planner/seed.ts` and `state.ts` (seed and validation).
 
 
 Two designs exist. The **snapshot** (this step) stores the whole `PlannerState` as one JSON document per user, using the same versioning rule as localStorage: a version mismatch or invalid data is discarded and replaced by the seed. The **normalised schema** (`schema.sql` with its ERD and data model) is the later path: one table per entity with constraints. Moving to it means a one-off import of the snapshot. The snapshot is the first step because it reuses the existing store and validation unchanged.

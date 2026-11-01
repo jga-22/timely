@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
-import { DAYS, DESIGN_COLORS, formatHour, isHourlyTemplate } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
+import { DESIGN_COLORS, isHourlyTemplate } from '~/utils/planner/templates'
 import {
   DURATION_OPTIONS,
   blockHours,

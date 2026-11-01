@@ -2,7 +2,8 @@
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { inkOn } from '~/utils/palette'
 import type { Activity } from '~/types/planner'
-import { formatHour, type TimeBlock } from '~/utils/planner'
+import { formatHour } from '~/utils/planner/format'
+import { type TimeBlock } from '~/utils/planner/slots'
 import { clockLabel } from '~/utils/sleep'
 import { HOUR_PX, type Cell, type FlowRow, type Range } from '~/utils/weekGrid'
 

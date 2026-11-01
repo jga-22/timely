@@ -1,6 +1,6 @@
 # Timely front-end design spec
 
-This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/main.css`, the component `<style>` blocks, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/utils/planner.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
+This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/main.css`, the component `<style>` blocks, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
 
 Source of truth: the code. The old `design/` folder (terracotta and serif look) is a stale export and must not be used. The Harada prototype in `spec/references/grille-harada-meilleure-version.html` is the origin of the blue palette and the Goals layout; it is a reference only.
 
@@ -38,7 +38,7 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | Light palette and all non-colour tokens | `app/assets/css/main.css`, `:root` | Colours, font, type scale, spacing, radius, `--shadow`, `--focus-ring`. |
 | Dark palette | `app/assets/css/main.css`, `html[data-theme="dark"]` | Redefines the colour tokens only; also sets `color-scheme: dark`. |
 | Vuetify themes | `vuetify.config.ts`, themes `timely` (light) and `timelyDark` | Hex values copied by hand from the CSS tokens. The file comment says "keep in sync"; nothing enforces it. |
-| Category palette (data) | `app/utils/planner.ts`, `DESIGN_COLORS` | 16 swatches offered for categories, activities and templates. Data, not UI chrome. |
+| Category palette (data) | `app/utils/planner/templates.ts`, `DESIGN_COLORS` | 16 swatches offered for categories, activities and templates. Data, not UI chrome. |
 | Hard-coded fallbacks | components and store | `#ccc` (chart segment), `#888` (category/activity dot), `#999` (block), `#5d6b7a` (template colour), `#685847` (new activity when its category has no colour, `app/stores/planner.ts`). |
 
 The CSS comment says "Colours are defined only here". This is true for CSS, with two exceptions: the `rgba()` inside `--shadow`, and the JS fallbacks above.
@@ -442,7 +442,7 @@ Slice 7 (FR-PLAN-17 to 22). The week is the first thing on the Planner. Mounted 
 - Shortcut hint (`.ag-hint`, 12px `--ink-3`): "Arrows move. Shift with arrows selects a range. Space or Enter paints. Escape cancels." With no brush: "Arrows move. Space or Enter selects the activity in that hour."
 - Painting (mouse, pen and touch use pointer events; `touch-action: none` while painting): press on a cell, drag across days and hours, release to paint. One gesture is one undo step. With no brush, a click on a coloured hour selects its activity.
 - Keyboard (FR-PLAN-19): one tab stop (roving `tabindex`); arrows move; Shift with arrows extends a range; Space or Enter paints the range or the focused hour; Escape drops the range. Home and End move across days; PageUp and PageDown across hours. Cell names: "Tuesday 9AM, Deep Work" or "Tuesday 9AM, free".
-- The grid writes through `paintCells` (store) and `restoreSlots` (undo), with `rectangleCells` and `rangeConflicts` from `app/utils/planner.ts`.
+- The grid writes through `paintCells` (store) and `restoreSlots` (undo), with `rectangleCells` and `rangeConflicts` from `app/utils/planner/slots.ts`.
 
 ### 4.14 Charts and legends (summary)
 

@@ -20,7 +20,7 @@ import {
   scheduleChanged,
   type EntryDraft,
 } from '~/utils/entries'
-import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { activity, empty, seed, slotsWith, withActivities, withHabits, withSlots, type Run } from './fixtures'
 
 /** A new user with a 4 h work block on Monday 8 AM to 12 PM in the one week type, and the work activity */

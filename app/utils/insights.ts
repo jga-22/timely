@@ -1,6 +1,7 @@
 import type { PlannerState, WeekTemplate } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { aggregateTemplate, aggregateTemplateByCategory, effectiveTemplate } from '~/utils/planner'
+import { aggregateTemplate, aggregateTemplateByCategory } from '~/utils/planner/aggregate'
+import { effectiveTemplate } from '~/utils/planner/templates'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**

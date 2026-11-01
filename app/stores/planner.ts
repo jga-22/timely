@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia'
 import type { Activity, Ambition, Category, Habit, HabitPeriod, PlannerState } from '~/types/planner'
-import {
-  createOnboardingState,
-  getActiveTemplate,
-  type ActivityFieldErrors,
-  type HourConflict,
-  type PaintMode
-} from '~/utils/planner'
+import { createOnboardingState } from '~/utils/planner/seed'
+import { getActiveTemplate } from '~/utils/planner/templates'
+import { type ActivityFieldErrors } from '~/utils/planner/activities'
+import { type HourConflict, type PaintMode } from '~/utils/planner/slots'
 import { addActivity, createRoleActivity, ensureSleepActivity, ownActivityFor, removeActivity, updateActivity } from '~/utils/store/activities'
 import { addHabit, removeHabit, setHabitActivity, setHabitFrequency, updateHabit } from '~/utils/store/habits'
 import { setSleep, setupSleep } from '~/utils/store/sleepSetup'

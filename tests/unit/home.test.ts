@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannerState } from '~/types/planner'
 import { dayBlocks, dayHabits, dayHours, dayRange, formatDayLabel, habitHasDay, habitProgressText, habitTicked } from '~/utils/home'
-import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { activity, applyWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots, withTemplate } from './fixtures'
 
 // 2026-10-26 is a Monday (day 0 of the week), 2026-10-27 a Tuesday

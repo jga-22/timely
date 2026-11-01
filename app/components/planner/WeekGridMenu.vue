@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Activity } from '~/types/planner'
-import { DAYS, formatHour } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
 import { rangeLabel, type Range } from '~/utils/weekGrid'
 
 /**

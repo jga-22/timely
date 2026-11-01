@@ -3,7 +3,7 @@
  * Owns addCategory, updateCategory, setCategoryColor, moveCategory, removeCategory and seedHaradaGoals
  */
 import type { Category, PlannerState } from '~/types/planner'
-import { createHaradaSeed } from '~/utils/planner'
+import { createHaradaSeed } from '~/utils/planner/seed'
 import { numberCategories } from '~/utils/plannerStore'
 import { newId } from '~/utils/store/ids'
 

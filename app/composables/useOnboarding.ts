@@ -1,6 +1,6 @@
 import type { NavTarget, TabId } from '~/composables/useNav'
 import { localDateKey, isoWeekOf, isoWeekStarts } from '~/utils/dates'
-import { createInitialState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { createInitialState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { buildOnboardingState, type OnboardingAnswers } from '~/utils/onboarding'
 
 export type OnboardingPhase = 'closed' | 'welcome' | 'intro' | 'ambition' | 'goals' | 'tour'

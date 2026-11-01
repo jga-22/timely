@@ -12,7 +12,8 @@ import {
   templateSplit,
   weekCategoryHours,
 } from '~/utils/insights'
-import { ONBOARDING_TEMPLATE_ID, createEmptySlots } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { createEmptySlots } from '~/utils/planner/slots'
 import type { WeekTemplate } from '~/types/planner'
 import { activity, applyWeek, empty, Run, seed, slotsWith, withActivities, withSlots, withTemplate } from './fixtures'
 

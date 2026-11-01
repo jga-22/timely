@@ -1,5 +1,5 @@
 -- Timely: snapshot storage for Supabase (Postgres with auth and RLS).
--- One row per user holds the whole PlannerState as jsonb. Versioned by PLANNER_STATE_VERSION (app/utils/planner.ts).
+-- One row per user holds the whole PlannerState as jsonb. Versioned by PLANNER_STATE_VERSION (app/utils/planner/state.ts).
 
 create table if not exists public.planner_state (
   user_id uuid primary key references auth.users (id) on delete cascade default auth.uid(),

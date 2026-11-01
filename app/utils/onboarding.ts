@@ -1,6 +1,8 @@
 import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
 import { isoWeekStarts } from '~/utils/dates'
-import { applyActivityCells, createOnboardingState, getTemplateById, ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { applyActivityCells } from '~/utils/planner/slots'
+import { createOnboardingState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { getTemplateById } from '~/utils/planner/templates'
 import { SLEEP_CODE, isSleepActivity } from '~/utils/sleep'
 
 /** One goal of the guided path (FR-ONB-4): one of the eight life areas, an optional 1-year target and one habit with its time */

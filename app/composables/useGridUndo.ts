@@ -1,5 +1,5 @@
 import { usePlannerStore } from '~/stores/planner'
-import { getTemplateById } from '~/utils/planner'
+import { getTemplateById } from '~/utils/planner/templates'
 
 /** The undo line of the week grid stays this long (ms) */
 export const UNDO_MS = 8000

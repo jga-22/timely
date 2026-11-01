@@ -4,7 +4,7 @@ import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { addDays, isoWeekOf } from '~/utils/dates'
 import { blockDoneKey, habitDoneKey, isDone } from '~/utils/done'
-import { formatHour } from '~/utils/planner'
+import { formatHour } from '~/utils/planner/format'
 import { dayBlocks, dayHabits, dayHours, dayRange, formatDayLabel, habitProgressText, habitTicked } from '~/utils/home'
 
 /**

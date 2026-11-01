@@ -1,5 +1,5 @@
 import type { PlannerState } from '~/types/planner'
-import { createOnboardingState } from '~/utils/planner'
+import { createOnboardingState } from '~/utils/planner/seed'
 import { getActivePlannerStorage } from '~/utils/storage/active'
 
 /**
