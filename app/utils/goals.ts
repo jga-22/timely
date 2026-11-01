@@ -1,4 +1,5 @@
 import type { Ambition, Category, PlannerState } from '~/types/planner'
+import { countLabel } from '~/utils/planner/format'
 import { isSleepActivity } from '~/utils/sleep'
 
 /** The Harada map shows the first eight categories by order (FR-GOALS-14, FR-GOALS-21) */
@@ -71,3 +72,16 @@ export const hasContentArea = (state: Pick<PlannerState, 'habits' | 'activities'
   || state.habits.some(habit => habit.categoryId === category.id)
   || state.activities.some(activity => activity.categoryId === category.id && !isSleepActivity(activity))
 )
+
+/**
+ * The text of the remove confirmation (FR-UX-7, FR-GOALS-17): a life area with nothing in it is removed at once; with activities or habits, they
+ * move to another life area first, so it needs one
+ */
+export const removeLifeAreaText = (input: { name: string; activities: number; habits: number; otherCount: number }): string => {
+  const { name, activities, habits, otherCount } = input
+  if (!activities && !habits) return `Remove ${name}? It has no activities or habits.`
+  if (!otherCount) return `Add another life area first, then remove ${name}.`
+
+  const summary = [activities ? countLabel(activities, 'activity', 'activities') : '', habits ? countLabel(habits, 'habit', 'habits') : ''].filter(Boolean).join(' and ')
+  return `Its ${summary} must move to another life area before ${name} is removed.`
+}
