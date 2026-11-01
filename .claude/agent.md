@@ -58,6 +58,14 @@ Shell and shared code:
 - `app/assets/css/`: all design tokens and styles. `main.css` is the entry: it imports the feature files in cascade order (`tokens.css` first, then base, shell, account, auth, legal, onboarding, layout, buttons, forms, planner, the week grid files, week panels, sections, insights, adherence, shared, home, lists). Add a rule to the file of its feature; keep the import order, since a later rule wins a tie. `vuetify.config.ts`: Vuetify themes (`timely`, `timelyDark`).
 - `spec/`: specifications (below). `design/` is an old gitignored design export with the previous look; do not use it.
 
+## Security headers and CSP
+
+- **Where:** `server/plugins/security.ts` (a Nitro plugin: the static headers on every response in the `request` hook, and a per-page Content-Security-Policy with a fresh nonce in `render:response`, which also puts the nonce on every `<script>` of the page). The pure parts are in `server/utils/security.ts` (`SECURITY_HEADERS`, `buildCsp`, `supabaseSources`, `addScriptNonce`) and tested in `tests/unit/security.test.ts`.
+- **Why not routeRules:** on Vercel the route rules are also written to the platform route config, so a header could be sent twice, and a repeated nosniff or X-Frame-Options can make the browser ignore it. Keep the headers in the plugin. The Vercel CDN serves `/_nuxt` files without the function, so those files do not get the headers; the HTML and API responses do.
+- **Policy:** `script-src` is `self` plus the nonce, with no `unsafe-inline` (Nuxt payload, bootstrap, importmap and the dark-theme script all get the nonce). `style-src` keeps `unsafe-inline` for Vue and Vuetify inline styles (a known limit). `connect-src` is `self` plus the origin and wss of `NUXT_PUBLIC_SUPABASE_URL`, read from the runtime config on each request, so a build without it still works.
+- **Adding an origin or a third-party script:** change `buildCsp` (and its test) first, then the code that uses it. Do not add a third-party script or origin without that line. Never add `unsafe-inline` or `unsafe-eval` to `script-src`.
+- **Check it:** `curl -I` the server and read the `Content-Security-Policy` line; in the browser, a violation shows as a console error that names the directive.
+
 ## Specs (read before changing behaviour or UI)
 
 - `spec/README.md`: index of the specs and what changed since the PRD.
