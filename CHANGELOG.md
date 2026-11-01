@@ -4,6 +4,9 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 
 ## Unreleased
 
+### Added
+- Security headers on every response (nosniff, strict Referrer-Policy, X-Frame-Options DENY, Permissions-Policy) and a Content-Security-Policy with a per-page nonce for HTML; see `.claude/agent.md`.
+
 ### Changed
 - Dependencies: `npm audit fix` without forced upgrades (Nuxt 4.6.3, Vue 3.5.44, Vite 8 through Nuxt); high and critical advisories cleared; the 15 left (moderate and low) are in build and dev tooling, not in the production server bundle.
 
