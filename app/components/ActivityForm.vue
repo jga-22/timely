@@ -53,6 +53,14 @@ const sleepEditor = ref<{ isValid: () => boolean; apply: () => { text: string; u
 const rootEl = ref<HTMLElement | null>(null)
 const nameEl = ref<HTMLInputElement | null>(null)
 
+// A confirmation opening or closing removes the button that had focus; keep focus inside the form so Escape reaches it
+// (otherwise the window Escape of the screen behind closes the whole form). Open: the safe button; closed: the panel
+watch([confirmingDelete, confirmingRemoval], async () => {
+  await nextTick()
+  const safe = rootEl.value?.querySelector<HTMLElement>('.act-confirm .btn:not(.btn-danger)')
+  ;(safe ?? rootEl.value)?.focus()
+})
+
 onMounted(() => {
   nextTick(() => focusEditField(nameEl.value, rootEl.value))
 })
