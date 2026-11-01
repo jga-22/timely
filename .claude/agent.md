@@ -26,7 +26,7 @@ npm test                    # unit tests (Vitest, tests/unit): must stay green; 
 
 If `npx nuxi typecheck` cannot resolve vue-tsc, run `npm i --no-save vue-tsc@3 @vue/language-core@3` (never commit that to `package.json` or the lockfile).
 
-CI (`.github/workflows/ci.yml`) runs on pull requests and on pushes to `main`: `npm ci`, `npm test`, the same typecheck (with vue-tsc installed for the run) and the build. Keep all four green. Unit tests cover the pure modules in `app/utils` (`tests/unit/*.test.ts`, shared data in `tests/unit/fixtures.ts`); new pure logic gets a test there, and tests pass dates explicitly (no clock).
+CI (`.github/workflows/ci.yml`) runs on pull requests and on pushes to `main`: `npm ci`, `npm test`, the same typecheck (with vue-tsc installed for the run) and the build. Keep all four green. Unit tests cover the pure modules in `app/utils` (`tests/unit/*.test.ts`, shared data in `tests/unit/fixtures.ts`); new pure logic gets a test there, and tests pass dates explicitly (no clock). **Size guard:** `tests/unit/fileSize.test.ts` fails when any `.vue` or `.ts` file in `app/` passes 400 lines; split the file by responsibility instead of raising the limit.
 
 ## Where things are
 
