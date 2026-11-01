@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
-import { isHourlyTemplate } from '~/utils/planner'
+import { isHourlyTemplate } from '~/utils/planner/templates'
 import {
   clockLabel,
   nightHours,

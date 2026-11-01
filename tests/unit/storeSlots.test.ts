@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannerState, WeekTemplate } from '~/types/planner'
-import { ONBOARDING_TEMPLATE_ID, createEmptySlots } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { paintCells, setActivitySlots } from '~/utils/store/slots'
 import { snapshotSlots, restoreSlotUndo, restoreSlots } from '~/utils/store/undo'
 import { newId } from '~/utils/store/ids'

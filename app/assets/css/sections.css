@@ -1,0 +1,114 @@
+/* Year weeks row, year section, collapsible section summaries and segmented buttons. */
+/* Weeks row under the year paint tools: one week type for a range of weeks (FR-YEAR-7) */
+.weeks-row { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+.weeks-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.weeks-part { font-size: var(--fs-sm); color: var(--ink-2); }
+.weeks-select { width: auto; max-width: 100%; min-width: 0; }
+.weeks-num { width: 72px; }
+.weeks-result { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.weeks-hint { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.weeks-toggle-row { margin-top: var(--space-4); }
+@media (max-width: 480px) {
+  .act-panel .form-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Year: full width, collapsible, 13 week columns with a quarter label per row */
+.year-section { margin-top: var(--space-6); }
+/* Collapsible sections (Year, Week, Activities and habits) share one summary: title and count on a line, no marker */
+.year-summary,
+.section-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+}
+.year-summary::-webkit-details-marker,
+.section-summary::-webkit-details-marker { display: none; }
+.year-summary .section-title,
+.section-summary .section-title { margin: 0; }
+/* The same chevron as .disclosure, before the title (on the title, so the title stays one flex item beside the counts); it turns when the section is open */
+.year-summary .section-title::before,
+.section-summary .section-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+  border-right: 1.5px solid var(--ink-3);
+  border-bottom: 1.5px solid var(--ink-3);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.year-details[open] > .year-summary .section-title::before,
+.acts-details[open] > .section-summary .section-title::before,
+.wk-details[open] > .section-summary .section-title::before { transform: rotate(45deg); }
+.year-count {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.year-line {
+  margin: var(--space-5) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.year-body { margin-top: var(--space-4); }
+.year-paint-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+.year-grid-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.year-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+}
+.year-row {
+  display: grid;
+  grid-template-columns: 56px repeat(13, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+}
+.year-row-label {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Segmented buttons (shared): the view switches of Insights */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+.segmented button {
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: 4px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.segmented button:hover { color: var(--ink); }
+.segmented button[data-active="true"] {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+}
+

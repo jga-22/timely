@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DESIGN_COLORS } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
 
 /**
  * The intro player (FR-ONB-9): five scenes of about 9 seconds each. Shared by the first-run dialog (OnboardingIntro.vue) and the

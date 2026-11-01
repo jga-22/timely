@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DAYS, formatHour } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
 import { rangeLabel, type Range } from '~/utils/weekGrid'
 
 /**

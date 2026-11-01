@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { focusEditField } from '~/utils/focus'
-import { DESIGN_COLORS } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
 
 /**
  * Add a life area: progressive disclosure under the list (FR-GOALS-19). The form opens in place of "+ Add life area";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
-import { resolveEntry } from '~/utils/entries'
+import { resolveEntry } from '~/utils/entries/resolve'
 import { readSleep, sleepActivityId, sleepSummary } from '~/utils/sleep'
 
 /**

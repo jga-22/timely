@@ -1,5 +1,6 @@
 import type { Activity, Habit, PlannerState, WeekTemplate } from '~/types/planner'
-import { createEmptySlots, createInitialState, createOnboardingState } from '~/utils/planner'
+import { createEmptySlots } from '~/utils/planner/slots'
+import { createInitialState, createOnboardingState } from '~/utils/planner/seed'
 
 /**
  * Shared test data. Every date is passed explicitly: tests never read the clock (localDateKey() without an argument is never called).

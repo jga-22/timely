@@ -1,4 +1,5 @@
-import { DAYS, formatHour, slotsToBlocks, type TimeBlock } from '~/utils/planner'
+import { DAYS, formatHour } from '~/utils/planner/format'
+import { slotsToBlocks, type TimeBlock } from '~/utils/planner/slots'
 import { clockLabel } from '~/utils/sleep'
 
 /**
@@ -214,3 +215,42 @@ export const saveAction = (moved: boolean, extendsApply: boolean): 'none' | 'ext
 
 /** What Cancel does in the edit box: a moved edge goes back to the run it was made on and the box stays; a clean selection closes the box (an Apply's block stays as applied) */
 export const cancelAction = (moved: boolean): 'revert' | 'close' => (moved ? 'revert' : 'close')
+
+/** The first activity in a run, in its order (null when the run holds none): the name an Apply uses, and the entry an Edit opens */
+export const firstActivityIn = (range: Range, slots: string[]): string | null => cellsOf(range).map(index => slots[index]).find(Boolean) ?? null
+
+/** Whether a run holds an activity: its edge handles show then (FR-PLAN-23) */
+export const rangeHasActivity = (range: Range, slots: string[]): boolean => cellsOf(range).some(index => !!slots[index])
+
+/** Whether applying an activity to a run changes any of its hours: applying the activity that already fills the run changes nothing */
+export const appliesChange = (range: Range, slots: string[], activityId: string): boolean => cellsOf(range).some(index => slots[index] !== activityId)
+
+/** How many hours of a run are Sleep: the hours an Apply replaces while sleep is hidden (FR-SLEEP-5) */
+export const sleepHoursIn = (range: Range, slots: string[], sleepId: string | null): number => cellsOf(range).filter(index => slots[index] === sleepId).length
+
+/** The line an Apply leaves in its undo step: the activity, its run, and the Sleep hours it replaced */
+export const applyLabel = (name: string, range: Range, replacedSleep: number): string => `${name} set on ${rangeLabel(range)}${replacedSleep ? `. Replaced ${replacedSleep} h of Sleep` : ''}`
+
+/** Whether a pointer has moved further than the slop from where it went down: a scroll, not a tap (touch only) */
+export const touchMovedBeyond = (from: { x: number; y: number }, to: { x: number; y: number }, slop: number): boolean => Math.abs(to.x - from.x) > slop || Math.abs(to.y - from.y) > slop
+
+/** Whether a run covers a collapsed hour (sleep hidden): such a selection is dropped when the rows change */
+export const coversCollapsed = (range: Range, collapsed: boolean[]): boolean => HOURS.some(hour => hour >= range.start && hour < range.end && collapsed[hour] === true)
+
+/** The run with one edge moved to where a drag at `y` (px, in the day column) puts it; collapsed hours are skipped */
+export const resizedRange = (range: Range, side: 'top' | 'bottom', y: number, collapsed: boolean[], tops: number[]): Range => {
+  const band = bandOf(collapsed, range.start)
+  return setEdge(range, side, edgeHourAt(side, y, range, band, tops), band)
+}
+
+/** The step an arrow key takes an edge handle: Up is -1 hour, Down is +1 hour; null for any other key */
+export const edgeStep = (key: string): -1 | 1 | null => {
+  if (key === 'ArrowUp') return -1
+  return key === 'ArrowDown' ? 1 : null
+}
+
+/** The run with one edge moved by `step` hours from where it is; collapsed hours are skipped */
+export const keyEdge = (range: Range, side: 'top' | 'bottom', step: -1 | 1, collapsed: boolean[]): Range => setEdge(range, side, (side === 'top' ? range.start : range.end) + step, bandOf(collapsed, range.start))
+
+/** Whether a press or click started inside the editor: the grid body, the box or menu, or an edge handle (duck-typed, so it runs outside the DOM) */
+export const isInEditor = (target: EventTarget | null): boolean => !!(target as Element | null)?.closest?.('.wk-body, .wk-pop, .wk-handle')

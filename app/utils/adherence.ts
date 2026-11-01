@@ -3,7 +3,7 @@ import { addDays, daysInMonth, isoWeekOf, weekdayOf } from '~/utils/dates'
 import { blockDoneKey, doneKeysOn, habitDoneKey, isDone } from '~/utils/done'
 import { dayBlocks, dayHabits } from '~/utils/home'
 import type { InsightsGranularity } from '~/utils/insights'
-import { getActivityMap } from '~/utils/planner'
+import { getActivityMap } from '~/utils/planner/activities'
 
 /**
  * Adherence (PRD FR-INS-P6): what was planned against what was ticked on Home, over the range shown. Pure functions over the

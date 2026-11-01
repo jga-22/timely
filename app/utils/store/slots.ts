@@ -3,7 +3,8 @@
  * Owns setActivitySlots and paintCells; the undo of a paint lives in undo.ts
  */
 import type { PlannerState } from '~/types/planner'
-import { applyActivityCells, getTemplateById, rangeConflicts, type HourConflict, type PaintMode } from '~/utils/planner'
+import { applyActivityCells, rangeConflicts, type HourConflict, type PaintMode } from '~/utils/planner/slots'
+import { getTemplateById } from '~/utils/planner/templates'
 
 /**
  * Paints one activity's hours in one hourly template (FR-PLAN-17, 18). `add` takes hours held by other

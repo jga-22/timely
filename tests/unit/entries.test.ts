@@ -1,26 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
-import {
-  DURATION_OPTIONS,
-  blockHours,
-  categoryEntryCounts,
-  categoryEntryText,
-  dayText,
-  durationText,
-  entryDraftOf,
-  entryErrors,
-  entryLines,
-  frequencyChanged,
-  frequencyOf,
-  frequencyText,
-  needText,
-  newEntryDraft,
-  paintResultText,
-  resolveEntry,
-  scheduleChanged,
-  type EntryDraft,
-} from '~/utils/entries'
-import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { DURATION_OPTIONS, blockHours, entryDraftOf, frequencyChanged, frequencyOf, newEntryDraft, scheduleChanged, type EntryDraft } from '~/utils/entries/draft'
+import { categoryEntryCounts, categoryEntryText } from '~/utils/entries/counts'
+import { categoryEntryRows, entryLines } from '~/utils/entries/rows'
+import { dayText, durationText, frequencyText, needText, paintResultText } from '~/utils/entries/text'
+import { entryErrors } from '~/utils/entries/validate'
+import { resolveEntry } from '~/utils/entries/resolve'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { SLEEP_CODE, SLEEP_ID } from '~/utils/sleep'
 import { activity, empty, seed, slotsWith, withActivities, withHabits, withSlots, type Run } from './fixtures'
 
 /** A new user with a 4 h work block on Monday 8 AM to 12 PM in the one week type, and the work activity */
@@ -289,6 +276,37 @@ describe('categoryEntryCounts and categoryEntryText', () => {
     expect(categoryEntryText({ habits: 1, activities: 0 })).toBe('1 habit')
     expect(categoryEntryText({ habits: 2, activities: 1 })).toBe('2 habits · 1 activity')
     expect(categoryEntryText({ habits: 1, activities: 2 })).toBe('1 habit · 2 activities')
+  })
+})
+
+describe('categoryEntryRows', () => {
+  it('lists the habits of a life area, each with its activity, then the activities no habit links to', () => {
+    const zen = activity('zen', 'spirituelle')
+    const yoga = activity('yoga', 'physique')
+    const habit: Habit = { id: 'zh', categoryId: 'physique', name: 'Zen', frequency: { count: 3, period: 'week' }, activityId: 'zen' }
+    const state = { ...seed(), activities: [zen, yoga], habits: [habit] }
+    const rows = categoryEntryRows(state, 'physique')
+
+    expect(rows.map(row => [row.key, row.habitId, row.activityId, row.name])).toEqual([
+      ['zh', 'zh', 'zen', 'Zen'],
+      ['yoga', null, 'yoga', 'yoga']
+    ])
+    // The linked activity lies in another life area: the row says so
+    expect(rows[0].note).toBe('in Spiritual')
+    expect(rows[0].lines).toEqual(entryLines(state, 'zh', 'zen'))
+    expect(rows[1].note).toBe('')
+  })
+
+  it('does not list a linked activity of another life area, nor the Sleep activity', () => {
+    const sleep = activity(SLEEP_ID, 'physique', SLEEP_CODE)
+    const state = {
+      ...seed(),
+      activities: [activity('zen', 'spirituelle'), sleep],
+      habits: [{ id: 'zh', categoryId: 'physique', name: 'Zen', frequency: { count: 3, period: 'week' as const }, activityId: 'zen' }]
+    }
+
+    expect(categoryEntryRows(state, 'spirituelle')).toEqual([])
+    expect(categoryEntryRows(state, 'physique').map(row => row.key)).toEqual(['zh'])
   })
 })
 

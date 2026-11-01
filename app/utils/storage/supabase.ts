@@ -1,5 +1,5 @@
 import type { PlannerState } from '~/types/planner'
-import { isPlannerState } from '~/utils/planner'
+import { isPlannerState } from '~/utils/planner/state'
 import { getSupabaseClient } from '~/utils/supabase'
 import type { PlannerStorage, SaveResult, StorageStatusHandler } from '~/utils/storage/types'
 

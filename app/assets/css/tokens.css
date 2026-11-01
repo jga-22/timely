@@ -1,0 +1,77 @@
+/* Design tokens: colours (light, then the dark overrides), type, spacing, radius, shadow and focus. */
+/* ── Design tokens ──────────────────────────────────────────────
+   One font family (IBM Plex Sans), one radius, a 4px spacing grid.
+   Colours are defined only here; components reference the variables.
+   The dark palette is applied by [data-theme="dark"] (topbar toggle). */
+:root {
+  --bg:          #ffffff;
+  --bg-2:        #f7f9fc;   /* quiet surface: hour column, week header */
+  --bg-3:        #eef3fa;   /* hover and tint */
+  --bg-4:        #dce7f5;   /* selected tint */
+  --ink:         #1a2230;
+  --ink-2:       #3d4657;
+  --ink-3:       #6b7385;   /* muted text, 4.5:1 or better on bg and bg-2 */
+  --ink-4:       #9aa1b1;   /* decoration only, never text */
+  --rule:        #e2e6ee;
+  --rule-2:      #eef1f6;
+  --control-border: #737e95;   /* boundary of inputs, outline buttons and swatch rings: 3:1 or more on every surface */
+  /* Semantic planned-time tokens (spec/frontend-design.md, section 5): empty surface and its outline */
+  --cell-empty:  #ffffff;      /* unplanned hour, week with no template: the surface */
+  --cell-line:   #7d879b;      /* outline of empty cells and unplanned time: 3.6:1 on --cell-empty */
+  --accent:      #1b4b8f;
+  --accent-deep: #12335f;
+  --accent-soft: #dce7f5;
+  --on-accent:   #ffffff;
+  --warn:        #8a5a12;
+  --ok:          #2d6a4f;
+  --danger:      #a33a3a;
+  --attention:   #a33a3a;      /* border of a category under or over its time target: 6.9:1 on --bg */
+  --danger-tint: #fbefef;
+  --shadow:      0 8px 24px rgba(18, 51, 95, 0.12);   /* floating menus only */
+
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 28px;
+
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --focus-ring: 0 0 0 3px var(--accent-soft);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:          #0f1624;
+  --bg-2:        #131c2c;
+  --bg-3:        #1a2539;
+  --bg-4:        #223156;
+  --ink:         #e6ebf3;
+  --ink-2:       #c4cbd8;
+  --ink-3:       #98a2b5;
+  --ink-4:       #5d6780;
+  --rule:        #28324a;
+  --rule-2:      #1d2639;
+  --control-border: #78859e;
+  --cell-empty:  #0f1624;
+  --cell-line:   #67738f;      /* 3.8:1 on --cell-empty */
+  --accent:      #86aee8;
+  --accent-deep: #b5cdf1;
+  --accent-soft: #223156;
+  --on-accent:   #0f1624;
+  --warn:        #e8bd7a;
+  --ok:          #7fc4a0;
+  --danger:      #ee9a9a;
+  --attention:   #ee9a9a;      /* 9:1 on the dark surface */
+  --danger-tint: #3a2226;
+  --shadow:      0 8px 24px rgba(0, 0, 0, 0.45);
+}
+

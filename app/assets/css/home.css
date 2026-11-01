@@ -1,0 +1,286 @@
+/* Home (FR-HOME): timeline, hour axis, activity rows, day progress, habits, done ticks and journal. */
+/* ── Home: timeline with hour axis, activity rows, journal ── */
+.home-timeline { margin: var(--space-4) 0 var(--space-6); }
+.home-sleep-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.home-sleep-line + .home-timeline { margin-top: var(--space-2); }
+/* Thin colour-only bar: one flex segment per hour, no text inside */
+.home-timeline-bar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.home-timeline-seg {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.home-timeline-seg.is-unplanned {
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
+}
+/* Axis labels sit at their hour on the 24-hour scale, each with a short tick above it */
+.home-axis {
+  position: relative;
+  height: 22px;
+  margin-top: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.home-axis-tick {
+  position: absolute;
+  top: 0;
+  padding-top: 6px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  line-height: 1;
+}
+.home-axis-tick::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: var(--ink-3);
+}
+/* The range's own ends, when sleep is hidden: the label hangs off the bar's edge so it stays inside the column */
+.home-axis-tick.is-start { transform: none; }
+.home-axis-tick.is-start::before { left: 0; }
+.home-axis-tick.is-end { transform: translateX(-100%); }
+.home-axis-tick.is-end::before { left: auto; right: 0; }
+.home-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.home-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  position: relative;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--rule-2);
+  font-size: var(--fs-sm);
+}
+.home-row:last-child { border-bottom: none; }
+.home-row .btn { text-decoration: none; }
+/* The Now marker sits in the gutter to the left, so every row keeps the same column edges */
+.home-row.is-now::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--space-3) * -1);
+  width: 3px;
+  background: var(--accent);
+}
+.home-row-time {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.home-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.home-row-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--ink);
+}
+.home-row-cat {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  text-decoration: none;
+  justify-self: start;
+}
+.home-row-cat:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.home-row-hours {
+  min-width: 40px;
+  text-align: right;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.home-now {
+  padding: 0 var(--space-2);
+  border-radius: 4px;
+  background: var(--accent-soft);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink);
+}
+.home-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+
+/* Day switch beside the title (FR-HOME-18): previous, Today and next */
+.home-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.home-day-nav { display: flex; align-items: center; gap: var(--space-2); }
+.home-habits { margin-top: var(--space-6); }
+.home-habits > summary { font-size: var(--fs-md, 1rem); font-weight: 600; color: var(--ink); }
+.home-habits > .home-rows { margin-top: var(--space-3); }
+.home-habits-count { margin-left: var(--space-2); font-weight: 400; color: var(--ink-3); }
+/* All listed habits ticked: a small green check and its text, beside the count (FR-HOME-15) */
+.home-habits-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: var(--space-3);
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.home-habits-check {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: var(--bg);
+}
+.home-habits-check svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Done ticks (FR-HOME-14 to 16): a 44px tap area around a 22px circle, blue and empty to do, green with a check mark when done; the check mark and the struck name show done, not colour alone */
+.home-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px -8px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--bg);
+  cursor: pointer;
+}
+.home-check:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.home-check-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg);
+}
+.home-check:hover .home-check-box { background: var(--bg-2); }
+.home-check[aria-checked="true"] .home-check-box { background: var(--ok); border-color: var(--ok); }
+.home-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.home-row.is-done .home-row-time,
+.home-row.is-done .home-row-hours,
+.home-row.is-done .home-row-name { color: var(--ink-3); }
+.home-row.is-done .home-row-name { text-decoration: line-through; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+/* Habits have no time column: the name and its meta on the left, the check on the right */
+.home-row.is-habit { grid-template-columns: minmax(0, 1fr) auto; }
+.home-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.home-row-progress { font-variant-numeric: tabular-nums; }
+/* The progress line above the list: a count, or a check and "All done" when complete (no streak, no motion) */
+/* The progress line and, on today, the adherence ring: one row that wraps on a phone (FR-HOME-19) */
+/* Day progress (FR-HOME-17, 19): a 28px ring filled by the share of the day done, or a green check when all is done; one line of text
+   before it, the whole line sits at the right end of the row */
+.home-progress {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2) auto;
+  max-width: 100%;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.home-progress.is-complete { color: var(--ink); }
+.home-progress .adh-ring { flex: none; }
+/* The small day ring needs a track that shows at 0 of N: the Insights track (bg-3) is nearly the page colour at 28px */
+.home-progress .adh-ring-track { stroke: var(--bg-4); }
+.home-progress-check {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: var(--bg);
+}
+.home-progress-check svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Journal (FR-HOME-11 to 13) */
+.journal-view,
+.journal-edit { display: grid; gap: var(--space-3); justify-items: start; }
+.journal-edit { justify-items: stretch; }
+.journal-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.journal-date { width: auto; min-width: 0; height: 32px; }
+.journal-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.journal-text {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.journal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 32px;
+}
+.journal-status { font-size: var(--fs-sm); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 480px) {
+  .home-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .home-row .home-row-time { grid-column: 1 / -1; }
+}
+

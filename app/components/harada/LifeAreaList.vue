@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
-import { categoryEntryCounts, categoryEntryText } from '~/utils/entries'
+import { categoryEntryCounts, categoryEntryText } from '~/utils/entries/counts'
 import { hasContentArea, targetStatus } from '~/utils/goals'
 
 /**

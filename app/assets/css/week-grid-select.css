@@ -1,0 +1,178 @@
+/* Week grid selection (FR-PLAN-23): run, handles, undo line and the action bar and menu popups. */
+/* Selection: a tinted run with a hairline frame. A run that holds an activity gets its edge handles (Save and Cancel are in the action bar) */
+.wk-sel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  pointer-events: none;
+}
+.wk[data-editing="true"] .wk-sel { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 2px var(--accent); }
+.wk-dur {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.wk-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+.wk-handle.is-top { top: -12px; z-index: 6; }
+.wk-handle.is-bottom { bottom: -12px; }
+.wk-handle span {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.wk-handle:hover span,
+.wk-handle:focus-visible span { background: var(--ink); }
+/* Touch: each edge has a 44px target that reaches out of the run, only 6px into it, so a scroll that starts in the middle of a
+   one-hour block still scrolls. The pill sits on the edge */
+@media (pointer: coarse) {
+  .wk-handle { height: 44px; }
+  .wk-handle.is-top { top: -38px; align-items: flex-end; padding-bottom: 2px; }
+  .wk-handle.is-bottom { bottom: -38px; align-items: flex-start; padding-top: 2px; }
+}
+
+/* Undo: one quiet line under the grid after a change, gone after a few seconds */
+.wk-undo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+/* Popups: the action bar and the activity menu, teleported to the body above the grid */
+.wk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  touch-action: none;
+}
+.wk-pop {
+  position: fixed;
+  z-index: 30;
+  width: 260px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.wk-bar { padding: var(--space-3) var(--space-4) var(--space-4); }
+.wk-pop-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.wk-pop-day { font-weight: 600; color: var(--ink); }
+.wk-pop-range { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.wk-pop-dur { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.wk-pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+/* The menu fits the screen (fitMenu in ActivityGrid): its list is the part that scrolls, and a scroll stops at its ends */
+.wk-menu {
+  display: flex;
+  flex-direction: column;
+  max-height: min(400px, calc(100vh - 16px));
+  max-height: min(400px, calc(100dvh - 16px));
+  overflow: hidden;
+}
+.wk-menu .wk-pop-head {
+  flex: none;
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--rule-2);
+}
+.wk-menu-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.wk-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: left;
+  cursor: pointer;
+}
+.wk-menu-item:hover,
+.wk-menu-item:focus-visible { background: var(--bg-3); }
+.wk-menu-item.is-clear { color: var(--ink-2); }
+/* The menu keeps the full activity name: it wraps rather than being cut off */
+.wk-menu-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wk-menu-hrs {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.wk-dot-clear {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--control-border);
+  background: transparent;
+}
+.wk-menu-divider {
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--rule-2);
+}
+.wk-menu-empty {
+  margin: 0;
+  padding: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+

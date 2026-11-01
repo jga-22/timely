@@ -1,0 +1,117 @@
+/* Account menu in the topbar: the avatar, its save status, the switches and actions. */
+/* Account (topbar, both modes): one round avatar button; its menu holds the account, the save status, the theme switch and the actions */
+.account { position: relative; flex: none; }
+.account-button {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+/* Phones: a 44px touch target around the 36px circle, without changing the layout */
+.account-button::before { content: ""; position: absolute; inset: -4px; }
+.account-button:hover,
+.account-button[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
+.account-glyph { width: 20px; height: 20px; }
+/* Save state on the avatar: a quiet pulsing dot while saving, a danger dot when not saved; nothing when saved */
+.account-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.account-dot[data-state="error"] { background: var(--danger); }
+.account-dot[data-state="saving"] { animation: account-pulse 1.4s ease-in-out infinite; }
+@keyframes account-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .account-dot[data-state="saving"] { animation: none; } }
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.account-menu:focus { outline: none; }
+.account-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--space-1) var(--space-2) var(--space-3); border-bottom: 1px solid var(--rule-2); text-align: left; }
+.account-sub { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
+.account-name { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.account-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex: none; }
+.account-status[data-state="saved"] .account-status-dot { background: var(--ok); }
+.account-status[data-state="error"] { color: var(--danger); }
+.account-status[data-state="error"] .account-status-dot { background: var(--danger); }
+.account-status-note { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); overflow-wrap: anywhere; }
+/* Menu rows: icon, left-aligned label; the Dark mode row adds the switch track at the right (text and aria-checked carry the state too) */
+.account-items { display: flex; flex-direction: column; gap: 2px; }
+.account-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.account-item:hover:not(:disabled) { background: var(--bg-3); color: var(--ink); }
+.account-item:disabled { opacity: 0.5; cursor: default; }
+.account-item-danger { color: var(--danger); }
+.account-item-danger:hover:not(:disabled) { color: var(--danger); }
+.account-icon { width: 16px; height: 16px; flex: none; }
+.account-label { flex: 1; min-width: 0; }
+.account-track {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--control-border);
+  transition: background 0.18s ease;
+}
+.account-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  transition: transform 0.18s ease;
+}
+.account-switch[aria-checked="true"] .account-track { background: var(--accent); }
+.account-switch[aria-checked="true"] .account-knob { transform: translateX(14px); }
+

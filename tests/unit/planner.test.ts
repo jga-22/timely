@@ -1,35 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { WeekTemplate } from '~/types/planner'
-import {
-  DESIGN_COLORS,
-  DAYS,
-  HOURS_PER_DAY,
-  PLANNER_STATE_VERSION,
-  aggregateTemplate,
-  aggregateTemplateByCategory,
-  applyActivityCells,
-  cellAtIndex,
-  cellIndex,
-  createEmptySlots,
-  createHaradaSeed,
-  createLifeAreas,
-  createOnboardingState,
-  createSeedTemplate,
-  effectiveTemplate,
-  formatHour,
-  getActiveTemplate,
-  goalsTemplate,
-  hoursLabel,
-  isHourlyTemplate,
-  isPlannerState,
-  nextTemplateColor,
-  paintModeFor,
-  rangeConflicts,
-  rectangleCells,
-  scheduledWeeklyMinutesForActivity,
-  slotsToBlocks,
-  validateActivityFields,
-} from '~/utils/planner'
+import { DESIGN_COLORS, effectiveTemplate, getActiveTemplate, goalsTemplate, isHourlyTemplate, nextTemplateColor } from '~/utils/planner/templates'
+import { DAYS, formatHour, hoursLabel } from '~/utils/planner/format'
+import { HOURS_PER_DAY, applyActivityCells, cellAtIndex, cellIndex, createEmptySlots, paintModeFor, rangeConflicts, rectangleCells, slotsToBlocks } from '~/utils/planner/slots'
+import { PLANNER_STATE_VERSION, isPlannerState } from '~/utils/planner/state'
+import { aggregateTemplate, aggregateTemplateByCategory, scheduledWeeklyMinutesForActivity } from '~/utils/planner/aggregate'
+import { createHaradaSeed, createLifeAreas, createOnboardingState } from '~/utils/planner/seed'
+import { createSeedTemplate } from '~/utils/planner/seedTemplates'
+import { validateActivityFields } from '~/utils/planner/activities'
 import { activity, applyWeek, empty, seed, withActive, withTemplate } from './fixtures'
 
 describe('slotsToBlocks', () => {

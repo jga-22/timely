@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Category, Habit } from '~/types/planner'
 import { SLEEP_CODE, SLEEP_ID } from '~/utils/sleep'
-import { MAP_CENTRE, hasContentArea, horizonText, isMapKey, mapCells, nextMapPosition, targetStatus } from '~/utils/goals'
+import { MAP_CENTRE, hasContentArea, horizonText, isMapKey, mapCells, nextMapPosition, removeLifeAreaText, targetStatus } from '~/utils/goals'
 import { activity } from './fixtures'
 
 const area = (id: string, order: number, extra: Partial<Category> = {}): Category => ({ id, name: id, order, color: '#3c4b63', ...extra })
@@ -100,5 +100,27 @@ describe('horizonText', () => {
     expect(horizonText(null)).toBe('5 years')
     expect(horizonText({ horizonYears: 1 })).toBe('1 year')
     expect(horizonText({ horizonYears: 3 })).toBe('3 years')
+  })
+})
+
+describe('removeLifeAreaText', () => {
+  it('removes a life area with nothing in it at once', () => {
+    expect(removeLifeAreaText({ name: 'Social', activities: 0, habits: 0, otherCount: 3 })).toBe('Remove Social? It has no activities or habits.')
+  })
+
+  it('asks for another life area first when the contents have nowhere to go', () => {
+    expect(removeLifeAreaText({ name: 'Social', activities: 1, habits: 0, otherCount: 0 })).toBe('Add another life area first, then remove Social.')
+  })
+
+  it('names the contents that must move, singular and plural', () => {
+    expect(removeLifeAreaText({ name: 'Physical', activities: 1, habits: 3, otherCount: 2 })).toBe(
+      'Its 1 activity and 3 habits must move to another life area before Physical is removed.'
+    )
+    expect(removeLifeAreaText({ name: 'Physical', activities: 0, habits: 1, otherCount: 2 })).toBe(
+      'Its 1 habit must move to another life area before Physical is removed.'
+    )
+    expect(removeLifeAreaText({ name: 'Physical', activities: 2, habits: 0, otherCount: 2 })).toBe(
+      'Its 2 activities must move to another life area before Physical is removed.'
+    )
   })
 })

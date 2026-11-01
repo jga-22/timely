@@ -1,0 +1,37 @@
+/* Buttons (.btn and its variants). */
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.btn:hover { background: var(--bg-3); color: var(--ink); }
+.btn:disabled,
+.btn:disabled:hover { opacity: 0.45; cursor: default; background: transparent; color: var(--ink-2); }
+.btn-primary,
+.btn-primary:hover { background: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-primary:disabled,
+.btn-primary:disabled:hover { background: var(--accent); color: var(--on-accent); }
+.btn-outline { border-color: var(--control-border); color: var(--ink); }
+.btn-outline:hover { border-color: var(--ink-3); background: transparent; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: var(--danger-tint); color: var(--danger); }
+/* Destructive confirm (Reset my data): filled with --danger, text in the surface colour (6.9:1 light, 9:1 dark) */
+.btn-danger-solid,
+.btn-danger-solid:hover { background: var(--danger); border-color: var(--danger); color: var(--bg); }
+.btn-danger-solid:hover { background: color-mix(in srgb, var(--danger) 85%, var(--ink)); }
+.btn-sm { height: 32px; padding: 0 var(--space-3); }
+.btn-xs { height: 26px; padding: 0 var(--space-2); font-size: var(--fs-xs); }
+

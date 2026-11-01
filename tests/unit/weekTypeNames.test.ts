@@ -1,7 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { PlannerState, WeekTemplate } from '~/types/planner'
-import { ONBOARDING_TEMPLATE_ID, createEmptySlots } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { usePlannerStore } from '~/stores/planner'
 import {
   createTemplate,

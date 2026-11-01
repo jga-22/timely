@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptySlots } from '~/utils/planner'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { ALL_NIGHTS, WEEKDAY_NIGHTS, WEEKEND_NIGHTS } from '~/utils/sleep'
 import { setSleep, setupSleep } from '~/utils/store/sleepSetup'
 import { empty } from './fixtures'

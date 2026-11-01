@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { aggregateTemplateByCategory, getActiveTemplate, hoursLabel } from '~/utils/planner'
+import { aggregateTemplateByCategory } from '~/utils/planner/aggregate'
+import { getActiveTemplate } from '~/utils/planner/templates'
+import { hoursLabel } from '~/utils/planner/format'
 import { onboardedCategories } from '~/utils/onboarding'
 
 /** Guided tour (FR-ONB-6): the cards 3 to 5 of the path, at the bottom of the screen. It never blocks the page and can be skipped at any step */

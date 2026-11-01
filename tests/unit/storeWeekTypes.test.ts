@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannerState, WeekTemplate } from '~/types/planner'
-import { DESIGN_COLORS, ONBOARDING_TEMPLATE_ID, createEmptySlots } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
+import { createEmptySlots } from '~/utils/planner/slots'
 import { SLEEP_ID } from '~/utils/sleep'
 import {
   createTemplate,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
 
 /**
  * The Edit week type panel (FR-UX-2): name, colour, time off, and the delete of the active week type, with changes applied at once.

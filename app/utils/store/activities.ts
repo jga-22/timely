@@ -3,7 +3,8 @@
  * activity of a preset role. Owns createRoleActivity, addActivity, ownActivityFor, updateActivity, removeActivity and ensureSleepActivity
  */
 import type { Activity, PlannerState } from '~/types/planner'
-import { DESIGN_COLORS, validateActivityFields, type ActivityFieldErrors } from '~/utils/planner'
+import { DESIGN_COLORS } from '~/utils/planner/templates'
+import { validateActivityFields, type ActivityFieldErrors } from '~/utils/planner/activities'
 import { freeShortCode, presetCategoryId } from '~/utils/plannerStore'
 import { shortCodeFor } from '~/utils/onboarding'
 import { ROLE_LABELS, type PresetRole } from '~/utils/presets'

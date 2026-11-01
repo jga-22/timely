@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
 import { adherenceMode, adherenceReport, basisOf, calendarDays, trackingStartOf } from '~/utils/adherence'
-import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner'
+import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withJournal, withSlots } from './fixtures'
 
 // Monday 26 October 2026 is the first tracked day in these tests; today is Wednesday 28 October

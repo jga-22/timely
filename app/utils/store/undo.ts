@@ -2,7 +2,7 @@
  * Slot undo: the copies an action returns so the form's Undo can put the hours back in one step. Owns the snapshot and the restore
  */
 import type { PlannerState, WeekTemplate } from '~/types/planner'
-import { getTemplateById } from '~/utils/planner'
+import { getTemplateById } from '~/utils/planner/templates'
 
 /** The slots of some week types as they were before an action */
 export type SlotUndo = Array<{ templateId: string; slots: string[] }>

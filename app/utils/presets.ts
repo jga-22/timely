@@ -1,5 +1,6 @@
 import type { Activity, PlannerState, WeekTemplate } from '~/types/planner'
-import { createEmptySlots, goalsTemplate } from '~/utils/planner'
+import { createEmptySlots } from '~/utils/planner/slots'
+import { goalsTemplate } from '~/utils/planner/templates'
 import { sleepActivityId } from '~/utils/sleep'
 
 /** The three roles a preset paints. Free time and meals are never painted (FR-TPL-6) */

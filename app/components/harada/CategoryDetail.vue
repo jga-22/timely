@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { DESIGN_COLORS, countLabel } from '~/utils/planner'
-import { entryLines } from '~/utils/entries'
 import { isSleepActivity } from '~/utils/sleep'
 import { focusEditById } from '~/utils/focus'
 
+// The detail of one life area (Goals): its name and mode, the view of its goal and target, and the edit mode's pieces. The form, the
+// entry list and the footer are their own components; this shell holds the selection and the mode
 const props = defineProps<{ categoryId: string; editing: boolean }>()
 const emit = defineEmits<{ back: [] }>()
 
 const planner = usePlannerStore()
 const { categories } = storeToRefs(planner)
 const { setSelection } = useNav()
-const { resultText, canUndo, showResult, undoResult } = useEntryResult()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
 const category = computed(() => categories.value.find(entry => entry.id === props.categoryId))
@@ -20,188 +19,37 @@ const position = computed(() => sortedCategories.value.findIndex(entry => entry.
 const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
 const otherCategories = computed(() => sortedCategories.value.filter(entry => entry.id !== props.categoryId))
-const categoryName = (categoryId: string) => categories.value.find(entry => entry.id === categoryId)?.name ?? 'No life area'
 
 // Sleep is not shown in a life area's lists or counts (FR-SLEEP-6)
 const activityCount = computed(() => planner.activities.filter(activity => activity.categoryId === props.categoryId && !isSleepActivity(activity)).length)
 const habitCount = computed(() => planner.habits.filter(habit => habit.categoryId === props.categoryId).length)
-const hasContent = computed(() => activityCount.value > 0 || habitCount.value > 0)
-
-// ── Activities and habits (FR-ITEM-4): one list of entries. A row is a habit of this life area (with its activity, wherever that
-// lies), or an activity of this life area that no habit links to
-interface EntryRow {
-  key: string
-  habitId: string | null
-  activityId: string | null
-  name: string
-  lines: string[]
-  note: string
-}
-
-const entryRows = computed<EntryRow[]>(() => {
-  const here = props.categoryId
-  const rows: EntryRow[] = []
-  const linkedAnywhere = new Set(planner.habits.map(habit => habit.activityId).filter((id): id is string => !!id))
-
-  for (const habit of planner.habits.filter(entry => entry.categoryId === here)) {
-    const activity = habit.activityId ? planner.activities.find(entry => entry.id === habit.activityId) : undefined
-
-    rows.push({
-      key: habit.id,
-      habitId: habit.id,
-      activityId: activity?.id ?? null,
-      name: habit.name,
-      lines: entryLines(planner.$state, habit.id, activity?.id ?? null),
-      note: activity && activity.categoryId !== here ? `in ${categoryName(activity.categoryId)}` : ''
-    })
-  }
-
-  const habitLinkedHere = new Set(planner.habits.filter(habit => habit.categoryId === here).map(habit => habit.activityId))
-
-  for (const activity of planner.activities) {
-    if (habitLinkedHere.has(activity.id) || isSleepActivity(activity)) continue
-
-    // An activity of this life area that no habit links to
-    if (activity.categoryId !== here || linkedAnywhere.has(activity.id)) continue
-
-    rows.push({
-      key: activity.id,
-      habitId: null,
-      activityId: activity.id,
-      name: activity.name,
-      lines: entryLines(planner.$state, null, activity.id),
-      note: ''
-    })
-  }
-
-  return rows
-})
-
-// ── One item at a time: a row's form or the add form, opened from its pencil or "+ Add" (both modes)
-const openKey = ref<string | null>(null)
-const adding = ref(false)
-const addTrigger = ref<HTMLButtonElement | null>(null)
-
-function toggleRow(key: string) {
-  adding.value = false
-  openKey.value = openKey.value === key ? null : key
-}
-
-function openAdd() {
-  openKey.value = null
-  adding.value = true
-}
-
-// Done, Cancel, Escape and a removal leave the form here; focus returns to the row's pencil, or to "+ Add"
-function closeForm() {
-  const key = openKey.value
-  openKey.value = null
-  adding.value = false
-  nextTick(() => {
-    if (key) document.getElementById(`entry-edit-${key}`)?.focus()
-    else addTrigger.value?.focus()
-  })
-}
-
-function onSaved(result: { text?: string; undo?: Array<{ templateId: string; slots: string[] }> }) {
-  if (result.text) showResult(result.text, result.undo ?? [])
-}
 
 // ── Mode changes live in the URL (FR-UX-5); Done replaces the entry and returns focus to Edit
 const editButton = ref<HTMLButtonElement | null>(null)
+const manage = ref<{ closeConfirm: () => boolean; reset: () => void } | null>(null)
 
 function startEdit() {
   setSelection({ item: props.categoryId, edit: true }).then(() => nextTick(() => focusEditById('cat-edit-name', 'cat-detail')))
 }
 
 function finishEdit() {
-  removing.value = false
+  manage.value?.reset()
   setSelection({ item: props.categoryId }, true).then(() => nextTick(() => editButton.value?.focus()))
 }
 
-// Escape closes a confirmation first, otherwise leaves edit mode
+// Escape closes a removal confirmation first, otherwise leaves edit mode
 function onKeydown(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
 
-  if (removing.value) {
+  if (manage.value?.closeConfirm()) {
     event.stopPropagation()
-    cancelRemove()
   } else if (props.editing) {
     event.stopPropagation()
     finishEdit()
   }
 }
 
-// ── Edit drafts: edits apply at once (FR-UX-6); an empty name is refused and its message stays until a valid one
-const removing = ref(false)
-const nameDraft = ref('')
-const nameError = ref('')
-
-watch(
-  () => [props.categoryId, props.editing] as const,
-  () => {
-    nameDraft.value = category.value?.name ?? ''
-    nameError.value = ''
-    removing.value = false
-    openKey.value = null
-    adding.value = false
-  },
-  { immediate: true }
-)
-
-function onNameInput(event: Event) {
-  const value = (event.target as HTMLInputElement).value
-  nameDraft.value = value
-
-  if (value.trim()) {
-    planner.updateCategory(props.categoryId, { name: value.trim() })
-    nameError.value = ''
-  } else {
-    nameError.value = 'Name can\'t be empty'
-  }
-}
-
-// Leaving an empty name restores the stored one
-function onNameBlur() {
-  nameDraft.value = category.value?.name ?? ''
-}
-
-// ── Remove: inline confirmation that names the impact; contents move first (FR-UX-7, FR-GOALS-17)
-const moveToId = ref('')
-const removeTrigger = ref<HTMLButtonElement | null>(null)
-const cancelRemoveButton = ref<HTMLButtonElement | null>(null)
-
-const contentSummary = computed(() => [
-  activityCount.value ? countLabel(activityCount.value, 'activity', 'activities') : '',
-  habitCount.value ? countLabel(habitCount.value, 'habit', 'habits') : ''
-].filter(Boolean).join(' and '))
-
-const removeText = computed(() => {
-  const name = category.value?.name ?? ''
-  if (!hasContent.value) return `Remove ${name}? It has no activities or habits.`
-  if (!otherCategories.value.length) return `Add another life area first, then remove ${name}.`
-
-  return `Its ${contentSummary.value} must move to another life area before ${name} is removed.`
-})
-
-const moveToOptions = computed(() => otherCategories.value)
-
-function askRemove() {
-  moveToId.value = otherCategories.value[0]?.id ?? ''
-  removing.value = true
-  nextTick(() => cancelRemoveButton.value?.focus())
-}
-
-function cancelRemove() {
-  removing.value = false
-  nextTick(() => removeTrigger.value?.focus())
-}
-
-function confirmRemove() {
-  const target = hasContent.value ? moveToId.value : undefined
-  if (!planner.removeCategory(props.categoryId, target)) return
-
-  removing.value = false
+function onRemoved() {
   setSelection({}, true)
 }
 </script>
@@ -238,145 +86,22 @@ function confirmRemove() {
     </template>
 
     <!-- Edit mode: fields apply at once; Done leaves. The list below is the same in both modes -->
-    <template v-else>
-      <section class="detail-block">
-        <div class="form-stack">
-          <div class="field">
-            <label class="field-label" for="cat-edit-name">Name</label>
-            <input
-              id="cat-edit-name"
-              class="timely-input"
-              :value="nameDraft"
-              :aria-invalid="!!nameError"
-              aria-describedby="cat-edit-name-error"
-              @input="onNameInput"
-              @blur="onNameBlur"
-            />
-            <p v-if="nameError" id="cat-edit-name-error" class="field-error">{{ nameError }}</p>
-          </div>
+    <HaradaCategoryEditFields v-else :category="category" />
 
-          <div class="field">
-            <span class="field-label">Colour</span>
-            <div class="color-pop color-pop-inline">
-              <button
-                v-for="dc in DESIGN_COLORS"
-                :key="dc.id"
-                type="button"
-                :style="{ background: dc.bg }"
-                :data-active="category.color === dc.bg"
-                :aria-label="`Colour ${dc.id}`"
-                @click="planner.setCategoryColor(category.id, dc.bg)"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+    <HaradaCategoryEntryList :category-id="category.id" :editing="editing" />
 
-      <section class="detail-block">
-        <div class="form-stack">
-          <AutoTextarea
-            :model-value="category.goal5y ?? ''"
-            label="5-year goal"
-            @update:model-value="planner.updateCategory(category.id, { goal5y: $event })"
-          />
-
-          <AutoTextarea
-            :model-value="category.target1y ?? ''"
-            label="1-year target"
-            @update:model-value="planner.updateCategory(category.id, { target1y: $event })"
-          />
-
-          <label class="check">
-            <input
-              type="checkbox"
-              :checked="!!category.targetTbd"
-              @change="planner.updateCategory(category.id, { targetTbd: ($event.target as HTMLInputElement).checked })"
-            />
-            Target still to be defined
-          </label>
-        </div>
-      </section>
-    </template>
-
-    <section class="detail-block">
-      <h4 class="detail-label">Activities and habits</h4>
-      <ul v-if="entryRows.length" class="row-list">
-        <li v-for="row in entryRows" :key="row.key" class="entry-row">
-          <div class="row-item">
-            <span class="row-main">
-              <span class="row-name">{{ row.name }}</span>
-              <span v-for="(line, index) in row.lines" :key="index" class="row-meta">{{ line }}</span>
-              <span v-if="row.note" class="row-meta">{{ row.note }}</span>
-            </span>
-            <EditButton
-              :id="`entry-edit-${row.key}`"
-              :label="`Edit ${row.name}`"
-              :expanded="openKey === row.key"
-              @click="toggleRow(row.key)"
-            />
-          </div>
-
-          <ActivityForm
-            v-if="openKey === row.key"
-            :habit-id="row.habitId"
-            :activity-id="row.activityId"
-            :category-id="category.id"
-            @saved="onSaved"
-            @close="closeForm"
-          />
-        </li>
-      </ul>
-      <p v-else class="detail-empty">No activities or habits in this life area yet.</p>
-
-      <ActivityForm
-        v-if="adding"
-        key="add"
-        :habit-id="null"
-        :activity-id="null"
-        :category-id="category.id"
-        @saved="onSaved"
-        @close="closeForm"
-      />
-      <button v-else ref="addTrigger" type="button" class="chip-add detail-add" @click="openAdd">+ Add</button>
-
-      <div v-if="resultText" class="sched-result" role="status">
-        <span>{{ resultText }}</span>
-        <button v-if="canUndo" type="button" class="btn btn-sm" @click="undoResult">Undo</button>
-      </div>
-    </section>
-
-    <template v-if="editing">
-      <section class="detail-block detail-manage">
-        <div class="form-actions">
-          <button type="button" class="btn btn-sm" :disabled="isFirst" @click="planner.moveCategory(category.id, -1)">Move up</button>
-          <button type="button" class="btn btn-sm" :disabled="isLast" @click="planner.moveCategory(category.id, 1)">Move down</button>
-        </div>
-
-        <button v-if="!removing" ref="removeTrigger" type="button" class="btn btn-sm btn-danger detail-remove" @click="askRemove">
-          Remove life area
-        </button>
-
-        <div v-else class="inline-confirm" role="group" aria-label="Confirm remove life area">
-          <p class="inline-confirm-text">{{ removeText }}</p>
-          <div class="form-actions">
-            <template v-if="!hasContent || otherCategories.length">
-              <select
-                v-if="hasContent"
-                v-model="moveToId"
-                class="timely-select"
-                aria-label="Move contents to"
-              >
-                <option v-for="other in moveToOptions" :key="other.id" :value="other.id">{{ other.name }}</option>
-              </select>
-              <button type="button" class="btn btn-sm btn-danger" :disabled="hasContent && !moveToId" @click="confirmRemove">
-                {{ hasContent ? 'Move and remove' : 'Remove' }}
-              </button>
-            </template>
-            <button ref="cancelRemoveButton" type="button" class="btn btn-sm" @click="cancelRemove">Cancel</button>
-          </div>
-        </div>
-      </section>
-    </template>
+    <HaradaCategoryManage
+      v-if="editing"
+      ref="manage"
+      :category-id="category.id"
+      :name="category.name"
+      :is-first="isFirst"
+      :is-last="isLast"
+      :activity-count="activityCount"
+      :habit-count="habitCount"
+      :other-categories="otherCategories"
+      @removed="onRemoved"
+    />
   </div>
 </template>
 
@@ -451,51 +176,10 @@ function confirmRemove() {
   color: var(--ink-3);
 }
 
-.detail-empty,
 .detail-flag {
   margin: 0;
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--warn);
-}
-
-.detail-add {
-  align-self: flex-start;
-  margin-top: var(--space-3);
-}
-
-.entry-row .row-item {
-  flex-wrap: wrap;
-}
-
-.row-confirm {
-  display: inline-flex;
-  gap: var(--space-2);
-}
-
-.check {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 24px;
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
-  cursor: pointer;
-}
-
-.check input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent);
-}
-
-.detail-manage {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--rule-2);
-}
-
-.detail-remove {
-  align-self: flex-start;
 }
 </style>

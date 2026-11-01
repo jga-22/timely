@@ -1,0 +1,69 @@
+/* Inline confirmation, empty state, and the responsive rules for the shell and shared panels. */
+/* Inline confirmation for a destructive action: nothing changes before its button (FR-UX-7) */
+.inline-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}
+.inline-confirm-text {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+/* ── Panels and metrics shared by views ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+  color: var(--ink-2);
+}
+
+@media (max-width: 1280px) {
+  .view { padding: 40px 32px 80px; }
+}
+
+@media (max-width: 1024px) {
+  .view { padding: 32px 28px 72px; }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0 var(--space-4);
+    padding: var(--space-3) var(--space-4) 0;
+  }
+  .brand { flex: 1; }
+  .tabs {
+    order: 3;
+    flex-basis: 100%;
+    gap: var(--space-5);
+    height: 44px;
+  }
+
+  .view { padding: var(--space-5) var(--space-4) 72px; }
+  .page-title { font-size: var(--fs-lg); }
+  .section { margin-top: var(--space-6); padding-top: var(--space-5); }
+
+  .timely-input,
+  .timely-select,
+  .pill-input { height: 40px; }
+
+
+  .form-row,
+  .form-row-3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .view { padding: var(--space-4) var(--space-4) 64px; }
+
+
+}
+

@@ -2,7 +2,7 @@
 
 Status: **draft, not built**. The app stores one JSON document in `localStorage` today (`PlannerState`, storage version 8). This file defines the relational model that would replace it. The DDL is in `schema.sql`; the diagram is in `erd.drawio` and `erd.mmd`. Decision pending with the owner (see `../../.claude/agent.md`).
 
-The source of truth for the shape is `app/types/planner.ts`; the seed and validation are in `app/utils/planner.ts`; the actions are in `app/stores/planner.ts`.
+The source of truth for the shape is `app/types/planner.ts`; the seed is in `app/utils/planner/seed.ts` and the validation in `app/utils/planner/state.ts`; the actions are in `app/stores/planner.ts`.
 
 ## 1. Mapping from the TypeScript model
 

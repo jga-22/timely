@@ -13,7 +13,7 @@
 --   2. tables (user_id on every table, composite keys, constraints, indexes)
 --   3. triggers (updated_at, invariants that a CHECK cannot express)
 --   4. row level security (own rows only, for the authenticated role)
---   5. seed function (OPTIONAL, separated, mirrors app/utils/planner.ts createInitialState)
+--   5. seed function (OPTIONAL, separated, mirrors app/utils/planner/seed.ts createInitialState)
 -- =============================================================================
 
 begin;
@@ -346,7 +346,7 @@ grant usage on schema public to authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 
 -- -----------------------------------------------------------------------------
--- 5. Seed (OPTIONAL). Mirrors createInitialState() in app/utils/planner.ts for one user.
+-- 5. Seed (OPTIONAL). Mirrors createInitialState() in app/utils/planner/seed.ts for one user.
 --
 -- Not run by the migration. Use it to get the same starter data the app seeds:
 --   select public.seed_planner_defaults('<user uuid>');            -- ISO year of today
