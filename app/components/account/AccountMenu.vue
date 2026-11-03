@@ -118,15 +118,17 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       </div>
 
       <div class="account-items">
-        <UiSwitch
-          ref="themeRef"
-          class="account-item account-switch"
-          :model-value="dark"
-          @update:model-value="toggleDark"
-        >
+        <div class="account-item account-row">
           <UiIcon name="moon" size="sm" />
-          <span class="account-label">Dark mode</span>
-        </UiSwitch>
+          <span id="account-dark-label" class="account-label" @click="toggleDark">Dark mode</span>
+          <UiSwitch
+            ref="themeRef"
+            class="account-switch"
+            labelledby="account-dark-label"
+            :model-value="dark"
+            @update:model-value="toggleDark"
+          />
+        </div>
 
         <div class="account-motion">
           <p class="account-motion-label">Motion</p>
