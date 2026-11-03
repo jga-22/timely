@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_COLOR } from '~/utils/palette'
 import type { Ambition } from '~/types/planner'
 import { horizonText, isMapKey, nextMapPosition, type MapCell } from '~/utils/goals'
 
@@ -42,7 +43,7 @@ function onMapKeydown(event: KeyboardEvent, position: number) {
           @keydown="onMapKeydown($event, position)"
         >
           <span class="cell-head">
-            <span class="dot dot-lg" :style="{ background: cell.color ?? '#888' }" aria-hidden="true" />
+            <span class="dot dot-lg" :style="{ background: cell.color ?? FALLBACK_COLOR }" aria-hidden="true" />
             <span class="cell-num">{{ String(cell.order).padStart(2, '0') }}</span>
           </span>
           <span class="cell-title">{{ cell.name }}</span>

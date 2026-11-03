@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePlannerFill } from '~/composables/usePlannerFill'
-import { inkOn } from '~/utils/palette'
+import { inkOn, FALLBACK_BLOCK_COLOR } from '~/utils/palette'
 import type { Activity } from '~/types/planner'
 import { formatHour } from '~/utils/planner/format'
 import { type TimeBlock } from '~/utils/planner/slots'
@@ -42,7 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const { fill } = usePlannerFill()
-const blockColor = (block: TimeBlock) => fill(props.activities.get(block.activityId)?.color ?? '#999999')
+const blockColor = (block: TimeBlock) => fill(props.activities.get(block.activityId)?.color ?? FALLBACK_BLOCK_COLOR)
 /** A block prints the activity's short code (1 to 3 letters), so no name is cut off; the full name is in the block's title */
 const blockCode = (block: TimeBlock) => props.activities.get(block.activityId)?.shortCode ?? ''
 const isCursor = (hour: number) => props.cursor.day === props.day && props.cursor.hour === hour

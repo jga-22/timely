@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_AREA_COLOR } from '~/utils/palette'
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
@@ -23,7 +24,7 @@ const split = computed(() => (activeTemplate.value ? templateSplit(planner.$stat
 const hasPlan = computed(() => (split.value?.planned ?? 0) > 0)
 const hoursText = (hours: number) => `${Number.isInteger(hours) ? hours : hours.toFixed(1)} h`
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
+const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
 const notPlannedShare = computed(() => split.value?.notPlannedShare ?? 100)

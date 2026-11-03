@@ -5,6 +5,7 @@
 
 @import './reset.css' layer(reset);
 @import './tokens.css' layer(tokens);
+@import './tokens-legacy.css' layer(tokens);
 @import './base.css' layer(base);
 @import './features/shell.css' layer(features);
 @import './features/account.css' layer(features);

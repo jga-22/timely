@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_AREA_COLOR } from '~/utils/palette'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import type { AdherenceBar, AdherenceBarMode, AdherenceReport, HabitRow, Measure } from '~/utils/adherence'
@@ -16,7 +17,7 @@ const { link } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
+const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
 // A whole number for display; a positive value never shows as zero

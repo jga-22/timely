@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_AREA_COLOR } from '~/utils/palette'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { UNITS, chartScale, formatInUnit, type InsightsBar, type InsightsGranularity, type InsightsUnit } from '~/utils/insights'
@@ -20,7 +21,7 @@ const scale = computed(() => chartScale(props.bars))
 const unitShort = computed(() => UNITS.find(option => option.id === props.unit)!.short)
 const amount = (hours: number) => `${formatInUnit(hours, props.unit)} ${unitShort.value}`
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
+const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
 const heightPct = (hours: number) => `${(hours / scale.value) * 100}%`
