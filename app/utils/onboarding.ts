@@ -1,5 +1,5 @@
 import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
-import { isoWeekStarts } from '~/utils/dates'
+import { isoWeekStarts, weekdayOf } from '~/utils/dates'
 import { applyActivityCells } from '~/utils/planner/slots'
 import { createOnboardingState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { getTemplateById } from '~/utils/planner/templates'
@@ -43,6 +43,21 @@ const SESSION_START_HOURS = [18, 7]
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(value)))
 
+/**
+ * The weekday indexes (0 is Monday) of the sessions of a habit a week (FR-ONB-5). The standard spread for its count; when today is
+ * not in it, the spread's day nearest to today becomes today, so the first session falls on today's weekday. Any count of one or
+ * more allows this, because today is one of the seven days
+ */
+export const sessionDays = (timesPerWeek: number, weekday: number): number[] => {
+  const days = SESSION_DAYS[clamp(timesPerWeek, 1, 7)] ?? []
+
+  if (days.includes(weekday)) return days
+
+  const nearest = days.reduce((best, day) => (Math.abs(day - weekday) < Math.abs(best - weekday) ? day : best), days[0] ?? weekday)
+
+  return days.map(day => (day === nearest ? weekday : day)).sort((a, b) => a - b)
+}
+
 /** The first letters of the first word, upper-cased: "Run" gives RUN. Falls back to ACT when there are no Latin letters */
 export const shortCodeFor = (name: string): string => {
   const word = name.trim().split(/\s+/)[0] ?? ''
@@ -71,9 +86,10 @@ export const needsOnboarding = (saved: PlannerState | null): boolean => !saved |
  * Builds the ambition, the chosen life areas (the default categories, filled in place: a 1-year target, an activity and a habit each),
  * and the template with every goal's sessions (FR-ONB-5). A habit asks for the chosen hours each time and its activity fills the
  * same hours in the template, so Goals sees equal times. The other default areas stay empty. The template is assigned to every
- * ISO week of `year`. `stamp` makes the ids; pass a fixed one in tests.
+ * ISO week of `year`. `today` is the caller's date key ('YYYY-MM-DD'): a goal's sessions include its weekday (`sessionDays`). `stamp`
+ * makes the ids; pass a fixed one in tests.
  */
-export const buildOnboardingState = (answers: OnboardingAnswers, year: number, stamp: number = Date.now()): PlannerState => {
+export const buildOnboardingState = (answers: OnboardingAnswers, year: number, today: string, stamp: number = Date.now()): PlannerState => {
   const base = createOnboardingState()
   const template = getTemplateById(base, ONBOARDING_TEMPLATE_ID)!
   const categories: Category[] = base.categories.map(category => ({ ...category }))
@@ -107,7 +123,7 @@ export const buildOnboardingState = (answers: OnboardingAnswers, year: number, s
       minutesPerOccurrence: hoursEach * 60
     })
 
-    const cells = (SESSION_DAYS[timesPerWeek] ?? []).flatMap(day =>
+    const cells = sessionDays(timesPerWeek, weekdayOf(today)).flatMap(day =>
       Array.from({ length: hoursEach }, (_, hour) => day * 24 + SESSION_START_HOURS[index]! + hour)
     )
     slots = applyActivityCells(slots, cells, activityId, 'add')
