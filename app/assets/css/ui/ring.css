@@ -1,5 +1,5 @@
 /* Rings (components/ui/Ring.vue): a track and an arc from 0 to the value, tone accent or ok, a check when done.
-   The track is --line (a decoration: the arc carries the figure). Layer ui. */
+   The track is --track (visible at 0 of N; decorative, the figure is in the text). Layer ui. */
 .ring {
   position: relative;
   display: inline-grid;
@@ -18,7 +18,7 @@
 }
 .ring-track {
   fill: none;
-  stroke: var(--line);
+  stroke: var(--track);
   stroke-width: var(--ring-stroke);
 }
 .ring-arc {

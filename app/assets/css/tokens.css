@@ -13,6 +13,7 @@
   --stone-50: #f4f2ec;
   --stone-100: #ebe8e0;
   --stone-200: #e2ded4;
+  --stone-300: #cdc7b9;
   --stone-600: #5c626b;
   --stone-700: #434951;
   --stone-900: #1c2026;
@@ -38,6 +39,7 @@
   --night-100: #eceae4;
   --night-200: #c3c6cc;
   --night-300: #9ea3ab;
+  --night-400: #4a505a;
   --night-700: #33456e;
   --night-800: #222c44;
   --night-950: #0e1321;
@@ -66,6 +68,7 @@
   --ink-inverse: var(--paper);         /* text on --ink (tooltip, toast) */
   --line: var(--stone-200);            /* dividers and decoration */
   --line-2: var(--stone-100);          /* quieter dividers */
+  --track: var(--stone-300);           /* the track of a ring: visible at 0 of N (decorative) */
   --control-border: var(--stone-600);  /* boundary of inputs, outline buttons, ticks: 3:1 on every surface */
   --accent: var(--blue-600);           /* links, the primary action, the current item */
   --accent-hover: var(--blue-700);
@@ -182,6 +185,7 @@ html[data-theme="dark"] {
   --ink-3: var(--night-300);
   --line: var(--night-3);
   --line-2: var(--night-2);
+  --track: var(--night-400);
   --control-border: var(--night-300);
   --accent: var(--blue-300);
   --accent-hover: var(--blue-200);
