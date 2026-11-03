@@ -23,6 +23,17 @@ const moreOpen = useState(`${props.stateKey}-more`, () => false)
 const FIRST_ROW = GRANULARITIES.filter(option => option.id === 'month' || option.id === 'week')
 const MORE_GRANULARITIES = GRANULARITIES.filter(option => option.id === 'quarter' || option.id === 'year')
 
+/** The choices of the segmented controls, as the Segmented component takes them */
+const toOptions = <T extends string>(list: Array<{ id: T; label: string }>): { value: T; label: string }[] =>
+  list.map(option => ({ value: option.id, label: option.label }))
+const FIRST_ROW_OPTIONS = toOptions(FIRST_ROW)
+const MORE_OPTIONS = toOptions(MORE_GRANULARITIES)
+const SPAN_OPTIONS: { value: 'one' | 'several'; label: string }[] = [
+  { value: 'one', label: 'One year' },
+  { value: 'several', label: 'Several years' },
+]
+const UNIT_OPTIONS = toOptions(UNITS)
+
 // The disclosure's button names the settings it hides when they are not the defaults, so they are not lost from view
 const moreSummary = computed(() => [
   granularity.value === 'quarter' || granularity.value === 'year' ? GRANULARITIES.find(option => option.id === granularity.value)!.label : '',
@@ -35,16 +46,7 @@ const moreSummary = computed(() => [
   <div class="insights-controls">
     <div class="insights-toolbar">
       <YearNav v-if="withYear" />
-      <div class="segmented" role="group" aria-label="Granularity">
-        <button
-          v-for="option in FIRST_ROW"
-          :key="option.id"
-          type="button"
-          :data-active="granularity === option.id"
-          :aria-pressed="granularity === option.id"
-          @click="granularity = option.id"
-        >{{ option.label }}</button>
-      </div>
+      <UiSegmented v-model="granularity" :options="FIRST_ROW_OPTIONS" label="Granularity" />
       <button
         type="button"
         class="btn btn-sm insights-more-toggle"
@@ -58,20 +60,8 @@ const moreSummary = computed(() => [
 
     <div v-if="moreOpen" :id="moreId" class="insights-more">
       <div class="insights-toolbar">
-        <div class="segmented" role="group" aria-label="Granularity, longer periods">
-          <button
-            v-for="option in MORE_GRANULARITIES"
-            :key="option.id"
-            type="button"
-            :data-active="granularity === option.id"
-            :aria-pressed="granularity === option.id"
-            @click="granularity = option.id"
-          >{{ option.label }}</button>
-        </div>
-        <div class="segmented" role="group" aria-label="Range">
-          <button type="button" :data-active="span === 'one'" :aria-pressed="span === 'one'" @click="span = 'one'">One year</button>
-          <button type="button" :data-active="span === 'several'" :aria-pressed="span === 'several'" @click="span = 'several'">Several years</button>
-        </div>
+        <UiSegmented v-model="granularity" :options="MORE_OPTIONS" label="Granularity, longer periods" />
+        <UiSegmented v-model="span" :options="SPAN_OPTIONS" label="Range" />
         <div v-if="span === 'several'" class="insights-horizon">
           <label class="field-label" :for="horizonId">Years</label>
           <select :id="horizonId" v-model.number="horizon" class="timely-select">
@@ -81,16 +71,7 @@ const moreSummary = computed(() => [
         </div>
       </div>
       <div v-if="withUnit" class="insights-toolbar">
-        <div class="segmented" role="group" aria-label="Show in">
-          <button
-            v-for="option in UNITS"
-            :key="option.id"
-            type="button"
-            :data-active="unit === option.id"
-            :aria-pressed="unit === option.id"
-            @click="unit = option.id"
-          >{{ option.label }}</button>
-        </div>
+        <UiSegmented :model-value="unit ?? 'hours'" :options="UNIT_OPTIONS" label="Show in" @update:model-value="unit = $event" />
       </div>
     </div>
   </div>

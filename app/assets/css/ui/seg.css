@@ -1,6 +1,6 @@
-/* Segmented control: a row of choices where one is pressed (data-active="true" on its button). .segmented holds the
-   Insights and Goals switches, the sleep editor and the range controls. Layer ui. */
-.segmented {
+/* Segmented control (components/ui/Segmented.vue): a row of pill choices; the pressed one is aria-pressed="true" and
+   lifts onto the surface. Layer ui. */
+.seg {
   display: inline-flex;
   padding: 3px;
   gap: 3px;
@@ -8,7 +8,7 @@
   background: var(--surface-2);
   flex-shrink: 0;
 }
-.segmented button {
+.seg button {
   min-height: 30px;
   padding: 0 var(--sp-4);
   border: 0;
@@ -18,10 +18,10 @@
   font-size: var(--text-small);
 }
 @media (pointer: coarse) {
-  .segmented button { min-height: var(--hit); }
+  .seg button { min-height: var(--hit); }
 }
-.segmented button:hover { color: var(--ink); }
-.segmented button[data-active="true"] {
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] {
   background: var(--surface);
   color: var(--ink);
   font-weight: 600;

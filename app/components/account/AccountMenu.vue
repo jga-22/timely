@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { accountInitials, avatarLabel, needsSaveAttention, saveLabel } from '~/utils/account'
+import type { MotionChoice } from '~/utils/prefs'
 
 /**
  * The account menu in the topbar (Supabase mode shows the name and Sign out; local mode shows "Local mode"): the avatar and its menu
@@ -15,6 +16,14 @@ const onboarding = useOnboarding()
 const { state: auth, signOut } = useAuth()
 const { status: storageStatus } = useStorageStatus()
 const { dark, toggle: toggleDark } = useTheme()
+const { choice, motion, setChoice } = useMotion()
+/** Lively or Calm (FR-UX, Motion): the choice is kept in this browser */
+const MOTION_OPTIONS: { value: MotionChoice; label: string }[] = [
+  { value: 'lively', label: 'Lively' },
+  { value: 'calm', label: 'Calm' },
+]
+/** The system asks for less motion: the page is calm whatever the choice, and the note says why */
+const forcedCalm = computed(() => choice.value === 'lively' && motion.value === 'calm')
 const accountOpen = ref(false)
 const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
@@ -116,6 +125,12 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
           <UiIcon name="moon" size="sm" />
           <span class="account-label">Dark mode</span>
         </UiSwitch>
+
+        <div class="account-motion">
+          <p class="account-motion-label">Motion</p>
+          <UiSegmented :model-value="choice" :options="MOTION_OPTIONS" label="Motion" @update:model-value="setChoice" />
+          <p v-if="forcedCalm" class="account-note">Your system asks for less motion, so Calm is in use.</p>
+        </div>
 
         <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayTour">
           <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" /></svg>

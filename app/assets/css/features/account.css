@@ -94,3 +94,7 @@
 .account-icon { width: 16px; height: 16px; flex: none; }
 .account-label { flex: 1; min-width: 0; }
 
+/* Motion choice (Lively or Calm) under the Dark mode switch, and the note when the system asks for less motion */
+.account-motion { display: grid; gap: var(--sp-2); padding: var(--sp-3) var(--sp-3) var(--sp-2); }
+.account-motion-label { font-size: var(--text-small); color: var(--ink-3); }
+.account-note { margin: 0; font-size: var(--text-small); color: var(--ink-3); line-height: var(--leading-body); }
