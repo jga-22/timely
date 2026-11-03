@@ -140,6 +140,12 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 
 ## 2. Changelog
 
+### Version 0.0.2, lighter app (2026-11-03, branch `chore/remove-vuetify`, from `main`, not pushed)
+
+- Vuetify, its icon font (`@mdi/font`) and `vuetify-nuxt-module` are removed (owner approved 2026-11-03). `vuetify.config.ts` is gone. The page reset and base rules are plain CSS in `base.css` with the values Vuetify supplied; the page root is a plain `.app` element. No visible change on the captured screens at 1280 and 400, light and dark (see the slice report in the PR).
+- Dark mode is unchanged: the `timely.dark` key, the pre-paint script and `data-theme` on `html`; Vuetify's theme switch is gone.
+- `package.json` and the lockfile are 0.0.2; `CHANGELOG.md` has the 0.0.2 section.
+
 ### Version 0.0.1, quick wins (2026-11-03, branch `feat/ux-quick-wins`, from `main`, not pushed)
 
 - One awake-hours rule (FR-SLEEP-9, `app/utils/awake.ts`): the Week meta line, the week type chip and the guided tour say the same numbers, "3 h planned of 105 h awake". Sleep is not planned time and is taken out of the 168 hours. Before: the chip said "66h", the meta "66 of 168 h planned", the tour "66 h for Physical", all counting sleep.

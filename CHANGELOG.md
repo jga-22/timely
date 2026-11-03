@@ -2,6 +2,17 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
+## 0.0.2 - lighter app
+
+The app downloads less. The screens look and behave as before.
+
+### Changed
+- Smaller download: the main style sheet drops from about 560 KB to about 52 KB (from 90 KB to 10 KB compressed).
+- Dark mode works as before: the same switch in the Account menu, and the choice is kept across reloads.
+
+### Removed
+- The component library that drew the page frame and the theme, its icon font (four font files) and the packages behind them.
+
 ## 0.0.1 - quick wins
 
 First patch of the 0.0.x line: the trust fixes and small changes that came out of the UX review, plus the security work merged after 0.0.0.
