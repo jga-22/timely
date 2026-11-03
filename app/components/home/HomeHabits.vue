@@ -36,18 +36,7 @@ const allDone = computed(() => isAllDone(done.value, props.rows.length))
             <span v-if="row.progress" class="home-row-progress">{{ row.progress }}</span>
           </span>
         </div>
-        <button
-          type="button"
-          class="home-check"
-          role="checkbox"
-          :aria-checked="row.done ? 'true' : 'false'"
-          :aria-label="`Mark ${row.name} done`"
-          @click="emit('toggle', row.key)"
-        >
-          <span class="home-check-box" aria-hidden="true">
-            <svg v-if="row.done" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
-          </span>
-        </button>
+        <UiTick :model-value="row.done" :label="`Mark ${row.name} done`" @update:model-value="emit('toggle', row.key)" />
       </li>
     </ol>
   </details>

@@ -3,3 +3,9 @@
 @keyframes draw {
   from { stroke-dasharray: 0 100; }
 }
+/* A tick that turns on: the circle swells and settles (lively only; Calm shows the state at once). */
+@keyframes pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}

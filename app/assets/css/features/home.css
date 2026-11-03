@@ -164,44 +164,6 @@
   stroke-linejoin: round;
 }
 
-/* Done ticks (FR-HOME-14 to 16): a 44px tap area around a 22px circle, blue and empty to do, green with a check mark when done; the check mark and the struck name show done, not colour alone */
-.home-check {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: -8px -8px -8px 0;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--bg);
-  cursor: pointer;
-}
-.home-check:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-.home-check-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  background: var(--bg);
-}
-.home-check:hover .home-check-box { background: var(--bg-2); }
-.home-check[aria-checked="true"] .home-check-box { background: var(--ok); border-color: var(--ok); }
-.home-check svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .home-row.is-done .home-row-time,
 .home-row.is-done .home-row-hours,
 .home-row.is-done .home-row-name { color: var(--ink-3); }
