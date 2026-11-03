@@ -1,0 +1,56 @@
+/* Year tab: the paint section, the Weeks row under the paint tools, the planned-hours grid rows (FR-YEAR-7). Layer features. */
+/* Weeks row under the year paint tools: one week type for a range of weeks (FR-YEAR-7) */
+.weeks-row { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-4); }
+.weeks-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.weeks-part { font-size: var(--text-small); color: var(--ink-2); }
+.weeks-select { width: auto; max-width: 100%; min-width: 0; }
+.weeks-num { width: 72px; }
+.weeks-result { margin: 0; font-size: var(--text-small); color: var(--ink-2); }
+.weeks-hint { margin: 0; font-size: var(--text-small); color: var(--ink-3); }
+.weeks-toggle-row { margin-top: var(--sp-4); }
+/* Year: full width, 13 week columns with a quarter label per row */
+.year-section { margin-top: var(--sp-8); }
+.year-count {
+  font-size: var(--text-small);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.year-line {
+  margin: var(--sp-6) 0 0;
+  font-size: var(--text-small);
+  color: var(--ink-2);
+}
+.year-body { margin-top: var(--sp-4); }
+.year-paint-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+.year-grid-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.year-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+}
+.year-row {
+  display: grid;
+  grid-template-columns: 56px repeat(13, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+}
+.year-row-label {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.year-details[open] > .year-summary .section-title::before { transform: rotate(45deg); }

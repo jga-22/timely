@@ -1,0 +1,29 @@
+/* Segmented control: a row of choices where one is pressed (data-active="true" on its button). .segmented holds the
+   Insights and Goals switches, the sleep editor and the range controls. Layer ui. */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+.segmented button {
+  min-height: 30px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+}
+@media (pointer: coarse) {
+  .segmented button { min-height: var(--hit); }
+}
+.segmented button:hover { color: var(--ink); }
+.segmented button[data-active="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--elev-1);
+}

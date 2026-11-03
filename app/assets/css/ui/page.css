@@ -1,0 +1,51 @@
+/* Page header and view frame: .view (the page column), .page-head (title, meta, lede), .eyebrow and the figure .stat.
+   Layer ui (spec/design-system.md, Components). */
+.view {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--sp-12) var(--sp-10) 96px;
+}
+@media (max-width: 1280px) {
+  .view { padding: 40px 32px 80px; }
+}
+@media (max-width: 1024px) {
+  .view { padding: 32px 28px 72px; }
+}
+@media (max-width: 768px) {
+  .view { padding: var(--sp-5) var(--sp-4) 72px; }
+}
+@media (max-width: 480px) {
+  .view { padding: var(--sp-4) var(--sp-4) 64px; }
+}
+
+.page-head { margin-bottom: var(--sp-8); }
+.page-title {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--text-title-l);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+@media (max-width: 768px) {
+  .page-title { font-size: var(--text-title-s); }
+}
+.page-meta {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--text-small);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.eyebrow { font-size: var(--text-meta); color: var(--ink-3); }
+.lede { font-size: var(--text-lede); color: var(--ink-2); max-width: 60ch; }
+
+/* A figure with its label: the number is tabular and large, the label is quiet */
+.stat { display: grid; gap: var(--sp-1); }
+.stat-value {
+  font-size: var(--text-number);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+}
+.stat-label { font-size: var(--text-small); color: var(--ink-3); }

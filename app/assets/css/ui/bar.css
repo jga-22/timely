@@ -1,0 +1,31 @@
+/* Bars: .bar is one track with a fill (--v, 0 to 1, the share of the track; --c the area colour, accent by default);
+   .bar-stack is a track split into segments, each segment a child <i> whose --i is its flex weight.
+   The call site gives the bar role="img" and an aria-label when it carries a figure. Layer ui. */
+.bar {
+  display: block;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--c, var(--accent));
+  border-radius: var(--radius-pill);
+  transform-origin: left center;
+  transform: scaleX(var(--v, 0));
+}
+
+.bar-stack {
+  display: flex;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--hatch);
+}
+.bar-stack > i {
+  flex: var(--i, 1) 1 0;
+  min-width: 0;
+  background: var(--c, var(--accent));
+}

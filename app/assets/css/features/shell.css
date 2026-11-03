@@ -72,4 +72,19 @@
 }
 .tab[aria-selected="true"]::after { transform: scaleX(1); }
 
-
+/* Phone topbar and tab bar (768px and narrower) */
+@media (max-width: 768px) {
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0 var(--sp-4);
+    padding: var(--sp-3) var(--sp-4) 0;
+  }
+  .brand { flex: 1; }
+  .tabs {
+    order: 3;
+    flex-basis: 100%;
+    gap: var(--sp-6);
+    height: 44px;
+  }
+}

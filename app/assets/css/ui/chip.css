@@ -1,0 +1,56 @@
+/* Chips: the pill choices (week types, paint tools, filters) and the colour dot that marks an area. Layer ui.
+   The pressed chip is marked by data-active="true" (the chips of the week type bar and the paint tools). */
+.chip {
+  --chip-h: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--chip-h);
+  max-width: 220px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  white-space: nowrap;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+@media (pointer: coarse) {
+  .chip { --chip-h: var(--hit); }
+}
+.chip:hover { color: var(--ink); background: var(--surface-hover); }
+.chip[data-active="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.chip .t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .pill-count { font-size: var(--text-caption); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.chip-add {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--sp-2);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+}
+@media (pointer: coarse) {
+  .chip-add { min-height: var(--hit); }
+}
+.chip-add:hover { text-decoration: underline; }
+
+/* Round colour dots and swatches: solid colour, with the 3:1 boundary ring where the colour is pale */
+.dot {
+  display: inline-block;
+  flex: none;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--control-border);
+}
+.dot-lg { width: 16px; height: 16px; }
+.dot-action { cursor: pointer; }

@@ -1,0 +1,19 @@
+/* Status pills: a short state label. The current one is marked with data-state="now" (a live dot shows with it).
+   Layer ui. Built for the countdown (slice 5); the style guide shows every state. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-self: start;
+  min-height: 30px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--ink-2);
+  font-size: var(--text-meta);
+  font-weight: 500;
+}
+.pill[data-state="now"] { background: var(--accent); color: var(--accent-ink); }
+.pill .live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: none; }
+.pill[data-state="now"] .live-dot { display: inline-block; }
+.pill-quiet { background: var(--surface-2); color: var(--ink-2); }

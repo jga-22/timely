@@ -1,0 +1,13 @@
+/* List rows: one entry per row, its pencil or tick at the end (FR-ITEM-4). .row-list is the list, .row-item a row,
+   .row-main the text part (.row-name, .row-meta). Layer ui. */
+.row-list { margin: 0; padding: 0; list-style: none; }
+.row-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line-2);
+}
+.row-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.row-name { font-size: var(--text-ui); font-weight: 500; overflow-wrap: anywhere; }
+.row-meta { font-size: var(--text-small); color: var(--ink-3); font-variant-numeric: tabular-nums; }

@@ -269,7 +269,7 @@
   .onb-intro-play { width: 56px; height: 56px; }
   .onb-intro-segment { height: 44px; }
   .onb-intro-controls .btn { height: 44px; }
-  .btn.login-action { height: 44px; }
+  .login-action { height: 44px; }
   .is-quiet .onb-intro-controls .onb-link { height: 44px; }
 }
 

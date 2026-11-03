@@ -226,4 +226,4 @@
 @media (hover: none) {
   .wk-block-del { display: none; }
 }
-
+.wk-details[open] > .section-summary .section-title::before { transform: rotate(45deg); }
