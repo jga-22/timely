@@ -5,6 +5,9 @@
  * `initialFocus`) takes focus; on close the remembered element gets focus back. Escape closes it when `dismissible`
  * and does nothing otherwise. `variant="sheet"` is a bottom sheet on a phone. `labelledby` names it by its title.
  * `close` is emitted once it has closed, however it closed.
+ *
+ * Tab: the inert page keeps focus in the dialog, but the browser's own cycle leaves the page after the last control (it
+ * goes to the address bar and back). Two edge stops inside the dialog hand focus to the first or the last control instead.
  */
 const open = defineModel<boolean>('open', { default: false })
 const props = withDefaults(defineProps<{
@@ -28,6 +31,15 @@ const show = () => {
     const first = dialog.value?.querySelector<HTMLElement>('button:not(:disabled), [href], input, select, textarea')
     ;(props.initialFocus ?? first)?.focus()
   })
+}
+
+const CONTROLS = 'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
+/** A focus edge: from the last control to the first, or from the first to the last */
+const wrap = (toFirst: boolean) => {
+  const controls = [...(dialog.value?.querySelectorAll<HTMLElement>(CONTROLS) ?? [])].filter(el => !el.classList.contains('dialog-edge'))
+  const target = toFirst ? controls[0] : controls[controls.length - 1]
+  target?.focus()
 }
 
 const restore = () => {
@@ -75,6 +87,8 @@ onBeforeUnmount(() => {
     @cancel="onCancel"
     @close="onClosed"
   >
+    <span class="dialog-edge" tabindex="0" @focus="wrap(false)" />
     <slot />
+    <span class="dialog-edge" tabindex="0" @focus="wrap(true)" />
   </dialog>
 </template>

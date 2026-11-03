@@ -15,6 +15,14 @@
   overscroll-behavior: contain;
 }
 .dialog:focus { outline: none; }
+/* The focus edge stops (Dialog.vue): invisible, one pixel, in the Tab order only */
+.dialog-edge {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
 .dialog::backdrop {
   background: var(--ink);
   opacity: 0.35;
