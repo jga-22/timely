@@ -47,23 +47,19 @@
 .btn-danger-solid,
 .btn-danger-solid:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 
-/* The pencil that opens an entry for editing (EditButton.vue): a muted icon, tinted on hover; 28px hit area */
-.edit-btn {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+/* Icon button: a round target of --hit holding one icon (the name is its aria-label). Quiet until hovered; the
+   pressed state (aria-expanded) is the tint of the hover. EditButton and the year stepper use it. */
+.btn-icon {
+  width: var(--btn-h);
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-xs);
+  border-color: transparent;
+  border-radius: 50%;
   background: transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-  text-decoration: none;
+  color: var(--ink-2);
 }
-.edit-btn:hover:not(:disabled) { background: var(--surface-hover); color: var(--accent); }
-.edit-btn[aria-expanded="true"] { background: var(--surface-hover); color: var(--accent); }
-.edit-btn:disabled { opacity: 0.45; cursor: default; }
-.edit-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn-icon:hover:not(:disabled) { background: var(--surface-hover); border-color: transparent; color: var(--ink); }
+.btn-icon[aria-expanded="true"] { background: var(--surface-hover); color: var(--accent); }
+.btn-icon:disabled { opacity: 0.45; }
+.edit-btn { color: var(--ink-3); }
+.edit-btn:hover:not(:disabled),
+.edit-btn[aria-expanded="true"] { color: var(--accent); }

@@ -19,6 +19,7 @@
 @import './ui/row.css' layer(ui);
 @import './ui/pill.css' layer(ui);
 @import './ui/seg.css' layer(ui);
+@import './ui/icon.css' layer(ui);
 @import './features/shell.css' layer(features);
 @import './features/account.css' layer(features);
 @import './features/auth.css' layer(features);

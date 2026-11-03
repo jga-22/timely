@@ -5,8 +5,8 @@ const { year, shiftYear } = usePlannerYear()
 
 <template>
   <div class="year-nav">
-    <button class="year-step" type="button" aria-label="Previous year" :disabled="year === null" @click="shiftYear(-1)">‹</button>
+    <button class="btn btn-icon year-step" type="button" aria-label="Previous year" :disabled="year === null" @click="shiftYear(-1)"><UiIcon name="left" size="sm" /></button>
     <span class="year-label">{{ year ?? '—' }}</span>
-    <button class="year-step" type="button" aria-label="Next year" :disabled="year === null" @click="shiftYear(1)">›</button>
+    <button class="btn btn-icon year-step" type="button" aria-label="Next year" :disabled="year === null" @click="shiftYear(1)"><UiIcon name="right" size="sm" /></button>
   </div>
 </template>

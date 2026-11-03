@@ -25,7 +25,7 @@ const BASELINE = {
   mediaWidthLegacy: 6,
   inlineColourKey: 16,
   importantOutsideReset: 4,
-  legacyTokenUse: 463,
+  legacyTokenUse: 459,
 } as const
 
 /** The 16 .vue files with a scoped <style> block today. A file leaves this list when its block moves to features/ (ratchet) */

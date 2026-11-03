@@ -128,9 +128,9 @@ const completeFor = computed(() => (isToday.value ? 'today' : formatDayLabel(vie
         <p v-if="headerLine" class="page-meta">{{ headerLine }}</p>
       </div>
       <div v-if="today" class="home-day-nav">
-        <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" :disabled="!canPrevious" @click="goPrevious">‹</button>
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" :disabled="!canPrevious" @click="goPrevious"><UiIcon name="left" size="sm" /></button>
         <button v-if="!isToday" type="button" class="btn btn-sm btn-outline" @click="goToday">Today</button>
-        <button type="button" class="btn btn-sm btn-outline" aria-label="Next day" :disabled="!canNext" @click="goNext">›</button>
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Next day" :disabled="!canNext" @click="goNext"><UiIcon name="right" size="sm" /></button>
       </div>
     </header>
 
