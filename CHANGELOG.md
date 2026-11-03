@@ -9,7 +9,7 @@ A calmer look and the groundwork for the next changes. The screens keep their la
 ### Changed
 - A calmer palette: a warm paper page with white cards and one blue accent. Dark mode is a neutral grey. Planned colours stay readable on both.
 - Rounder corners, a 3-pixel focus ring, and type sizes in rem, so the browser's font size is respected.
-- Dark mode is applied before the first paint, so a dark page no longer flashes light on load.
+- Dark mode, the motion choice and the tint by time of day are applied before the first paint, as dark mode was before.
 
 ### Added
 - The design system: `spec/design-system.md` (tokens, colour, motion, the CSS structure, the checks that keep them in line) and the plan behind it (`spec/ux-design-system-plan.md`).
