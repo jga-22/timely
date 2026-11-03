@@ -62,6 +62,7 @@ Light value and dark value of each semantic colour. The dark theme changes these
 | `--ink-inverse` | `#f4f2ec` | `#121417` | Text on `--ink` (tooltip, toast): 14.61 light, 15.34 dark | — | — |
 | `--line` | `#e2ded4` | `#2c3138` | Dividers and decoration. Not a control boundary | decorative | decorative |
 | `--line-2` | `#ebe8e0` | `#23272e` | Quieter dividers | decorative | decorative |
+| `--track` | `#cdc7b9` | `#4a505a` | The track of a ring: visible at 0 of N (decorative, no 3:1 need; the figure is in the text) | decorative | decorative |
 | `--control-border` | `#5c626b` | `#9ea3ab` | Boundary of inputs, outline buttons, ticks | 5.49 / 6.10 (3:1 met) | 7.28 / 6.59 |
 | `--accent` | `#2a55c4` | `#9ab8f5` | Links, the primary action, the current item | 5.87 / 6.52 | 9.27 / 8.39 |
 | `--accent-hover` | `#1f439c` | `#b5cdf1` | Hover on the primary action | 8.01 / 8.89 | 11.39 / 10.32 |
@@ -176,6 +177,7 @@ The phone rules are at 768px, which matches the focus rule in `utils/focus.ts` (
 - **Theme:** `html[data-theme="dark"]` swaps the semantic colour and elevation tokens. Light has no attribute. Set by `useTheme()` (the Account menu's Dark mode switch).
 - **Motion:** `html[data-motion="lively|calm"]` says what runs; `html[data-choice="lively|calm"]` says what the user picked. Reduced motion (the system's `prefers-reduced-motion`) makes `data-motion` calm whatever the choice, and the choice is kept, so the Account menu still shows it. Set by `useMotion()`. The control is the Motion choice in the Account menu (Lively or Calm, with a note when the system asks for less motion).
 - **Part:** `html[data-part="morning|afternoon|evening"]` swaps `--am-1` and `--am-2`. Morning from 05:00, afternoon from 12:00, evening from 17:00 and through the night (`PART_START_HOUR` in `utils/motion.ts`).
+- **The Lively wash:** under `data-motion="lively"` the page background is a soft wash, 30% of `--am-1` then `--am-2` mixed over the paper (`color-mix` in `motion.css`; the one allowed use outside feature CSS, as it is a background, not a text pair). Calm keeps the plain paper. `designContrast.test.ts` checks ink, the secondary and muted text and the accent on the mixed extremes of every part and theme (4.5:1). The wash is fixed to the viewport, so it stays while the page scrolls.
 - **Before first paint:** one inline script in the head (`utils/prepaint.ts`, `PREPAINT_SCRIPT`, added in `nuxt.config.ts`) sets all four attributes. It is built from `PREF_KEYS` and `PART_START_HOUR`, so it cannot drift; `tests/unit/prepaint.test.ts` runs it against a fake storage, media query, document and clock. It gets the CSP nonce like every `<script>` (`server/plugins/security.ts`); no new script and no CSP change.
 
 ### 3.2 Preference keys
@@ -320,6 +322,7 @@ Feature components are built from primitives and classes, not made into primitiv
 
 - The `ui/` file owns the bare block selector (`.btn`, `.chip`). A feature file restyles a primitive only with a contextual selector (`.today-focus .btn`); the guard fails on a bare one.
 - Restyle a control in its `ui/` file, not in the feature. Keep the variant as one hyphenated class.
+- **Deviation: the Dialog keeps two focus edge stops.** The plan (`ux-design-system-plan.md`, section 4) relies on the inert page alone. Tested in Chromium: Tab from the last control of a native modal dialog moves focus to the browser (`BODY`) and back, so the keyboard left the dialog. The reset dialog kept Tab between its two buttons before, and the brief keeps the keyboard unchanged. `UiDialog` therefore places two invisible focus stops (`.dialog-edge`) at its start and end that hand focus to the last or the first control. This is the one hand-written focus rule in a primitive; it lives in `Dialog.vue`, and no dialog keeps a loop of its own. Remove it only if the browser behaviour is checked to keep Tab inside.
 - Targets are at least `var(--hit)` on a touch screen (`@media (pointer: coarse)` raises the dense sizes).
 
 ### 6.4 The living style guide
