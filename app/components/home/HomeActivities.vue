@@ -29,7 +29,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
   <div v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" role="status">
     <span>{{ progress }}</span>
     <span v-if="allDone" class="home-progress-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span>
-    <AdherenceRing v-else :percent="percent" :size="28" :show-value="false" />
+    <UiRing v-else :value="percent" :size="28" />
   </div>
 
   <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->

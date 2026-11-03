@@ -109,7 +109,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
       </div>
 
       <div class="adh-headline">
-        <AdherenceRing :percent="report.percent" :basis="report.basis" />
+        <UiRing :value="report.percent" :size="240" :tone="report.basis === 'habits' ? 'ok' : 'accent'">{{ report.percent === null ? '-' : `${report.percent}%` }}</UiRing>
         <div class="adh-headline-text">
           <p v-if="hoursText" class="adh-sub">{{ hoursText }}</p>
           <p v-if="habitsLine" class="adh-sub">{{ habitsLine }}</p>
