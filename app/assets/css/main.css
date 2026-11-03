@@ -23,6 +23,7 @@
 @import './ui/ring.css' layer(ui);
 @import './ui/switch.css' layer(ui);
 @import './ui/tick.css' layer(ui);
+@import './ui/dialog.css' layer(ui);
 @import './features/shell.css' layer(features);
 @import './features/account.css' layer(features);
 @import './features/auth.css' layer(features);

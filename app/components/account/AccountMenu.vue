@@ -68,7 +68,9 @@ const onSignOut = async () => {
   await signOut()
 }
 
+/** The dialog returns focus to the avatar when it closes, so the avatar takes it here, before the menu (and its button) goes */
 const openReset = () => {
+  avatarRef.value?.focus()
   accountOpen.value = false
   emit('reset')
 }

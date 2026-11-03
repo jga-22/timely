@@ -9,3 +9,11 @@
   60% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
+
+/* Ambient: the page takes the tint of the part of the day (--am-1 to --am-2, then the paper). Lively only: Calm keeps the
+   plain paper. The app shell and the top bar let it show through. */
+:root[data-motion="lively"] body {
+  background: linear-gradient(180deg, var(--am-1) 0%, var(--am-2) 32rem, var(--paper) 58rem) fixed no-repeat;
+}
+:root[data-motion="lively"] .app,
+:root[data-motion="lively"] .topbar { background: transparent; }
