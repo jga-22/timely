@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely mockup: Week in plain words</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Mockup only. Colours are the light and dark values of app/assets/css/tokens.css. Not the app. */
+:root{color-scheme:light dark;--font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--bg:#ffffff;--bg-2:#f7f9fc;--bg-3:#eef3fa;--bg-4:#dce7f5;--ink:#1a2230;--ink-2:#3d4657;--ink-3:#6b7385;--ink-4:#9aa1b1;
+--rule:#e2e6ee;--rule-2:#eef1f6;--ctl:#737e95;--accent:#1b4b8f;--accent-deep:#12335f;--accent-soft:#dce7f5;--on-accent:#ffffff;
+--ok:#2d6a4f;--warn:#8a5a12;--shadow:0 8px 24px rgba(18,51,95,.12);
+--c-prof:#3c4b63;--c-rel:#c4767f;--c-phys:#7a9471;--c-cog:#4f7f80;--c-spir:#6e5c7c;--c-env:#c19a3e}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1624;--bg-2:#131c2c;--bg-3:#1a2539;--bg-4:#223156;--ink:#e6ebf3;--ink-2:#c4cbd8;--ink-3:#98a2b5;--ink-4:#5d6780;--rule:#28324a;--rule-2:#1d2639;--ctl:#78859e;--accent:#86aee8;--accent-deep:#b5cdf1;--accent-soft:#223156;--on-accent:#0f1624;--ok:#7fc4a0;--warn:#e8bd7a;--shadow:0 8px 24px rgba(0,0,0,.45);
+--c-prof:#8fa3c4;--c-rel:#d98a92;--c-phys:#97b58c;--c-cog:#7fb3b4;--c-spir:#a596b8;--c-env:#d9b35e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-2);color:var(--ink);font:400 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 64px}
+.note{font-size:13px;color:var(--ink-3);margin:0 0 8px}
+h1{font-size:28px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.lede{color:var(--ink-2);max-width:680px;margin:0 0 32px}
+.label{font-size:13px;color:var(--ink-3);margin:0 0 12px;font-weight:500}
+.frame{background:var(--bg);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.frame.phone{width:375px;max-width:100%;border-radius:28px;padding:10px;background:var(--bg-2)}
+.frame.phone .inner{background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--rule)}
+.topbar{display:flex;align-items:center;gap:24px;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.topbar b{font-weight:600}
+.topbar nav{display:flex;gap:20px;font-size:14px;color:var(--ink-3)}
+.topbar nav .on{color:var(--ink);font-weight:500;box-shadow:inset 0 -2px 0 var(--accent);padding-bottom:4px}
+.phone .topbar{padding:12px 16px;gap:12px;flex-wrap:wrap}
+.phone .topbar nav{gap:12px;font-size:13px}
+.screen{padding:24px;display:flex;flex-direction:column;gap:20px}
+.phone .screen{padding:16px;gap:14px}
+.head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+h2{font-size:24px;font-weight:600;margin:0;letter-spacing:-.01em}
+h3{font-size:16px;font-weight:600;margin:0}
+.muted{color:var(--ink-3);font-size:13px;margin:4px 0 0}
+.btn{min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--ctl);background:var(--bg);color:var(--ink-2);font:500 15px var(--font);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--accent);padding:0 8px}
+.chip{min-height:44px;padding:0 14px;border-radius:6px;border:1px solid var(--ctl);background:var(--bg-3);color:var(--ink-2);font:500 14px var(--font);display:inline-flex;align-items:center;gap:8px}
+.chip[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sleepline{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px;color:var(--ink-3);border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2);padding:8px 0;min-height:44px}
+.sleepline a{color:var(--accent);font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:44px;display:inline-flex;align-items:center}
+/* Grid */
+.scrollcue{position:relative}
+.scroll{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.cal{display:grid;grid-template-columns:64px repeat(7,minmax(0,1fr));grid-template-rows:36px repeat(16,40px);min-width:0;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:var(--bg)}
+.cal .hd{font-size:13px;font-weight:500;color:var(--ink-2);display:flex;flex-direction:column;justify-content:center;padding:0 10px;border-bottom:1px solid var(--rule);background:var(--bg-2)}
+.cal .hd small{font-size:12px;color:var(--ink-3);font-weight:400}
+.cal .hr{font-size:12px;color:var(--ink-3);padding:2px 10px 0;border-top:1px solid var(--rule-2);font-variant-numeric:tabular-nums}
+.cal .ln{border-top:1px solid var(--rule-2);border-left:1px solid var(--rule-2)}
+.blk{margin:2px 4px;border-radius:6px;padding:2px 8px;font-size:13px;line-height:1.2;background:color-mix(in srgb,var(--c) 16%,var(--bg));border-left:3px solid var(--c);color:var(--ink);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;min-width:0}
+.blk b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk span{font-size:12px;color:var(--ink-2)}
+.blk.sel{outline:2px solid var(--accent);outline-offset:1px;background:color-mix(in srgb,var(--accent) 14%,var(--bg))}
+.blk.sel{border-left-color:var(--accent)}
+.sel-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:1px solid var(--accent);background:var(--bg-3);border-radius:12px;padding:12px 16px}
+.sel-bar p{margin:0;font-size:14px;color:var(--ink);flex:1 1 220px}
+.sel-bar .acts{display:flex;gap:8px;flex-wrap:wrap}
+.sel-bar .btn{min-height:44px}
+.free-card{border:1px solid var(--rule);border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.split{display:flex;height:20px;border-radius:6px;overflow:hidden;border:1px solid var(--rule)}
+.split div{height:100%}
+.free{background:repeating-linear-gradient(135deg,var(--bg) 0 5px,var(--rule) 5px 6px)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.phone .cal{grid-template-columns:44px repeat(7,64px);grid-template-rows:36px repeat(16,38px);border-radius:12px}
+.phone .cal .hr{font-size:11px;padding:2px 6px 0}
+.phone .blk{padding:3px 6px;font-size:12px;margin:2px 3px}
+.phone .blk span{display:none}
+.cue{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink-2)}
+.cue b{font-weight:500;color:var(--accent)}
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
+.dots i.on{background:var(--accent);width:18px;border-radius:3px}
+.fade{position:absolute;right:0;top:0;bottom:0;width:48px;background:linear-gradient(to right,transparent,var(--bg));pointer-events:none;border-radius:0 12px 12px 0}
+.phone .fade{background:linear-gradient(to right,transparent,var(--bg))}
+.bottom{display:flex;gap:8px;flex-wrap:wrap}
+.bottom .btn{flex:1 1 140px}
+@media (max-width:560px){.wrap{padding:24px 12px 48px}.cal-desk{display:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="note">Mockup, static, sample data (week 45). Taste, not tested. See spec/ux-proposal.md, section 6e for the vocabulary table.</p>
+  <h1>Week, in plain words</h1>
+  <p class="lede">The same grid, with the words a stranger uses: Schedule for the week type, Where the week goes for the split, Free for unplanned time, and Add to these hours for the one action. The phone grid says that the rest of the week is to the right.</p>
+
+  <!-- Desktop -->
+  <p class="label">Desktop (1100 px frame)</p>
+  <div class="frame" style="margin-bottom:40px">
+    <div class="topbar"><b>timely</b><nav><span>Home</span><span>Goals</span><span class="on">Week</span><span>Year</span><span>Insights</span></nav></div>
+    <div class="screen">
+      <div class="head">
+        <div>
+          <h2>Week</h2>
+          <p class="muted">Schedule: <b style="color:var(--ink-2);font-weight:500">My week</b>, used in every week of 2026 unless Year says otherwise.</p>
+        </div>
+        <div class="chips">
+          <button class="chip" aria-pressed="true" type="button">My week</button>
+          <button class="chip" aria-pressed="false" type="button">Holiday</button>
+          <button class="btn quiet" type="button">+ Another schedule</button>
+        </div>
+      </div>
+
+      <div class="sleepline"><span>Sleep, 10 PM to 7 AM, is hidden to keep the grid short.</span><a href="#" onclick="return false">Show sleep</a></div>
+
+      <div class="cal" role="grid" aria-label="Week 45 schedule, Monday to Sunday">
+        <div class="hd" style="grid-row:1;grid-column:1"></div>
+        <div class="hd" style="grid-row:1;grid-column:2">Mon<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:3">Tue<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:4">Wed<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:5">Thu<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:6">Fri<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:7">Sat<small>3 h</small></div>
+        <div class="hd" style="grid-row:1;grid-column:8">Sun<small>1 h</small></div>
+
+        <div class="hr" style="grid-row:2;grid-column:1">6 AM</div>
+        <div class="hr" style="grid-row:3;grid-column:1">7 AM</div>
+        <div class="hr" style="grid-row:4;grid-column:1">8 AM</div>
+        <div class="hr" style="grid-row:5;grid-column:1">9 AM</div>
+        <div class="hr" style="grid-row:6;grid-column:1">10 AM</div>
+        <div class="hr" style="grid-row:7;grid-column:1">11 AM</div>
+        <div class="hr" style="grid-row:8;grid-column:1">12 PM</div>
+        <div class="hr" style="grid-row:9;grid-column:1">1 PM</div>
+        <div class="hr" style="grid-row:10;grid-column:1">2 PM</div>
+        <div class="hr" style="grid-row:11;grid-column:1">3 PM</div>
+        <div class="hr" style="grid-row:12;grid-column:1">4 PM</div>
+        <div class="hr" style="grid-row:13;grid-column:1">5 PM</div>
+        <div class="hr" style="grid-row:14;grid-column:1">6 PM</div>
+        <div class="hr" style="grid-row:15;grid-column:1">7 PM</div>
+        <div class="hr" style="grid-row:16;grid-column:1">8 PM</div>
+        <div class="hr" style="grid-row:17;grid-column:1">9 PM</div>
+
+        <!-- Empty lines: 16 rows x 7 days -->
+        <div class="ln" style="grid-row:2;grid-column:2"></div><div class="ln" style="grid-row:2;grid-column:3"></div><div class="ln" style="grid-row:2;grid-column:4"></div><div class="ln" style="grid-row:2;grid-column:5"></div><div class="ln" style="grid-row:2;grid-column:6"></div><div class="ln" style="grid-row:2;grid-column:7"></div><div class="ln" style="grid-row:2;grid-column:8"></div>
+        <div class="ln" style="grid-row:3;grid-column:2"></div><div class="ln" style="grid-row:3;grid-column:3"></div><div class="ln" style="grid-row:3;grid-column:4"></div><div class="ln" style="grid-row:3;grid-column:5"></div><div class="ln" style="grid-row:3;grid-column:6"></div><div class="ln" style="grid-row:3;grid-column:7"></div><div class="ln" style="grid-row:3;grid-column:8"></div>
+        <div class="ln" style="grid-row:4;grid-column:2"></div><div class="ln" style="grid-row:4;grid-column:3"></div><div class="ln" style="grid-row:4;grid-column:4"></div><div class="ln" style="grid-row:4;grid-column:5"></div><div class="ln" style="grid-row:4;grid-column:6"></div><div class="ln" style="grid-row:4;grid-column:7"></div><div class="ln" style="grid-row:4;grid-column:8"></div>
+        <div class="ln" style="grid-row:5;grid-column:2"></div><div class="ln" style="grid-row:5;grid-column:3"></div><div class="ln" style="grid-row:5;grid-column:4"></div><div class="ln" style="grid-row:5;grid-column:5"></div><div class="ln" style="grid-row:5;grid-column:6"></div><div class="ln" style="grid-row:5;grid-column:7"></div><div class="ln" style="grid-row:5;grid-column:8"></div>
+        <div class="ln" style="grid-row:6;grid-column:2"></div><div class="ln" style="grid-row:6;grid-column:3"></div><div class="ln" style="grid-row:6;grid-column:4"></div><div class="ln" style="grid-row:6;grid-column:5"></div><div class="ln" style="grid-row:6;grid-column:6"></div><div class="ln" style="grid-row:6;grid-column:7"></div><div class="ln" style="grid-row:6;grid-column:8"></div>
+        <div class="ln" style="grid-row:7;grid-column:2"></div><div class="ln" style="grid-row:7;grid-column:3"></div><div class="ln" style="grid-row:7;grid-column:4"></div><div class="ln" style="grid-row:7;grid-column:5"></div><div class="ln" style="grid-row:7;grid-column:6"></div><div class="ln" style="grid-row:7;grid-column:7"></div><div class="ln" style="grid-row:7;grid-column:8"></div>
+        <div class="ln" style="grid-row:8;grid-column:2"></div><div class="ln" style="grid-row:8;grid-column:3"></div><div class="ln" style="grid-row:8;grid-column:4"></div><div class="ln" style="grid-row:8;grid-column:5"></div><div class="ln" style="grid-row:8;grid-column:6"></div><div class="ln" style="grid-row:8;grid-column:7"></div><div class="ln" style="grid-row:8;grid-column:8"></div>
+        <div class="ln" style="grid-row:9;grid-column:2"></div><div class="ln" style="grid-row:9;grid-column:3"></div><div class="ln" style="grid-row:9;grid-column:4"></div><div class="ln" style="grid-row:9;grid-column:5"></div><div class="ln" style="grid-row:9;grid-column:6"></div><div class="ln" style="grid-row:9;grid-column:7"></div><div class="ln" style="grid-row:9;grid-column:8"></div>
+        <div class="ln" style="grid-row:10;grid-column:2"></div><div class="ln" style="grid-row:10;grid-column:3"></div><div class="ln" style="grid-row:10;grid-column:4"></div><div class="ln" style="grid-row:10;grid-column:5"></div><div class="ln" style="grid-row:10;grid-column:6"></div><div class="ln" style="grid-row:10;grid-column:7"></div><div class="ln" style="grid-row:10;grid-column:8"></div>
+        <div class="ln" style="grid-row:11;grid-column:2"></div><div class="ln" style="grid-row:11;grid-column:3"></div><div class="ln" style="grid-row:11;grid-column:4"></div><div class="ln" style="grid-row:11;grid-column:5"></div><div class="ln" style="grid-row:11;grid-column:6"></div><div class="ln" style="grid-row:11;grid-column:7"></div><div class="ln" style="grid-row:11;grid-column:8"></div>
+        <div class="ln" style="grid-row:12;grid-column:2"></div><div class="ln" style="grid-row:12;grid-column:3"></div><div class="ln" style="grid-row:12;grid-column:4"></div><div class="ln" style="grid-row:12;grid-column:5"></div><div class="ln" style="grid-row:12;grid-column:6"></div><div class="ln" style="grid-row:12;grid-column:7"></div><div class="ln" style="grid-row:12;grid-column:8"></div>
+        <div class="ln" style="grid-row:13;grid-column:2"></div><div class="ln" style="grid-row:13;grid-column:3"></div><div class="ln" style="grid-row:13;grid-column:4"></div><div class="ln" style="grid-row:13;grid-column:5"></div><div class="ln" style="grid-row:13;grid-column:6"></div><div class="ln" style="grid-row:13;grid-column:7"></div><div class="ln" style="grid-row:13;grid-column:8"></div>
+        <div class="ln" style="grid-row:14;grid-column:2"></div><div class="ln" style="grid-row:14;grid-column:3"></div><div class="ln" style="grid-row:14;grid-column:4"></div><div class="ln" style="grid-row:14;grid-column:5"></div><div class="ln" style="grid-row:14;grid-column:6"></div><div class="ln" style="grid-row:14;grid-column:7"></div><div class="ln" style="grid-row:14;grid-column:8"></div>
+        <div class="ln" style="grid-row:15;grid-column:2"></div><div class="ln" style="grid-row:15;grid-column:3"></div><div class="ln" style="grid-row:15;grid-column:4"></div><div class="ln" style="grid-row:15;grid-column:5"></div><div class="ln" style="grid-row:15;grid-column:6"></div><div class="ln" style="grid-row:15;grid-column:7"></div><div class="ln" style="grid-row:15;grid-column:8"></div>
+        <div class="ln" style="grid-row:16;grid-column:2"></div><div class="ln" style="grid-row:16;grid-column:3"></div><div class="ln" style="grid-row:16;grid-column:4"></div><div class="ln" style="grid-row:16;grid-column:5"></div><div class="ln" style="grid-row:16;grid-column:6"></div><div class="ln" style="grid-row:16;grid-column:7"></div><div class="ln" style="grid-row:16;grid-column:8"></div>
+        <div class="ln" style="grid-row:17;grid-column:2"></div><div class="ln" style="grid-row:17;grid-column:3"></div><div class="ln" style="grid-row:17;grid-column:4"></div><div class="ln" style="grid-row:17;grid-column:5"></div><div class="ln" style="grid-row:17;grid-column:6"></div><div class="ln" style="grid-row:17;grid-column:7"></div><div class="ln" style="grid-row:17;grid-column:8"></div>
+
+        <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:2"><b>Focused work</b><span>9 AM to 12 PM</span></div>
+        <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:4"><b>Focused work</b><span>9 AM to 12 PM</span></div>
+        <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:6"><b>Focused work</b><span>9 AM to 12 PM</span></div>
+        <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:3"><b>Focused work</b><span>9 AM to 12 PM</span></div>
+        <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:5"><b>Focused work</b><span>9 AM to 12 PM</span></div>
+        <div class="blk sel" style="--c:var(--c-prof);grid-row:9/span 2;grid-column:3"><b>Selected</b><span>1 to 3 PM</span></div>
+        <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:2"><b>Run</b><span>6 to 7 PM</span></div>
+        <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:4"><b>Run</b><span>6 to 7 PM</span></div>
+        <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:6"><b>Run</b><span>6 to 7 PM</span></div>
+        <div class="blk" style="--c:var(--c-cog);grid-row:17;grid-column:3"><b>Reading</b><span>9 to 10 PM</span></div>
+        <div class="blk" style="--c:var(--c-cog);grid-row:17;grid-column:5"><b>Reading</b><span>9 to 10 PM</span></div>
+        <div class="blk" style="--c:var(--c-rel);grid-row:7/span 4;grid-column:7"><b>Family time</b><span>11 AM to 2 PM</span></div>
+        <div class="blk" style="--c:var(--c-prof);grid-row:12;grid-column:8"><b>Weekly planning</b><span>4 to 5 PM</span></div>
+      </div>
+
+      <div class="sel-bar" role="region" aria-label="Selected hours">
+        <p><b>Tuesday, 1 to 3 PM</b> is selected. Pick what goes here, or clear it.</p>
+        <div class="acts">
+          <button class="btn primary" type="button">Add to these hours</button>
+          <button class="btn" type="button">Clear</button>
+          <button class="btn quiet" type="button">Cancel</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+        <div class="free-card">
+          <h3>Where the week goes</h3>
+          <div class="split" role="img" aria-label="72 hours planned, 33 hours free"><div style="flex:72;background:var(--c-prof)"></div><div class="free" style="flex:33"></div></div>
+          <div class="legend"><span><i class="sw" style="background:var(--c-prof)"></i>Planned, 72 h</span><span><i class="sw free"></i>Free, 33 h</span></div>
+          <p class="muted" style="margin:0">Of the 105 awake hours in a typical week. Sleep is not counted. <span style="color:var(--accent)">See it by life area in Year</span></p>
+        </div>
+        <div class="free-card">
+          <h3>Add something</h3>
+          <p class="muted" style="margin:0;font-size:14px">Paint a time on the grid, then choose what goes there. Or add an activity first and place it later.</p>
+          <div class="bottom">
+            <button class="btn primary" type="button">+ Add activity</button>
+            <button class="btn" type="button">Sleep hours</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone -->
+  <p class="label">Phone (375 px): the grid scrolls sideways, and the page says so</p>
+  <div class="frame phone">
+    <div class="inner">
+      <div class="topbar"><b>timely</b><nav><span>Home</span><span>Goals</span><span class="on">Week</span><span>Year</span><span>Insights</span></nav></div>
+      <div class="screen">
+        <div>
+          <h2 style="font-size:22px">Week</h2>
+          <p class="muted">Schedule: <b style="color:var(--ink-2);font-weight:500">My week</b></p>
+        </div>
+        <div class="chips">
+          <button class="chip" aria-pressed="true" type="button">My week</button>
+          <button class="chip" aria-pressed="false" type="button">Holiday</button>
+        </div>
+        <div class="cue">
+          <span>Thu to Sun are to the <b>right</b></span>
+          <span class="dots" aria-hidden="true"><i class="on"></i><i></i></span>
+        </div>
+        <div class="scrollcue">
+          <div class="scroll" aria-label="Week grid, scrolls sideways">
+            <div class="cal" style="min-width:492px">
+              <div class="hd" style="grid-row:1;grid-column:1"></div>
+              <div class="hd" style="grid-row:1;grid-column:2">Mon</div>
+              <div class="hd" style="grid-row:1;grid-column:3">Tue</div>
+              <div class="hd" style="grid-row:1;grid-column:4">Wed</div>
+              <div class="hd" style="grid-row:1;grid-column:5">Thu</div>
+              <div class="hd" style="grid-row:1;grid-column:6">Fri</div>
+              <div class="hd" style="grid-row:1;grid-column:7">Sat</div>
+              <div class="hd" style="grid-row:1;grid-column:8">Sun</div>
+              <div class="hr" style="grid-row:2;grid-column:1">6 AM</div>
+              <div class="hr" style="grid-row:3;grid-column:1">7 AM</div>
+              <div class="hr" style="grid-row:4;grid-column:1">8 AM</div>
+              <div class="hr" style="grid-row:5;grid-column:1">9 AM</div>
+              <div class="hr" style="grid-row:6;grid-column:1">10 AM</div>
+              <div class="hr" style="grid-row:7;grid-column:1">11 AM</div>
+              <div class="hr" style="grid-row:8;grid-column:1">12 PM</div>
+              <div class="hr" style="grid-row:9;grid-column:1">1 PM</div>
+              <div class="hr" style="grid-row:10;grid-column:1">2 PM</div>
+              <div class="hr" style="grid-row:11;grid-column:1">3 PM</div>
+              <div class="hr" style="grid-row:12;grid-column:1">4 PM</div>
+              <div class="hr" style="grid-row:13;grid-column:1">5 PM</div>
+              <div class="hr" style="grid-row:14;grid-column:1">6 PM</div>
+              <div class="hr" style="grid-row:15;grid-column:1">7 PM</div>
+              <div class="hr" style="grid-row:16;grid-column:1">8 PM</div>
+              <div class="hr" style="grid-row:17;grid-column:1">9 PM</div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:2"><b>Focused</b></div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:3"><b>Focused</b></div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:4"><b>Focused</b></div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:5"><b>Focused</b></div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:5/span 3;grid-column:6"><b>Focused</b></div>
+              <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:2"><b>Run</b></div>
+              <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:4"><b>Run</b></div>
+              <div class="blk" style="--c:var(--c-phys);grid-row:14;grid-column:6"><b>Run</b></div>
+              <div class="blk" style="--c:var(--c-rel);grid-row:7/span 3;grid-column:7"><b>Family</b></div>
+              <div class="blk" style="--c:var(--c-cog);grid-row:17;grid-column:3"><b>Reading</b></div>
+              <div class="blk" style="--c:var(--c-prof);grid-row:12;grid-column:8"><b>Planning</b></div>
+            </div>
+          </div>
+          <div class="fade" aria-hidden="true"></div>
+        </div>
+        <div class="free-card" style="padding:14px 16px">
+          <h3 style="font-size:15px">Where the week goes</h3>
+          <div class="split"><div style="flex:72;background:var(--c-prof)"></div><div class="free" style="flex:33"></div></div>
+          <p class="muted" style="margin:0">72 h planned, 33 h free</p>
+        </div>
+        <div class="bottom">
+          <button class="btn primary" type="button" style="width:100%">+ Add activity</button>
+          <button class="btn" type="button" style="width:100%">Sleep hours</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:16px">Phone rules: the page never scrolls sideways; only the grid does. The cue text and the fade on the right edge say there is more. Blocks show the name only, and the time is one tap away in the block's box.</p>
+</main>
+</body>
+</html>

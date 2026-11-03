@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely UX mockups (index)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Mockup index only. Colours are the light and dark values of app/assets/css/tokens.css. Not the app. */
+:root{color-scheme:light dark;--font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--bg:#ffffff;--bg-2:#f7f9fc;--bg-3:#eef3fa;--ink:#1a2230;--ink-2:#3d4657;--ink-3:#6b7385;--rule:#e2e6ee;--accent:#1b4b8f;--accent-deep:#12335f;--warn:#8a5a12;--shadow:0 8px 24px rgba(18,51,95,.12)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1624;--bg-2:#131c2c;--bg-3:#1a2539;--ink:#e6ebf3;--ink-2:#c4cbd8;--ink-3:#98a2b5;--rule:#28324a;--accent:#86aee8;--accent-deep:#b5cdf1;--warn:#e8bd7a;--shadow:0 8px 24px rgba(0,0,0,.45)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-2);color:var(--ink);font:400 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+h1{font-size:28px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.lede{color:var(--ink-2);max-width:680px;margin:0 0 32px}
+.list{display:grid;gap:16px}
+a.card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:20px 24px;text-decoration:none;color:var(--ink);min-height:44px}
+a.card:hover{background:var(--bg-3)}
+a.card:focus-visible{outline:3px solid var(--bg-3);outline-offset:2px;border-color:var(--accent)}
+a.card h2{font-size:18px;font-weight:600;margin:0 0 4px;color:var(--accent-deep)}
+a.card h2 span{color:var(--ink-3);font-weight:500;font-size:13px;margin-left:8px}
+a.card p{margin:0;color:var(--ink-2);font-size:14px}
+a.card .go{color:var(--accent);font-weight:500;font-size:14px;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;color:var(--warn);border:1px dashed var(--warn);border-radius:999px;padding:1px 9px;margin-left:8px;font-weight:500}
+.foot{margin-top:32px;font-size:13px;color:var(--ink-3);max-width:680px}
+@media (max-width:560px){.wrap{padding:28px 14px 48px}a.card{grid-template-columns:1fr}a.card .go{justify-self:start}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Timely UX mockups</h1>
+  <p class="lede">Static pages for the proposal in <code>spec/ux-proposal.md</code>. Sample data (Physical, Professional, Spiritual and the rest of the seed areas). They are not the app and were not tested with users. Taste, not evidence, unless the proposal says otherwise.</p>
+  <div class="list">
+    <a class="card" href="prototype-a2.html">
+      <div><h2>Prototype A2: alive <span>option A, lively</span></h2><p>Prototype A made alive, with the same structure and data: a time-of-day greeting and tint, a live now marker and countdown, a tick that celebrates and lets the next block glide in, a dream path, a recap ceremony, illustrated empty states, and a Lively or Calm switch in the account menu.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="prototype-a.html">
+      <div><h2>Prototype A: Today, Plan, Progress <span>option A, plain</span></h2><p>The structure A2 is built on: Today, Plan (Dreams, Week, Year) and Progress, with dummy data and a rules-based first run.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="prototype-b.html">
+      <div><h2>Prototype B: one stream <span>option B</span></h2><p>The one-stream alternative (Option B): one screen with a plan drawer. Compared with A in the information-architecture note.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="prototype.html">
+      <div><h2>Working prototype <span>all screens, dummy data</span></h2><p>The whole product in one file set: the rules-based first run, Home with working ticks, the day switch and a preview switch for the states, Goals, Week, Year and Insights. Light and dark. Clicks work; nothing is saved.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="first-run.html">
+      <div><h2>First run, rules-based <span>proposal 6a</span></h2><p>A short conversation of five questions that adapt by rule, a draft plan you edit before anything is saved, a starter one tap away, and a first action for today on Home. No AI.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="home-cockpit.html">
+      <div><h2>Home as a cockpit <span>proposal 6b</span></h2><p>Today's next block with its tick and the goal behind it, a week that forgives misses, 1-year progress per life area, the all-done and nothing-planned states.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="charts.html">
+      <div><h2>Charts, one question each <span>proposal 6d</span></h2><p>Where the week goes (Time split), how full each month is (Year), and one headline with one weekly trend (Insights).</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="week-grid.html">
+      <div><h2>Week in plain words <span>proposal 6e</span></h2><p>The same grid with Schedule, Where the week goes, Free and Add to these hours; the phone scroll cue.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="gamification.html">
+      <div><h2>Motivation without pressure <span>proposal 7</span></h2><p>Weekly recap that forgives misses, stages per life area from the 1-year target, a milestone line, and the guardrails.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="journey-map.html">
+      <div><h2>Journey map <span>proposal companion</span></h2><p>Six stages with the user goal, the screen, the risk of quitting, the motivation device and the success metric. Read with the UX proposal.</p></div>
+      <span class="go">Open</span>
+    </a>
+    <a class="card" href="../ux-information-architecture.md">
+      <div><h2>Navigation options <span>read, not a mockup</span></h2><p>The four navigation options (five tabs, Year in Week, Today / Plan / Progress, one stream), the scorecard and the prototype questions. No option is chosen yet.</p></div>
+      <span class="go">Read</span>
+    </a>
+  </div>
+  <p class="foot">Each page is one file with its CSS inline, except the prototype, which loads <code>prototype/prototype.css</code> and <code>prototype/prototype.js</code> from this folder. The only external request is the IBM Plex Sans font from Google Fonts. Light and dark follow the system setting (prefers-color-scheme), and the prototype has its own switch. Partners and rewards are parked (proposal section 7.5) and have no mockup.</p>
+</main>
+</body>
+</html>

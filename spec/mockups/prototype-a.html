@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely prototype A: Today, Plan, Progress (dummy data)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+/* Theme before the first paint: the saved choice, else the system setting. Storage errors are ignored. */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('timely.a.theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    var dark = false;
+    try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    t = dark ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<style>
+/* Prototype A. Mockup only: dummy data, no business logic, not the app. Vanilla CSS. */
+
+/* 1. Tokens: warm paper, ink, one cobalt accent. Area colours are the seed colours (app/utils/planner/seed.ts) with dark twins. */
+:root {
+  --paper: #f4f2ec; --surface: #fffefb; --ink: #1c2026; --ink-2: #454b55; --ink-3: #666c75;
+  --line: #e2ded4; --line-2: #ebe8e0;
+  --accent: #2a55c4; --accent-ink: #ffffff; --accent-soft: #e4ebfb; --accent-tint: #c5d4f4;
+  --sand: #ecdcb9; --sand-ink: #5b4a24;
+  --c-phys: #7a9471; --c-spir: #6e5c7c; --c-rel: #c4767f; --c-eco: #c19a3e;
+  --c-cog: #4a8683; --c-soc: #e09070; --c-prof: #3c4b63; --c-env: #5c7248;
+  --shadow: 0 1px 2px rgba(28, 32, 38, .06), 0 18px 44px -20px rgba(28, 32, 38, .28);
+  --hatch: repeating-linear-gradient(135deg, transparent 0 5px, var(--line) 5px 6px);
+  --r-xl: 28px; --r-lg: 20px; --r-md: 14px; --r-sm: 10px;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  --paper: #121417; --surface: #1b1e23; --ink: #eceae4; --ink-2: #c3c6cc; --ink-3: #9ea3ab;
+  --line: #2c3138; --line-2: #23272e;
+  --accent: #9ab8f5; --accent-ink: #0e1321; --accent-soft: #222c44; --accent-tint: #33456e;
+  --sand: #4a3d23; --sand-ink: #f0dfb4;
+  --c-phys: #97b58c; --c-spir: #a596b8; --c-rel: #d98a92; --c-eco: #d9b35e;
+  --c-cog: #7fb3b4; --c-soc: #eba78a; --c-prof: #8fa3c4; --c-env: #a3b86f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 18px 44px -20px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}
+
+/* 2. Base */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, ul, figure { margin: 0; padding: 0; }
+ul { list-style: none; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .4; }
+a { color: var(--accent); text-underline-offset: 3px; }
+b { font-weight: 600; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--ink-3); }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.skip { position: absolute; left: 12px; top: -60px; z-index: 99; background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 999px; }
+.skip:focus { top: 12px; }
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.eyebrow { font-size: 14px; color: var(--ink-3); }
+
+/* 3. Shell: a rail on desktop, a top bar and a bottom bar on phones */
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+.rail { position: sticky; top: 0; height: 100vh; padding: 32px 20px 24px 24px; display: flex; flex-direction: column; gap: 36px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: var(--ink); text-decoration: none; letter-spacing: -.01em; }
+.brand svg { width: 28px; height: 28px; }
+.rail nav { display: grid; gap: 4px; }
+.rail nav a, .tabbar a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: var(--r-md); color: var(--ink-2); text-decoration: none; font-size: 17px; }
+.rail nav a:hover { background: var(--line-2); }
+.rail nav a[aria-current="page"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow); }
+.rail nav a[aria-current="page"] .ic { color: var(--accent); }
+.rail-foot { margin-top: auto; font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+.column { min-width: 0; display: flex; flex-direction: column; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 56px 0; max-width: 900px; width: 100%; }
+.top .brand { display: none; }
+.tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.icon { width: 44px; height: 44px; border-radius: 50%; border: 0; background: transparent; color: var(--ink-2); display: inline-grid; place-items: center; }
+.icon:hover { background: var(--line-2); }
+.icon[disabled] { opacity: .3; }
+main { padding: 40px 56px 64px; max-width: 900px; width: 100%; }
+main:focus, h1[tabindex="-1"]:focus { outline: none; }
+.foot { padding: 0 56px 40px; max-width: 900px; font-size: 13px; color: var(--ink-3); }
+
+.acct { position: relative; }
+.acct > summary { list-style: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 15px; cursor: pointer; }
+.acct > summary::-webkit-details-marker { display: none; }
+.menu { position: absolute; right: 0; top: 52px; z-index: 20; width: 260px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 10px; display: grid; gap: 2px; }
+.menu p { padding: 8px 12px 10px; font-size: 14px; color: var(--ink-3); border-bottom: 1px solid var(--line-2); margin-bottom: 4px; }
+.menu p b { display: block; color: var(--ink); font-size: 16px; }
+.menu button { text-align: left; min-height: 44px; padding: 0 12px; border: 0; background: transparent; border-radius: var(--r-sm); font-size: 15px; }
+.menu button:hover { background: var(--line-2); }
+
+.tabbar { display: none; }
+
+/* 4. Type and common parts */
+.page-head { display: grid; gap: 8px; margin-bottom: 32px; }
+.page-head h1 { font-size: 36px; line-height: 1.1; font-weight: 600; letter-spacing: -.02em; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 60ch; }
+.subnav { display: inline-flex; gap: 4px; padding: 4px; background: var(--line-2); border-radius: 999px; margin-bottom: 32px; flex-wrap: wrap; }
+.subnav a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; color: var(--ink-2); text-decoration: none; font-size: 16px; }
+.subnav a[aria-current="page"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow); }
+.btn { min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--ink-3); background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.btn:hover { border-color: var(--ink-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 12px; }
+.btn.quiet:hover { background: var(--accent-soft); }
+.chip { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); font-weight: 500; }
+.chip:disabled { opacity: .45; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.line-in { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ink-3); border-radius: var(--r-sm); background: var(--surface); font-size: 16px; }
+.line-in:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+textarea.line-in { resize: vertical; min-height: 88px; line-height: 1.45; }
+.row-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.switch { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; background: none; border: 0; padding: 0; font-size: 16px; color: var(--ink); text-align: left; }
+.track { width: 48px; height: 28px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .2s; }
+.track::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .2); transition: transform .2s; }
+.switch[aria-checked="true"] .track { background: var(--accent); }
+.switch[aria-checked="true"] .track::after { transform: translateX(20px); }
+.ring { position: relative; display: inline-grid; place-items: center; flex: none; }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .rt, .ring .ra { fill: none; stroke-width: 3; }
+.ring .rt { stroke: var(--line); }
+.ring .ra { stroke: var(--accent); stroke-linecap: round; animation: arc .9s ease-out both; }
+.ring .rc { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ring.ok .ra { stroke: var(--accent); }
+.ring.ok .rc { color: var(--accent); }
+.ring .rc svg { position: static; transform: none; width: 16px; height: 16px; }
+@keyframes arc { from { stroke-dashoffset: var(--c); } to { stroke-dashoffset: var(--o); } }
+.bar-t { height: 6px; background: var(--line-2); border-radius: 999px; overflow: hidden; }
+.bar-t i { display: block; height: 100%; background: var(--c, var(--accent)); border-radius: 999px; }
+
+/* 5. Today */
+.t-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+.daynav { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.daynav .icon { width: 44px; }
+.amb { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--ink-2); max-width: 240px; }
+.amb b { display: block; color: var(--ink); font-size: 15px; font-weight: 500; }
+.dream { font-size: 17px; color: var(--ink-2); margin-bottom: 20px; }
+.dream span { color: var(--ink); font-weight: 500; }
+.focus { background: var(--surface); border-radius: var(--r-xl); padding: 36px; box-shadow: var(--shadow); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 32px; align-items: center; }
+.tick { width: 76px; height: 76px; border-radius: 50%; border: 2px solid var(--accent); background: transparent; color: var(--accent); display: grid; place-items: center; padding: 0; }
+.tick:hover { background: var(--accent-soft); }
+.tk-ring { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: transparent; transition: background .25s, color .25s; }
+.tick .tk-ring { width: 76px; height: 76px; }
+.tick .tk-ring .ic { width: 34px; height: 34px; stroke-width: 2.4; }
+.tick.on, .tick:active { }
+.tk.on .tk-ring, .tick.on .tk-ring { background: var(--accent); color: var(--accent-ink); }
+.tk.on .tk-ring .ic path, .tick.on .ic path { stroke-dasharray: 26; stroke-dashoffset: 0; animation: draw .35s ease-out; }
+.tk-ring .ic path { stroke-dasharray: 26; stroke-dashoffset: 0; }
+@keyframes draw { from { stroke-dashoffset: 26; } to { stroke-dashoffset: 0; } }
+.pop .tk-ring { animation: pop .45s ease-out; }
+@keyframes pop { 0% { transform: scale(.86); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.f-text { display: grid; gap: 10px; min-width: 0; }
+.f-title { font-size: 44px; line-height: 1.08; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.f-line { font-size: 17px; color: var(--ink-2); }
+.f-act { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.focus.done .f-title { color: var(--accent); }
+.focus.nothing .f-title { color: var(--ink-2); }
+h2.sec { font-size: 18px; font-weight: 600; margin: 40px 0 8px; }
+.items li { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1px solid var(--line-2); }
+.items li:last-child { border-bottom: 1px solid var(--line-2); }
+.tk { width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; padding: 0; flex: none; }
+.tk .tk-ring { width: 28px; height: 28px; border: 1.5px solid var(--ink-3); }
+.tk .tk-ring .ic { width: 16px; height: 16px; stroke-width: 2.4; }
+.tk.on .tk-ring { border-color: var(--accent); }
+.it-text { min-width: 0; flex: 1; }
+.it-name { font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+.item.is-done .it-name { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.it-meta { font-size: 14px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.it-meta .dot { width: 8px; height: 8px; }
+.weekrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 40px; }
+.strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.strip li { display: grid; justify-items: center; gap: 8px; font-size: 14px; color: var(--ink-3); }
+.pip { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; }
+.strip .full .pip { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.strip .full .pip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+.strip .part .pip { background: var(--accent-tint); border-color: var(--accent-tint); }
+.strip .none .pip { border-color: var(--ink-3); border-style: dashed; }
+.strip .fut .pip { border-style: dotted; border-color: var(--line); }
+.strip .now { color: var(--ink); font-weight: 600; }
+.strip .now .pip { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--accent); }
+.strip .free .pip { border-color: var(--line-2); }
+.strip-note { font-size: 15px; color: var(--ink-2); margin-top: 16px; }
+.jr { margin-top: 36px; display: grid; gap: 6px; }
+.jr label { font-size: 14px; color: var(--ink-3); }
+.saved { font-size: 13px; color: var(--ink-3); min-height: 1.2em; }
+details.all { margin-top: 36px; }
+details.all > summary { list-style: none; min-height: 44px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 16px; color: var(--accent); }
+details.all > summary::-webkit-details-marker { display: none; }
+details.all > summary::after { content: "+"; font-size: 20px; line-height: 1; margin-left: 4px; }
+details.all[open] > summary::after { content: "−"; }
+details.all h3 { font-size: 14px; color: var(--ink-3); font-weight: 500; margin: 20px 0 4px; }
+.hrows li { display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1px solid var(--line-2); }
+.hrows .hn { flex: 1; min-width: 0; }
+.hrows .hn span { display: block; font-size: 14px; color: var(--ink-3); }
+.hrows .ok { font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+
+/* 6. Plan: Dreams */
+.amb-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 40px; }
+.amb-big { font-size: 28px; line-height: 1.25; font-weight: 500; letter-spacing: -.015em; max-width: 26ch; text-wrap: balance; }
+.dreams { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 48px; align-items: start; }
+.areas { display: grid; }
+.area-row { width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 4px 14px; align-items: start; text-align: left; padding: 16px 12px 16px 4px; border: 0; border-top: 1px solid var(--line-2); background: transparent; border-radius: 0; }
+.area-row:last-child { border-bottom: 1px solid var(--line-2); }
+.area-row:hover { background: var(--surface); }
+.area-row[aria-current="true"] { background: var(--surface); box-shadow: var(--shadow); border-radius: var(--r-md); border-color: transparent; }
+.area-row .dot { margin-top: 7px; }
+.ar-name { font-size: 16px; font-weight: 500; }
+.ar-goal { grid-column: 2; font-size: 14px; color: var(--ink-3); }
+.ar-status { grid-column: 2; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ar-status .bar-t { flex: 1; max-width: 120px; }
+.detail { background: var(--surface); border-radius: var(--r-xl); padding: 32px; box-shadow: var(--shadow); display: grid; gap: 4px; }
+.d-title { font-size: 30px; font-weight: 600; letter-spacing: -.02em; display: flex; align-items: center; gap: 12px; }
+.detail h3 { font-size: 16px; font-weight: 600; margin: 28px 0 8px; }
+.field-v { display: grid; gap: 4px; padding-top: 16px; border-top: 1px solid var(--line-2); }
+.f-label { font-size: 14px; color: var(--ink-3); }
+.f-value { font-size: 18px; line-height: 1.4; }
+.field-v .btn { justify-self: start; margin-top: 4px; }
+.field-v .bar-t { margin-top: 8px; max-width: 260px; --c: var(--accent); }
+.addrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-top: 12px; }
+.addrow select { min-height: 44px; border: 1px solid var(--ink-3); border-radius: var(--r-sm); background: var(--surface); padding: 0 8px; }
+.empty { color: var(--ink-3); font-size: 15px; padding: 8px 0; }
+
+/* 7. Plan: Week */
+.wk-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 20px; }
+.where { background: var(--surface); border-radius: var(--r-xl); padding: 28px 32px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.where-sum { font-size: 17px; color: var(--ink-2); margin-top: 4px; }
+.where-sum b { color: var(--ink); font-weight: 600; }
+.bar { display: flex; height: 40px; border-radius: 999px; overflow: hidden; margin: 18px 0 14px; background: var(--hatch); }
+.bar i { display: block; height: 100%; background: var(--c); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.legend li { display: inline-flex; align-items: center; gap: 8px; }
+.legend .free { width: 10px; height: 10px; border-radius: 50%; background: var(--hatch); border: 1px solid var(--line); }
+.gridbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 28px 0 14px; }
+.daytabs { display: none; gap: 4px; }
+.daytabs button { min-width: 44px; min-height: 44px; border-radius: 999px; border: 0; background: transparent; color: var(--ink-2); }
+.daytabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.selbar { position: sticky; bottom: 16px; z-index: 5; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 14px 18px; margin-top: 14px; display: grid; gap: 12px; }
+.selbar:empty { display: none; }
+.selbar p { font-size: 16px; }
+.selbar .row-btns { margin-top: 0; }
+.chooser { display: flex; flex-wrap: wrap; gap: 8px; }
+.chooser .chip .dot { width: 9px; height: 9px; }
+.wk { display: flex; background: var(--surface); border-radius: var(--r-xl); padding: 16px 16px 12px 8px; box-shadow: var(--shadow); user-select: none; touch-action: pan-y; }
+.hrs { width: 56px; flex: none; font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.hrs div { height: 36px; line-height: 36px; text-align: right; padding-right: 10px; }
+.hrs .colhead { height: 40px; }
+.hrs .sleepl { height: 30px; line-height: 30px; font-size: 12px; }
+.col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--line-2); }
+.col-head { height: 40px; display: grid; place-items: center; font-size: 14px; color: var(--ink-2); }
+.col-head .today { color: var(--accent); font-weight: 600; }
+.cell { height: 36px; border: 0; border-top: 1px solid var(--line-2); background: transparent; border-radius: 0; padding: 0; position: relative; text-align: left; font-size: 13px; overflow: hidden; touch-action: none; }
+.cell.on { background: color-mix(in srgb, var(--c) 24%, var(--surface)); border-left: 3px solid var(--c); border-top-color: transparent; }
+.cell.on.start { border-top: 1px solid var(--c); }
+.cell.on:not(.start) { border-top-color: transparent; }
+.cell .lbl { position: absolute; left: 6px; top: 8px; right: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--ink); line-height: 1.2; }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.cell.sel.on { background: color-mix(in srgb, var(--c) 36%, var(--accent-soft)); }
+.cell:hover { background: var(--line-2); }
+.cell:focus-visible { outline-offset: -3px; }
+.sleepband { height: 30px; background: var(--hatch); border-top: 1px solid var(--line-2); font-size: 12px; color: var(--ink-3); display: flex; align-items: center; padding-left: 8px; }
+.wk-msg { font-size: 14px; color: var(--ink-3); margin-top: 12px; min-height: 1.4em; }
+
+/* 8. Plan: Year */
+.paint { display: grid; gap: 12px; margin-bottom: 20px; }
+.paint-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; color: var(--ink-2); }
+.yearcard { background: var(--surface); border-radius: var(--r-xl); padding: 28px 32px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.yearcard h2 { font-size: 18px; font-weight: 600; }
+.ygrid { display: grid; gap: 8px; margin-top: 22px; }
+.yrow { display: grid; grid-template-columns: 44px repeat(14, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.yrow > span { font-size: 13px; color: var(--ink-3); }
+.sq { aspect-ratio: 1; border: 0; border-radius: 8px; background: var(--accent-soft); padding: 0; touch-action: none; }
+.sq.deep { background: var(--accent); }
+.sq.holiday { background: var(--sand); }
+.sq.none { background: transparent; }
+.sq.now { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.sq:hover { filter: brightness(.95); }
+.ylegend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 20px; font-size: 14px; color: var(--ink-2); }
+.ylegend span { display: inline-flex; align-items: center; gap: 8px; }
+.ylegend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.bigyear { font-size: 40px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.yshares { display: grid; gap: 0; margin-top: 22px; }
+.yshares li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--line-2); font-size: 15px; font-variant-numeric: tabular-nums; }
+.yshares li:last-child { border-bottom: 1px solid var(--line-2); }
+.yshares .pc { color: var(--ink-3); min-width: 3.5em; text-align: right; }
+.yshares .hr { min-width: 5em; text-align: right; }
+
+/* 9. Progress */
+.headline { font-size: 30px; line-height: 1.3; font-weight: 500; letter-spacing: -.015em; max-width: 30ch; text-wrap: balance; margin-bottom: 36px; }
+.headline b { color: var(--accent); font-weight: 600; }
+.card { background: var(--surface); border-radius: var(--r-xl); padding: 28px 32px; box-shadow: var(--shadow); }
+.card h2 { font-size: 18px; font-weight: 600; }
+.card + .card { margin-top: 20px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 20px; }
+.grid2 > .card + .card { margin-top: 0; }
+.stack { display: grid; gap: 20px; align-content: start; }
+.stack > .card + .card { margin-top: 0; }
+.trend { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; align-items: end; height: 210px; margin-top: 26px; }
+.tcol { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tcol .pct { color: var(--ink-2); font-weight: 500; }
+.tbar { height: 150px; width: 100%; display: flex; align-items: flex-end; }
+.tbar i { display: block; width: 100%; border-radius: 10px 10px 4px 4px; background: var(--accent-tint); }
+.tcol.now .tbar i { background: transparent; border: 2px dashed var(--accent); }
+.tcol .wkl { white-space: nowrap; }
+.stage { font-size: 13px; color: var(--ink-3); }
+.arows li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; min-height: 52px; border-top: 1px solid var(--line-2); padding: 8px 0; }
+.arows li:last-child { border-bottom: 1px solid var(--line-2); }
+.arows .nm { font-size: 15px; font-weight: 500; }
+.arows .sg { grid-column: 2 / 4; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.arows .sg .bar-t { flex: 1; }
+.recap-t { font-size: 22px; font-weight: 600; letter-spacing: -.015em; margin-top: 8px; }
+.recap-p { margin-top: 10px; font-size: 16px; color: var(--ink-2); }
+.ms { display: grid; gap: 0; margin-top: 14px; }
+.ms li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line-2); font-size: 15px; }
+.ms li span:first-child { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.setlist { display: grid; gap: 0; margin-top: 10px; }
+.setlist > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 60px; border-top: 1px solid var(--line-2); }
+.setlist > div:last-child { border-bottom: 1px solid var(--line-2); }
+.setlist small { display: block; color: var(--ink-3); font-size: 14px; }
+
+/* 10. Footer: preview tool, collapsed and in the flow */
+.preview { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; }
+.preview > summary { list-style: none; min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; color: var(--ink-2); font-size: 15px; }
+.preview > summary::-webkit-details-marker { display: none; }
+.preview > summary::before { content: "+ "; }
+.preview[open] > summary::before { content: "− "; }
+.preview .chips { margin-top: 10px; }
+.preview p { font-size: 14px; color: var(--ink-3); margin-top: 12px; }
+
+/* 11. First run: a full-screen flow, not a pop-up */
+.setup { position: fixed; inset: 0; z-index: 50; background: var(--paper); overflow-y: auto; }
+.su-wrap { max-width: 640px; margin: 0 auto; min-height: 100%; padding: 28px 24px 40px; display: flex; flex-direction: column; gap: 28px; }
+.su-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.su-prog { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.su-prog i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+.su-body { display: grid; gap: 20px; align-content: start; flex: 1; }
+.su-body h1 { font-size: 36px; line-height: 1.12; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+.su-body .lede { font-size: 17px; }
+.su-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.su-foot .end { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.err { color: var(--sand-ink); background: var(--sand); padding: 10px 14px; border-radius: var(--r-sm); font-size: 15px; }
+.note { font-size: 15px; color: var(--ink-2); background: var(--surface); border-radius: var(--r-md); padding: 14px 16px; }
+.stepper { display: inline-flex; align-items: center; gap: 12px; }
+.stepper output { font-size: 40px; font-weight: 600; min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.draft { display: grid; gap: 0; background: var(--surface); border-radius: var(--r-xl); padding: 8px 28px; box-shadow: var(--shadow); }
+.draft > div { padding: 18px 0; border-top: 1px solid var(--line-2); display: grid; gap: 8px; }
+.draft > div:first-child { border-top: 0; }
+.draft .src { font-size: 14px; color: var(--ink-3); }
+.draft .area-h { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; }
+.mini { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+.mini > div { display: grid; gap: 3px; align-content: start; min-height: 120px; }
+.mini .dh { font-size: 12px; color: var(--ink-3); text-align: center; }
+.mini .mb { font-size: 11px; line-height: 1.2; padding: 4px 4px; border-radius: 6px; background: color-mix(in srgb, var(--c) 28%, var(--surface)); border-left: 3px solid var(--c); overflow: hidden; color: var(--ink); }
+.mini .mb { font-size: 12px; }
+.fa { background: var(--accent-soft); border-radius: var(--r-md); padding: 14px 16px; font-size: 16px; }
+.fa b { font-weight: 600; }
+
+/* 12. Toast: one line, fades, never blocks */
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; max-width: min(520px, calc(100vw - 32px)); background: var(--ink); color: var(--paper); border-radius: var(--r-lg); padding: 14px 16px 14px 20px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); animation: fade .35s ease-out; }
+.toast p { font-size: 15px; }
+.toast b { font-weight: 600; display: block; font-size: 16px; }
+.toast .btn { min-height: 40px; color: var(--paper); border-color: transparent; background: transparent; padding: 0 10px; text-decoration: underline; }
+@keyframes fade { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* 13. Phone: a bottom bar, one day in the week grid, stacked panels */
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .rail { display: none; }
+  .top { padding: 12px 18px 0; }
+  .top .brand { display: inline-flex; font-size: 18px; }
+  main { padding: 20px 18px 120px; }
+  .foot { padding: 0 18px 120px; }
+  .page-head h1 { font-size: 30px; }
+  .tabbar { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar a { flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 0; font-size: 13px; border-radius: var(--r-md); }
+  .tabbar a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+  .tabbar a[aria-current="page"] .ic { color: var(--accent); }
+  .f-title { font-size: 34px; }
+  .focus { grid-template-columns: 1fr; padding: 26px 24px; gap: 22px; }
+  .tick { width: 64px; height: 64px; }
+  .tick .tk-ring { width: 64px; height: 64px; }
+  .dreams { grid-template-columns: 1fr; gap: 28px; }
+  .detail { padding: 24px 20px; }
+  .amb-big { font-size: 24px; }
+  .dreams .areas { order: 0; }
+  .where, .yearcard, .card { padding: 22px 20px; }
+  .daytabs { display: flex; }
+  .wk { padding: 12px 10px 10px 4px; }
+  .hrs { width: 44px; }
+  .hrs div { font-size: 12px; padding-right: 6px; }
+  .col { display: none; }
+  .wk[data-day="0"] .col[data-d="0"], .wk[data-day="1"] .col[data-d="1"], .wk[data-day="2"] .col[data-d="2"], .wk[data-day="3"] .col[data-d="3"], .wk[data-day="4"] .col[data-d="4"], .wk[data-day="5"] .col[data-d="5"], .wk[data-day="6"] .col[data-d="6"] { display: flex; }
+  .cell .lbl { white-space: normal; }
+  .yrow { grid-template-columns: 34px repeat(14, minmax(0, 1fr)); gap: 3px; }
+  .yrow > span { font-size: 11px; }
+  .sq { border-radius: 5px; }
+  .headline { font-size: 24px; }
+  .grid2 { grid-template-columns: 1fr; }
+  .trend { gap: 5px; }
+  .addrow { grid-template-columns: 1fr; }
+  .toast { bottom: 84px; }
+  .selbar { bottom: 84px; }
+  .setup { }
+  .su-body h1 { font-size: 30px; }
+  .mini .mb { font-size: 11px; padding: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5.5 8.5 12l6.5 6.5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+  <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.8l3 1.7"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-progress" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16l4-5 3 2.5 5-6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-brand" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="var(--accent)"/><path d="M7.5 13.5l3.5 3.5 7.5-8" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <aside class="rail">
+    <a class="brand" href="#today"><svg aria-hidden="true"><use href="#i-brand"/></svg><span>Timely</span></a>
+    <nav aria-label="Main">
+      <a href="#today" data-nav="today"><svg class="ic" aria-hidden="true"><use href="#i-today"/></svg>Today</a>
+      <a href="#plan/dreams" data-nav="plan"><svg class="ic" aria-hidden="true"><use href="#i-plan"/></svg>Plan</a>
+      <a href="#progress" data-nav="progress"><svg class="ic" aria-hidden="true"><use href="#i-progress"/></svg>Progress</a>
+    </nav>
+    <p class="rail-foot">Sample data for Sam Reyes. Nothing is saved to a server.</p>
+  </aside>
+
+  <div class="column">
+    <header class="top">
+      <a class="brand" href="#today"><svg aria-hidden="true"><use href="#i-brand"/></svg><span>Timely</span></a>
+      <div class="tools">
+        <button class="icon" type="button" id="themeBtn" aria-pressed="false" aria-label="Dark mode">
+          <svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+        <details class="acct" id="acct">
+          <summary aria-label="Account, Sam Reyes">SR</summary>
+          <div class="menu">
+            <p><b>Sam Reyes</b>Saved on this device only (sample)</p>
+            <button type="button" data-a="replay">Replay first run</button>
+            <button type="button" data-a="reset">Reset sample data</button>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1"><div id="view"></div></main>
+
+    <footer class="foot">
+      <details class="preview">
+        <summary>Preview states</summary>
+        <p>Shows the Today states and the empty start on demand. Nothing outside this page changes.</p>
+        <div class="chips">
+          <button class="chip" type="button" data-prev="normal" aria-pressed="true">Today: normal</button>
+          <button class="chip" type="button" data-prev="all" aria-pressed="false">Today: all done</button>
+          <button class="chip" type="button" data-prev="none" aria-pressed="false">Today: nothing planned</button>
+          <button class="chip" type="button" data-prev="new" aria-pressed="false">New user: empty plan</button>
+          <button class="chip" type="button" data-prev="setup" aria-pressed="false">First run</button>
+        </div>
+      </details>
+      <p style="margin-top:20px">Prototype with dummy data: a sketch for discussion, not the app. See the <a href="../ux-proposal.md">UX proposal</a>. The date is fixed at Wednesday 4 November 2026.</p>
+    </footer>
+  </div>
+
+  <nav class="tabbar" aria-label="Main, phone">
+    <a href="#today" data-nav="today"><svg class="ic" aria-hidden="true"><use href="#i-today"/></svg>Today</a>
+    <a href="#plan/dreams" data-nav="plan"><svg class="ic" aria-hidden="true"><use href="#i-plan"/></svg>Plan</a>
+    <a href="#progress" data-nav="progress"><svg class="ic" aria-hidden="true"><use href="#i-progress"/></svg>Progress</a>
+  </nav>
+</div>
+
+<section class="setup" id="setup" aria-labelledby="su-h" hidden></section>
+
+<div class="toast" id="toast" role="status" hidden>
+  <div style="min-width:0"><b id="toastT"></b><p id="toastX"></p></div>
+  <button class="btn" type="button" data-a="toast-close">Dismiss</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── 0. Helpers ─────────────────────────────────────────── */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var key = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var parse = function (k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  var addDays = function (d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); };
+  var dow = function (d) { return (d.getDay() + 6) % 7; };
+  var monday = function (d) { return addDays(d, -dow(d)); };
+  var MON1 = new Date(2025, 11, 29);                       // Monday of ISO week 1, 2026
+  var weekOf = function (d) { return Math.round((monday(d) - MON1) / 864e5 / 7) + 1; };
+  var weekMon = function (w) { return addDays(MON1, (w - 1) * 7); };
+  var weekDates = function (w) { var m = weekMon(w), o = []; for (var i = 0; i < 7; i++) o.push(addDays(m, i)); return o; };
+  var TODAY = new Date(2026, 10, 4), TK = key(TODAY), THIS_WEEK = weekOf(TODAY);   // fixed sample date: Wed 4 Nov 2026, week 45
+  var DAY = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  var DL = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  var DS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var MS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var AWAKE = 105;                                          // awake hours a week: 7 AM to 10 PM
+  var hr = function (h) { var x = h % 12 === 0 ? 12 : h % 12; return x + (h % 24 < 12 ? ' AM' : ' PM'); };
+  var span = function (a, b) { return hr(a) + ' to ' + hr(b); };
+  var hash01 = function (s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; };
+  var pct = function (n) { return Math.max(0, Math.min(100, Math.round(n || 0))); };
+  var plural = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
+  var icon = function (id, cls) { return '<svg class="' + (cls || 'ic') + '" aria-hidden="true" focusable="false"><use href="#i-' + id + '"/></svg>'; };
+  var stage = function (p) { return p == null ? 'No target yet' : p >= 100 ? 'Reached' : p >= 75 ? 'Strong' : p >= 50 ? 'Steady' : p >= 25 ? 'Building' : 'Starting'; };
+  var inWords = function (r) { return r >= 0.85 ? 'nearly all' : r >= 0.7 ? 'about three in four' : r >= 0.45 ? 'about half' : 'fewer than half'; };
+  var dot = function (id) { return '<i class="dot" style="--c:var(--c-' + id + ')" aria-hidden="true"></i>'; };
+  var ring = function (p, px, label) {
+    var C = 97.39, v = pct(p), off = C * (1 - v / 100), ok = v >= 100;
+    return '<span class="ring' + (ok ? ' ok' : '') + '" style="width:' + px + 'px;height:' + px + 'px" role="img" aria-label="' + esc(label) + '">' +
+      '<svg viewBox="0 0 36 36" aria-hidden="true"><circle class="rt" cx="18" cy="18" r="15.5"/>' +
+      '<circle class="ra" cx="18" cy="18" r="15.5" stroke-dasharray="' + C + '" stroke-dashoffset="' + off + '" style="--c:' + C + ';--o:' + off + '"/></svg>' +
+      '<span class="rc">' + (ok ? icon('check') : v + '%') + '</span></span>';
+  };
+  var needOf = function (h) { return h.period === 'day' ? 'Every day' : h.period === 'month' ? (h.count === 1 ? 'Once a month' : h.count + ' times a month') : (h.count === 1 ? 'Once a week' : h.count + ' times a week'); };
+
+  /* ── 1. Sample data (invented person, dummy plan) ───────── */
+  var AREA_DEFS = [
+    { id: 'phys', name: 'Physical', goal5: 'Feel strong, rested and energetic.', target: 'Exercise at least three times a week, all year.', progress: 62 },
+    { id: 'spir', name: 'Spiritual', goal5: 'Keep a calm, clear mind and clear values.', target: 'Read something inspiring at least three times a week.', progress: 30 },
+    { id: 'rel', name: 'Relational & emotional', goal5: 'Be present for the people I love.', target: 'A regular time together with family and friends, every week.', progress: 55 },
+    { id: 'eco', name: 'Economic', goal5: 'Manage money with confidence and calm.', target: '', progress: null },
+    { id: 'cog', name: 'Cognitive', goal5: 'Keep learning and growing in my field.', target: 'Finish one course and share what I learn.', progress: 40 },
+    { id: 'soc', name: 'Social', goal5: 'Belong to a few circles where I can give and receive.', target: '', progress: null },
+    { id: 'prof', name: 'Professional', goal5: 'Do work that uses my best skills and makes sense.', target: 'Ship the Q1 project and keep focused mornings.', progress: 48 },
+    { id: 'env', name: 'Environment', goal5: 'Live and work in a calm, tidy space.', target: 'A tidy home and one walk outside every day.', progress: 20 }
+  ];
+  var ACT_DEFS = [
+    ['focus', 'Focused work', 'prof'], ['planning', 'Weekly planning', 'prof'], ['run', 'Run', 'phys'], ['yoga', 'Yoga', 'phys'],
+    ['walk', 'Walk', 'phys'], ['family', 'Family time', 'rel'], ['dinner', 'Family dinner', 'rel'], ['call', 'Call a friend', 'rel'],
+    ['quiet', 'Quiet time', 'spir'], ['reading', 'Reading', 'cog'], ['study', 'Study', 'cog'], ['tidy', 'Tidy the flat', 'env']
+  ].map(function (a) { return { id: a[0], name: a[1], area: a[2] }; });
+  var HABIT_DEFS = [
+    ['run', 'phys', 'Run', 3, 'week', 'run'], ['water', 'phys', 'Drink enough water', 1, 'day', null],
+    ['quiet', 'spir', 'Quiet time to reflect', 1, 'day', 'quiet'], ['read', 'spir', 'Read for inspiration', 3, 'week', 'reading'],
+    ['call', 'rel', 'Call a friend or relative', 2, 'week', 'call'], ['family', 'rel', 'Plan a family activity', 1, 'week', 'family'],
+    ['budget', 'eco', 'Review the monthly budget', 1, 'month', null], ['study', 'cog', 'Study a new topic', 3, 'week', 'study'],
+    ['project', 'cog', 'Work on a personal project', 2, 'week', null], ['meeting', 'soc', 'Attend a community meeting', 1, 'month', null],
+    ['focus', 'prof', 'Focused work', 5, 'week', 'focus'], ['planning', 'prof', 'Weekly planning', 1, 'week', 'planning'],
+    ['errands', 'env', 'Run errands with a plan', 1, 'week', 'tidy']
+  ].map(function (h) { return { id: h[0], area: h[1], name: h[2], count: h[3], period: h[4], act: h[5] }; });
+  var BASE = { phys: .82, spir: .55, rel: .86, eco: .6, cog: .7, soc: .6, prof: .78, env: .6 };   // share ticked in the sample history
+  var MY = [
+    [0, 9, 12, 'focus'], [0, 18, 19, 'run'], [0, 20, 21, 'reading'],
+    [1, 9, 12, 'focus'], [1, 18, 19, 'dinner'], [1, 20, 21, 'study'],
+    [2, 9, 10, 'planning'], [2, 13, 15, 'focus'], [2, 18, 19, 'run'],
+    [3, 9, 12, 'focus'], [3, 12, 13, 'walk'], [3, 18, 20, 'family'],
+    [4, 7, 8, 'yoga'], [4, 9, 11, 'focus'], [4, 17, 18, 'call'], [4, 18, 19, 'run'],
+    [5, 8, 9, 'walk'], [5, 10, 12, 'walk'], [5, 15, 18, 'family'], [5, 19, 20, 'dinner'],
+    [6, 8, 9, 'quiet'], [6, 10, 12, 'family'], [6, 15, 16, 'tidy'], [6, 17, 18, 'reading']
+  ];
+  var DEEP = MY.concat([[0, 13, 16, 'focus'], [1, 13, 15, 'focus'], [3, 15, 17, 'focus'], [4, 13, 15, 'focus']]);
+  var HOLIDAY = [[0, 8, 9, 'walk'], [1, 8, 9, 'walk'], [2, 8, 9, 'walk'], [3, 8, 9, 'walk'], [4, 8, 9, 'walk'],
+    [5, 10, 12, 'walk'], [5, 15, 18, 'family'], [6, 8, 9, 'quiet'], [6, 15, 18, 'family']];
+  var STARTER_AMB = 'Stronger, calmer, and able to keep up with my kids.';
+  var AMB = 'Stronger, calmer, and able to keep up with my kids.';
+
+  // The first-run rule table (ux-proposal 6a). Every area has a rule, so every area gets a follow-up.
+  var FOLLOW = {
+    phys: { q: 'What would a good month look like for Physical?', opts: [
+      { label: 'Run, three times a week', habit: 'Run', count: 3, period: 'week', act: 'run' },
+      { label: 'Walk, every day', habit: 'Walk', count: 7, period: 'week', act: 'walk' }] },
+    prof: { q: 'Which piece of work would make this year count?', opts: [
+      { label: 'Focused work, three mornings a week', habit: 'Focused work', count: 3, period: 'week', act: 'focus' },
+      { label: 'Weekly planning, once a week', habit: 'Weekly planning', count: 1, period: 'week', act: 'planning' }] },
+    rel: { q: 'Who do you want more time with?', opts: [
+      { label: 'Family evening, twice a week', habit: 'Family evening', count: 2, period: 'week', act: 'dinner' },
+      { label: 'A call with a friend, twice a week', habit: 'Call a friend or relative', count: 2, period: 'week', act: 'call' }] },
+    spir: { q: 'Which habit would you like to start?', opts: [{ label: 'Quiet time, three times a week', habit: 'Quiet time to reflect', count: 3, period: 'week', act: 'quiet' }] },
+    cog: { q: 'Which habit would you like to start?', opts: [{ label: 'Study a new topic, three times a week', habit: 'Study a new topic', count: 3, period: 'week', act: 'study' }] },
+    env: { q: 'Which habit would you like to start?', opts: [{ label: 'Tidy the flat, once a week', habit: 'Run errands with a plan', count: 1, period: 'week', act: 'tidy' }] },
+    eco: { q: 'Which habit would you like to start?', opts: [{ label: 'Review the monthly budget', habit: 'Review the monthly budget', count: 1, period: 'month', act: null }] },
+    soc: { q: 'Which habit would you like to start?', opts: [{ label: 'Attend a community meeting', habit: 'Attend a community meeting', count: 1, period: 'month', act: null }] }
+  };
+
+  function sampleSched() {
+    return { my: { name: 'My week', slots: MY.map(function (s) { return s.slice(); }) },
+      deep: { name: 'Deep work', slots: DEEP.map(function (s) { return s.slice(); }) },
+      holiday: { name: 'Holiday', slots: HOLIDAY.map(function (s) { return s.slice(); }) } };
+  }
+  function emptyState() {
+    return {
+      ambition: '', areas: AREA_DEFS.map(function (a) { return { id: a.id, name: a.name, goal5: '', target: '', progress: null }; }),
+      acts: ACT_DEFS.map(function (a) { return { id: a.id, name: a.name, area: a.area }; }), habits: [],
+      schedules: { my: { name: 'My week', slots: [] } }, weekSched: {}, done: {}, extra: {}, dayOff: {}, journal: {},
+      set: { recap: true, milestones: true, celebrate: true }, recap: 'open', showSleep: false
+    };
+  }
+  function sampleState() {
+    var s = emptyState();
+    s.ambition = AMB;
+    s.areas = AREA_DEFS.map(function (a) { return { id: a.id, name: a.name, goal5: a.goal5, target: a.target, progress: a.progress }; });
+    s.habits = HABIT_DEFS.map(function (h) { return { id: h.id, area: h.area, name: h.name, count: h.count, period: h.period, act: h.act }; });
+    s.schedules = sampleSched();
+    s.weekSched = { 28: 'holiday', 29: 'holiday', 47: 'deep', 48: 'deep', 49: 'deep' };
+    s.journal = { '2026-11-03': 'Skipped the run. Too much at work, and that is fine.' };
+    seedHistory(s);
+    return s;
+  }
+
+  /* ── 2. State and rules (pure over S) ───────────────────── */
+  var S = emptyState();
+  var FR = null;
+  var UI = { route: 'today', sub: 'dreams', day: TK, sel: null, choose: false, wkSched: 'my', wkDay: 2,
+    showAll: false, edit: null, lastEdit: null, dream: 'phys', paint: 'holiday', pop: null, focusKey: null, firstRoute: true };
+
+  function areaOf(id) { for (var i = 0; i < S.areas.length; i++) if (S.areas[i].id === id) return S.areas[i]; return null; }
+  function actOf(id) { for (var i = 0; i < S.acts.length; i++) if (S.acts[i].id === id) return S.acts[i]; return null; }
+  function schedOf(w) { return S.schedules[S.weekSched[w] || 'my'] || S.schedules.my; }
+  function isDone(dk, k) { var a = S.done[dk]; return !!a && a.indexOf(k) >= 0; }
+  function setDone(dk, k, on) {
+    var a = S.done[dk] || (S.done[dk] = []), i = a.indexOf(k);
+    if (on && i < 0) a.push(k);
+    if (!on && i >= 0) a.splice(i, 1);
+  }
+  function slotsHours(slots) { return slots.reduce(function (s, x) { return s + x[2] - x[1]; }, 0); }
+  function areaHours(slots) {
+    var o = {};
+    slots.forEach(function (x) { var a = actOf(x[3]); var id = a ? a.area : 'none'; o[id] = (o[id] || 0) + x[2] - x[1]; });
+    return o;
+  }
+
+  // Blocks for one day: the week's schedule slots plus any extra block added that day.
+  function blocksOn(dk) {
+    if (S.dayOff[dk]) return [];
+    var d = parse(dk), wd = dow(d);
+    var list = schedOf(weekOf(d)).slots.filter(function (s) { return s[0] === wd; })
+      .map(function (s) { return { act: s[3], start: s[1], end: s[2] }; });
+    (S.extra[dk] || []).forEach(function (e) { list.push(e); });
+    list.sort(function (a, b) { return a.start - b.start; });
+    return list.map(function (b) {
+      var a = actOf(b.act) || { name: 'Activity', area: null };
+      return { kind: 'block', key: 'a:' + b.act + '@' + b.start, act: b.act, start: b.start, end: b.end, title: a.name, area: a.area, hours: b.end - b.start };
+    });
+  }
+  // Everything due on a day: blocks first, then daily habits that no block already stands for.
+  function itemsOn(dk) {
+    if (S.dayOff[dk]) return [];
+    var blocks = blocksOn(dk);
+    var habits = S.habits.filter(function (h) {
+      return h.period === 'day' && !(h.act && blocks.some(function (b) { return b.act === h.act; }));
+    }).map(function (h) { return { kind: 'habit', key: 'h:' + h.id, title: h.name, area: h.area, habit: h, start: 99, end: 99, hours: 0 }; });
+    return blocks.concat(habits);
+  }
+  function dayStats(dk) {
+    var items = itemsOn(dk);
+    return { n: items.length, d: items.filter(function (it) { return isDone(dk, it.key); }).length };
+  }
+  // Week totals up to today: planned and ticked hours (blocks) and counts (all items).
+  function weekStats(w) {
+    var st = { pH: 0, dH: 0, pN: 0, dN: 0 };
+    weekDates(w).forEach(function (d) {
+      if (d > TODAY) return;
+      var dk = key(d);
+      itemsOn(dk).forEach(function (it) {
+        var ok = isDone(dk, it.key);
+        st.pN++; if (ok) st.dN++;
+        if (it.kind === 'block') { st.pH += it.hours; if (ok) st.dH += it.hours; }
+      });
+    });
+    return st;
+  }
+  function areaWeek(w) {
+    var o = {};
+    weekDates(w).forEach(function (d) {
+      if (d > TODAY) return;
+      var dk = key(d);
+      blocksOn(dk).forEach(function (b) {
+        var r = o[b.area] || (o[b.area] = { p: 0, d: 0 });
+        r.p += b.hours; if (isDone(dk, b.key)) r.d += b.hours;
+      });
+    });
+    return o;
+  }
+  // Ticks in a week that count toward a habit (its own tick, or a block of its activity).
+  function habitWeek(h, w) {
+    var n = 0;
+    weekDates(w).forEach(function (d) {
+      if (d > TODAY) return;
+      var dk = key(d);
+      (S.done[dk] || []).forEach(function (k) {
+        if (k === 'h:' + h.id || (h.act && k.indexOf('a:' + h.act + '@') === 0)) n++;
+      });
+    });
+    return n;
+  }
+  function seedHistory(s) {
+    var saved = S; S = s;
+    for (var d = new Date(2026, 8, 7); d < TODAY; d = addDays(d, 1)) {
+      var dk = key(d);
+      itemsOn(dk).forEach(function (it) {
+        var base = it.kind === 'block' ? (BASE[it.area] || .6) : .7;
+        if (hash01(dk + it.key) < base) setDone(dk, it.key, true);
+      });
+    }
+    S = saved;
+  }
+  function avgTarget() {
+    var v = S.areas.filter(function (a) { return a.progress != null; });
+    if (!v.length) return null;
+    return v.reduce(function (s, a) { return s + a.progress; }, 0) / v.length;
+  }
+  // The next action when today is empty: the weekly habit furthest behind, with an activity.
+  function nextAction() {
+    var best = null, gap = -1;
+    S.habits.forEach(function (h) {
+      if (!h.act || h.period === 'day') return;
+      var g = h.count - habitWeek(h, THIS_WEEK);
+      if (g > gap) { gap = g; best = h; }
+    });
+    return best;
+  }
+
+  /* ── 3. Sample history and the first-run draft ──────────── */
+  function freeSpot(order, start, occ) {
+    for (var i = 0; i < order.length; i++) {
+      for (var h = start; h <= start + 3 && h + 1 <= 22; h++) {
+        var k = order[i] + '-' + h;
+        if (!occ[k]) { occ[k] = 1; return { wd: order[i], h: h }; }
+      }
+    }
+    return null;
+  }
+  function buildDraft(fr) {
+    var order = fr.week.weekend && !fr.week.working ? [5, 6, 0, 1, 2, 3, 4] : [0, 2, 4, 1, 3, 5, 6];
+    var start = fr.week.evenings ? 18 : 9, occ = {}, slots = [], habits = [], targets = {}, budget = fr.hours, placed = 0, asked = 0;
+    fr.areas.slice(0, 3).forEach(function (aid, i) {
+      var rule = FOLLOW[aid], pick = i === 0 ? fr.fol[aid] : 0, opt = rule.opts[typeof pick === 'number' ? pick : 0];
+      var src = i === 0 && pick === 'unsure' ? 'Not sure, so we used the default: ' + opt.label + '.'
+        : i === 0 ? 'From your answer: ' + opt.label + '.' : 'A default for ' + areaOf(aid).name + '. You can change it.';
+      var h = { id: 'd' + i, area: aid, name: opt.habit, count: opt.count, period: opt.period, act: opt.act, src: src };
+      habits.push(h);
+      targets[aid] = (areaOf(aid).target || ('First step: ' + opt.habit + '.'));
+      if (h.act && h.period === 'week') {
+        for (var k = 0; k < h.count; k++) {
+          asked++;
+          if (budget <= 0) break;
+          var spot = freeSpot(order, start, occ);
+          if (!spot) break;
+          slots.push([spot.wd, spot.h, spot.h + 1, h.act]); budget--; placed++;
+        }
+      }
+    });
+    slots.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    return { ambition: fr.amb.trim(), areas: fr.areas.slice(0, 3), habits: habits, targets: targets, slots: slots,
+      note: placed + ' of ' + asked + ' sessions fit your ' + fr.hours + ' hours. You can add more later in Week.' };
+  }
+  function starterDraft() {
+    return { ambition: STARTER_AMB, areas: ['phys', 'rel'],
+      habits: [{ id: 'd0', area: 'phys', name: 'Run', count: 3, period: 'week', act: 'run', src: 'Starter: three runs a week.' },
+        { id: 'd1', area: 'rel', name: 'Family evening', count: 2, period: 'week', act: 'dinner', src: 'Starter: two family evenings a week.' }],
+      targets: { phys: areaOf('phys').target, rel: areaOf('rel').target },
+      slots: [[0, 18, 19, 'run'], [1, 18, 19, 'dinner'], [2, 18, 19, 'run'], [3, 18, 19, 'dinner'], [4, 18, 19, 'run']],
+      note: 'Starter: a week already set. Edit anything before you accept.' };
+  }
+  function firstActionOf(d) {
+    var sl = d.slots.slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    var pick = sl.filter(function (s) { return s[0] >= 2; })[0] || sl[0];
+    if (!pick) return null;
+    var a = ACT_DEFS.filter(function (x) { return x.id === pick[3]; })[0];
+    return { name: a ? a.name : 'Activity', wd: pick[0], h: pick[1] };
+  }
+
+  /* ── 4. Renderers ───────────────────────────────────────── */
+  function head(eyebrow, title, lede, extra) {
+    return '<header class="page-head"><p class="eyebrow">' + eyebrow + '</p><h1 id="h1" tabindex="-1">' + title + '</h1>' +
+      (lede ? '<p class="lede">' + lede + '</p>' : '') + (extra || '') + '</header>';
+  }
+  function behindOf(it) {
+    var a = areaOf(it.area);
+    if (!a) return '';
+    if (!a.target) return 'Behind this: ' + esc(a.name) + '. No 1-year target yet.';
+    return 'Behind this: ' + esc(a.target) + (a.progress != null ? ' ' + a.progress + '% of the way there.' : '');
+  }
+  function itemRow(it, dk) {
+    var ok = isDone(dk, it.key), a = areaOf(it.area);
+    var meta = it.kind === 'block' ? span(it.start, it.end) : 'Habit, every day';
+    return '<li class="item' + (ok ? ' is-done' : '') + '"><button class="tk' + (ok ? ' on' : '') + '" type="button" data-a="tick" data-k="' + esc(it.key) + '" data-d="' + dk + '" data-fk="' + esc(it.key) + '" aria-label="' + esc(it.title) + (ok ? ', done. Undo' : ', not done yet. Mark done') + '"><span class="tk-ring">' + icon('check') + '</span></button>' +
+      '<div class="it-text"><p class="it-name">' + esc(it.title) + '</p><p class="it-meta">' + meta + (a ? ' · ' + dot(a.id) + esc(a.name) : '') + '</p></div></li>';
+  }
+  function todayView() {
+    var dk = UI.day, d = parse(dk), isT = dk === TK, items = itemsOn(dk), focal = null;
+    for (var i = 0; i < items.length; i++) if (!isDone(dk, items[i].key)) { focal = items[i]; break; }
+    var floor = key(addDays(TODAY, -60));
+    var nav = '<div class="daynav" role="group" aria-label="Choose a day">' +
+      '<button class="icon" type="button" data-a="day" data-step="-1" aria-label="Previous day"' + (dk <= floor ? ' disabled' : '') + '>' + icon('left') + '</button>' +
+      (isT ? '' : '<button class="chip" type="button" data-a="day" data-step="0" data-fk="today-btn">Back to today</button>') +
+      '<button class="icon" type="button" data-a="day" data-step="1" aria-label="Next day"' + (isT ? ' disabled' : '') + '>' + icon('right') + '</button></div>';
+    var avg = avgTarget();
+    var amb = '<div class="amb">' + (avg == null ? '' : ring(avg, 64, 'Ambition: ' + pct(avg) + ' percent')) +
+      '<p><b>Toward your ambition</b>' + (avg == null ? 'Set a 1-year target to see it here.' : 'Average of your 1-year targets') + '</p></div>';
+    var html = '<header class="t-head"><div><p class="eyebrow">' + (isT ? 'Today' : 'A past day') + ' · ' + DAY[dow(d)] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + ' · week ' + weekOf(d) + '</p>' + nav + '</div>' + amb + '</header>';
+    html += '<p class="dream">' + (S.ambition ? 'For: <span>' + esc(S.ambition) + '</span>' : 'Your ambition is not written yet.') + '</p>';
+    if (!items.length) {
+      var nx = nextAction();
+      html += '<section class="focus nothing" aria-labelledby="h1"><div class="f-text"><p class="eyebrow">Nothing planned</p><h1 id="h1" class="f-title" tabindex="-1">Nothing planned for today.</h1>' +
+        '<p class="f-line">' + (S.ambition ? 'One small step keeps the week honest, or take the day off.' : 'Your plan is empty. Setting it up takes about three minutes.') + '</p>' +
+        '<div class="f-act">' + (S.ambition && nx ? '<button class="btn primary" type="button" data-a="add-next" data-fk="add-next">Add ' + esc(nx.name) + ' this evening</button>' : '<button class="btn primary" type="button" data-a="setup">Set up my plan</button>') + '</div></div></section>';
+    } else if (!focal) {
+      html += '<section class="focus done" aria-labelledby="h1"><div class="f-text"><p class="eyebrow">Today</p><h1 id="h1" class="f-title" tabindex="-1">Today is done.</h1>' +
+        '<p class="f-line">' + plural(items.length, 'thing', 'things') + ' ticked. The rest of the week can wait.</p>' +
+        '<div class="f-act"><a class="btn quiet" href="#plan/week">Plan tomorrow</a></div></div></section>';
+    } else {
+      var when = focal.kind === 'block' ? span(focal.start, focal.end) + ' · ' + (areaOf(focal.area) ? areaOf(focal.area).name : '') : 'A habit for today';
+      html += '<section class="focus" aria-labelledby="h1"><button class="tick' + (UI.pop === focal.key ? ' pop' : '') + '" type="button" id="focalTick" data-a="tick" data-k="' + esc(focal.key) + '" data-d="' + dk + '" data-fk="' + esc(focal.key) + '" aria-label="Mark ' + esc(focal.title) + ' done"><span class="tk-ring">' + icon('check') + '</span></button>' +
+        '<div class="f-text"><p class="eyebrow">Next · ' + when + '</p><h1 id="h1" class="f-title" tabindex="-1">' + esc(focal.title) + '</h1><p class="f-line">' + behindOf(focal) + '</p></div></section>';
+    }
+    var rest = items.filter(function (it) { return it !== focal; });
+    if (rest.length) {
+      html += '<h2 class="sec">' + (focal ? 'Also today' : 'Ticked today') + '</h2><ul class="items">' + rest.map(function (it) { return itemRow(it, dk); }).join('') + '</ul>';
+    }
+    var m = weekMon(THIS_WEEK), cells = '', pN = 0, dN = 0;
+    for (var j = 0; j < 7; j++) {
+      var day = addDays(m, j), k2 = key(day), fut = day > TODAY, st = dayStats(k2);
+      if (!fut) { pN += st.n; dN += st.d; }
+      var cls = fut ? 'fut' : st.n === 0 ? 'free' : st.d === st.n ? 'full' : st.d > 0 ? 'part' : 'none';
+      var word = fut ? 'not yet' : st.n === 0 ? 'nothing planned' : st.d === st.n ? 'all done' : st.d > 0 ? 'some done' : 'not ticked';
+      cells += '<li class="' + cls + (k2 === TK ? ' now' : '') + '"><span class="pip" aria-hidden="true">' + (cls === 'full' ? icon('check') : '') + '</span><span>' + DL[j] + '</span><span class="sr">' + DAY[j] + ': ' + word + '</span></li>';
+    }
+    html += '<section aria-labelledby="wk-h"><h2 class="sec" id="wk-h">This week</h2><ul class="strip">' + cells + '</ul>' +
+      '<p class="strip-note">' + dN + ' of ' + pN + ' planned so far. A missed one costs only itself; nothing resets.</p></section>';
+    html += '<section class="jr"><label for="jr-in">One line for ' + (isT ? 'today' : 'this day') + '</label><input id="jr-in" class="line-in" data-in="journal" data-d="' + dk + '" value="' + esc(S.journal[dk] || '') + '" placeholder="What got in the way? One line is enough."><span class="saved" id="jr-saved" role="status"></span></section>';
+    var byArea = S.areas.filter(function (a) { return S.habits.some(function (h) { return h.area === a.id; }); });
+    html += '<details class="all" data-all' + (UI.showAll ? ' open' : '') + '><summary>All habits (' + S.habits.length + ')</summary><div>' +
+      byArea.map(function (a) {
+        return '<h3>' + esc(a.name) + '</h3><ul class="hrows">' + S.habits.filter(function (h) { return h.area === a.id; }).map(function (h) {
+          var linked = h.act && blocksOn(dk).some(function (b) { return b.act === h.act; });
+          var wk = h.period === 'day' ? (isDone(dk, 'h:' + h.id) ? 'Done today' : 'Not yet today') : habitWeek(h, THIS_WEEK) + ' of ' + h.count + ' this week';
+          var right = linked ? '<span class="ok">Planned as a block</span>' :
+            '<button class="chip" type="button" data-a="tick" data-k="h:' + h.id + '" data-d="' + dk + '" data-fk="h:' + h.id + '" aria-pressed="' + isDone(dk, 'h:' + h.id) + '">' + (isDone(dk, 'h:' + h.id) ? 'Ticked' : 'Tick') + '</button>';
+          return '<li><div class="hn">' + esc(h.name) + '<span>' + needOf(h) + ' · ' + wk + '</span></div>' + right + '</li>';
+        }).join('') + '</ul>';
+      }).join('') + '</div></details>';
+    return html;
+  }
+
+  /* Dreams */
+  function fieldHTML(kind, label, value, a) {
+    var id = kind + ':' + a.id;
+    if (UI.edit === id) {
+      return '<form class="field-v" data-form="' + kind + '" data-area="' + a.id + '"><label class="f-label" for="f-' + kind + '">' + label + '</label>' +
+        '<textarea id="f-' + kind + '" class="line-in" name="v" rows="2">' + esc(value) + '</textarea>' +
+        '<div class="row-btns"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-a="edit-cancel">Cancel</button></div></form>';
+    }
+    var prog = kind === 'target' && a.progress != null ? '<div class="bar-t" style="--c:var(--c-' + a.id + ')"><i style="width:' + a.progress + '%"></i></div>' : '';
+    return '<div class="field-v"><p class="f-label">' + label + '</p><p class="f-value">' + (value ? esc(value) : '<span class="muted">Not set yet.</span>') + '</p>' + prog +
+      '<button class="btn quiet" type="button" data-a="edit" data-f="' + kind + '" data-area="' + a.id + '" data-fk="edit:' + id + '">Edit ' + label.toLowerCase() + '</button></div>';
+  }
+  function detailHTML(a) {
+    var hs = S.habits.filter(function (h) { return h.area === a.id; }), ac = S.acts.filter(function (x) { return x.area === a.id; });
+    var sched = schedOf(THIS_WEEK).slots;
+    return '<section class="detail" aria-labelledby="d-h"><p class="eyebrow">' + stage(a.progress) + '</p><h2 id="d-h" class="d-title">' + dot(a.id) + esc(a.name) + '</h2>' +
+      fieldHTML('goal', '5-year goal', a.goal5, a) + fieldHTML('target', '1-year target', a.target, a) +
+      '<h3>Habits</h3>' + (hs.length ? '<ul class="hrows">' + hs.map(function (h) {
+        return '<li><div class="hn">' + esc(h.name) + '<span>' + needOf(h) + (h.act ? ' · in the plan as ' + esc((actOf(h.act) || {}).name || '') : '') + '</span></div></li>';
+      }).join('') + '</ul>' : '<p class="empty">No habits yet.</p>') +
+      '<form class="addrow" data-form="habit" data-area="' + a.id + '"><label class="sr" for="nh">New habit</label><input id="nh" class="line-in" name="name" placeholder="New habit">' +
+      '<select name="count" aria-label="Times a week">' + [1, 2, 3, 4, 5, 6, 7].map(function (n) { return '<option value="' + n + '"' + (n === 3 ? ' selected' : '') + '>' + n + ' a week</option>'; }).join('') + '</select>' +
+      '<button class="btn" type="submit">Add habit</button></form>' +
+      '<h3>Activities</h3>' + (ac.length ? '<ul class="hrows">' + ac.map(function (x) {
+        var n = sched.filter(function (s) { return s[3] === x.id; }).length;
+        return '<li><div class="hn">' + esc(x.name) + '<span>' + (n ? plural(n, 'block', 'blocks') + ' a week in My week' : 'Not in a week yet') + '</span></div></li>';
+      }).join('') + '</ul>' : '<p class="empty">No activities yet. Add one in Week.</p>') + '</section>';
+  }
+  function dreamsView() {
+    var sel = areaOf(UI.dream) || S.areas[0];
+    var amb = UI.edit === 'amb'
+      ? '<form class="amb-card" data-form="amb" style="display:grid"><label class="f-label" for="f-amb">Your ambition, in a sentence</label><textarea id="f-amb" class="line-in" name="v" rows="3">' + esc(S.ambition) + '</textarea><div class="row-btns"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-a="edit-cancel">Cancel</button></div></form>'
+      : '<div class="amb-card"><p class="amb-big">' + (S.ambition ? esc(S.ambition) : '<span class="muted">Not written yet.</span>') + '</p><button class="btn quiet" type="button" data-a="edit" data-f="amb" data-fk="edit:amb">Edit</button></div>';
+    var rows = S.areas.map(function (a) {
+      var st = a.progress == null ? '<span class="muted">No 1-year target yet</span>' : '<span class="bar-t" style="--c:var(--c-' + a.id + ')"><i style="width:' + a.progress + '%"></i></span><span>' + a.progress + '%</span> <span class="muted">' + stage(a.progress) + '</span>';
+      return '<li><button class="area-row" type="button" data-a="area" data-area="' + a.id + '" data-fk="area-' + a.id + '"' + (a.id === sel.id ? ' aria-current="true"' : '') + '>' + dot(a.id) +
+        '<span class="ar-name">' + esc(a.name) + '</span><span class="ar-goal">' + (a.goal5 ? esc(a.goal5) : 'No 5-year goal yet') + '</span><span class="ar-status">' + st + '</span></button></li>';
+    }).join('');
+    return head('Plan · Dreams', 'Dreams', 'The why. Each life area has a 5-year goal and a 1-year target. The habits and activities below serve them.') + '' +
+      amb + '<div class="dreams"><ul class="areas" aria-label="Life areas">' + rows + '</ul>' + detailHTML(sel) + '</div>';
+  }
+
+  /* Week */
+  function weekView() {
+    var sid = UI.wkSched, sc = S.schedules[sid], slots = sc.slots;
+    var hrs = slotsHours(slots), by = areaHours(slots), free = Math.max(0, AWAKE - hrs);
+    var used = 0; for (var w = 1; w <= 53; w++) if ((S.weekSched[w] || 'my') === sid) used++;
+    var chips = Object.keys(S.schedules).map(function (id) {
+      return '<button class="chip" type="button" data-a="sched" data-id="' + id + '" data-fk="sched-' + id + '" aria-pressed="' + (id === sid) + '">' + esc(S.schedules[id].name) + '</button>';
+    }).join('');
+    var seg = Object.keys(by).filter(function (k) { return k !== 'none'; }).sort(function (a, b) { return by[b] - by[a]; });
+    var bar = seg.map(function (k) { var a = areaOf(k); return '<i style="--c:var(--c-' + k + ');width:' + (by[k] / AWAKE * 100) + '%" title="' + esc(a ? a.name : '') + ' ' + by[k] + ' h"></i>'; }).join('');
+    var legend = seg.map(function (k) { var a = areaOf(k); return '<li>' + dot(k) + esc(a ? a.name : '') + ' <span class="num">' + by[k] + ' h</span></li>'; }).join('') +
+      '<li><span class="free" aria-hidden="true"></span>Free <span class="num">' + free + ' h</span></li>';
+    var where = '<section class="where" aria-labelledby="wh"><p class="eyebrow" id="wh">Where the week goes</p>' +
+      '<p class="where-sum"><b class="num">' + hrs + ' h</b> planned · <b class="num">' + free + ' h</b> free · ' + AWAKE + ' h awake</p>' +
+      '<div class="bar" role="img" aria-label="' + hrs + ' hours planned, ' + free + ' hours free">' + bar + '</div><ul class="legend">' + legend + '</ul>' +
+      '<p class="muted" style="font-size:14px;margin-top:14px">Sleep is not counted. Awake time is 7 AM to 10 PM. ' + esc(sc.name) + ' is used in ' + used + ' weeks of 2026.</p></section>';
+    var days = '<div class="daytabs" role="group" aria-label="Day">' + DS.map(function (n, i) {
+      return '<button type="button" data-a="wkday" data-d="' + i + '" aria-pressed="' + (UI.wkDay === i) + '" aria-label="' + DAY[i] + '">' + DL[i] + '</button>';
+    }).join('') + '</div>';
+    var hl = '', h0 = 7, h1 = 21;
+    hl += '<div class="colhead"></div>';
+    for (var h = h0; h <= h1; h++) hl += '<div>' + hr(h) + '</div>';
+    if (S.showSleep) hl += '<div class="sleepl">Sleep</div>';
+    var cols = DS.map(function (n, d) {
+      var c = '<div class="col" data-d="' + d + '"><div class="col-head' + (addDays(weekMon(THIS_WEEK), d).getTime() === TODAY.getTime() ? ' today' : '') + '">' + n + '</div>';
+      for (var hh = h0; hh <= h1; hh++) {
+        var s = slots.filter(function (x) { return x[0] === d && x[1] <= hh && hh < x[2]; })[0];
+        var a = s ? actOf(s[3]) : null, first = s && s[1] === hh;
+        c += '<button class="cell' + (s ? ' on' : '') + (first ? ' start' : '') + '" type="button" data-cell data-d="' + d + '" data-h="' + hh + '" aria-label="' + DAY[d] + ' ' + hr(hh) + ', ' + (a ? esc(a.name) : 'free') + '"' +
+          (a ? ' style="--c:var(--c-' + a.area + ')"' : '') + ' aria-pressed="false">' + (first ? '<span class="lbl">' + esc(a ? a.name : '') + '</span>' : '') + '</button>';
+      }
+      if (S.showSleep) c += '<div class="sleepband" aria-hidden="true">Sleep</div>';
+      return c + '</div>';
+    }).join('');
+    return head('Plan · Week ' + THIS_WEEK + ', 2 to 8 November 2026', 'This week',
+      'Schedule: <b>' + esc(sc.name) + '</b>. Every week uses it unless Year says otherwise. Tap or drag hours on the grid, then choose what goes there.') +
+      '<div class="wk-top"><div class="chips" role="group" aria-label="Schedules">' + chips + '<button class="chip" type="button" data-a="sched-new">+ New schedule</button></div></div>' +
+      where +
+      '<div class="gridbar"><button class="switch" type="button" role="switch" aria-checked="' + S.showSleep + '" data-a="sleep" data-fk="sleep"><span class="track" aria-hidden="true"></span><span>Show sleep</span></button>' + days + '</div>' +
+            '<div class="wk" id="wk" data-day="' + UI.wkDay + '"><div class="hrs" aria-hidden="true">' + hl + '</div>' + cols + '</div>' +
+'<div class="selbar" id="selbar" role="region" aria-label="Selected hours" aria-live="polite"></div>' +
+      '<p class="wk-msg" id="wkmsg" role="status"></p>';
+  }
+  function selbarHTML() {
+    if (!UI.sel) return '';
+    var s = UI.sel, n = s.b - s.a + 1;
+    var head = '<p><b>' + DAY[s.d] + '</b>, ' + span(s.a, s.b + 1) + ' · <span class="num">' + n + ' h</span> selected</p>';
+    if (UI.choose) {
+      return head + '<p class="muted" style="font-size:15px">Choose what goes in these hours. It replaces what is there.</p><div class="chooser">' +
+        S.acts.map(function (a) { return '<button class="chip" type="button" data-a="wk-apply" data-act="' + a.id + '" data-fk="act-' + a.id + '">' + dot(a.area) + esc(a.name) + '</button>'; }).join('') +
+        '</div><div class="row-btns"><button class="btn" type="button" data-a="wk-back" data-fk="wk-back">Back</button></div>';
+    }
+    return head + '<div class="row-btns"><button class="btn primary" type="button" data-a="wk-choose" data-fk="wk-choose">Add to these hours</button>' +
+      '<button class="btn" type="button" data-a="wk-clear" data-fk="wk-clear">Clear these hours</button><button class="btn quiet" type="button" data-a="wk-cancel" data-fk="wk-cancel">Cancel</button></div>';
+  }
+  function renderSel() {
+    var bar = $('#selbar'); if (!bar) return;
+    bar.innerHTML = selbarHTML();
+    $$('.cell', $('#wk')).forEach(function (c) {
+      var on = UI.sel && +c.dataset.d === UI.sel.d && +c.dataset.h >= UI.sel.a && +c.dataset.h <= UI.sel.b;
+      c.classList.toggle('sel', !!on);
+      c.setAttribute('aria-pressed', !!on);
+    });
+  }
+  function setSel(d, a, b) {
+    UI.sel = { d: d, a: Math.min(a, b), b: Math.max(a, b) };
+    UI.choose = false;
+    renderSel();
+  }
+  function applyWeek(act) {
+    var sc = S.schedules[UI.wkSched], s = UI.sel;
+    sc.slots = sc.slots.filter(function (x) { return !(x[0] === s.d && x[1] <= s.b && x[2] > s.a); });
+    sc.slots.push([s.d, s.a, s.b + 1, act]);
+    var a = actOf(act);
+    UI.sel = null; UI.choose = false;
+    render();
+    var m = $('#wkmsg'); if (m) m.textContent = 'Added ' + (a ? a.name : 'it') + ' on ' + DAY[s.d] + ', ' + span(s.a, s.b + 1) + '.';
+  }
+  function clearWeek() {
+    var sc = S.schedules[UI.wkSched], s = UI.sel;
+    sc.slots = sc.slots.filter(function (x) { return !(x[0] === s.d && x[1] <= s.b && x[2] > s.a); });
+    UI.sel = null; UI.choose = false;
+    render();
+    var m = $('#wkmsg'); if (m) m.textContent = 'Cleared ' + DAY[s.d] + ', ' + span(s.a, s.b + 1) + '.';
+  }
+
+  /* Year */
+  var YEAR_ROWS = 4, YEAR_COLS = 14;
+  function yearView() {
+    var counts = {}, paintHTML = '';
+    for (var w = 1; w <= 53; w++) { var id = S.weekSched[w] || 'my'; counts[id] = (counts[id] || 0) + 1; }
+    var ids = Object.keys(S.schedules);
+    var tools = ids.map(function (id) {
+      return '<button class="chip" type="button" data-a="paint" data-id="' + id + '" data-fk="paint-' + id + '" aria-pressed="' + (UI.paint === id) + '">' + esc(S.schedules[id].name) + '</button>';
+    }).join('') + '<button class="chip" type="button" data-a="paint" data-id="clear" data-fk="paint-clear" aria-pressed="' + (UI.paint === 'clear') + '">Clear to My week</button>';
+    var rows = '';
+    var starts = ['Jan', 'Apr', 'Jul', 'Oct'];
+    for (var r = 0; r < YEAR_ROWS; r++) {
+      var sq = '';
+      for (var c = 0; c < YEAR_COLS; c++) {
+        var wk = r * YEAR_COLS + c + 1;
+        if (wk > 53) { sq += '<span></span>'; continue; }
+        var sid = S.weekSched[wk] || 'my', mon = weekMon(wk), thu = addDays(mon, 3);
+        sq += '<button class="sq ' + (sid === 'my' ? 'mine' : sid) + (wk === THIS_WEEK ? ' now' : '') + '" type="button" data-w="' + wk + '" aria-label="Week ' + wk + ', from ' + mon.getDate() + ' ' + MS[mon.getMonth()] + ': ' + esc(S.schedules[sid].name) + (wk === THIS_WEEK ? ', this week' : '') + '"></button>';
+      }
+      rows += '<div class="yrow"><span>' + starts[r] + '</span>' + sq + '</div>';
+    }
+    var awake = 53 * AWAKE, planned = 0, byA = {};
+    for (var q = 1; q <= 53; q++) {
+      var sc = schedOf(q), h = areaHours(sc.slots);
+      Object.keys(h).forEach(function (k) { if (k === 'none') return; byA[k] = (byA[k] || 0) + h[k]; planned += h[k]; });
+    }
+    var keys = Object.keys(byA).sort(function (a, b) { return byA[b] - byA[a]; });
+    var bar = keys.map(function (k) { return '<i style="--c:var(--c-' + k + ');width:' + (byA[k] / awake * 100) + '%" title="' + esc(areaOf(k).name) + '"></i>'; }).join('');
+    var list = keys.map(function (k) {
+      return '<li>' + dot(k) + '<span>' + esc(areaOf(k).name) + '</span><span class="hr num">' + byA[k].toLocaleString('en-GB') + ' h</span><span class="pc num">' + Math.round(byA[k] / awake * 100) + '%</span></li>';
+    }).join('') + '<li><span class="free" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--hatch);border:1px solid var(--line)"></span><span>Free</span><span class="hr num">' + (awake - planned).toLocaleString('en-GB') + ' h</span><span class="pc num">' + Math.round((awake - planned) / awake * 100) + '%</span></li>';
+    return head('Plan · Year', 'The year', 'Most weeks use My week. Paint the exceptions, such as a holiday. The bar shows what the year holds.') +
+      '<section class="paint"><div class="paint-row" role="group" aria-label="Paint with"><span>Paint with</span>' + tools + '</div></section>' +
+      '<section class="yearcard" aria-labelledby="yw-h"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline"><h2 id="yw-h">Which weeks use which schedule</h2><span class="muted num" id="yw-count">' + (counts.my || 0) + ' My week · ' + (counts.holiday || 0) + ' Holiday · ' + (counts.deep || 0) + ' Deep work</span></div>' +
+        '<p class="muted" style="margin-top:6px;font-size:15px">Pick a schedule above, then click or drag across the weeks. Week ' + THIS_WEEK + ' is outlined.</p>' +
+        '<div class="ygrid" id="ygrid">' + rows + '</div>' +
+        '<div class="ylegend"><span><i style="background:var(--accent-soft)"></i>My week</span><span><i style="background:var(--accent)"></i>Deep work</span><span><i style="background:var(--sand)"></i>Holiday</span><span><i style="background:transparent;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink)"></i>This week</span></div></section>' +
+      '<section class="yearcard" aria-labelledby="yb-h"><p class="eyebrow" id="yb-h">Planned hours in 2026</p><p class="bigyear">' + planned.toLocaleString('en-GB') + ' h <span class="muted" style="font-size:18px;font-weight:400;letter-spacing:0">of ' + awake.toLocaleString('en-GB') + ' awake hours</span></p>' +
+        '<div class="bar" role="img" aria-label="' + planned + ' hours planned of ' + awake + ' awake">' + bar + '</div>' +
+        '<ul class="yshares">' + list + '</ul><p class="muted" style="font-size:14px;margin-top:14px">Sleep is not counted. Awake time is 7 AM to 10 PM each day.</p></section>';
+  }
+  function paintWeek(w) {
+    if (UI.paint === 'clear') delete S.weekSched[w];
+    else S.weekSched[w] = UI.paint;
+    var sq = $('.sq[data-w="' + w + '"]');
+    if (sq) { sq.className = 'sq ' + ((S.weekSched[w] || 'my') === 'my' ? 'mine' : S.weekSched[w]) + (w === THIS_WEEK ? ' now' : ''); }
+  }
+
+  /* Progress */
+  function progressView() {
+    var weeks = [38, 39, 40, 41, 42, 43, 44, 45], tp = 0, td = 0;
+    var bars = weeks.map(function (w) {
+      var st = weekStats(w); tp += st.pH; td += st.dH;
+      var r = st.pH ? st.dH / st.pH : 0, now = w === THIS_WEEK;
+      return '<div class="tcol' + (now ? ' now' : '') + '"><span class="pct num">' + (st.pH ? Math.round(r * 100) + '%' : '-') + '</span><span class="tbar"><i style="height:' + Math.max(6, r * 100) + '%" role="img" aria-label="Week ' + w + ': ' + Math.round(r * 100) + ' percent"></i></span><span class="wkl">' + (now ? 'So far' : 'Wk ' + w) + '</span></div>';
+    }).join('');
+    var rec = weekStats(THIS_WEEK), areas = areaWeek(THIS_WEEK), top = null, low = null;
+    Object.keys(areas).forEach(function (k) {
+      var a = areas[k]; if (!a.p) return;
+      var r = a.d / a.p, an = areaOf(k);
+      if (!top || r > top.r) top = { r: r, n: an.name };
+      if (!low || r < low.r) low = { r: r, n: an.name };
+    });
+    var recapBody = !S.set.recap ? '<p class="recap-p">The weekly recap is off. Turn it on in the settings below.</p>' :
+      S.recap === 'closed' ? '<p class="recap-t">Week ' + THIS_WEEK + ' is closed.</p><p class="recap-p">Nothing is lost. Week ' + (THIS_WEEK + 1) + ' is ready when you are.</p>' +
+        '<div class="row-btns"><a class="btn primary" href="#plan/week">Plan next week</a><button class="btn quiet" type="button" data-a="recap-open" data-fk="recap-open">Reopen</button></div>' :
+      '<p class="recap-t">This week, so far</p><p class="recap-p"><b class="num">' + Math.round(rec.dH) + ' of ' + Math.round(rec.pH) + '</b> planned hours ticked.' +
+        (top && low && top.n !== low.n ? ' ' + esc(top.n) + ' was the steadiest. ' + esc(low.n) + ' had the most misses.' : '') + '</p>' +
+        '<div class="row-btns"><button class="btn primary" type="button" data-a="recap-close" data-fk="recap-close">Done for the week</button></div>';
+    var areasHTML = S.areas.map(function (a) {
+      return '<li>' + dot(a.id) + '<span class="nm">' + esc(a.name) + '</span><span class="stage">' + stage(a.progress) + '</span>' +
+        '<div class="sg">' + (a.progress == null ? '<span>No target yet</span>' : '<span class="bar-t" style="--c:var(--c-' + a.id + ')"><i style="width:' + a.progress + '%"></i></span><span>' + a.progress + '%</span>') + '</div></li>';
+    }).join('');
+    var sw = function (k, label, note) {
+      return '<div><span>' + label + (note ? '<small>' + note + '</small>' : '') + '</span><button class="switch" type="button" role="switch" aria-checked="' + !!S.set[k] + '" data-a="set" data-set="' + k + '" data-fk="set-' + k + '"><span class="track" aria-hidden="true"></span><span class="sr">' + label + '</span></button></div>';
+    };
+    var ms = S.set.milestones ? '<ul class="ms"><li><span>9 Oct</span><span>First planned hour ticked.</span></li><li><span>18 Oct</span><span>Physical had a full week.</span></li><li><span>28 Oct</span><span>Relational reached Steady.</span></li></ul>' :
+      '<p class="muted" style="margin-top:12px;font-size:15px">Milestone lines are off. Your progress is still here.</p>';
+    return head('Progress · weeks 38 to 45', 'Progress', '') +
+      '<p class="headline">Over the last eight weeks you ticked <b>' + inWords(td / tp) + '</b> of the hours you planned.</p>' +
+      '<section class="card" aria-labelledby="tr-h"><h2 id="tr-h">Week by week</h2><p class="muted" style="font-size:15px;margin-top:4px">Share of planned hours ticked. This week is dashed until it ends.</p><div class="trend">' + bars + '</div></section>' +
+      '<div class="grid2"><div class="stack">' +
+      '<section class="card" aria-labelledby="rc-h"><p class="eyebrow" id="rc-h">Weekly recap</p>' + recapBody + '</section>' +
+      '<section class="card" aria-labelledby="ms-h"><h2 id="ms-h">Milestones</h2>' + ms + '</section>' +
+      '<section class="card" aria-labelledby="st-h"><h2 id="st-h">Settings</h2><p class="muted" style="font-size:14px;margin-top:4px">Each one switches off on its own. Nothing here compares you with anyone.</p><div class="setlist">' +
+      sw('recap', 'Weekly recap', 'A short summary of your own week') + sw('milestones', 'Milestone lines', 'One calm line at a time, never blocking a tick') + sw('celebrate', 'Calm line when a day is done', 'No sound, no confetti') + '</div></section></div>' +
+      '<section class="card" aria-labelledby="ar-h"><h2 id="ar-h">Life areas</h2><p class="muted" style="font-size:14px;margin-top:4px">Progress toward each 1-year target. Stages are calm: Starting, Building, Steady, Strong, Reached.</p><ul class="arows" style="margin-top:12px">' + areasHTML + '</ul></section></div>';
+  }
+
+  /* First run */
+  function frHead(title, lede) {
+    return '<h1 id="h1" class="' + '" tabindex="-1" data-fk="fr-h">' + title + '</h1>' + (lede ? '<p class="lede">' + lede + '</p>' : '');
+  }
+  function setupView() {
+    var step = FR.step, total = 6, out = '';
+    var prog = step === 0 ? 0 : Math.round(step / total * 100);
+    var top = '<div class="su-top"><a class="brand" href="#today" style="font-size:18px"><svg aria-hidden="true" style="width:24px;height:24px"><use href="#i-brand"/></svg><span>Timely</span></a>' +
+      (step === 0 ? '<span class="eyebrow">First visit</span>' : '<span class="eyebrow">Step ' + step + ' of ' + total + '</span>') + '</div><div class="su-prog" aria-hidden="true"><i style="width:' + prog + '%"></i></div>';
+    var err = FR.err ? '<p class="err" role="alert">' + esc(FR.err) + '</p>' : '';
+    var foot = '';
+    if (step === 0) {
+      out = frHead('Set up your plan in about three minutes.', 'Five short questions. You read the draft before anything is saved, and you can change anything in it.') +
+        '<div class="row-btns"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">Start</button><button class="btn" type="button" data-a="fr-starter" data-fk="fr-starter">Use a starter instead</button></div>';
+    } else if (step === 1) {
+      out = frHead('What do you want to become?', 'One sentence. It can be rough, and you can change it later.') + err +
+        '<label class="sr" for="fr-amb">Your ambition</label><textarea id="fr-amb" class="line-in" data-fr-in="amb" data-fk="fr-amb" rows="3" placeholder="For example: Stronger, calmer, and able to keep up with my kids.">' + esc(FR.amb) + '</textarea>';
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">Continue</button></span>';
+    } else if (step === 2) {
+      out = frHead('What matters most this year?', 'Choose one to three. We start with the first one you pick.') + err +
+        '<div class="chips" role="group" aria-label="Life areas">' + AREA_DEFS.map(function (a) {
+          var on = FR.areas.indexOf(a.id) >= 0, full = !on && FR.areas.length >= 3;
+          return '<button class="chip" type="button" data-a="fr-area" data-id="' + a.id + '" data-fk="fr-area-' + a.id + '" aria-pressed="' + on + '"' + (full ? ' disabled' : '') + '>' + dot(a.id) + esc(a.name) + '</button>';
+        }).join('') + '</div>';
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">Continue</button></span>';
+    } else if (step === 3) {
+      var aid = FR.areas[0], rule = FOLLOW[aid];
+      out = frHead(rule.q, 'This sets the first habit for ' + esc(areaOf(aid).name) + '. Not sure uses the default.') + err +
+        '<div class="chips" role="group" aria-label="Answers">' + rule.opts.map(function (o, i) {
+          return '<button class="chip" type="button" data-a="fr-opt" data-opt="' + i + '" data-fk="fr-opt-' + i + '" aria-pressed="' + (FR.fol[aid] === i) + '">' + esc(o.label) + '</button>';
+        }).join('') + '<button class="chip" type="button" data-a="fr-opt" data-opt="unsure" data-fk="fr-opt-unsure" aria-pressed="' + (FR.fol[aid] === 'unsure') + '">Not sure</button></div>';
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">Continue</button></span>';
+    } else if (step === 4) {
+      out = frHead('What does a normal week look like?', 'Tick what applies. Sleep is never asked.') +
+        '<div class="chips" role="group" aria-label="A normal week">' + [['working', 'Working days'], ['evenings', 'Free evenings'], ['weekend', 'Free weekends']].map(function (p) {
+          return '<button class="chip" type="button" data-a="fr-week" data-w="' + p[0] + '" data-fk="fr-w-' + p[0] + '" aria-pressed="' + !!FR.week[p[0]] + '">' + p[1] + '</button>';
+        }).join('') + '</div>' +
+        '<label for="fr-extra" class="f-label">Anything else? (optional)</label><textarea id="fr-extra" class="line-in" data-fr-in="extra" data-fk="fr-extra" rows="2">' + esc(FR.extra) + '</textarea>';
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">Continue</button></span>';
+    } else if (step === 5) {
+      out = frHead('How many hours can you give your goals each week?', 'Sleep is not counted. Three hours is enough to start.') +
+        '<div class="stepper"><button class="btn" type="button" data-a="fr-hours" data-d="-1" aria-label="Fewer hours" data-fk="fr-less">&minus;</button><output id="fr-h" aria-live="polite">' + FR.hours + ' h</output><button class="btn" type="button" data-a="fr-hours" data-d="1" aria-label="More hours" data-fk="fr-more">+</button></div>' +
+        (FR.hours < 3 ? '<p class="note">Three hours is enough to start. You can add more later.</p><div class="row-btns"><button class="btn" type="button" data-a="fr-starter" data-fk="fr-starter">Use a starter instead</button></div>' : '');
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn primary" type="button" data-a="fr-next" data-fk="fr-next">See my draft</button></span>';
+    } else {
+      var d = FR.draft;
+      out = frHead('Your draft plan', 'A draft from your answers. Edit anything. Nothing is saved until you accept.') +
+        '<p class="note">' + esc(d.note) + '</p>' +
+        '<div class="draft"><div><p class="f-label">Your ambition</p><textarea class="line-in" data-fr-in="d-amb" aria-label="Ambition" rows="2">' + esc(d.ambition) + '</textarea></div>' +
+        d.areas.map(function (aid, i) {
+          var h = d.habits.filter(function (x) { return x.area === aid; })[0], a = areaOf(aid);
+          return '<div><p class="area-h">' + dot(aid) + esc(a.name) + '</p>' +
+            '<label class="f-label" for="dt-' + i + '">1-year target</label><input id="dt-' + i + '" class="line-in" data-fr-in="d-target" data-i="' + aid + '" value="' + esc(d.targets[aid]) + '">' +
+            '<label class="f-label" for="dh-' + i + '">Habit</label><input id="dh-' + i + '" class="line-in" data-fr-in="d-habit" data-i="' + i + '" value="' + esc(h.name) + '">' +
+            '<p class="src">' + needOf(h) + (h.act ? ' · with ' + esc((actOf(h.act) || {}).name || '') : '') + '. ' + esc(h.src) + '</p></div>';
+        }).join('') +
+        '<div><p class="f-label">Your week, as a draft</p>' + miniWeek(d) + '</div></div>' +
+        (function () { var fa = firstActionOf(d); return '<p class="fa">' + (fa ? 'Your first action: <b>' + esc(fa.name) + '</b>, ' + DAY[fa.wd] + ' at ' + hr(fa.h) + '.' : 'Your first action: add one habit in Week.') + '</p>'; })();
+      foot = '<button class="btn quiet" type="button" data-a="fr-back" data-fk="fr-back">Back</button><span class="end"><button class="btn quiet" type="button" data-a="fr-starter" data-fk="fr-starter">Use a starter instead</button><button class="btn primary" type="button" data-a="fr-accept" data-fk="fr-accept">Accept plan</button></span>';
+    }
+    return '<div class="su-wrap">' + top + '<div class="su-body">' + out + '</div>' + (foot ? '<div class="su-foot">' + foot + '</div>' : '') + '</div>';
+  }
+  function miniWeek(d) {
+    var cols = DS.map(function (n, i) {
+      var b = d.slots.filter(function (s) { return s[0] === i; }).map(function (s) {
+        var a = actOf(s[3]) || { name: '', area: 'prof' };
+        return '<div class="mb" style="--c:var(--c-' + a.area + ')">' + esc(a.name) + ' ' + hr(s[1]).replace(' ', '') + '</div>';
+      }).join('');
+      return '<div><span class="dh">' + n + '</span>' + b + '</div>';
+    }).join('');
+    return '<div class="mini">' + cols + '</div>';
+  }
+
+  /* ── 5. Render and routes ───────────────────────────────── */
+  function render() {
+    var route = UI.route;
+    $$('[data-nav]').forEach(function (a) {
+      var on = (route === 'today' && a.dataset.nav === 'today') || (route === 'plan' && a.dataset.nav === 'plan') || (route === 'progress' && a.dataset.nav === 'progress');
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    var app = $('#app'), setup = $('#setup');
+    if (route === 'setup') {
+      app.hidden = true; setup.hidden = false;
+      setup.innerHTML = setupView();
+      document.title = 'Set up your plan · Timely prototype A';
+      afterRender(); return;
+    }
+    app.hidden = false; setup.hidden = true;
+    var html;
+    if (route === 'today') { html = todayView(); document.title = 'Today · Timely prototype A'; }
+    else if (route === 'progress') { html = progressView(); document.title = 'Progress · Timely prototype A'; }
+    else {
+      var subs = [['dreams', 'Dreams'], ['week', 'Week'], ['year', 'Year']];
+      var nav = '<nav class="subnav" aria-label="Plan views">' + subs.map(function (s) {
+        return '<a href="#plan/' + s[0] + '"' + (UI.sub === s[0] ? ' aria-current="page"' : '') + '>' + s[1] + '</a>';
+      }).join('') + '</nav>';
+      html = nav + (UI.sub === 'week' ? weekView() : UI.sub === 'year' ? yearView() : dreamsView());
+      document.title = (UI.sub === 'week' ? 'Week' : UI.sub === 'year' ? 'Year' : 'Dreams') + ' · Timely prototype A';
+    }
+    $('#view').innerHTML = html;
+    if (route === 'plan' && UI.sub === 'week') renderSel();
+    afterRender();
+  }
+  function afterRender() {
+    var target = UI.focusKey ? document.querySelector('[data-fk="' + UI.focusKey.replace(/"/g, '') + '"]') : null;
+    if (target) target.focus({ preventScroll: true });
+    else if (UI.firstRoute === false && UI.route !== 'setup') { var h = document.getElementById('main'); if (h) h.focus({ preventScroll: true }); }
+    UI.focusKey = null;
+    if (UI.pop) { var pk = UI.pop; setTimeout(function () { if (UI.pop === pk) { UI.pop = null; } }, 900); }
+    UI.firstRoute = false;
+  }
+  function route() {
+    var parts = (location.hash || '#today').replace(/^#/, '').split('/');
+    var r = parts[0];
+    if (r !== 'plan' && r !== 'progress' && r !== 'setup') r = 'today';
+    if (r === 'plan') { UI.sub = ['dreams', 'week', 'year'].indexOf(parts[1]) >= 0 ? parts[1] : 'dreams'; }
+    if (r === 'setup' && !FR) frReset();
+    if (r !== 'setup' && UI.route === 'setup') { FR = null; }
+    UI.route = r;
+    UI.sel = null; UI.choose = false;
+    render();
+  }
+  function frReset() { FR = { step: 0, amb: '', areas: [], fol: {}, week: { working: false, evenings: false, weekend: false }, extra: '', hours: 5, err: '', draft: null, starter: false }; }
+
+  /* Toast: one line, fades, never blocks. */
+  var toastTimer = null;
+  function toast(title, text) {
+    var t = $('#toast'); $('#toastT').textContent = title; $('#toastX').textContent = text; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 7000);
+  }
+
+  /* ── 6. Actions ─────────────────────────────────────────── */
+  function toggleTick(k, dk) {
+    var on = !isDone(dk, k);
+    var wasFirst = weekStats(weekOf(parse(dk))).dN === 0;
+    setDone(dk, k, on);
+    if (on) UI.pop = k;
+    if (on && S.set.milestones && wasFirst && weekOf(parse(dk)) === THIS_WEEK) toast('First tick this week.', 'A small start counts. Nothing else is needed.');
+    if (on && dk === TK && S.set.celebrate) {
+      var items = itemsOn(TK);
+      if (items.length && items.every(function (it) { return isDone(TK, it.key); })) toast('All done for today.', 'Nothing else needs you. Rest counts.');
+    }
+    render();
+  }
+  function applyPreview(p) {
+    if (p === 'setup') { S = emptyState(); frReset(); location.hash = '#setup'; return; }
+    if (p === 'new') { S = emptyState(); UI.day = TK; location.hash = '#today'; return; }
+    if (p === 'normal') { S.dayOff = {}; S.done[TK] = []; }
+    if (p === 'all') { S.dayOff = {}; S.done[TK] = itemsOn(TK).map(function (it) { return it.key; }); }
+    if (p === 'none') { S.dayOff = {}; S.dayOff[TK] = true; S.done[TK] = []; }
+    UI.day = TK; location.hash = '#today';
+    if (location.hash === '#today') render();
+    $$('[data-prev]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.prev === p)); });
+  }
+
+  function act(a, t) {
+    switch (a) {
+      case 'tick': toggleTick(t.dataset.k, t.dataset.d); break;
+      case 'day': {
+        var st = +t.dataset.step;
+        UI.day = st === 0 ? TK : key(addDays(parse(UI.day), st));
+        if (UI.day > TK) UI.day = TK;
+        UI.focusKey = st === 0 ? 'today-btn' : null;
+        render(); break;
+      }
+      case 'add-next': {
+        var nx = nextAction(); if (!nx) break;
+        delete S.dayOff[TK];
+        (S.extra[TK] = S.extra[TK] || []).push({ act: nx.act, start: 18, end: 19 });
+        render(); break;
+      }
+      case 'setup': location.hash = '#setup'; break;
+      case 'edit': UI.lastEdit = t.dataset.fk; UI.edit = t.dataset.f === 'amb' ? 'amb' : t.dataset.f + ':' + t.dataset.area; render(); break;
+      case 'edit-cancel': UI.edit = null; UI.focusKey = UI.lastEdit; render(); break;
+      case 'area': UI.dream = t.dataset.area; render(); break;
+      case 'sched': UI.wkSched = t.dataset.id; UI.sel = null; UI.choose = false; render(); break;
+      case 'sched-new': {
+        var id = 'n' + (Object.keys(S.schedules).length + 1);
+        S.schedules[id] = { name: 'New schedule', slots: S.schedules.my.slots.map(function (s) { return s.slice(); }) };
+        UI.wkSched = id; render(); break;
+      }
+      case 'wkday': UI.wkDay = +t.dataset.d; var wk = $('#wk'); if (wk) wk.dataset.day = UI.wkDay; $$('.daytabs button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.d === UI.wkDay)); }); break;
+      case 'sleep': S.showSleep = !S.showSleep; UI.focusKey = 'sleep'; render(); break;
+      case 'wk-choose': UI.choose = true; renderSel(); UI.focusKey = null; var f = $('[data-fk="act-' + S.acts[0].id + '"]'); if (f) f.focus(); break;
+      case 'wk-back': UI.choose = false; renderSel(); document.querySelector('[data-fk="wk-choose"]').focus(); break;
+      case 'wk-apply': applyWeek(t.dataset.act); break;
+      case 'wk-clear': clearWeek(); break;
+      case 'wk-cancel': UI.sel = null; UI.choose = false; renderSel(); break;
+      case 'paint': UI.paint = t.dataset.id; render(); break;
+      case 'recap-close': S.recap = 'closed'; UI.focusKey = 'recap-open'; render(); break;
+      case 'recap-open': S.recap = 'open'; UI.focusKey = 'recap-close'; render(); break;
+      case 'set': { var k = t.dataset.set; S.set[k] = !S.set[k]; render(); break; }
+      case 'toast-close': $('#toast').hidden = true; break;
+      case 'replay': S = emptyState(); frReset(); $('#acct').open = false; location.hash = '#setup'; break;
+      case 'reset': S = sampleState(); UI.day = TK; $('#acct').open = false; location.hash = '#today'; render(); toast('Sample data is back.', 'Sam Reyes, week 45. Nothing was sent anywhere.'); break;
+      case 'fr-next': frNext(); break;
+      case 'fr-back': FR.err = ''; FR.step = Math.max(0, FR.step - 1); if (FR.step < 6) FR.draft = null; UI.focusKey = 'fr-next'; render(); break;
+      case 'fr-starter': FR.starter = true; FR.draft = starterDraft(); FR.step = 6; FR.err = ''; UI.focusKey = 'fr-accept'; render(); break;
+      case 'fr-area': { var id2 = t.dataset.id, i = FR.areas.indexOf(id2); if (i >= 0) { FR.areas.splice(i, 1); delete FR.fol[id2]; } else if (FR.areas.length < 3) FR.areas.push(id2); FR.err = ''; render(); break; }
+      case 'fr-opt': { FR.fol[FR.areas[0]] = t.dataset.opt === 'unsure' ? 'unsure' : +t.dataset.opt; FR.err = ''; render(); break; }
+      case 'fr-week': { var wkk = t.dataset.w; FR.week[wkk] = !FR.week[wkk]; render(); break; }
+      case 'fr-hours': { FR.hours = Math.max(1, Math.min(20, FR.hours + +t.dataset.d)); UI.focusKey = t.dataset.d > 0 ? 'fr-more' : 'fr-less'; render(); break; }
+      case 'fr-accept': frAccept(); break;
+    }
+  }
+  function frNext() {
+    if (FR.step === 0) FR.step = 1;
+    else if (FR.step === 1) {
+      if (!FR.amb.trim()) { FR.err = 'Write one sentence to continue.'; UI.focusKey = 'fr-amb'; render(); return; }
+      FR.step = 2;
+    } else if (FR.step === 2) {
+      if (!FR.areas.length) { FR.err = 'Choose at least one area to continue.'; render(); return; }
+      FR.step = 3;
+    } else if (FR.step === 3) {
+      if (FR.fol[FR.areas[0]] === undefined) { FR.err = 'Choose one answer, or Not sure.'; render(); return; }
+      FR.step = 4;
+    } else if (FR.step === 4) FR.step = 5;
+    else if (FR.step === 5) { FR.draft = buildDraft(FR); FR.step = 6; FR.starter = false; }
+    FR.err = '';
+    UI.focusKey = 'fr-h';
+    render();
+  }
+  function frAccept() {
+    var d = FR.draft;
+    S = emptyState();
+    S.ambition = d.ambition || S.ambition;
+    d.areas.forEach(function (aid) { var a = areaOf(aid); a.target = d.targets[aid] || ''; a.progress = 0; });
+    S.habits = d.habits.map(function (h) { return { id: h.id, area: h.area, name: h.name, count: h.count, period: h.period, act: h.act }; });
+    S.schedules.my.slots = d.slots.map(function (s) { return s.slice(); });
+    FR = null;
+    try { localStorage.setItem('timely.a.seen', '1'); } catch (e) {}
+    UI.day = TK; UI.focusKey = 'h1'; UI.route = 'today';
+    location.hash = '#today';
+    render();
+    toast('Your plan is saved.', 'Your first action is at the top of Today.');
+  }
+
+  /* Events: one delegated listener each. */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-a]');
+    if (t && !t.disabled) {
+      if (t.dataset.a === 'wk-choose' || t.dataset.a === 'wk-back' || t.dataset.a === 'wkday') { act(t.dataset.a, t); return; }
+      UI.focusKey = t.getAttribute('data-fk') || null;
+      act(t.dataset.a, t);
+      return;
+    }
+    var pv = e.target.closest('[data-prev]');
+    if (pv) { applyPreview(pv.dataset.prev); return; }
+    var sq = e.target.closest('.sq[data-w]');
+    if (sq && e.detail === 0) { paintWeek(+sq.dataset.w); UI.focusKey = sq.getAttribute('data-fk') || null; }
+    var cell = e.target.closest('[data-cell]');
+    if (cell && e.detail === 0) {
+      var d = +cell.dataset.d, h = +cell.dataset.h;
+      if (UI.sel && UI.sel.d === d && h >= UI.sel.a && h <= UI.sel.b) { UI.sel = null; renderSel(); }
+      else { setSel(d, h, h); }
+      $('#wk') && cell.focus();
+    }
+  });
+  document.addEventListener('input', function (e) {
+    var t = e.target, k = t.getAttribute('data-in'), f = t.getAttribute('data-fr-in');
+    if (k === 'journal') { S.journal[t.dataset.d] = t.value; $('#jr-saved').textContent = ''; }
+    if (f === 'amb') FR.amb = t.value;
+    if (f === 'extra') FR.extra = t.value;
+    if (f === 'd-amb' && FR.draft) FR.draft.ambition = t.value;
+    if (f === 'd-target' && FR.draft) FR.draft.targets[t.dataset.i] = t.value;
+    if (f === 'd-habit' && FR.draft) { var h = FR.draft.habits[+t.dataset.i]; h.name = t.value; }
+    if (f === 'd-habit' && FR.draft) { var sum = FR.draft.habits[+t.dataset.i]; sum.name = t.value; }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.getAttribute('data-in') === 'journal') { $('#jr-saved').textContent = 'Saved for this day.'; }
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target, kind = f.getAttribute('data-form');
+    if (!kind) return;
+    e.preventDefault();
+    if (kind === 'amb') { var v = f.querySelector('textarea').value.trim(); if (v) S.ambition = v; UI.edit = null; UI.focusKey = 'edit:amb'; render(); }
+    if (kind === 'goal' || kind === 'target') {
+      var a = areaOf(f.dataset.area), val = f.querySelector('textarea').value.trim();
+      if (kind === 'goal') a.goal5 = val; else a.target = val;
+      UI.edit = null; UI.focusKey = 'edit:' + kind + ':' + a.id; render();
+    }
+    if (kind === 'habit') {
+      var nm = f.querySelector('input').value.trim(); if (!nm) return;
+      var n = +f.querySelector('select').value;
+      S.habits.push({ id: 'h' + Date.now().toString(36), area: f.dataset.area, name: nm, count: n, period: 'week', act: null });
+      UI.focusKey = 'nh'; render();
+    }
+  });
+  document.addEventListener('toggle', function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute('data-all')) UI.showAll = e.target.open;
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { var acct = $('#acct'); if (acct && acct.open) { acct.open = false; acct.querySelector('summary').focus(); } }
+  });
+
+  /* Week grid selection: press and drag within one day. */
+  var drag = null;
+  document.addEventListener('pointerdown', function (e) {
+    var c = e.target.closest('[data-cell]');
+    if (!c || e.button > 0) return;
+    drag = { d: +c.dataset.d, a: +c.dataset.h };
+    setSel(drag.d, drag.a, drag.a);
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var c = el && el.closest && el.closest('[data-cell]');
+    if (c && +c.dataset.d === drag.d) setSel(drag.d, drag.a, +c.dataset.h);
+  });
+  document.addEventListener('pointerup', function () {
+    if (drag) { drag = null; renderSel(); }
+    yearDrag = false;
+  });
+  // Year: press and drag across weeks paints them with the chosen schedule.
+  var yearDrag = false;
+  document.addEventListener('pointerdown', function (e) {
+    var q = e.target.closest('.sq[data-w]');
+    if (!q) return;
+    yearDrag = true; paintWeek(+q.dataset.w); e.preventDefault();
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!yearDrag) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var q = el && el.closest && el.closest('.sq[data-w]');
+    if (q) paintWeek(+q.dataset.w);
+  });
+
+  /* Theme: default from the system, then the saved choice. */
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('timely.a.theme', t); } catch (e) {}
+    var b = $('#themeBtn');
+    if (b) b.setAttribute('aria-pressed', String(t === 'dark'));
+  }
+  $('#themeBtn').addEventListener('click', function () {
+    var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(t);
+  });
+  setTheme(document.documentElement.getAttribute('data-theme') || 'light');
+
+  /* Start: the sample is shown once the first run has been finished on this device. */
+  var seen = false;
+  try { seen = localStorage.getItem('timely.a.seen') === '1'; } catch (e) {}
+  S = seen ? sampleState() : emptyState();
+  if (!seen) { frReset(); if (location.hash !== '#setup') history.replaceState(null, '', '#setup'); }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>

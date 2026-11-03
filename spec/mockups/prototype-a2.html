@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely prototype A2: alive (dummy data)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+/* Before the first paint: the theme (saved, else the system setting), the motion choice (Lively unless Calm is saved
+   or the system asks for less motion) and the time of day for the ambient tint. Storage errors are ignored. */
+(function () {
+  var r = document.documentElement, t = null, m = null, reduce = false;
+  try { t = localStorage.getItem('timely.a2.theme'); m = localStorage.getItem('timely.a2.motion'); } catch (e) {}
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    var dark = false;
+    try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    t = dark ? 'dark' : 'light';
+  }
+  var choice = m === 'calm' ? 'calm' : 'lively';
+  r.setAttribute('data-theme', t);
+  r.setAttribute('data-choice', choice);
+  r.setAttribute('data-motion', choice === 'calm' || reduce ? 'calm' : 'lively');
+  var h = new Date().getHours();
+  r.setAttribute('data-part', h >= 5 && h < 12 ? 'morning' : h >= 12 && h < 17 ? 'afternoon' : 'evening');
+})();
+</script>
+<link rel="stylesheet" href="prototype-a2/a2.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="ambient" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5.5 8.5 12l6.5 6.5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+  <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.8l3 1.7"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-progress" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16l4-5 3 2.5 5-6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-brand" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="var(--accent)"/><path d="M7.5 13.5l3.5 3.5 7.5-8" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ill-sprout" viewBox="0 0 44 44"><circle cx="22" cy="22" r="21" style="fill:var(--accent)"/><path d="M22 33V22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M22 22c0-5.5 3.5-9 9-9 0 5.5-3.5 9-9 9z" style="fill:currentColor"/><path d="M22 27c0-4.2-3-6.5-7.5-6.5 0 4.2 3 6.5 7.5 6.5z" style="fill:currentColor"/></symbol>
+  <symbol id="ill-ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" style="fill:none;stroke:var(--accent);stroke-width:3"/><path d="M13.5 22.5l5.5 5.5 11-12" style="fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <aside class="rail">
+    <a class="brand" href="#today"><svg aria-hidden="true"><use href="#i-brand"/></svg><span>Timely</span></a>
+    <nav aria-label="Main">
+      <a href="#today" data-nav="today"><svg class="ic" aria-hidden="true"><use href="#i-today"/></svg>Today</a>
+      <a href="#plan/dreams" data-nav="plan"><svg class="ic" aria-hidden="true"><use href="#i-plan"/></svg>Plan</a>
+      <a href="#progress" data-nav="progress"><svg class="ic" aria-hidden="true"><use href="#i-progress"/></svg>Progress</a>
+    </nav>
+    <p class="rail-foot">Sample data for Sam Reyes. Nothing is saved to a server.</p>
+  </aside>
+
+  <div class="column">
+    <header class="top">
+      <a class="brand" href="#today"><svg aria-hidden="true"><use href="#i-brand"/></svg><span>Timely</span></a>
+      <div class="tools">
+        <button class="icon" type="button" id="themeBtn" aria-pressed="false" aria-label="Dark mode">
+          <svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+        <details class="acct" id="acct">
+          <summary aria-label="Account, Sam Reyes">SR</summary>
+          <div class="menu">
+            <p><b>Sam Reyes</b>Saved on this device only (sample)</p>
+            <div class="menu-motion">
+              <span id="mot-l">Motion</span>
+              <div class="seg" role="group" aria-labelledby="mot-l">
+                <button type="button" data-m="lively" aria-pressed="true">Lively</button>
+                <button type="button" data-m="calm" aria-pressed="false">Calm</button>
+              </div>
+              <small id="mot-note">Lively adds gentle motion. Calm keeps every number and line and stops the moving parts.</small>
+            </div>
+            <button type="button" data-a="replay">Replay first run</button>
+            <button type="button" data-a="reset">Reset sample data</button>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1"><div id="view"></div></main>
+
+    <footer class="foot">
+      <details class="preview">
+        <summary>Preview states</summary>
+        <p>Shows the Today states and the empty start on demand. Nothing outside this page changes.</p>
+        <div class="chips">
+          <button class="chip" type="button" data-prev="normal" aria-pressed="true">Today: normal</button>
+          <button class="chip" type="button" data-prev="all" aria-pressed="false">Today: all done</button>
+          <button class="chip" type="button" data-prev="none" aria-pressed="false">Today: nothing planned</button>
+          <button class="chip" type="button" data-prev="new" aria-pressed="false">New user: empty plan</button>
+          <button class="chip" type="button" data-prev="setup" aria-pressed="false">First run</button>
+        </div>
+      </details>
+      <p style="margin-top:20px">Prototype A2 with dummy data: prototype A made alive, a sketch for discussion, not the app. Same structure and data as <a href="prototype-a.html">prototype A</a>. See the <a href="ux-proposal.md">UX proposal</a>. The date is fixed at Wednesday 4 November 2026. Add <code>?now=9:20</code> to the address to freeze the clock.</p>
+    </footer>
+  </div>
+
+  <nav class="tabbar" aria-label="Main, phone">
+    <a href="#today" data-nav="today"><svg class="ic" aria-hidden="true"><use href="#i-today"/></svg>Today</a>
+    <a href="#plan/dreams" data-nav="plan"><svg class="ic" aria-hidden="true"><use href="#i-plan"/></svg>Plan</a>
+    <a href="#progress" data-nav="progress"><svg class="ic" aria-hidden="true"><use href="#i-progress"/></svg>Progress</a>
+  </nav>
+</div>
+
+<section class="setup" id="setup" aria-labelledby="su-h" hidden></section>
+<div class="cer" id="cer" hidden></div>
+
+<div class="toast" id="toast" role="status" hidden>
+  <svg class="toast-ill" viewBox="0 0 44 44" aria-hidden="true" focusable="false"><use id="toastU" href="#ill-sprout"/></svg>
+  <div style="min-width:0"><b id="toastT"></b><p id="toastX"></p></div>
+  <button class="btn" type="button" data-a="toast-close">Dismiss</button>
+</div>
+
+<div class="tip" id="tip" aria-hidden="true" hidden></div>
+<p class="sr" id="live" role="status" aria-live="polite"></p>
+
+<script src="prototype-a2/a2.js"></script>
+</body>
+</html>

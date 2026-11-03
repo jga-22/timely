@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely prototype B: one stream (dummy data)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="prototype-b/prototype-b.css">
+<script>
+/* Theme before the first paint: the saved choice, else the system setting. Storage errors are ignored. */
+(function () {
+  var dark = false;
+  try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+  var t = null;
+  try { t = localStorage.getItem('timely.proto.b.theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = dark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the plan</a>
+
+<!-- Icons: one set of inline SVG symbols, drawn with currentColor. No icon font. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5.5 8.5 12l6.5 6.5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+</svg>
+
+<div id="app">
+  <header class="bar-top">
+    <div class="bar-in">
+      <a class="brand" href="#top"><span class="mark" aria-hidden="true"></span>Timely</a>
+      <div class="bar-tools">
+        <button class="edit-plan" type="button" data-act="plan-open" data-view="dreams">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-edit"/></svg><span>Edit my plan</span>
+        </button>
+        <button class="icon-btn" type="button" id="theme-btn" data-act="theme" aria-pressed="false" aria-label="Dark mode"></button>
+        <div class="acct">
+          <button class="avatar" type="button" data-act="acct" aria-haspopup="true" aria-expanded="false" aria-controls="acct-menu" aria-label="Account: Sam Reyes">SR</button>
+          <div class="menu" id="acct-menu" hidden>
+            <p class="menu-head"><b>Sam Reyes</b><span>Saved on this device</span></p>
+            <button class="menu-item" type="button" role="switch" aria-checked="false" data-act="theme-switch"><span>Dark mode</span><span class="track"><i></i></span></button>
+            <button class="menu-item" type="button" role="switch" aria-checked="true" data-act="ms-switch"><span>Milestone moments</span><span class="track"><i></i></span></button>
+            <button class="menu-item" type="button" data-act="replay"><span>Replay first run</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="dream" id="dream" aria-labelledby="dream-h"></section>
+    <section class="sec" id="today" aria-labelledby="today-h"></section>
+    <section class="sec" id="week" aria-labelledby="week-h"></section>
+    <section class="sec" id="progress" aria-labelledby="progress-h"></section>
+
+    <details class="preview" id="preview">
+      <summary>Preview states</summary>
+      <div class="preview-body">
+        <p class="muted">Changes the dummy data on this page only. Kept in this browser.</p>
+        <div>
+          <p class="pv-label">Plan</p>
+          <div class="chips">
+            <button class="chip" type="button" data-act="pv" data-pv="sam">Sam’s plan</button>
+            <button class="chip" type="button" data-act="pv" data-pv="new">New account, first run</button>
+          </div>
+        </div>
+        <div>
+          <p class="pv-label">Today</p>
+          <div class="chips">
+            <button class="chip" type="button" data-act="pv" data-pv="normal">One to tick</button>
+            <button class="chip" type="button" data-act="pv" data-pv="alldone">All done</button>
+            <button class="chip" type="button" data-act="pv" data-pv="none">Nothing planned</button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </main>
+
+  <footer class="foot">
+    <p>Timely prototype B. Dummy data for an invented person, Sam Reyes.</p>
+    <p>Nothing leaves this browser.</p>
+  </footer>
+</div>
+
+<!-- The plan drawer: full screen, a dialog with a focus trap. Its URL is #plan/dreams, #plan/week or #plan/year. -->
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" tabindex="-1">
+  <div class="dr-top">
+    <div class="dr-row">
+      <button class="close" type="button" data-act="close"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-close"/></svg><span>Close</span></button>
+      <h2 id="dr-title" tabindex="-1">Edit my plan</h2>
+    </div>
+    <div class="seg" role="group" aria-label="Plan view">
+      <button type="button" data-act="dr-view" data-view="dreams" aria-pressed="true">Dreams</button>
+      <button type="button" data-act="dr-view" data-view="week" aria-pressed="false">Week</button>
+      <button type="button" data-act="dr-view" data-view="year" aria-pressed="false">Year</button>
+    </div>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+  <div class="dr-bar" id="dr-bar" hidden></div>
+</div>
+
+<!-- The first run: six steps. Nothing is saved until Accept. -->
+<div class="fr" id="fr" role="dialog" aria-modal="true" aria-labelledby="fr-title">
+  <div class="fr-top">
+    <button class="link" type="button" id="fr-back" data-act="fr-back">Back</button>
+    <p class="fr-step" id="fr-step" aria-live="polite"></p>
+    <div class="fr-prog" aria-hidden="true"><i id="fr-prog-bar"></i></div>
+  </div>
+  <div class="fr-body" id="fr-body"></div>
+</div>
+
+<script src="prototype-b/prototype-b.js"></script>
+</body>
+</html>
