@@ -14,7 +14,7 @@ const planner = usePlannerStore()
 const onboarding = useOnboarding()
 const { state: auth, signOut } = useAuth()
 const { status: storageStatus } = useStorageStatus()
-const dark = useState('dark', () => false)
+const { dark, toggle: toggleDark } = useTheme()
 const accountOpen = ref(false)
 const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
@@ -67,12 +67,6 @@ const openReset = () => {
 const onReplayTour = () => {
   accountOpen.value = false
   replayTour()
-}
-
-const toggleDark = () => {
-  dark.value = !dark.value
-  localStorage.setItem('timely.dark', String(dark.value))
-  document.documentElement.setAttribute('data-theme', dark.value ? 'dark' : '')
 }
 
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointer))

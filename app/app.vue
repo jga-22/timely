@@ -6,21 +6,14 @@ const router = useRouter()
 const { tab, go } = useNav()
 // Terms and Privacy render with or without a session, so the sign-in gate never hides them (no planner data is loaded for them)
 const legalPage = computed(() => LEGAL_ROUTES.includes(router.currentRoute.value.path))
-const dark = useState('dark', () => false)
+// Dark mode and motion: applied before first paint by the head script (utils/prepaint.ts); these keep them in step after that
+useTheme()
+useMotion()
 const { today } = usePlannerYear()
 const { state: auth } = useAuth()
 const resetOpen = ref(false)
 
-// Not immediate: the stored value is applied before first paint (nuxt.config.ts head script), and onMounted reads it below
-watch(dark, (v) => {
-  if (import.meta.client) {
-    document.documentElement.setAttribute('data-theme', v ? 'dark' : '')
-  }
-})
-
 onMounted(() => {
-  const saved = localStorage.getItem('timely.dark')
-  if (saved !== null) dark.value = saved === 'true'
   // Date-dependent views read this only after mount, so server and client render the same first pass
   today.value = localDateKey()
 })

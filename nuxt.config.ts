@@ -1,3 +1,5 @@
+import { PREPAINT_SCRIPT } from './app/utils/prepaint'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
 // Vercel Web Analytics (page views, no cookies). Vercel serves the script at /_vercel/insights/script.js, so it is added
@@ -31,11 +33,8 @@ export default defineNuxtConfig({
       ],
       script: [
         ...vercelAnalytics,
-        // Applies a saved dark theme before first paint (same key as app/app.vue), so dark users do not see a light flash
-        {
-          tagPosition: 'head',
-          innerHTML: "try{if(localStorage.getItem('timely.dark')==='true')document.documentElement.setAttribute('data-theme','dark')}catch(e){}"
-        },
+        // Before first paint: the saved theme, motion and part of the day on <html> (utils/prepaint.ts; the nonce is added by server/plugins/security.ts)
+        { tagPosition: 'head', innerHTML: PREPAINT_SCRIPT },
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
