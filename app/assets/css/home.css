@@ -125,6 +125,7 @@
   color: var(--ink);
 }
 .home-empty { margin: 0; font-size: var(--fs-sm); color: var(--ink-3); }
+.home-empty-state { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 
 /* Day switch beside the title (FR-HOME-18): previous, Today and next */
 .home-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }

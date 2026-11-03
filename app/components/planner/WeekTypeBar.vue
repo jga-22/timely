@@ -3,7 +3,10 @@ import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import { DESIGN_COLORS } from '~/utils/planner/templates'
+import { hoursLabel } from '~/utils/planner/format'
 import { focusEditField } from '~/utils/focus'
+import { awakeHoursText, awakeMinutes } from '~/utils/awake'
+import { sleepActivityId } from '~/utils/sleep'
 import type { WeekTemplate } from '~/types/planner'
 
 /**
@@ -17,6 +20,8 @@ const emit = defineEmits<{ created: [templateId: string], opened: [] }>()
 const planner = usePlannerStore()
 const { activeTemplate, templates } = storeToRefs(planner)
 const { fill } = usePlannerFill()
+// The chip counts the planned hours of its week type, awake-based (utils/awake.ts): Sleep is not planned time
+const sleepId = computed(() => sleepActivityId(planner.$state))
 
 const renamingId = ref<string | null>(null)
 const colorPickerFor = ref<string | null>(null)
@@ -90,7 +95,7 @@ function closeEdit() {
           @click.stop="colorPickerFor = colorPickerFor === t.id ? null : t.id"
         />
         <span class="t-name">{{ t.name }}</span>
-        <span class="pill-count">{{ t.slots.filter(Boolean).length }}h</span>
+        <span class="pill-count" :title="awakeHoursText(t, sleepId)">{{ hoursLabel(awakeMinutes(t, sleepId).planned) }}</span>
       </button>
 
       <div v-if="colorPickerFor === t.id" class="color-pop" @click.stop>

@@ -135,7 +135,7 @@ const completeFor = computed(() => (isToday.value ? 'today' : formatDayLabel(vie
     </header>
 
     <template v-if="viewed">
-      <HomeTimeline :show-sleep="showSleep" :segments="timeline" :range="range" />
+      <HomeTimeline :segments="timeline" :range="range" />
       <HomeActivities :rows="dayRows" :has-activities="!!planner.activities.length" :is-today="isToday" :complete-for="completeFor" @toggle="toggle" />
       <HomeHabits :rows="habitRows" @toggle="toggle" />
     </template>

@@ -69,8 +69,10 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
         </button>
       </li>
     </ol>
-    <p v-else class="home-empty">
-      {{ isToday ? 'Nothing planned today.' : 'Nothing planned on this day.' }} <NuxtLink :to="link('planner')">Plan your time in Week</NuxtLink>.
-    </p>
+    <!-- Nothing planned: one next action, the Week tab, where the day's hours are planned -->
+    <div v-else class="home-empty-state">
+      <p class="home-empty">{{ isToday ? 'Nothing planned today.' : 'Nothing planned on this day.' }}</p>
+      <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Week</NuxtLink>
+    </div>
   </template>
 </template>

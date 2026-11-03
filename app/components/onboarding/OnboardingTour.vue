@@ -3,17 +3,22 @@ import { aggregateTemplateByCategory } from '~/utils/planner/aggregate'
 import { getActiveTemplate } from '~/utils/planner/templates'
 import { hoursLabel } from '~/utils/planner/format'
 import { onboardedCategories } from '~/utils/onboarding'
+import { awakeHoursText } from '~/utils/awake'
+import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
 
 /** Guided tour (FR-ONB-6): the cards 3 to 5 of the path, at the bottom of the screen. It never blocks the page and can be skipped at any step */
 const planner = usePlannerStore()
 const { phase, step, next, back, close, openIntro } = useOnboarding()
 const heading = ref<HTMLElement | null>(null)
 
-/** Hours a week the active week type holds for each life area (its activities, by primary life area) */
+/** Hours a week the active week type plans for each life area (its activities, by primary life area). Sleep is not planned time (FR-SLEEP-9), so it is left out */
 const hoursByArea = computed(() => {
   const template = getActiveTemplate(planner.$state)
-  return template ? aggregateTemplateByCategory(template, planner.$state) : new Map<string, number>()
+  const state = { ...planner.$state, activities: planner.$state.activities.filter(activity => !isSleepActivity(activity)) }
+  return template ? aggregateTemplateByCategory(template, state) : new Map<string, number>()
 })
+/** The planned and awake hours of the week, the same line as the Week tab's meta and the week type chip */
+const awakeText = computed(() => awakeHoursText(getActiveTemplate(planner.$state), sleepActivityId(planner.$state)))
 /** The life areas the build filled (the chosen ones); the other default areas are not named in the tour */
 const lifeAreas = computed(() => onboardedCategories(planner.$state))
 
@@ -30,7 +35,7 @@ const steps = computed(() => {
     {
       title: 'Plan your week',
       body: (count
-        ? `This is your week. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals keeps the why: each area's goal and its habits.`
+        ? `This is your week: ${awakeText.value}. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals keeps the why: each area's goal and its habits.`
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.') + ' Sleep is set to 10 PM-7 AM and kept out of your totals; change it any time in Week.'
     },
     {

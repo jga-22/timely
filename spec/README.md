@@ -12,6 +12,7 @@ This folder holds the product and design specification for Timely. The code is t
 | `ux-proposal.md` | Product-UX proposal for strangers (not built): verdict, market, adoption scorecard, ranked findings, design principles, direction (first run, Home cockpit, navigation, charts, vocabulary), motivation and rewards, roadmap, open decisions, test plan. `mockups/` holds the static HTML sketches it links to, and `mockups/prototype.html` is a working prototype of the whole product (dummy data, no logic). | Read before proposing UX or onboarding changes. Taste and evidence are marked. |
 | `ux-journey-map.md` | Journey map from first visit to first quarter (not built): six stages, each with the user goal, screen and action, emotion curve, risk of quitting, motivation device, upkeep and success metric; the weekly loop and the time budget. Visual: `mockups/journey-map.html`. | Read before changing onboarding, Home or the weekly review. Hypotheses are marked as such. |
 | `ux-information-architecture.md` | Navigation options, not decided: five tabs, four tabs with Year in Week, Today / Plan / Progress, and one stream with a plan drawer. Scorecard, a mapping of every screen and concept, vocabulary, code changes per option, prototype questions and a decision template. | Read before choosing a navigation shape. No winner is chosen yet. |
+| `ux-migration-plan.md` | The plan for the A2 migration (dated 2026-11-03): the gap per screen, the decisions to take, the feature parity log and twelve slices, each one PR and one patch version. Slice 1 is version 0.0.1 and the quick wins (CHANGELOG `0.0.1`). | Read before building any A2 slice. Each slice updates its own docs. |
 | `mockups/prototype-a2.html` (with `mockups/prototype-a2/`) | Prototype A2: option A made alive, same structure and dummy data. Time-of-day greeting and tint, live now marker and countdown, a tick that celebrates and lets the next block glide in, dream path, recap ceremony, illustrated empty states, Lively or Calm switch. Not built; not tested with users. | Read with the navigation options (Option A). Not a decision. |
 | `build-plan.md` | Slice-by-slice plan to build the v3 structure: rules every slice follows, definition of done, slice scopes, status log and what remains. | Read before starting or reviewing a slice; update the status log as slices ship. |
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/tokens.css` remain the source of truth. |
@@ -138,6 +139,13 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Version 0.0.1, quick wins (2026-11-03, branch `feat/ux-quick-wins`, from `main`, not pushed)
+
+- One awake-hours rule (FR-SLEEP-9, `app/utils/awake.ts`): the Week meta line, the week type chip and the guided tour say the same numbers, "3 h planned of 105 h awake". Sleep is not planned time and is taken out of the 168 hours. Before: the chip said "66h", the meta "66 of 168 h planned", the tour "66 h for Physical", all counting sleep.
+- Home: the sentence about hidden sleep is gone; with nothing planned the day shows an "Open Week" button (FR-HOME-4).
+- Guided build: a goal's sessions include today's weekday when the build runs (FR-ONB-5, `sessionDays`).
+- `package.json` and the lockfile are 0.0.1; `CHANGELOG.md` has the 0.0.1 section; `ux-migration-plan.md` is in the spec.
 
 ### UX prototype and rules-based first run (2026-11-03, branch `docs/ux-prototype`, not pushed)
 

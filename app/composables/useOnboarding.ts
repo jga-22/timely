@@ -107,7 +107,7 @@ export const useOnboarding = () => {
   const build = (answers: OnboardingAnswers) => {
     const planYear = year.value ?? currentYear.value ?? isoWeekOf(localDateKey()).year
 
-    planner.replaceState(buildOnboardingState(answers, planYear))
+    planner.replaceState(buildOnboardingState(answers, planYear, localDateKey()))
     startTour()
   }
 

@@ -2,13 +2,22 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
-## Unreleased
+## 0.0.1 - quick wins
+
+First patch of the 0.0.x line: the trust fixes and small changes that came out of the UX review, plus the security work merged after 0.0.0.
 
 ### Added
-- Security headers on every response (nosniff, strict Referrer-Policy, X-Frame-Options DENY, Permissions-Policy) and a Content-Security-Policy with a per-page nonce for HTML; see `.claude/agent.md`.
+- Security headers on every response (nosniff, strict Referrer-Policy, X-Frame-Options DENY, Permissions-Policy) and a Content-Security-Policy with a per-page nonce for HTML.
+- The A2 migration plan in `spec/ux-migration-plan.md`: the gap per screen, the decisions to take and the twelve slices, each one PR and one patch version.
 
 ### Changed
+- One rule for awake hours: the Week meta line, the week type chip and the guided tour say the same numbers, for example "3 h planned of 105 h awake". Sleep is not planned time and is taken out of the 168 hours.
+- Home: the sentence about hidden sleep is removed; the Show sleep control stays. With nothing planned for the day, the day shows an "Open Week" button.
+- Guided build: a goal's first session falls on today's weekday, when the build runs.
 - Dependencies: `npm audit fix` without forced upgrades (Nuxt 4.6.3, Vue 3.5.44, Vite 8 through Nuxt); high and critical advisories cleared; the 15 left (moderate and low) are in build and dev tooling, not in the production server bundle.
+
+### Fixed
+- The week type chip, the Week meta line and the guided tour counted Sleep as planned time (for example "66 h for Physical" for a new user with a 3-hour habit in Physical). They now leave Sleep out.
 
 ## 0.0.0 - first checkpoint
 

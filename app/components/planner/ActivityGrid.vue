@@ -7,6 +7,7 @@ import { useGridPopups } from '~/composables/useGridPopups'
 import { useGridSelection } from '~/composables/useGridSelection'
 import { DAYS, formatHour } from '~/utils/planner/format'
 import { aggregateTemplate } from '~/utils/planner/aggregate'
+import { awakeHoursText } from '~/utils/awake'
 import { isHourlyTemplate } from '~/utils/planner/templates'
 import { slotsToBlocks } from '~/utils/planner/slots'
 import { isSleepActivity, sleepActivityId } from '~/utils/sleep'
@@ -32,8 +33,8 @@ const slots = computed(() => activeTemplate.value?.slots ?? [])
 const shownSlots = computed(() => (sleepHidden.value ? withoutSleep(slots.value, sleepId.value) : slots.value))
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
 const templateName = computed(() => activeTemplate.value?.name ?? 'no week type')
-const plannedHours = computed(() => shownSlots.value.filter(Boolean).length)
-const metaText = computed(() => (sleepHidden.value ? `${plannedHours.value} h planned, sleep hidden` : `${plannedHours.value} of 168 h planned`))
+// The meta line is the awake-hours rule (utils/awake.ts): Sleep is not planned and is left out of the week, sleep shown or not
+const metaText = computed(() => awakeHoursText(activeTemplate.value, sleepId.value))
 const hoursPerDay = computed(() => DAYS.map((_, day) => shownSlots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length))
 const blocksByDay = computed(() => DAYS.map((_, day) => slotsToBlocks(shownSlots.value, day)))
 const menuActivities = computed(() => planner.activities.filter(activity => showSleep.value || !isSleepActivity(activity)))
