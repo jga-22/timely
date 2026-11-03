@@ -174,7 +174,7 @@ The phone rules are at 768px, which matches the focus rule in `utils/focus.ts` (
 ### 3.1 Theme, motion and part of the day
 
 - **Theme:** `html[data-theme="dark"]` swaps the semantic colour and elevation tokens. Light has no attribute. Set by `useTheme()` (the Account menu's Dark mode switch).
-- **Motion:** `html[data-motion="lively|calm"]` says what runs; `html[data-choice="lively|calm"]` says what the user picked. Reduced motion (the system's `prefers-reduced-motion`) makes `data-motion` calm whatever the choice, and the choice is kept, so the Account menu still shows it. Set by `useMotion()`. The control for the choice comes with the primitives (slice 3b).
+- **Motion:** `html[data-motion="lively|calm"]` says what runs; `html[data-choice="lively|calm"]` says what the user picked. Reduced motion (the system's `prefers-reduced-motion`) makes `data-motion` calm whatever the choice, and the choice is kept, so the Account menu still shows it. Set by `useMotion()`. The control is the Motion choice in the Account menu (Lively or Calm, with a note when the system asks for less motion).
 - **Part:** `html[data-part="morning|afternoon|evening"]` swaps `--am-1` and `--am-2`. Morning from 05:00, afternoon from 12:00, evening from 17:00 and through the night (`PART_START_HOUR` in `utils/motion.ts`).
 - **Before first paint:** one inline script in the head (`utils/prepaint.ts`, `PREPAINT_SCRIPT`, added in `nuxt.config.ts`) sets all four attributes. It is built from `PREF_KEYS` and `PART_START_HOUR`, so it cannot drift; `tests/unit/prepaint.test.ts` runs it against a fake storage, media query, document and clock. It gets the CSP nonce like every `<script>` (`server/plugins/security.ts`); no new script and no CSP change.
 
@@ -246,10 +246,10 @@ The palette swatches (`DESIGN_COLORS` in `utils/planner/templates.ts`) are data 
 | `reset` | `reset.css` | Reset rules and the reduced-motion kill (the only place `!important` is allowed, once the guard's ratchet reaches zero) |
 | `tokens` | `tokens.css`, `tokens-legacy.css` | The three tiers and the old-name aliases |
 | `base` | `base.css` | `html`, `body`, headings, links, the focus ring, form defaults |
-| `ui` | `ui/*.css` (from 3b) | Primitives: one file per block (`button`, `card`, `seg`, `switch`, `ring`, `tick`, `dialog` and so on) |
-| `features` | `features/*.css` | One file per area: `shell`, `account`, `auth`, `legal`, `onboarding`, `layout`, `buttons`, `forms`, `planner`, `week-grid`, `week-grid-select`, `week-panels`, `sections`, `insights`, `adherence`, `shared`, `home`, `lists` |
+| `ui` | `ui/*.css` | Primitives, one file per block: `button`, `card`, `page`, `chip`, `field`, `menu`, `disclosure`, `empty`, `bar`, `row`, `pill`, `seg`, `icon`, `ring`, `switch`, `tick`, `dialog` (section 6) |
+| `features` | `features/*.css` | One file per area: `shell`, `account`, `auth`, `legal`, `onboarding`, `entry`, `planner`, `week-grid`, `week-grid-select`, `week-panels`, `year`, `insights`, `adherence`, `home`, `styleguide` |
 | `motion` | `motion.css` | Every `@keyframes`, and the lively rules that belong to no one feature |
-| `utilities` | `utilities.css` | `.sr-only` and similar, always winning |
+| `utilities` | `utilities.css` | `.sr-only` (the label a screen reader reads), always winning |
 
 A later layer wins whatever the specificity. Inside `features` the files keep their original relative order; a new feature file depends on no order, because each owns a prefix (5.3).
 
@@ -282,43 +282,51 @@ A later layer wins whatever the specificity. Inside `features` the files keep th
 
 ## 6. Components
 
-Components are the list of primitives and feature parts. Primitives are added by the recipe in section 8. The style guide page is planned for slice 3b (`app/dev/StyleGuide.vue`, dev only, route `/_styleguide`, also with `TIMELY_STYLEGUIDE=1`); it is not built yet.
+Built in 0.0.3 (slice 3b). A primitive is either a class in `app/assets/css/ui/` or a Vue component in `app/components/ui/` (the Vue ones own ARIA, focus, keys or timing). Every one is in the living style guide (section 6.4) in every state. New ones follow the recipe in section 8.2.
 
-### 6.1 Built today (classes restyled in 3b)
+### 6.1 Classes and Vue primitives
 
-These are the existing classes. Their rules are in the feature files and move into `ui/` in 3b.
-
-- **Buttons** (`buttons.css`): `.btn` (inline flex, gap 8px, 36px high, padding 0 16px, radius, 13px 500, `--ink-2`); `.btn-outline` (1px `--control-border` border); `.btn-primary` (`--accent` fill, `--accent-ink` text; hover `--accent-hover`); `.btn-danger` (`--danger` text; hover `--danger-tint`); `.btn-sm` (32px high); `.btn-xs` (26px, 12px text). Disabled: opacity 0.45 and no hover. One primary action per block; destructive actions are text-coloured, never a filled red. Icon-only buttons need `aria-label`.
-- **Chips** (`forms.css`): `.chip` (32px high, radius, `--surface-2` background, `--ink-2` 13px text, ellipsis at 220px); `data-active="true"` gives the `--accent-soft` fill and a 1px `--accent` border. Inside: `.dot` and `.pill-count` (12px, `--ink-2`, tabular). `.chip-add` is an accent text link ("+ New week type").
-- **Colour popover** (`.color-pop`): absolute, 248px wide, eight 20px swatches in 24px buttons, padding 12px, radius, `--elev-2`, z-index `--z-popover`. Closes on an outside click. The inline variant is static with no shadow.
-- **Fields** (`forms.css`): `.field` (column, gap 6px), `.field-label` (13px 500, `--ink-2`), `.timely-input` and `.timely-select` (36px high, 40px on phones, 1px `--control-border`, radius, `--surface` background, 13px). Focus: accent border and the halo `--focus-ring`. `.pill-input` is the rename field. `.form-row` is two columns, one below 768px.
-- **AutoTextarea** (`components/AutoTextarea.vue`, scoped): the shared auto-growing textarea; its rules move to `ui/field.css` in 3b.
-
-### 6.2 Planned for slice 3b (not built)
-
-| Component | Kind | Replaces or adds | Notes |
+| Component | File | Use | Classes, props and states |
 | --- | --- | --- | --- |
-| `UiIcon` | Vue | The text arrows of `YearNav`, the pencil of `EditButton` | `name: IconName`, `size: sm or md`; `aria-hidden` |
-| Button (`.btn`) | CSS | `buttons.css` | As 6.1 |
-| Card (`.card`, `.card-focal`) | CSS | The section rules of `sections.css` | `--radius-xl`, `--elev-1`, padding `--sp-8` (`--sp-5` on a phone) |
-| Page header (`.page-head`, `.eyebrow`, `.lede`) | CSS | Exists, restyled | |
-| Stat (`.stat`, `.stat-value`, `.stat-label`) | CSS | New | `--text-number`, tabular |
-| Ring (`UiRing`) | Vue | `AdherenceRing.vue` (deleted) | `value` 0 to 100 or null, `size`, `label` (`role="img"`), `done` (check), `tone` accent or ok |
-| Bar (`.bar`, `.bar-stack`) | CSS | `.adh-area-meter` when Progress is rebuilt | `--v` and `--i` per segment |
-| Segmented (`UiSegmented`) | Vue | Motion in Account, the range controls | `v-model`, `options: { value, label }[]`; `aria-pressed` group |
-| Switch (`UiSwitch`) | Vue | `SleepToggle.vue` (deleted) and the dark switch | `button[role=switch][aria-checked]`; the slot is the visible label |
-| Tick (`UiTick`) | Vue | The done checks of Home | `aria-pressed`, 44px (76px for `lg`); sparks only when lively |
-| Empty (`.empty`) | CSS | `.empty-state` | |
-| Dialog (`UiDialog`) | Vue | The manual trap of `ResetDataDialog.vue` | Native `<dialog>` with `showModal()`; focus back to the opener; `variant="sheet"` below 768px |
-| Menu (`.menu`) | CSS | `AccountMenu.vue` (behaviour kept) | |
-| Disclosure (`.disclosure`) | CSS | Native `<details>` | Plus and minus marker |
-| Fields (`.field`, `.input`) | CSS | 6.1 | |
+| `UiIcon` | `components/ui/Icon.vue`, `utils/icons.ts`, `ui/icon.css` | A glyph from the set (check, today, plan, progress, left, right, plus, moon, sun, pencil, close, brand) | `name: IconName`, `size: sm or md` (16 or 20px). Always `aria-hidden`; the name of a button is its `aria-label`. Classes `.ic`, `.ic-sm` |
+| Button | `ui/button.css` | Actions | `.btn` (44px, the outline pill), `.btn-primary`, `.btn-quiet` (accent text), `.btn-danger` (text), `.btn-danger-solid` (confirm a delete), `.btn-outline`, `.btn-sm` (36px; 44px on a touch screen), `.btn-xs` (28px). Disabled: opacity 0.45. One primary per block |
+| Icon button | `ui/button.css` | One icon, round, 44px | `.btn.btn-icon` with `UiIcon` and an `aria-label`; `aria-expanded="true"` tints it. `EditButton` and the year stepper use it |
+| Card | `ui/card.css` | A raised panel, a focal panel, a section, an inline confirmation | `.card` (`--elev-1`, the card radius), `.card-focal` (more room, `--elev-2`), `.section` (hairline above, the section spacing), `.section-head`, `.section-title`, `.inline-confirm` and `.inline-confirm-text` |
+| Page header | `ui/page.css` | The top of a view | `.view` (the page column), `.page-head`, `.page-title`, `.page-meta`, `.eyebrow`, `.lede`. The title keeps its size (`--text-title-l`) |
+| Stat | `ui/page.css` | A figure with its label | `.stat`, `.stat-value` (`--text-number`, tabular), `.stat-label` |
+| Ring | `components/ui/Ring.vue`, `ui/ring.css` | A percentage as a ring | `UiRing`: `value` (0 to 100, or `null` for none yet), `size` (px, default 28, the width; the height follows), `label` (given: an image with that name; absent: decorative, the figure is in the text beside it), `done` (a check in the centre), `tone` (`accent` or `ok`); the default slot is the centre text. The arc draws in under lively motion only |
+| Bar | `ui/bar.css` | A share of one track; a stacked track | `.bar` with `--v` (0 to 1) and `--c` (area colour, accent by default). `.bar-stack` with a child `<i>` per part: `--i` is its weight, `--c` its colour. The call site gives `role="img"` and an `aria-label` |
+| Segmented | `components/ui/Segmented.vue`, `ui/seg.css` | One choice of a few, shown as a row | `UiSegmented`: `v-model`, `options: { value, label }[]`, `label` (the group's name). Each choice is a button with `aria-pressed`; the pressed one lifts onto the surface |
+| Switch | `components/ui/Switch.vue`, `ui/switch.css` | On or off | `UiSwitch`: `v-model` (a boolean), the slot is the visible label, `label` names it for screen readers when there is no slot. `role="switch"` with `aria-checked`. The caller saves a preference through its setter (`:model-value` and an update handler), not a plain `v-model` on a store ref |
+| Tick | `components/ui/Tick.vue`, `ui/tick.css` | A done check on a row | `UiTick`: `v-model`, `label` (for example "Mark Run done"), `size` (`default` 44px target around a 22px circle; `lg` 76px, 64 on a phone). `role="checkbox"` with `aria-checked`. Turned on under lively motion the circle pops; Calm and no sound otherwise |
+| Dialog | `components/ui/Dialog.vue`, `ui/dialog.css` | A modal question | `UiDialog`: `v-model:open`, `labelledby`, `describedby`, `role` (`dialog` or `alertdialog`), `dismissible` (Escape closes only then), `variant` (`center`, or `sheet`, a bottom sheet on a phone), `initialFocus`. A native `<dialog>` shown with `showModal()`: the page behind is inert. Two focus edge stops inside keep Tab in the dialog (the browser would leave the page after the last control). The focused element is remembered and gets focus back when it closes; `close` is emitted once it has closed |
+| Chip | `ui/chip.css` | A choice among a few, or a status tag | `.chip` (36px; 44px on a touch screen), `data-active="true"` for the pressed one, `.chip-add` (an accent text link), `.pill-count` and `.dot` inside. `.dot` paints `--c` (an area colour) |
+| Menu | `ui/menu.css` | A popover over the page | `.color-pop` (the colour pop, `--z-popover`), `.color-pop-inline` (in a panel), swatches that paint `--c`. The account menu keeps its rules in `features/account.css` |
+| Disclosure | `ui/disclosure.css` | A native `<details>` shown on demand | `.disclosure` and `.disclosure-body` (a plus and minus chevron); `.section-summary` and `.year-summary` for a collapsible section with its counts on one line |
+| Fields | `ui/field.css` | Text, select and check inputs | `.field` (label and control), `.field-label`, `.timely-input` (alias `.input`), `.timely-select`, `.pill-input` (the rename field), `.check` and `.check-row`, `.form-row` and `.form-row-3` (one column on a phone), `.field-error`. 44px, 16px text (no zoom on iOS). The focus is the global ring plus a halo |
+| Empty state | `ui/empty.css` | What a view shows before it has anything | `.empty-state`: a line of text and the action that fills it |
+| Rows | `ui/row.css` | A list of entries | `.row-list`, `.row-item`, `.row-main`, `.row-name`, `.row-meta`; the entry's pencil or tick at the end |
+| Pill | `ui/pill.css` | A short status | `.pill`, `data-state="now"` (accent, with `.live-dot`), `.pill-quiet` |
 
-Later, when first needed (slices 6 and 8): `v-tip` and `shell/Tooltip.vue`; `shell/Toast.vue` with `useToast()`.
+Not primitives, kept as they are: `EditButton.vue` (an icon button with a name, `to` or click), `AutoTextarea.vue` (the growing textarea, its rules are in `ui/field.css`), `YearNav.vue` (the year stepper), `IntroPlayer.vue`, `AccountMenu.vue` (its menu and rows are in `features/account.css`).
 
-### 6.3 Feature parts
+Still to come, when a view first needs them (slices 6 and 8): the tooltip (`v-tip`, `shell/Tooltip.vue`) and the toast (`shell/Toast.vue`, `useToast()`).
+
+### 6.2 Feature parts
 
 Feature components are built from primitives and classes, not made into primitives: the focal card, the day line, the week strip, the dream path, the recap, the ghost block. They keep their own `features/<area>.css` file.
+
+### 6.3 Ownership and the rules
+
+- The `ui/` file owns the bare block selector (`.btn`, `.chip`). A feature file restyles a primitive only with a contextual selector (`.today-focus .btn`); the guard fails on a bare one.
+- Restyle a control in its `ui/` file, not in the feature. Keep the variant as one hyphenated class.
+- Targets are at least `var(--hit)` on a touch screen (`@media (pointer: coarse)` raises the dense sizes).
+
+### 6.4 The living style guide
+
+`app/dev/StyleGuide.vue` (the switches and the index) with `app/dev/styleguide/Tokens.vue`, `Controls.vue`, `Feedback.vue` and `Data.vue` (each under 200 lines). It renders the real components and the real CSS, every state, in light and dark, Lively and Calm, and at the part of the day chosen with its switches. Tokens shows the colour roles and text pairs with their live contrast (read from the page), and the area colours through `fillFor`.
+
+It is a page at `/_styleguide`. The `timely-styleguide` module in `nuxt.config.ts` adds the route in dev and in a build with `TIMELY_STYLEGUIDE=1`; a normal build has no route and the page is not in its output. The design guard fails when a `components/ui/*.vue` is not shown in the guide. Hover and focus are seen by moving the pointer or tabbing through the guide.
 
 ---
 
@@ -372,7 +380,7 @@ Only when it owns ARIA, focus, keys or timing, or a class repeats in three or mo
 `npm test` runs two guards (no new dependency; the scanner strips comments and `url(...)`):
 
 - `tests/unit/designSystem.test.ts`:
-  - **Hard rules.** A `.vue` file gains a `<style>` block that is not in the list (`STYLE_BLOCK_FILES`), or a listed file loses its block without leaving the list. A bare primitive selector in a feature file (active once `ui/` exists).
+  - **Hard rules.** A `.vue` file gains a `<style>` block that is not in the list (`STYLE_BLOCK_FILES`), or a listed file loses its block without leaving the list. A bare primitive selector in a feature file. A `components/ui/*.vue` that the style guide (`app/dev`) does not show.
   - **Ratchet.** Thirteen counts of legacy values (raw colours in CSS, `.vue` and `.ts`; font sizes in px; radius literals; z-index literals; `@keyframes` outside `motion.css`; ungated `animation`; literal `transition` durations; legacy `@media` widths; colour keys in `:style`; `!important` outside reset; old token names). The baseline is in `BASELINE` at the top of the file.
 - `tests/unit/designContrast.test.ts`: every text and boundary pair (section 2.2) in every theme and part of the day, read from `tokens.css`; `SURFACE` equals the tokens; every design swatch through `fillFor` reaches 3:1 on both surfaces; text on each fill reaches 4.5:1 or is in the known-limit list.
 
@@ -389,39 +397,39 @@ The guards read the source and the tokens; they do not render. The browser check
 
 ## 10. Deprecations
 
-Old names are aliases in `tokens-legacy.css`. Each goes when its count reaches zero; the total is the ratchet's `legacyTokenUse` (587 at 0.0.3). Target: slice 12, when the last screens are rewritten.
+Old names are aliases in `tokens-legacy.css`. Each goes when its count reaches zero; the total is the ratchet's `legacyTokenUse` (450 after slice 3b, down from 587). Target: slice 12, when the last screens are rewritten.
 
 | Old name | Use it as | Deprecated in | Remaining uses (0.0.3) |
 | --- | --- | --- | --- |
-| `--bg` | `--surface` (the page is `--paper`) | 0.0.3 | 25 |
-| `--bg-2` | `--surface-2` | 0.0.3 | 12 |
-| `--bg-3` | `--surface-hover` | 0.0.3 | 15 |
-| `--bg-4` | `--accent-soft` | 0.0.3 | 7 |
-| `--rule` | `--line` | 0.0.3 | 21 |
-| `--rule-2` | `--line-2` | 0.0.3 | 22 |
+| `--bg` | `--surface` (the page is `--paper`) | 0.0.3 | 15 |
+| `--bg-2` | `--surface-2` | 0.0.3 | 9 |
+| `--bg-3` | `--surface-hover` | 0.0.3 | 8 |
+| `--bg-4` | `--accent-soft` | 0.0.3 | 5 |
+| `--rule` | `--line` | 0.0.3 | 18 |
+| `--rule-2` | `--line-2` | 0.0.3 | 19 |
 | `--ink-4` | `--control-border` or `--line` (decoration) | 0.0.3 | 3 |
-| `--accent-deep` | `--accent-hover` | 0.0.3 | 4 |
-| `--on-accent` | `--accent-ink` | 0.0.3 | 7 |
+| `--accent-deep` | `--accent-hover` | 0.0.3 | 3 |
+| `--on-accent` | `--accent-ink` | 0.0.3 | 5 |
 | `--attention` | `--danger` | 0.0.3 | 3 |
 | `--warn` | `--warn-ink` | 0.0.3 | 4 |
-| `--shadow` | `--elev-1` (cards) or `--elev-2` (menus) | 0.0.3 | 7 |
-| `--focus-ring` | the focus rule in `base.css` | 0.0.3 | 5 |
+| `--shadow` | `--elev-1` (cards) or `--elev-2` (menus) | 0.0.3 | 6 |
+| `--focus-ring` | the focus rule in `base.css` | 0.0.3 | 2 |
 | `--font-ui` | `--font` | 0.0.3 | 5 |
-| `--fs-xs` | `--text-caption` | 0.0.3 | 27 |
-| `--fs-sm` | `--text-small` | 0.0.3 | 68 |
-| `--fs-md` | `--text-ui` | 0.0.3 | 21 |
-| `--fs-lg` | `--text-title-s` | 0.0.3 | 9 |
-| `--fs-xl` | `--text-title-l` | 0.0.3 | 3 |
-| `--radius` | `--radius-sm` (or a role radius) | 0.0.3 | 25 |
-| `--space-1` | `--sp-1` | 0.0.3 | 15 |
-| `--space-2` | `--sp-2` | 0.0.3 | 95 |
-| `--space-3` | `--sp-3` | 0.0.3 | 84 |
-| `--space-4` | `--sp-4` | 0.0.3 | 57 |
-| `--space-5` | `--sp-6` (24px, not 20px) | 0.0.3 | 22 |
-| `--space-6` | `--sp-8` (32px) | 0.0.3 | 16 |
-| `--space-7` | `--sp-12` (48px) | 0.0.3 | 5 |
+| `--fs-xs` | `--text-caption` | 0.0.3 | 24 |
+| `--fs-sm` | `--text-small` | 0.0.3 | 49 |
+| `--fs-md` | `--text-ui` | 0.0.3 | 19 |
+| `--fs-lg` | `--text-title-s` | 0.0.3 | 7 |
+| `--fs-xl` | `--text-title-l` | 0.0.3 | 1 |
+| `--radius` | `--radius-sm` (or a role radius) | 0.0.3 | 15 |
+| `--space-1` | `--sp-1` | 0.0.3 | 13 |
+| `--space-2` | `--sp-2` | 0.0.3 | 81 |
+| `--space-3` | `--sp-3` | 0.0.3 | 69 |
+| `--space-4` | `--sp-4` | 0.0.3 | 39 |
+| `--space-5` | `--sp-6` (24px, not 20px) | 0.0.3 | 15 |
+| `--space-6` | `--sp-8` (32px) | 0.0.3 | 10 |
+| `--space-7` | `--sp-12` (48px) | 0.0.3 | 3 |
 
-Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour literals in `.vue` (1), the colour literals in CSS (3, the week grid's dark overlay), font sizes in px (9), radius literals (18), z-index literals (7), `@keyframes` outside `motion.css` (9), ungated `animation` (11), literal `transition` durations (10), legacy `@media` widths (6), colour keys in `:style` (16) and `!important` outside reset (4).
+Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour literals in `.vue` (1), the colour literals in CSS (3, the week grid's dark overlay), font sizes in px (9), radius literals (15), z-index literals (6), `@keyframes` outside `motion.css` (9), ungated `animation` (11), literal `transition` durations (3), legacy `@media` widths (6), colour keys in `:style` (16) and `!important` outside reset (4).
 
 ---
 
@@ -430,4 +438,5 @@ Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour 
 Dated entries with the app version. No separate version for the system.
 
 - **0.0.3, 2026-11-03: design foundation.** Cascade layers (`reset`, `tokens`, `base`, `ui`, `features`, `motion`, `utilities`); the feature CSS moved to `features/`. Tokens in three tiers with the A2 palette (paper and card surfaces, cobalt accent, neutral dark) and rem type; old names aliased. `fillFor` checks both surfaces; the fallback colours are constants. `app/utils/breakpoints.ts` (768 is the phone edge). Preferences (`utils/prefs.ts`, `usePref`), dark mode and motion (`useTheme`, `useMotion`) and the head script (`utils/prepaint.ts`) set `data-theme`, `data-motion`, `data-choice` and `data-part` before first paint. The guards and the contrast test. This document. The focus ring is 3px.
+- **0.0.3, slice 3b: primitives and the style guide.** The legacy button, form, list, section, shared and layout files moved to `ui/`, and their look follows the A2 prototype (pill buttons and chips, a 44px target, the fields at 16px text). New Vue primitives: `UiIcon`, `UiRing` (replaces `AdherenceRing`), `UiSwitch` (replaces `SleepToggle` and the dark-mode toggle), `UiSegmented`, `UiTick` (the Home done checks), `UiDialog` (the reset dialog). The living style guide at `/_styleguide` (dev, or `TIMELY_STYLEGUIDE=1`). The ambient tint of the page under lively motion. The Motion choice in the Account menu. The active guards: the bare primitive selector and the style guide coverage.
 - 0.0.2: Vuetify and its icon font removed (no token change).
