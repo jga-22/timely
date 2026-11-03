@@ -1,22 +1,28 @@
-/* Entry point (nuxt.config.ts css). The parts load in this order, which is the cascade order of the
-   original single file: a later rule wins a tie, so keep the order and add new rules to the part they belong to. */
-@import './tokens.css';
-@import './base.css';
-@import './shell.css';
-@import './account.css';
-@import './auth.css';
-@import './legal.css';
-@import './onboarding.css';
-@import './layout.css';
-@import './buttons.css';
-@import './forms.css';
-@import './planner.css';
-@import './week-grid.css';
-@import './week-grid-select.css';
-@import './week-panels.css';
-@import './sections.css';
-@import './insights.css';
-@import './adherence.css';
-@import './shared.css';
-@import './home.css';
-@import './lists.css';
+/* Entry point (nuxt.config.ts css). Layers set the order: a later layer wins whatever the specificity, so a
+   feature rule can restyle a primitive without !important (see spec/design-system.md, CSS architecture).
+   Inside features/ the files keep their original relative order: a later rule wins a tie. */
+@layer reset, tokens, base, ui, features, motion, utilities;
+
+@import './reset.css' layer(reset);
+@import './tokens.css' layer(tokens);
+@import './base.css' layer(base);
+@import './features/shell.css' layer(features);
+@import './features/account.css' layer(features);
+@import './features/auth.css' layer(features);
+@import './features/legal.css' layer(features);
+@import './features/onboarding.css' layer(features);
+@import './features/layout.css' layer(features);
+@import './features/buttons.css' layer(features);
+@import './features/forms.css' layer(features);
+@import './features/planner.css' layer(features);
+@import './features/week-grid.css' layer(features);
+@import './features/week-grid-select.css' layer(features);
+@import './features/week-panels.css' layer(features);
+@import './features/sections.css' layer(features);
+@import './features/insights.css' layer(features);
+@import './features/adherence.css' layer(features);
+@import './features/shared.css' layer(features);
+@import './features/home.css' layer(features);
+@import './features/lists.css' layer(features);
+@import './motion.css' layer(motion);
+@import './utilities.css' layer(utilities);
