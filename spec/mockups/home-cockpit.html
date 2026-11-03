@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely mockup: Home as a cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Mockup only. Colours are the light and dark values of app/assets/css/tokens.css. Not the app. */
+:root{color-scheme:light dark;--font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--bg:#ffffff;--bg-2:#f7f9fc;--bg-3:#eef3fa;--bg-4:#dce7f5;--ink:#1a2230;--ink-2:#3d4657;--ink-3:#6b7385;--ink-4:#9aa1b1;
+--rule:#e2e6ee;--rule-2:#eef1f6;--ctl:#737e95;--accent:#1b4b8f;--accent-deep:#12335f;--accent-soft:#dce7f5;--on-accent:#ffffff;
+--ok:#2d6a4f;--warn:#8a5a12;--shadow:0 8px 24px rgba(18,51,95,.12);
+--c-prof:#3c4b63;--c-rel:#c4767f;--c-phys:#7a9471;--c-cog:#4f7f80;--c-spir:#6e5c7c;--c-env:#c19a3e}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1624;--bg-2:#131c2c;--bg-3:#1a2539;--bg-4:#223156;--ink:#e6ebf3;--ink-2:#c4cbd8;--ink-3:#98a2b5;--ink-4:#5d6780;--rule:#28324a;--rule-2:#1d2639;--ctl:#78859e;--accent:#86aee8;--accent-deep:#b5cdf1;--accent-soft:#223156;--on-accent:#0f1624;--ok:#7fc4a0;--warn:#e8bd7a;--shadow:0 8px 24px rgba(0,0,0,.45);
+--c-prof:#8fa3c4;--c-rel:#d98a92;--c-phys:#97b58c;--c-cog:#7fb3b4;--c-spir:#a596b8;--c-env:#d9b35e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-2);color:var(--ink);font:400 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 24px 64px}
+.note{font-size:13px;color:var(--ink-3);margin:0 0 8px}
+h1{font-size:28px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.lede{color:var(--ink-2);max-width:680px;margin:0 0 32px}
+.label{font-size:13px;color:var(--ink-3);margin:0 0 12px;font-weight:500}
+.states{display:grid;gap:40px}
+.frame{background:var(--bg);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.frame.wide{width:100%}
+.frame.phone{width:375px;max-width:100%;border-radius:28px;padding:10px;background:var(--bg-2)}
+.frame.phone .inner{background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--rule)}
+.topbar{display:flex;align-items:center;gap:24px;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.topbar b{font-weight:600}
+.topbar nav{display:flex;gap:20px;font-size:14px;color:var(--ink-3)}
+.topbar nav .on{color:var(--ink);font-weight:500;box-shadow:inset 0 -2px 0 var(--accent);padding-bottom:4px}
+.phone .topbar{padding:12px 16px;flex-wrap:wrap;gap:4px 14px}
+.phone .topbar nav{gap:12px;font-size:13px}
+.screen{padding:24px;display:flex;flex-direction:column;gap:20px}
+.phone .screen{padding:16px;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:20px}
+.head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.head h2{font-size:24px;font-weight:600;margin:0;letter-spacing:-.01em}
+.head p{margin:4px 0 0;font-size:13px;color:var(--ink-3)}
+.card{border:1px solid var(--rule);border-radius:12px;padding:20px;background:var(--bg)}
+.card h3{font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink-2)}
+.focus{border:1px solid var(--accent);border-radius:12px;background:var(--bg-3);padding:20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+.focus .kicker{font-size:12px;color:var(--ink-2);font-weight:500}
+.focus .name{font-size:22px;font-weight:600;margin:4px 0 2px;letter-spacing:-.01em}
+.focus .time{font-size:14px;color:var(--ink-2)}
+.focus .behind{margin:12px 0 0;padding-left:12px;border-left:3px solid var(--c-phys);font-size:13px;color:var(--ink-2)}
+.btn{min-height:44px;padding:0 18px;border-radius:6px;border:1px solid var(--ctl);background:var(--bg);color:var(--ink-2);font:500 15px var(--font);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.quiet{border-color:transparent;color:var(--accent);background:transparent;padding:0 8px}
+.tick{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--accent);background:var(--bg);display:inline-grid;place-items:center;color:var(--accent);font:600 18px var(--font);flex:none}
+.tick.done{background:var(--accent);color:var(--on-accent)}
+.ring{position:relative;width:72px;height:72px;flex:none}
+.ring svg{width:72px;height:72px;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--font)}
+.ring.big{width:120px;height:120px}
+.ring.big svg{width:120px;height:120px}
+.ring.big .c{font-size:26px}
+.dayrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--rule-2)}
+.dayrow:first-of-type{border-top:0}
+.dayrow .t{font-size:13px;color:var(--ink-3);width:124px;flex:none;white-space:nowrap}
+.dayrow .n{flex:1;min-width:0}
+.dayrow .n b{font-weight:500}
+.dayrow .n span{display:block;font-size:12px;color:var(--ink-3)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.done-txt{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--ink-4)}
+.area{margin-bottom:14px}
+.area h4{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.hab{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;color:var(--ink-2)}
+.hab .box{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--ctl);flex:none;display:grid;place-items:center;font-size:13px;color:var(--on-accent)}
+.hab .box.on{background:var(--accent);border-color:var(--accent)}
+.hab .meta{margin-left:auto;font-size:12px;color:var(--ink-3)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.week .d{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--ink-3)}
+.week .s{width:100%;aspect-ratio:1;border-radius:8px;border:1.5px solid var(--ctl);display:grid;place-items:center;font:500 12px var(--font);color:var(--ink-3)}
+.week .s.full{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.week .s.part{background:var(--bg-4);border-color:var(--accent);color:var(--accent-deep)}
+.week .s.miss{border-style:dashed;border-color:var(--ink-4)}
+.week .s.todo{border-style:dotted;border-color:var(--ink-4)}
+.week .s.now{box-shadow:0 0 0 3px var(--accent-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-3);margin-top:12px}
+.prog{display:grid;grid-template-columns:110px minmax(0,1fr) 44px;gap:10px;align-items:center;min-height:32px;font-size:13px;color:var(--ink-2)}
+.bar{height:6px;border-radius:3px;background:var(--rule-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px}
+.prog .pc{text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.jour{display:flex;flex-direction:column;gap:10px}
+.jour .in{border:1px solid var(--ctl);border-radius:6px;padding:12px;min-height:44px;color:var(--ink-3);font-size:14px}
+.milestone{border:1px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--bg));border-radius:12px;padding:16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.milestone .ck{width:32px;height:32px;border-radius:50%;background:var(--ok);color:var(--bg);display:grid;place-items:center;font-weight:600}
+.milestone strong{display:block;font-weight:600}
+.milestone span{font-size:13px;color:var(--ink-2)}
+.empty{border:1px dashed var(--ctl);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;background:var(--bg-2)}
+.empty h3{margin:0;font-size:18px;font-weight:600}
+.empty p{margin:0;color:var(--ink-2);font-size:14px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:12px;color:var(--ink-3);border:1px solid var(--rule);border-radius:999px;padding:2px 10px}
+.phone .focus{grid-template-columns:minmax(0,1fr) auto;padding:16px}
+.phone .focus .name{font-size:19px}
+.phone .head h2{font-size:22px}
+.caption{font-size:13px;color:var(--ink-3);margin:0 0 10px}
+.note-line{font-size:12px;color:var(--ink-3)}
+.phone-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+@media (max-width:400px){.wrap{padding:24px 12px 48px}.frame.phone{padding:6px}.frame.phone .inner{border-radius:16px}.focus{grid-template-columns:1fr}.focus .tick{justify-self:start}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="note">Mockup, static, sample data (Wednesday 4 November 2026, week 45). Taste, not tested. See spec/ux-proposal.md, sections 6b and 7.</p>
+  <h1>Home as a cockpit</h1>
+  <p class="lede">One focal point: the next block, with its tick. Around it: what the block is for, how the year is going per life area, a week that forgives misses, and one line to write in the journal. The ambition ring and the milestone are small and never block the view.</p>
+
+  <div class="states">
+
+    <!-- 1. Today, desktop -->
+    <p class="label">1. Today, desktop (1240 px frame; stacks below 860 px)</p>
+    <div class="frame wide">
+      <div class="topbar"><b>timely</b><nav><span class="on">Home</span><span>Goals</span><span>Week</span><span>Year</span><span>Insights</span></nav></div>
+      <div class="screen">
+        <div class="cols">
+          <div class="stack">
+            <div class="head">
+              <div><h2>Wednesday 4 November</h2><p>Week 45 · Be strong, rested and able to keep up with my kids.</p></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="text-align:right;font-size:13px;color:var(--ink-2)">Ambition<br><span style="color:var(--ink-3)">average of the 1-year targets</span></div>
+                <div class="ring" role="img" aria-label="Ambition progress 43 percent"><svg viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" fill="none" stroke="var(--rule-2)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="188.5 188.5" stroke-dashoffset="107"/></svg><span class="c">43%</span></div>
+              </div>
+            </div>
+
+            <div class="focus">
+              <div>
+                <div class="kicker">Next, 6:00 to 7:00 PM</div>
+                <div class="name">Run</div>
+                <div class="time">Physical · 1 h · 2 of 3 runs still to do this week</div>
+                <p class="behind">Behind this block: Physical, 1-year target &ldquo;Run three times a week all year&rdquo;. You are 62% of the way there.</p>
+              </div>
+              <button class="tick" type="button" aria-label="Tick Run as done">&#10003;</button>
+            </div>
+
+            <div class="card">
+              <h3>Today, 1 of 3 blocks done</h3>
+              <div class="dayrow"><span class="t">9:00 to 10:00 AM</span><span class="n"><b class="done-txt">Weekly planning</b><span><i class="dot" style="background:var(--c-prof)"></i>Professional</span></span><span class="tick done" style="width:44px;height:44px;font-size:16px" aria-label="Done">&#10003;</span></div>
+              <div class="dayrow"><span class="t">1:00 to 3:00 PM</span><span class="n"><b>Focused work</b><span><i class="dot" style="background:var(--c-prof)"></i>Professional</span></span><span class="tick" aria-label="Not done yet"></span></div>
+              <div class="dayrow"><span class="t">6:00 to 7:00 PM</span><span class="n"><b>Run</b><span><i class="dot" style="background:var(--c-phys)"></i>Physical</span></span><span class="tick" aria-label="Not done yet"></span></div>
+            </div>
+
+            <div class="card">
+              <h3>Habits, grouped by life area: 3 of 6 ticked today</h3>
+              <div class="area"><h4><i class="dot" style="background:var(--c-phys)"></i>Physical</h4>
+                <div class="hab"><span class="box on">&#10003;</span>Drink enough water<span class="meta">4 of 7 days</span></div>
+                <div class="hab"><span class="box"></span>Sleep at a regular time<span class="meta">5 of 7 days</span></div></div>
+              <div class="area"><h4><i class="dot" style="background:var(--c-spir)"></i>Spiritual</h4>
+                <div class="hab"><span class="box"></span>Quiet time to reflect<span class="meta">2 of 7 days</span></div></div>
+              <div class="area"><h4><i class="dot" style="background:var(--c-rel)"></i>Relational &amp; emotional</h4>
+                <div class="hab"><span class="box on">&#10003;</span>Call a friend or relative<span class="meta">1 of 1 this week</span></div></div>
+            </div>
+
+            <div class="card jour">
+              <h3 style="margin:0">Journal</h3>
+              <div class="in">What got in the way today? One line is enough, or skip it.</div>
+              <div class="actions"><button class="btn" type="button">Write a note</button></div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <h3>This week so far</h3>
+              <div class="week" aria-label="Week 45, Monday to Sunday">
+                <div class="d">Mon<span class="s full">2/2</span></div>
+                <div class="d">Tue<span class="s part">1/2</span></div>
+                <div class="d">Wed<span class="s now">0/1</span></div>
+                <div class="d">Thu<span class="s todo">&middot;</span></div>
+                <div class="d">Fri<span class="s todo">&middot;</span></div>
+                <div class="d">Sat<span class="s todo">&middot;</span></div>
+                <div class="d">Sun<span class="s todo">&middot;</span></div>
+              </div>
+              <p class="caption" style="margin:12px 0 0;color:var(--ink-2);font-size:14px">3 of 5 planned sessions so far. A missed session costs one session, nothing else: no streak resets.</p>
+              <div class="legend"><span>Filled: all done</span><span>Half: some done</span><span>Dotted: still to come</span></div>
+            </div>
+
+            <div class="card">
+              <h3>Your 1-year targets, by life area</h3>
+              <div class="prog"><span>Physical</span><div class="bar"><i style="width:62%;background:var(--c-phys)"></i></div><span class="pc">62%</span></div>
+              <div class="prog"><span>Relational</span><div class="bar"><i style="width:55%;background:var(--c-rel)"></i></div><span class="pc">55%</span></div>
+              <div class="prog"><span>Professional</span><div class="bar"><i style="width:48%;background:var(--c-prof)"></i></div><span class="pc">48%</span></div>
+              <div class="prog"><span>Cognitive</span><div class="bar"><i style="width:40%;background:var(--c-cog)"></i></div><span class="pc">40%</span></div>
+              <div class="prog"><span>Spiritual</span><div class="bar"><i style="width:30%;background:var(--c-spir)"></i></div><span class="pc">30%</span></div>
+              <div class="prog"><span>Environment</span><div class="bar"><i style="width:20%;background:var(--c-env)"></i></div><span class="pc">20%</span></div>
+              <p class="note-line" style="margin:12px 0 0">Economic and Social have no 1-year target yet. <span style="color:var(--accent)">Set one in Goals</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Today, phone -->
+    <p class="label">2. Today, phone (375 px)</p>
+    <div class="frame phone">
+      <div class="inner">
+        <div class="topbar"><b>timely</b><nav><span class="on">Home</span><span>Goals</span><span>Week</span><span>Year</span><span>Insights</span></nav></div>
+        <div class="screen">
+          <div class="head">
+            <div><h2>Wednesday 4 Nov</h2><p>Week 45</p></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--ink-3);text-align:right;line-height:1.3">Ambition<br>average</span><div class="ring" style="width:56px;height:56px" role="img" aria-label="Ambition progress 43 percent"><svg viewBox="0 0 72 72" style="width:56px;height:56px"><circle cx="36" cy="36" r="30" fill="none" stroke="var(--rule-2)" stroke-width="8"/><circle cx="36" cy="36" r="30" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="188.5 188.5" stroke-dashoffset="107"/></svg><span class="c" style="font-size:12px">43%</span></div></div>
+          </div>
+          <div class="focus">
+            <div>
+              <div class="kicker">Next, 6:00 to 7:00 PM</div>
+              <div class="name">Run</div>
+              <div class="time">Physical · 2 of 3 runs still to do</div>
+              <p class="behind">Behind this block: 1-year target &ldquo;Run three times a week&rdquo;, 62% there.</p>
+            </div>
+            <button class="tick" type="button" aria-label="Tick Run as done">&#10003;</button>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Today, 1 of 3 done</h3>
+            <div class="dayrow" style="padding:10px 0"><span class="n"><b class="done-txt">Weekly planning</b><span>9:00 to 10:00 AM</span></span><span class="tick done" style="width:44px;height:44px;font-size:16px" aria-label="Done">&#10003;</span></div>
+            <div class="dayrow" style="padding:10px 0"><span class="n"><b>Focused work</b><span>1:00 to 3:00 PM</span></span><span class="tick" aria-label="Not done yet"></span></div>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Week 45 so far</h3>
+            <div class="week"><div class="d">M<span class="s full">2</span></div><div class="d">T<span class="s part">1</span></div><div class="d">W<span class="s now">0</span></div><div class="d">T<span class="s todo">&middot;</span></div><div class="d">F<span class="s todo">&middot;</span></div><div class="d">S<span class="s todo">&middot;</span></div><div class="d">S<span class="s todo">&middot;</span></div></div>
+            <p style="margin:10px 0 0;font-size:13px;color:var(--ink-2)">3 of 5 planned sessions. Misses do not reset anything.</p>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Habits: 3 of 6 ticked</h3>
+            <div class="hab"><span class="box on">&#10003;</span>Drink enough water<span class="meta">Physical</span></div>
+            <div class="hab"><span class="box"></span>Quiet time to reflect<span class="meta">Spiritual</span></div>
+            <div class="hab"><span class="box on">&#10003;</span>Call a friend<span class="meta">Relational</span></div>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>1-year targets</h3>
+            <div class="prog" style="grid-template-columns:96px minmax(0,1fr) 40px"><span>Physical</span><div class="bar"><i style="width:62%;background:var(--c-phys)"></i></div><span class="pc">62%</span></div>
+            <div class="prog" style="grid-template-columns:96px minmax(0,1fr) 40px"><span>Spiritual</span><div class="bar"><i style="width:30%;background:var(--c-spir)"></i></div><span class="pc">30%</span></div>
+            <div class="prog" style="grid-template-columns:96px minmax(0,1fr) 40px"><span>Environment</span><div class="bar"><i style="width:20%;background:var(--c-env)"></i></div><span class="pc">20%</span></div>
+          </div>
+          <div class="card" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-size:14px;color:var(--ink-2)">What got in the way today? One line, or skip.</span>
+            <div class="actions"><button class="btn" type="button" style="width:100%">Write a note</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. All done, phone -->
+    <p class="label">3. All done, phone: the one celebration, small and calm</p>
+    <div class="frame phone">
+      <div class="inner">
+        <div class="topbar"><b>timely</b><nav><span class="on">Home</span><span>Goals</span><span>Week</span><span>Year</span><span>Insights</span></nav></div>
+        <div class="screen">
+          <div class="head">
+            <div><h2>Wednesday 4 Nov</h2><p>Week 45</p></div>
+            <div class="ring" style="width:56px;height:56px"><svg viewBox="0 0 72 72" style="width:56px;height:56px"><circle cx="36" cy="36" r="30" fill="none" stroke="var(--rule-2)" stroke-width="8"/><circle cx="36" cy="36" r="30" fill="none" stroke="var(--ok)" stroke-width="8" stroke-dasharray="188.5 188.5"/></svg><span class="c" style="font-size:18px;color:var(--ok)">&#10003;</span></div>
+          </div>
+          <div class="milestone">
+            <span class="ck">&#10003;</span>
+            <div><strong>Today is complete</strong><span>All 3 blocks done. Nothing else is due today.</span></div>
+          </div>
+          <div class="milestone" style="border-color:var(--rule);background:var(--bg-2)">
+            <span class="ck" style="background:var(--accent);color:var(--on-accent)">1</span>
+            <div><strong style="font-weight:500">First full Physical week</strong><span>Every planned Physical session this week is done. Shown once, then in the recap.</span></div>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Week 45 so far</h3>
+            <p style="margin:0;font-size:14px;color:var(--ink-2)">4 of 5 planned sessions. The two open ones are Friday and the weekend, as planned.</p>
+          </div>
+          <div class="actions"><button class="btn" type="button" style="width:100%">See this week</button></div>
+          <p class="note-line" style="margin:0">No sound, no confetti. Turn milestones off in Account.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Nothing planned, phone -->
+    <p class="label">4. Nothing planned today, phone: offer one next action, not a blank</p>
+    <div class="frame phone">
+      <div class="inner">
+        <div class="topbar"><b>timely</b><nav><span class="on">Home</span><span>Goals</span><span>Week</span><span>Year</span><span>Insights</span></nav></div>
+        <div class="screen">
+          <div class="head">
+            <div><h2>Thursday 5 Nov</h2><p>Week 45 · nothing planned</p></div>
+          </div>
+          <div class="empty">
+            <h3>Nothing planned for today</h3>
+            <p>Your Run is due twice more this week. Thursday evening is free.</p>
+            <div class="actions">
+              <button class="btn primary" type="button" style="width:100%">Add Run, 6:00 to 7:00 PM</button>
+              <button class="btn quiet" type="button" style="width:100%">Plan the day in Week</button>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Habits: 0 of 6 ticked</h3>
+            <p style="margin:0;font-size:14px;color:var(--ink-2)">Habits do not need a block. Tick them when they happen.</p>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <h3>Week 45 so far</h3>
+            <p style="margin:0;font-size:14px;color:var(--ink-2)">3 of 5 planned sessions. Missing one still leaves the week in good shape.</p>
+          </div>
+          <p class="note-line" style="margin:0">The suggestion always comes from a habit that is behind its target this week, and it can be dismissed for the day.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely mockup: charts, one question each</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Mockup only. Colours are the light and dark values of app/assets/css/tokens.css. Not the app. */
+:root{color-scheme:light dark;--font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--bg:#ffffff;--bg-2:#f7f9fc;--bg-3:#eef3fa;--bg-4:#dce7f5;--ink:#1a2230;--ink-2:#3d4657;--ink-3:#6b7385;--ink-4:#9aa1b1;
+--rule:#e2e6ee;--rule-2:#eef1f6;--ctl:#737e95;--accent:#1b4b8f;--accent-deep:#12335f;--accent-soft:#dce7f5;--on-accent:#ffffff;
+--ok:#2d6a4f;--warn:#8a5a12;--shadow:0 8px 24px rgba(18,51,95,.12);
+--c-prof:#3c4b63;--c-rel:#c4767f;--c-phys:#7a9471;--c-cog:#4f7f80;--c-spir:#6e5c7c;--c-env:#c19a3e;--c-soc:#b5836a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1624;--bg-2:#131c2c;--bg-3:#1a2539;--bg-4:#223156;--ink:#e6ebf3;--ink-2:#c4cbd8;--ink-3:#98a2b5;--ink-4:#5d6780;--rule:#28324a;--rule-2:#1d2639;--ctl:#78859e;--accent:#86aee8;--accent-deep:#b5cdf1;--accent-soft:#223156;--on-accent:#0f1624;--ok:#7fc4a0;--warn:#e8bd7a;--shadow:0 8px 24px rgba(0,0,0,.45);
+--c-prof:#8fa3c4;--c-rel:#d98a92;--c-phys:#97b58c;--c-cog:#7fb3b4;--c-spir:#a596b8;--c-env:#d9b35e;--c-soc:#d9a58d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-2);color:var(--ink);font:400 15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 24px 64px}
+.note{font-size:13px;color:var(--ink-3);margin:0 0 8px}
+h1{font-size:28px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.lede{color:var(--ink-2);max-width:680px;margin:0 0 32px}
+.chart{background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:28px;margin-bottom:32px}
+.q{font-size:13px;color:var(--ink-3);font-weight:500;margin:0 0 4px}
+h2{font-size:22px;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--ink-2);margin:0 0 20px;max-width:640px}
+.was{font-size:12px;color:var(--ink-3);border-top:1px solid var(--rule-2);margin-top:20px;padding-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-2);margin:0 0 14px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+/* Time split */
+.split-bar{display:flex;height:48px;border-radius:8px;overflow:hidden;border:1px solid var(--rule)}
+.split-bar div{height:100%}
+.free{background:repeating-linear-gradient(135deg,var(--bg) 0 6px,var(--rule) 6px 7px)}
+.split-list{margin:20px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.split-list li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:44px;border-bottom:1px solid var(--rule-2);font-size:15px}
+.split-list li .h{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.split-list li.free-row{color:var(--ink-2)}
+.sum{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:20px;font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.sum b{font-weight:600;color:var(--ink)}
+/* Year */
+.plot{position:relative;height:280px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;align-items:end;border-bottom:1px solid var(--rule);padding-left:36px}
+.yaxis{position:absolute;left:0;top:0;bottom:0;width:32px;font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.yaxis span{position:absolute;right:0;transform:translateY(50%)}
+.col{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.col .bar{width:100%;height:calc(var(--h)*1px);background:var(--accent);border-radius:6px 6px 0 0;opacity:.9}
+.col .val{position:absolute;left:0;right:0;text-align:center;font-size:12px;color:var(--ink-2);bottom:calc(var(--h)*1px + 4px);font-variant-numeric:tabular-nums}
+.col .cap{position:absolute;left:-4px;right:-4px;height:0;border-top:2px dashed var(--ink-3);bottom:calc(var(--c)*1px)}
+.months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding-left:36px;margin-top:8px;font-size:12px;color:var(--ink-3);text-align:center}
+.year-note{font-size:13px;color:var(--ink-3);margin:14px 0 0}
+/* Insights */
+.headline{font-size:34px;font-weight:600;letter-spacing:-.02em;margin:4px 0 4px;line-height:1.2}
+.headline-sub{color:var(--ink-2);margin:0 0 24px}
+.trend{position:relative;height:200px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;align-items:end;padding-left:40px;border-bottom:1px solid var(--rule)}
+.trend .yl{position:absolute;left:0;font-size:12px;color:var(--ink-3);transform:translateY(50%);font-variant-numeric:tabular-nums}
+.trend .b{height:calc(var(--p)*2px);background:var(--accent);border-radius:6px 6px 0 0}
+.trend .b.now{background:transparent;border:2px dashed var(--accent)}
+.trend .wl{text-align:center;font-size:12px;color:var(--ink-3);margin-top:8px}
+.trend-wrap{padding-left:0}
+.trend-labels{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;padding-left:40px;font-size:12px;color:var(--ink-3);text-align:center;margin-top:8px}
+.kept{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;font-size:14px;color:var(--ink-2)}
+.kept div{border-top:1px solid var(--rule-2);padding-top:12px}
+.kept b{display:block;font-weight:600;color:var(--ink);margin-bottom:6px}
+@media (max-width:700px){.split-list{grid-template-columns:1fr;column-gap:0}.chart{padding:20px}.headline{font-size:26px}.kept{grid-template-columns:1fr}.months,.plot{gap:4px}.col .val{font-size:10px}.plot{padding-left:30px}.months{padding-left:30px}}
+@media (max-width:400px){.wrap{padding:24px 12px 48px}.chart{padding:16px}.col .val{display:none}.trend{gap:6px;padding-left:30px}.trend-labels{gap:6px;padding-left:30px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="note">Mockup, static, sample data. Taste, not tested. See spec/ux-proposal.md, section 6d.</p>
+  <h1>Charts: one question each</h1>
+  <p class="lede">Each chart answers one question, with one number to read first. Totals agree everywhere: 105 awake hours a week, 72 planned, 33 free. Sleep is not in these totals.</p>
+
+  <!-- A. Time split -->
+  <section class="chart" aria-labelledby="ts">
+    <p class="q">Question: where does my week go?</p>
+    <h2 id="ts">72 of 105 awake hours are planned</h2>
+    <p class="sub">A typical week, from the active schedule. Sleep (63 h) is left out, as the Show sleep setting says. Free time is shown, not hidden.</p>
+    <div class="legend" aria-label="Legend">
+      <span><i class="sw" style="background:var(--c-prof)"></i>Professional</span>
+      <span><i class="sw" style="background:var(--c-rel)"></i>Relational</span>
+      <span><i class="sw" style="background:var(--c-phys)"></i>Physical</span>
+      <span><i class="sw" style="background:var(--c-cog)"></i>Cognitive</span>
+      <span><i class="sw" style="background:var(--c-soc)"></i>Social</span>
+      <span><i class="sw" style="background:var(--c-spir)"></i>Spiritual</span>
+      <span><i class="sw" style="background:var(--c-env)"></i>Environment</span>
+      <span><i class="sw free"></i>Free</span>
+    </div>
+    <div class="split-bar" role="img" aria-label="Awake time: Professional 26 h, Relational 16 h, Physical 10 h, Cognitive 9 h, Social 5 h, Spiritual 4 h, Environment 2 h, Free 33 h">
+      <div style="flex:26;background:var(--c-prof)"></div>
+      <div style="flex:16;background:var(--c-rel)"></div>
+      <div style="flex:10;background:var(--c-phys)"></div>
+      <div style="flex:9;background:var(--c-cog)"></div>
+      <div style="flex:5;background:var(--c-soc)"></div>
+      <div style="flex:4;background:var(--c-spir)"></div>
+      <div style="flex:2;background:var(--c-env)"></div>
+      <div class="free" style="flex:33"></div>
+    </div>
+    <ul class="split-list">
+      <li><i class="sw" style="background:var(--c-prof)"></i><span>Professional</span><span class="h">26 h</span></li>
+      <li><i class="sw" style="background:var(--c-phys)"></i><span>Physical</span><span class="h">10 h</span></li>
+      <li><i class="sw" style="background:var(--c-rel)"></i><span>Relational &amp; emotional</span><span class="h">16 h</span></li>
+      <li><i class="sw" style="background:var(--c-spir)"></i><span>Spiritual</span><span class="h">4 h</span></li>
+      <li><i class="sw" style="background:var(--c-cog)"></i><span>Cognitive</span><span class="h">9 h</span></li>
+      <li><i class="sw" style="background:var(--c-env)"></i><span>Environment</span><span class="h">2 h</span></li>
+      <li><i class="sw" style="background:var(--c-soc)"></i><span>Social</span><span class="h">5 h</span></li>
+      <li class="free-row"><i class="sw free"></i><span>Free</span><span class="h">33 h</span></li>
+    </ul>
+    <div class="sum"><span><b>72 h</b> planned</span><span>+</span><span><b>33 h</b> free</span><span>=</span><span><b>105 h</b> awake, a week</span></div>
+    <p class="was">Was: a donut with &ldquo;69%&rdquo; in the middle, &ldquo;72 h planned of 105 h&rdquo;, and a list with a separate &ldquo;Not planned&rdquo; row. Two numbers answered one question. Now the free time is one segment and the sum is written out.</p>
+  </section>
+
+  <!-- B. Year -->
+  <section class="chart" aria-labelledby="yr">
+    <p class="q">Question: how full is each month?</p>
+    <h2 id="yr">Planned hours, month by month</h2>
+    <p class="sub">Bars are planned hours. The dashed line is the awake time of that month, with sleep left out. Nothing is red: a full bar is not an alarm.</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--accent)"></i>Planned hours</span>
+      <span><i class="sw" style="border-top:2px dashed var(--ink-3);height:0;width:16px;border-radius:0"></i>Awake time in the month</span>
+    </div>
+    <div class="plot" role="img" aria-label="Twelve months of planned hours against awake time. Planned hours: Jan 310, Feb 300, Mar 330, Apr 280, May 300, Jun 240, Jul 220, Aug 190, Sep 310, Oct 330, Nov 300, Dec 260. Awake time about 420 to 465 hours a month.">
+      <div class="yaxis" aria-hidden="true"><span style="bottom:0">0</span><span style="bottom:50%">250 h</span><span style="bottom:calc(100% - 1px)">500 h</span></div>
+      <div class="col" style="--h:161;--c:242"><div class="bar"></div><span class="val">310</span><span class="cap"></span></div>
+      <div class="col" style="--h:156;--c:218"><div class="bar"></div><span class="val">300</span><span class="cap"></span></div>
+      <div class="col" style="--h:172;--c:242"><div class="bar"></div><span class="val">330</span><span class="cap"></span></div>
+      <div class="col" style="--h:146;--c:234"><div class="bar"></div><span class="val">280</span><span class="cap"></span></div>
+      <div class="col" style="--h:156;--c:242"><div class="bar"></div><span class="val">300</span><span class="cap"></span></div>
+      <div class="col" style="--h:125;--c:234"><div class="bar"></div><span class="val">240</span><span class="cap"></span></div>
+      <div class="col" style="--h:114;--c:242"><div class="bar"></div><span class="val">220</span><span class="cap"></span></div>
+      <div class="col" style="--h:99;--c:242"><div class="bar"></div><span class="val">190</span><span class="cap"></span></div>
+      <div class="col" style="--h:161;--c:234"><div class="bar"></div><span class="val">310</span><span class="cap"></span></div>
+      <div class="col" style="--h:172;--c:242"><div class="bar"></div><span class="val">330</span><span class="cap"></span></div>
+      <div class="col" style="--h:156;--c:234"><div class="bar"></div><span class="val">300</span><span class="cap"></span></div>
+      <div class="col" style="--h:135;--c:242"><div class="bar"></div><span class="val">260</span><span class="cap"></span></div>
+    </div>
+    <div class="months"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span></div>
+    <p class="year-note">The dip in June to August is the Vacation schedule, set in Year. Only one life area is shown here; the split by life area is in Week.</p>
+    <p class="was">Was: 12 stacked bars in life-area colours under a red dashed &ldquo;Available per month: up to 525 h&rdquo; line drawn as 12 separate pieces, with an axis at 263 and 525. The colours answered a question nobody asked on this screen, and the red read as an error.</p>
+  </section>
+
+  <!-- C. Insights -->
+  <section class="chart" aria-labelledby="ins">
+    <p class="q">Question: am I doing what I planned?</p>
+    <h2 id="ins" class="headline">You ticked about three in four planned hours.</h2>
+    <p class="headline-sub">October 9 to today, 8 weeks. Counted from the first tick. Earlier weeks are not tracked.</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--accent)"></i>Full week, ticked as planned</span>
+      <span><i class="sw" style="border:2px dashed var(--accent)"></i>This week so far</span>
+    </div>
+    <div class="trend" role="img" aria-label="Weekly share of planned hours ticked, weeks 38 to 45: 62, 71, 58, 80, 74, 77, 83 and 69 so far">
+      <span class="yl" style="top:0">100%</span><span class="yl" style="top:50%">50%</span><span class="yl" style="bottom:0;transform:translateY(50%)">0%</span>
+      <div class="b" style="--p:62"></div>
+      <div class="b" style="--p:71"></div>
+      <div class="b" style="--p:58"></div>
+      <div class="b" style="--p:80"></div>
+      <div class="b" style="--p:74"></div>
+      <div class="b" style="--p:77"></div>
+      <div class="b" style="--p:83"></div>
+      <div class="b now" style="--p:69"></div>
+    </div>
+    <div class="trend-labels"><span>38</span><span>39</span><span>40</span><span>41</span><span>42</span><span>43</span><span>44</span><span>45</span></div>
+    <div class="kept">
+      <div><b>Kept up</b>Attend a community meeting &middot; Call a friend or relative &middot; Help someone in my network</div>
+      <div><b>Could use another go</b>Quiet time to reflect &middot; Drink enough water &middot; Sleep at a regular time</div>
+    </div>
+    <p class="was">Was: a headline &ldquo;Done 77% of planned&rdquo;, a donut with 77% again, four weekly bars with their own percentages, eight life-area bars, and two sub-lines with &ldquo;13 of 16 blocks&rdquo;. The same figure appeared four times. Now each figure appears once: the headline, and the trend shows the shape. Life areas are on the Year tab and in Home.</p>
+  </section>
+</main>
+</body>
+</html>

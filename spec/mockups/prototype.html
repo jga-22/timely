@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timely prototype (dummy data)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="prototype/prototype.css">
+<script>
+/* Theme before the first paint: the saved choice, else the system setting. Storage errors are ignored. */
+(function () {
+  var dark = false;
+  try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+  var t = null;
+  try { t = localStorage.getItem('timely.proto.theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = dark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Icons: one set of inline SVG symbols, drawn with currentColor. No icon font. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1h-4.5v-6h-6v6H4.5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-goal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 2.5v4M16 2.5v4"/><path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01"/></symbol>
+  <symbol id="i-year" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 2.5v4M16 2.5v4M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2"/></symbol>
+  <symbol id="i-insight" viewBox="0 0 24 24"><path d="M4 19.5V4.5M4 19.5h16"/><path d="M8 15.5l3.5-4 3 2.5 5-6.5"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5.5 8.5 12l6.5 6.5"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c1.2-3.6 4-5.2 7.5-5.2s6.3 1.6 7.5 5.2"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 1.5h-14z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#home" aria-label="Timely, Home">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="var(--accent)"/><path d="M7.5 13.5l3.5 3.5 7.5-8" fill="none" stroke="var(--on-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Timely</span>
+    </a>
+    <nav class="tabs" aria-label="Main">
+      <a href="#home" data-tab="home"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Home</a>
+      <a href="#goals" data-tab="goals"><svg class="ic" aria-hidden="true"><use href="#i-goal"/></svg>Goals</a>
+      <a href="#week" data-tab="week"><svg class="ic" aria-hidden="true"><use href="#i-week"/></svg>Week</a>
+      <a href="#year" data-tab="year"><svg class="ic" aria-hidden="true"><use href="#i-year"/></svg>Year</a>
+      <a href="#insights" data-tab="insights"><svg class="ic" aria-hidden="true"><use href="#i-insight"/></svg>Insights</a>
+    </nav>
+    <div class="top-tools">
+      <button class="icon-btn" id="themeBtn" type="button" aria-pressed="false" aria-label="Dark mode">
+        <svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
+      <div class="acct">
+        <button class="avatar" id="acctBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="acctMenu" aria-label="Account, Sam Reyes">SR</button>
+        <div class="menu" id="acctMenu" hidden>
+          <div class="menu-head"><b>Sam Reyes</b><span class="muted">Saved on this device (sample)</span></div>
+          <button class="menu-item" type="button" id="menuTheme" role="switch" aria-checked="false">
+            <span>Dark mode</span><span class="switch" aria-hidden="true"><span class="track"></span></span>
+          </button>
+          <button class="menu-item" type="button" id="menuMilestones" role="switch" aria-checked="true">
+            <span>Milestone lines<small>One calm line at a time. Never blocks a tick.</small></span><span class="switch" aria-hidden="true"><span class="track"></span></span>
+          </button>
+          <button class="menu-item" type="button" data-menu="replay"><span>Replay first run</span><svg class="ic" aria-hidden="true"><use href="#i-replay"/></svg></button>
+          <button class="menu-item" type="button" data-menu="reset"><span>Reset sample data</span><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ═══ Home ═══ -->
+  <section class="view" id="view-home" data-view="home" aria-labelledby="t-home" hidden>
+    <header class="page-head">
+      <div class="page-title">
+        <p class="eyebrow" id="homeEyebrow"></p>
+        <h1 id="t-home" tabindex="-1"></h1>
+        <p class="lede" id="homeAmb"></p>
+      </div>
+      <div class="head-tools">
+        <div class="day-nav" role="group" aria-label="Choose a day">
+          <button class="btn" id="dayPrev" type="button"></button>
+          <button class="btn primary" id="dayToday" type="button">Today</button>
+          <button class="btn" id="dayNext" type="button"></button>
+        </div>
+        <div class="amb-ring" id="ambRing"></div>
+      </div>
+    </header>
+
+    <div class="home">
+      <div class="home-main">
+        <div id="focus"></div>
+
+        <section class="card" aria-labelledby="blocks-h">
+          <div class="card-head">
+            <h2 id="blocks-h">Today's blocks</h2>
+            <span class="amb-line" style="gap:8px"><span id="dayRing" class="ring-slot"></span><span class="body-sm" id="dayCount"></span></span>
+          </div>
+          <ul class="rows" id="blockList"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="hab-h">
+          <div class="card-head">
+            <h2 id="hab-h">Habits</h2>
+            <span class="body-sm" id="habCount"></span>
+          </div>
+          <div id="habitList"></div>
+        </section>
+
+        <section class="card jour" aria-labelledby="jour-h">
+          <h2 id="jour-h">Journal</h2>
+          <label class="sr" for="journal">What got in the way today?</label>
+          <textarea class="field" id="journal" rows="2" placeholder="What got in the way today? One line is enough, or skip it."></textarea>
+          <p class="muted" id="journalNote">Kept in this page only. Nothing is saved.</p>
+        </section>
+      </div>
+
+      <aside class="home-side" aria-label="This week and the year">
+        <section class="card" aria-labelledby="week-h">
+          <h2 id="week-h">This week so far</h2>
+          <div class="strip" id="strip" style="margin-top:14px"></div>
+          <p class="body-sm" id="stripText" style="margin-top:14px"></p>
+        </section>
+        <section class="card" aria-labelledby="tgt-h">
+          <h2 id="tgt-h">1-year targets</h2>
+          <p class="muted">Each life area, from its 1-year target.</p>
+          <div id="targets" class="stack" style="margin-top:12px"></div>
+          <p class="card-note" id="ambNote"></p>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══ Goals ═══ -->
+  <section class="view" id="view-goals" data-view="goals" aria-labelledby="t-goals" hidden>
+    <header class="page-head">
+      <div class="page-title">
+        <p class="eyebrow">The why: one ambition, eight life areas</p>
+        <h1 id="t-goals" tabindex="-1">Goals</h1>
+      </div>
+      <div class="seg" role="group" aria-label="Goals view" id="goalMode">
+        <button type="button" id="modeList" aria-pressed="true">List</button>
+        <button type="button" id="modeGrid" aria-pressed="false">Grid</button>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="amb-h">
+      <div class="card-head">
+        <div style="min-width:0;flex:1 1 320px">
+          <p class="eyebrow" id="amb-h">Ambition, 5 years</p>
+          <p class="amb-text" id="ambText"></p>
+        </div>
+        <button class="btn" id="ambEdit" type="button"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>Edit</button>
+      </div>
+      <form class="form" id="ambForm" hidden>
+        <label class="field-label">Your ambition, in a sentence
+          <textarea class="field" id="ambInput" rows="2"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Save</button>
+          <button class="btn" type="button" data-amb="cancel">Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="harada" class="harada" hidden></div>
+
+    <div class="goals" style="margin-top:20px">
+      <section class="card" aria-labelledby="areas-h" id="listCard">
+        <h2 id="areas-h" class="sr">Life areas</h2>
+        <ul class="area-list" id="areaList" role="list"></ul>
+      </section>
+      <section class="card detail" id="detail" aria-live="polite" aria-labelledby="detail-h"></section>
+    </div>
+  </section>
+
+  <!-- ═══ Week ═══ -->
+  <section class="view" id="view-week" data-view="week" aria-labelledby="t-week" hidden>
+    <header class="page-head">
+      <div class="page-title">
+        <p class="eyebrow">Week 45 · 2 to 8 November 2026</p>
+        <h1 id="t-week" tabindex="-1">Week</h1>
+        <p class="lede">Schedule: <b id="schedName"></b>, used in every week unless Year says otherwise.</p>
+      </div>
+    </header>
+
+    <div class="chips" id="schedChips" role="group" aria-label="Schedules"></div>
+
+    <div class="sleepline">
+      <span>Sleep, 10 PM to 7 AM, is hidden to keep the grid short.</span>
+      <button class="switch" type="button" role="switch" id="sleepSw" aria-checked="false"><span class="track" aria-hidden="true"></span><span>Show sleep</span></button>
+    </div>
+
+    <div class="selbar" id="selBar" role="region" aria-label="Selected hours" aria-live="polite"></div>
+
+    <div class="card grid-card">
+      <div class="scrollcue">
+        <div class="scroll" id="gridScroll">
+          <div class="wgrid" id="wgrid"></div>
+        </div>
+        <div class="fade-r" aria-hidden="true"></div>
+      </div>
+      <p class="cue" id="cue"></p>
+    </div>
+
+    <div class="week-bottom">
+      <section class="card" aria-labelledby="donut-h">
+        <h2 id="donut-h">Where the week goes</h2>
+        <div class="donut-row">
+          <svg id="donut" viewBox="0 0 124 124" role="img" aria-label="Where the week goes"></svg>
+          <ul class="legend-list" id="donutLegend"></ul>
+        </div>
+        <p class="muted" id="donutNote" style="margin-top:12px"></p>
+      </section>
+      <section class="card" aria-labelledby="add-h">
+        <h2 id="add-h">Add something</h2>
+        <p class="muted" style="margin-top:4px">Paint a time on the grid, then choose what goes there. Or add an activity first and place it later.</p>
+        <div class="actions" style="margin-top:14px">
+          <button class="btn primary" id="addAct" type="button"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add activity</button>
+          <button class="btn" id="sleepHours" type="button">Sleep hours</button>
+        </div>
+        <p class="muted" id="addNote" role="status" style="margin-top:12px"></p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══ Year ═══ -->
+  <section class="view" id="view-year" data-view="year" aria-labelledby="t-year" hidden>
+    <header class="page-head">
+      <div class="page-title">
+        <p class="eyebrow">Plan across the year</p>
+        <h1 id="t-year" tabindex="-1">Year</h1>
+        <p class="lede">Paint the weeks that differ, such as a holiday. The chart shows what each month holds.</p>
+      </div>
+      <div class="yearnav">
+        <button class="icon-btn" id="yPrev" type="button" aria-label="Previous year" disabled><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg></button>
+        <output id="yLabel" aria-live="polite">2026</output>
+        <button class="icon-btn" id="yNext" type="button" aria-label="Next year" disabled><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="paint-h">
+      <div class="card-head">
+        <h2 id="paint-h">Schedules by week</h2>
+        <div class="chips" id="paintTools" role="group" aria-label="Paint with"></div>
+      </div>
+      <p class="muted" id="paintLine"></p>
+      <div class="yweeks" id="yweeks"></div>
+      <div class="legend" id="yLegend"></div>
+    </section>
+
+    <section class="card" aria-labelledby="chart-h">
+      <h2 id="chart-h">Planned hours, month by month</h2>
+      <p class="muted" style="margin-top:4px">Bars are planned hours, stacked by life area. The dashed tick is the awake time of the month. Sleep is not counted.</p>
+      <div class="ychart" id="ychart"></div>
+      <div class="xmonths" id="xmonths"></div>
+      <div class="legend" id="yAreaLegend"></div>
+    </section>
+
+    <section class="card" aria-labelledby="sh-h">
+      <h2 id="sh-h">Hours by life area</h2>
+      <ul class="shares" id="yShares"></ul>
+    </section>
+  </section>
+
+  <!-- ═══ Insights ═══ -->
+  <section class="view" id="view-insights" data-view="insights" aria-labelledby="t-insights" hidden>
+    <header class="page-head">
+      <div class="page-title">
+        <p class="eyebrow">Adherence, weeks 38 to 45</p>
+        <h1 id="t-insights" tabindex="-1">Insights</h1>
+      </div>
+    </header>
+
+    <section class="card headline-card" aria-labelledby="ins-h">
+      <p class="eyebrow" id="ins-h">Planned against ticked</p>
+      <p class="headline" id="insHead"></p>
+      <p class="muted" id="insSub"></p>
+    </section>
+
+    <div class="ins-grid">
+      <div class="stack">
+        <section class="card" aria-labelledby="trend-h">
+          <h2 id="trend-h">Week by week</h2>
+          <p class="muted" style="margin-top:4px">Share of planned hours ticked. The dashed bar is this week so far.</p>
+          <div class="trend" id="trend" role="img"></div>
+          <div class="trend-x" id="trendX"></div>
+        </section>
+
+        <section class="card" aria-labelledby="areas-i-h">
+          <h2 id="areas-i-h">Life areas</h2>
+          <ul class="bars-list" id="insAreas"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="kept-h">
+          <h2 id="kept-h">Habits</h2>
+          <div class="kept" id="kept"></div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card" aria-labelledby="rec-h" id="recapCard"></section>
+
+        
+        <section class="card" aria-labelledby="ms-h">
+          <h2 id="ms-h">Milestone lines</h2>
+          <p class="muted" style="margin-top:4px">Only your own progress: a first tick, a full week, a stage reached. No comparison with anyone.</p>
+          <div class="actions" style="margin-top:12px;align-items:center">
+            <button class="switch" type="button" role="switch" id="msSw" aria-checked="true"><span class="track" aria-hidden="true"></span><span>Show milestone lines</span></button>
+          </div>
+          <div class="actions" style="margin-top:8px">
+            <button class="btn quiet" type="button" id="msExample">Show an example</button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="nudge-h">
+          <h2 id="nudge-h">Journal</h2>
+          <p class="body-sm" id="nudgeText" style="margin-top:6px"></p>
+          <div class="actions" style="margin-top:12px"><a class="btn" href="#home" id="nudgeLink">Open today</a></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p><b>Prototype with dummy data.</b> Nothing is saved, and the sample people, numbers and plans are invented. The date is fixed at Wednesday 4 November 2026 so every screen reads the same.</p>
+  <p>Sketch for discussion, not the app. See <a href="index.html">the mockup index</a> and <a href="../ux-proposal.md">the UX proposal</a>.</p>
+</footer>
+
+<!-- Preview switcher: shows the Home states on demand. Hideable. -->
+<div class="preview" id="preview" role="group" aria-label="Preview a Home state">
+  <span>Preview Home</span>
+  <div class="seg" id="previewSeg">
+    <button type="button" data-preview="normal" aria-pressed="true">Normal</button>
+    <button type="button" data-preview="all" aria-pressed="false">All done</button>
+    <button type="button" data-preview="none" aria-pressed="false">Nothing planned</button>
+  </div>
+  <button class="icon-btn" type="button" id="previewHide" aria-label="Hide the preview switcher"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button>
+</div>
+<button class="btn preview-open" type="button" id="previewOpen" hidden>Preview states</button>
+
+<!-- First run: a dialog over the page. Rendered by prototype.js. -->
+<div class="fr" id="fr" role="dialog" aria-modal="true" aria-labelledby="fr-title" hidden>
+  <div class="fr-card">
+    <div class="fr-top">
+      <span class="eyebrow" id="frStep">Welcome</span>
+      <button class="btn quiet" type="button" id="frSkip">Skip for now</button>
+    </div>
+    <div class="fr-prog" id="frProg" aria-hidden="true"></div>
+    <div class="fr-body" id="frBody"></div>
+  </div>
+</div>
+
+<!-- Milestone and status line: one at a time, fades, never blocks a tick. -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span class="ck" id="toastCk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span>
+  <div><b id="toastTitle"></b><p id="toastText"></p></div>
+  <button class="btn quiet" type="button" id="toastClose" aria-label="Dismiss">Dismiss</button>
+</div>
+
+<script src="prototype/prototype.js"></script>
+</body>
+</html>

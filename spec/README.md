@@ -9,6 +9,10 @@ This folder holds the product and design specification for Timely. The code is t
 | `README.md` | This index, plus a short changelog. | Start here. |
 | `weekly_planner_prd_and_design_doc.md` | The product requirements and design document (v3): the five-screen product (Home, Goals, Week, Year, Insights). Requirements have IDs and a status (Done, Partial, Not built, Planned (v3), Superseded, Dropped) with evidence for each Done or Partial item. Includes the UX rules, the see-only-once matrix, the old-Insights mapping, the implementation slices, assumptions and open questions. | Read before changing behaviour. Update statuses and the backlog when a feature ships or a decision changes. |
 | `frontend-design.md` | The current visual style, derived from the code: tokens, layout, breakpoints, component catalogue (sections 4.9 to 4.17 cover the current screens), accessibility, voice, do and don't, verification, known gaps. | Read before any UI change. Update it with the code in the same change. |
+| `ux-proposal.md` | Product-UX proposal for strangers (not built): verdict, market, adoption scorecard, ranked findings, design principles, direction (first run, Home cockpit, navigation, charts, vocabulary), motivation and rewards, roadmap, open decisions, test plan. `mockups/` holds the static HTML sketches it links to, and `mockups/prototype.html` is a working prototype of the whole product (dummy data, no logic). | Read before proposing UX or onboarding changes. Taste and evidence are marked. |
+| `ux-journey-map.md` | Journey map from first visit to first quarter (not built): six stages, each with the user goal, screen and action, emotion curve, risk of quitting, motivation device, upkeep and success metric; the weekly loop and the time budget. Visual: `mockups/journey-map.html`. | Read before changing onboarding, Home or the weekly review. Hypotheses are marked as such. |
+| `ux-information-architecture.md` | Navigation options, not decided: five tabs, four tabs with Year in Week, Today / Plan / Progress, and one stream with a plan drawer. Scorecard, a mapping of every screen and concept, vocabulary, code changes per option, prototype questions and a decision template. | Read before choosing a navigation shape. No winner is chosen yet. |
+| `mockups/prototype-a2.html` (with `mockups/prototype-a2/`) | Prototype A2: option A made alive, same structure and dummy data. Time-of-day greeting and tint, live now marker and countdown, a tick that celebrates and lets the next block glide in, dream path, recap ceremony, illustrated empty states, Lively or Calm switch. Not built; not tested with users. | Read with the navigation options (Option A). Not a decision. |
 | `build-plan.md` | Slice-by-slice plan to build the v3 structure: rules every slice follows, definition of done, slice scopes, status log and what remains. | Read before starting or reviewing a slice; update the status log as slices ship. |
 | `references/grille-harada-meilleure-version.html` | The standalone Harada prototype; origin of the blue palette and the 3x3 layout. Not part of the build. | Visual and content reference for the Goals Harada map. Tokens in `app/assets/css/tokens.css` remain the source of truth. |
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
@@ -134,6 +138,12 @@ Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visuali
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### UX prototype and rules-based first run (2026-11-03, branch `docs/ux-prototype`, not pushed)
+
+- Owner decisions: the first run is rules-based (no AI now; the AI path is a later option in `ux-proposal.md` section 6a); perks stay out; gamification stays, each mechanic with an opt-out.
+- `ux-proposal.md` sections 6a, 8, 9 and 10 rewritten for the rules-based first run; `mockups/first-run.html` and `index.html` updated (no AI badge, consent line or "Written by AI").
+- New `mockups/prototype.html` with `mockups/prototype/prototype.css` and `prototype.js`: all five screens with dummy data, the rules-based first run, light and dark, a Home preview switcher. No app code changed.
 
 ### Home habits split (2026-11-06, branch `feat/home-habits-split`, from `main`, not pushed)
 
