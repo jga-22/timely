@@ -6,6 +6,8 @@ const router = useRouter()
 const { tab, go } = useNav()
 // Terms and Privacy render with or without a session, so the sign-in gate never hides them (no planner data is loaded for them)
 const legalPage = computed(() => LEGAL_ROUTES.includes(router.currentRoute.value.path))
+// The style guide (dev, app/dev) is a reading page: the first-run flow does not open over it
+const styleGuidePage = computed(() => router.currentRoute.value.path === '/_styleguide')
 // Dark mode and motion: applied before first paint by the head script (utils/prepaint.ts); these keep them in step after that
 useTheme()
 useMotion()
@@ -55,9 +57,9 @@ onMounted(() => {
   <!-- Client only: the first-run state is set before hydration, so the server markup must not contain it -->
   <!-- Hidden on the legal pages only: the state is kept, so Welcome or the tour shows again on Home -->
   <ClientOnly>
-    <OnboardingFlow v-if="!legalPage" />
-    <OnboardingIntro v-if="!legalPage" />
-    <OnboardingTour v-if="!legalPage" />
+    <OnboardingFlow v-if="!legalPage && !styleGuidePage" />
+    <OnboardingIntro v-if="!legalPage && !styleGuidePage" />
+    <OnboardingTour v-if="!legalPage && !styleGuidePage" />
     <AccountResetDataDialog v-if="resetOpen" @close="resetOpen = false" />
   </ClientOnly>
   <NuxtRouteAnnouncer />
