@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { accountInitials, avatarLabel, needsSaveAttention, saveLabel } from '~/utils/account'
+import type { MotionChoice } from '~/utils/prefs'
 
 /**
  * The account menu in the topbar (Supabase mode shows the name and Sign out; local mode shows "Local mode"): the avatar and its menu
@@ -14,12 +15,20 @@ const planner = usePlannerStore()
 const onboarding = useOnboarding()
 const { state: auth, signOut } = useAuth()
 const { status: storageStatus } = useStorageStatus()
-const dark = useState('dark', () => false)
+const { dark, toggle: toggleDark } = useTheme()
+const { choice, motion, setChoice } = useMotion()
+/** Lively or Calm (FR-UX, Motion): the choice is kept in this browser */
+const MOTION_OPTIONS: { value: MotionChoice; label: string }[] = [
+  { value: 'lively', label: 'Lively' },
+  { value: 'calm', label: 'Calm' },
+]
+/** The system asks for less motion: the page is calm whatever the choice, and the note says why */
+const forcedCalm = computed(() => choice.value === 'lively' && motion.value === 'calm')
 const accountOpen = ref(false)
 const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
-const themeRef = ref<HTMLButtonElement | null>(null)
+const themeRef = ref<{ $el: HTMLButtonElement } | null>(null)
 
 /** Replays the tour from Plan your week; without an ambition and a life area with habits there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
@@ -39,7 +48,7 @@ const toggleAccount = async () => {
   accountOpen.value = !accountOpen.value
   if (!accountOpen.value) return
   await nextTick()
-  focusEditField(themeRef.value, menuRef.value)
+  focusEditField(themeRef.value?.$el, menuRef.value)
 }
 
 /** Escape closes the menu from anywhere inside it and returns focus to the avatar */
@@ -59,7 +68,9 @@ const onSignOut = async () => {
   await signOut()
 }
 
+/** The dialog returns focus to the avatar when it closes, so the avatar takes it here, before the menu (and its button) goes */
 const openReset = () => {
+  avatarRef.value?.focus()
   accountOpen.value = false
   emit('reset')
 }
@@ -67,12 +78,6 @@ const openReset = () => {
 const onReplayTour = () => {
   accountOpen.value = false
   replayTour()
-}
-
-const toggleDark = () => {
-  dark.value = !dark.value
-  localStorage.setItem('timely.dark', String(dark.value))
-  document.documentElement.setAttribute('data-theme', dark.value ? 'dark' : '')
 }
 
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointer))
@@ -113,18 +118,23 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       </div>
 
       <div class="account-items">
-        <button
-          ref="themeRef"
-          type="button"
-          class="account-item account-switch"
-          role="switch"
-          :aria-checked="dark ? 'true' : 'false'"
-          @click="toggleDark"
-        >
-          <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" /></svg>
-          <span class="account-label">Dark mode</span>
-          <span class="account-track" aria-hidden="true"><span class="account-knob" /></span>
-        </button>
+        <div class="account-item account-row">
+          <UiIcon name="moon" size="sm" />
+          <span id="account-dark-label" class="account-label" @click="toggleDark">Dark mode</span>
+          <UiSwitch
+            ref="themeRef"
+            class="account-switch"
+            labelledby="account-dark-label"
+            :model-value="dark"
+            @update:model-value="toggleDark"
+          />
+        </div>
+
+        <div class="account-motion">
+          <p class="account-motion-label">Motion</p>
+          <UiSegmented :model-value="choice" :options="MOTION_OPTIONS" label="Motion" @update:model-value="setChoice" />
+          <p v-if="forcedCalm" class="account-note">Your system asks for less motion, so Calm is in use.</p>
+        </div>
 
         <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayTour">
           <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" /></svg>

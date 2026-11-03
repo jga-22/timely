@@ -1,0 +1,37 @@
+/* Popovers: the colour pop of a life area, activity or week type (absolute, over the page). Layer ui.
+   The account menu keeps its rules in features/account.css. */
+.color-pop {
+  position: absolute;
+  z-index: var(--z-popover);
+  top: calc(100% + var(--sp-2));
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--sp-1);
+  width: 248px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elev-2);
+}
+.color-pop-inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  box-shadow: none;
+}
+/* 24px hit area; the 2px padding is transparent, so the visible swatch stays 20px */
+.color-pop button {
+  background: var(--c, var(--cell-empty));
+  width: 24px;
+  height: 24px;
+  padding: 2px;
+  background-clip: content-box;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--control-border);
+}
+.color-pop button[data-active="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}

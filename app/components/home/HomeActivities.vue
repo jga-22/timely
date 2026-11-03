@@ -29,7 +29,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
   <div v-if="total" class="home-progress" :class="{ 'is-complete': allDone }" role="status">
     <span>{{ progress }}</span>
     <span v-if="allDone" class="home-progress-check" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg></span>
-    <AdherenceRing v-else :percent="percent" :size="28" :show-value="false" />
+    <UiRing v-else :value="percent" :size="28" />
   </div>
 
   <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->
@@ -55,18 +55,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
           <NuxtLink v-if="row.category" class="home-row-cat" :to="link('goals', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
         </div>
         <span class="home-row-hours">{{ row.block.end - row.block.start }} h</span>
-        <button
-          type="button"
-          class="home-check"
-          role="checkbox"
-          :aria-checked="row.done ? 'true' : 'false'"
-          :aria-label="`Mark ${row.activity.name} done`"
-          @click="emit('toggle', row.key)"
-        >
-          <span class="home-check-box" aria-hidden="true">
-            <svg v-if="row.done" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
-          </span>
-        </button>
+        <UiTick :model-value="row.done" :label="`Mark ${row.activity.name} done`" @update:model-value="emit('toggle', row.key)" />
       </li>
     </ol>
     <!-- Nothing planned: one next action, the Week tab, where the day's hours are planned -->

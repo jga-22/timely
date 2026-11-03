@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_AREA_COLOR } from '~/utils/palette'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
@@ -23,7 +24,7 @@ const { link } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
 // Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4, 7): hidden, it is neither planned nor available time
-const { showSleep } = useShowSleep()
+const { showSleep, setShowSleep } = useShowSleep()
 
 const granularity = ref<InsightsGranularity>('month')
 const span = ref<'one' | 'several'>('one')
@@ -38,7 +39,7 @@ const available = computed(() => availableShares(bars.value))
 const unitShort = computed(() => UNITS.find(option => option.id === unit.value)!.short)
 const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShort.value}`
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
+const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
 // The life areas list: one row per life area, its name linking to Goals; the not planned rest is the last row
@@ -90,7 +91,7 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
           <div class="insights-chart-head">
             <p class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
             <div class="insights-chart-tools">
-              <SleepToggle />
+              <UiSwitch :model-value="showSleep" @update:model-value="setShowSleep">Show sleep</UiSwitch>
             </div>
           </div>
           <YearPlannedBars

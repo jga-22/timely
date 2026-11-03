@@ -2,13 +2,33 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
-## 0.0.2 - lighter app
+## 0.0.2 - a lighter app and a calmer look
 
-The app downloads less. The screens look and behave as before.
+A calmer look and the groundwork for the next changes. The screens keep their layout and behaviour; the colours, corners and type sizes are softer.
 
 ### Changed
+- A calmer palette: a warm paper page with white cards and one blue accent. Dark mode is a neutral grey. Planned colours stay readable on both.
+- Rounder corners, a 3-pixel focus ring, and type sizes in rem, so the browser's font size is respected.
+- Dark mode, the motion choice and the tint by time of day are applied before the first paint, as dark mode was before.
+- Buttons are outlined pills at least 44 pixels high (36 pixels for the dense ones; 44 on a touch screen). Chips and fields follow them, and fields use 16-pixel text, so an iPhone does not zoom in on them.
+- Icons replace the text arrows of the year and day controls and the pencil of the edit buttons.
+- Show sleep is a switch that shows on or off, instead of a button whose label changes to Hide sleep.
+- The List or Grid choice in Goals, the Month or Week and range choices in Insights and Year, and the sleep nights share one segmented control.
+- Reset my data keeps its dialog and its buttons. The dialog uses the browser's own dialog: Tab stays inside it, and focus goes back to the account button when it closes.
+- Done ticks on Home keep their labels and behaviour.
+
 - Smaller download: the main style sheet drops from about 560 KB to about 52 KB (from 90 KB to 10 KB compressed).
 - Dark mode works as before: the same switch in the Account menu, and the choice is kept across reloads.
+
+### Added
+- The design system: `spec/design-system.md` (tokens, colour, motion, the CSS structure, the checks that keep them in line) and the plan behind it (`spec/ux-design-system-plan.md`).
+- A Motion choice in the Account menu: Lively (the default) or Calm. Calm stops the movement (the tick pop, the rings and bars drawing in, the tint); every number and state stays. When the system asks for less motion, the page is calm and the menu says so.
+- In Lively, the page takes a soft tint of the time of day (morning, afternoon, evening), and a done tick pops when it turns on.
+- A living style guide at `/_styleguide` in the development build (or a build with `TIMELY_STYLEGUIDE=1`): every control and token in every state, in light and dark, Calm and Lively.
+- The Dark mode and Motion choices and Show sleep are kept in this browser, outside the saved planner data.
+
+### Notes
+- Saved data is unchanged.
 
 ### Removed
 - The component library that drew the page frame and the theme, its icon font (four font files) and the packages behind them.

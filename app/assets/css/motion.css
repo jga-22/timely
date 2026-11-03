@@ -1,0 +1,20 @@
+/* Layer motion: every @keyframes lives here. Animations only under :root[data-motion="lively"] (spec/design-system.md, Motion). */
+/* The arc of a ring or a bar draws in from empty; the end value is the element's own. */
+@keyframes draw {
+  from { stroke-dasharray: 0 100; }
+}
+/* A tick that turns on: the circle swells and settles (lively only; Calm shows the state at once). */
+@keyframes pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Ambient: a soft wash of the part of the day (30% of --am-1, then --am-2, then the paper; a colour-mix, not a text pair,
+   checked in designContrast.test.ts). Lively only: Calm keeps the plain paper. The top bar takes the same colour as the top of it. */
+:root[data-motion="lively"] body {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--am-1) 30%, var(--paper)) 0%, color-mix(in srgb, var(--am-2) 30%, var(--paper)) 32rem, var(--paper) 58rem) fixed no-repeat;
+}
+:root[data-motion="lively"] .app { background: transparent; }
+/* The top bar holds the wash colour of the top of the page, so the content does not show through it when it scrolls under */
+:root[data-motion="lively"] .topbar { background: color-mix(in srgb, var(--am-1) 30%, var(--paper)); }

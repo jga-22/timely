@@ -1,0 +1,81 @@
+/* Form fields: .field (label and control), .field-label, .timely-input and .timely-select (.input is the same field,
+   alias until the call sites are renamed), checks, the form row and the field error. Layer ui. The focus ring is the
+   global one (base.css) plus the field halo. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.field-label {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.form-row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+.check-row { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); }
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-small);
+  color: var(--ink);
+  cursor: pointer;
+}
+.check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+
+.timely-input,
+.timely-select,
+.input {
+  min-height: var(--hit);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-body);
+  outline: none;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.timely-input::placeholder,
+.input::placeholder { color: var(--ink-3); }
+.timely-input:focus,
+.timely-select:focus,
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 var(--focus-width) var(--accent-soft);
+}
+.field .timely-input,
+.field .timely-select,
+.field .input { width: 100%; }
+.timely-select {
+  appearance: none;
+  padding-right: var(--sp-8);
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 11px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px) {
+  .timely-input,
+  .timely-select,
+  .pill-input { min-height: var(--hit); }
+  .form-row,
+  .form-row-3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The rename field of a week type or an area (a field on the chip row, a focused accent border) */
+.pill-input {
+  min-height: 36px;
+  width: 150px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-small);
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-width) var(--accent-soft);
+}
+
+.field-error { margin: 0; font-size: var(--text-small); color: var(--danger); }

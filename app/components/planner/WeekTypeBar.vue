@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_TEMPLATE_COLOR } from '~/utils/palette'
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
@@ -30,7 +31,7 @@ const newTemplateTrigger = ref<HTMLButtonElement | null>(null)
 const templateEditButton = ref<{ focus: () => void } | null>(null)
 
 // The paint colour of a template: the same fill on the year grid, in the paint tools and in the switcher
-const templateFill = (t: WeekTemplate) => fill(t.color ?? '#5d6b7a')
+const templateFill = (t: WeekTemplate) => fill(t.color ?? FALLBACK_TEMPLATE_COLOR)
 
 // A click anywhere else closes an open colour pop. The dot and the pop stop their own clicks, so only the other clicks reach this
 const closeColorPop = () => {

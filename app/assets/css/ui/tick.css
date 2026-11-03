@@ -1,0 +1,42 @@
+/* Done tick (components/ui/Tick.vue): a target of --hit around a circle; the accent ring to do, the ok fill with a check
+   when done (the check and the state carry it, not the colour alone). `lg` is the large tick. Layer ui. */
+.tick {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hit);
+  height: var(--hit);
+  margin: calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--surface);
+  cursor: pointer;
+}
+.tick-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--surface);
+}
+.tick:hover .tick-box { background: var(--surface-2); }
+.tick[aria-checked="true"] .tick-box { background: var(--ok); border-color: var(--ok); }
+
+/* The large tick: 76px (64 on a phone) around the same circle, the check in the middle */
+.tick-lg {
+  width: var(--tick-lg);
+  height: var(--tick-lg);
+  margin: 0;
+}
+.tick-lg .tick-box { width: var(--tick-lg); height: var(--tick-lg); }
+.tick-lg[aria-checked="false"] .tick-box { background: transparent; color: var(--accent); }
+.tick-lg[aria-checked="true"] .tick-box { color: var(--accent-ink); }
+
+:root[data-motion="lively"] .tick.is-burst .tick-box { animation: pop var(--dur-base) var(--ease-spring); }

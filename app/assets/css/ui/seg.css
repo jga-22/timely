@@ -1,0 +1,29 @@
+/* Segmented control (components/ui/Segmented.vue): a row of pill choices; the pressed one is aria-pressed="true" and
+   lifts onto the surface. Layer ui. */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+.seg button {
+  min-height: 30px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+}
+@media (pointer: coarse) {
+  .seg button { min-height: var(--hit); }
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--elev-1);
+}

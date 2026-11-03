@@ -1,3 +1,4 @@
+import { FALLBACK_COLOR } from '~/utils/palette'
 import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
 import { isoWeekStarts, weekdayOf } from '~/utils/dates'
 import { applyActivityCells } from '~/utils/planner/slots'
@@ -113,7 +114,7 @@ export const buildOnboardingState = (answers: OnboardingAnswers, year: number, t
     const activityId = `activity-${stamp}-${number}`
 
     if (target1y) category.target1y = target1y
-    activities.push({ id: activityId, name: habitName, shortCode: shortCodeFor(habitName), categoryId: category.id, color: category.color ?? '#888' })
+    activities.push({ id: activityId, name: habitName, shortCode: shortCodeFor(habitName), categoryId: category.id, color: category.color ?? FALLBACK_COLOR })
     habits.push({
       id: `habit-${stamp}-${number}`,
       categoryId: category.id,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_AREA_COLOR } from '~/utils/palette'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { usePlannerFill } from '~/composables/usePlannerFill'
 import type { AdherenceBar, AdherenceBarMode, AdherenceReport, HabitRow, Measure } from '~/utils/adherence'
@@ -16,7 +17,7 @@ const { link } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? '#ccc')
+const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
 const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
 
 // A whole number for display; a positive value never shows as zero
@@ -108,7 +109,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
       </div>
 
       <div class="adh-headline">
-        <AdherenceRing :percent="report.percent" :basis="report.basis" />
+        <UiRing :value="report.percent" :size="240" :tone="report.basis === 'habits' ? 'ok' : 'accent'">{{ report.percent === null ? '-' : `${report.percent}%` }}</UiRing>
         <div class="adh-headline-text">
           <p v-if="hoursText" class="adh-sub">{{ hoursText }}</p>
           <p v-if="habitsLine" class="adh-sub">{{ habitsLine }}</p>

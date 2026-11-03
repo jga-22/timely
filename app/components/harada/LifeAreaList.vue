@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_COLOR } from '~/utils/palette'
 import type { Category } from '~/types/planner'
 import { usePlannerStore } from '~/stores/planner'
 import { categoryEntryCounts, categoryEntryText } from '~/utils/entries/counts'
@@ -40,7 +41,7 @@ function onListKeydown(event: KeyboardEvent) {
           :aria-current="selectedId === category.id ? 'true' : undefined"
           @click="emit('open', category.id)"
         >
-          <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
+          <span class="dot dot-lg" :style="{ background: category.color ?? FALLBACK_COLOR }" aria-hidden="true" />
           <span class="cat-main">
             <span class="cat-row-name">{{ category.name }}</span>
             <!-- The 5-year target (FR-GOALS-15): a target icon and its text, two lines at most; the full text is in the title -->

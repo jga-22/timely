@@ -1,20 +1,17 @@
 <script setup lang="ts">
 /**
- * Confirmation for Reset my data (FR-ONB-10). An alertdialog: Cancel has focus, Escape and Cancel close it, Tab stays
- * between its two buttons. On success the reset itself opens Welcome; on failure the message is shown and nothing changes.
+ * Confirmation for Reset my data (FR-ONB-10): an alertdialog on UiDialog. Cancel has focus; Escape and Cancel close it
+ * (not while the reset runs). On success the reset itself opens Welcome; on failure the message is shown and nothing changes.
  */
 const emit = defineEmits<{ close: [] }>()
 const { resetData } = useResetData()
 
-const cancelButton = ref<HTMLButtonElement | null>(null)
-const deleteButton = ref<HTMLButtonElement | null>(null)
+const open = ref(true)
 const busy = ref(false)
 const error = ref('')
 
-onMounted(() => nextTick(() => cancelButton.value?.focus()))
-
 const cancel = () => {
-  if (!busy.value) emit('close')
+  if (!busy.value) open.value = false
 }
 
 const confirm = async () => {
@@ -25,42 +22,25 @@ const confirm = async () => {
   busy.value = false
 
   if (message) error.value = message
-  else emit('close')
-}
-
-const onTab = (event: KeyboardEvent) => {
-  const first = cancelButton.value
-  const last = deleteButton.value
-  if (!first || !last) return
-
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault()
-    last.focus()
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault()
-    first.focus()
-  }
+  else open.value = false
 }
 </script>
 
 <template>
-  <div class="onb-overlay">
-    <div
-      class="onb-dialog"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="reset-title"
-      aria-describedby="reset-body"
-      @keydown.esc.stop="cancel"
-      @keydown.tab="onTab"
-    >
-      <h2 id="reset-title" class="onb-title">Reset my data?</h2>
-      <p id="reset-body" class="onb-lede">This permanently deletes your goals, activities and habits, weeks and journal notes from this account and starts again from the beginning. Your sign-in stays. This cannot be undone.</p>
-      <p v-if="error" class="field-error" role="alert">{{ error }}</p>
-      <div class="onb-actions onb-actions-spaced">
-        <button ref="cancelButton" type="button" class="btn btn-outline" :disabled="busy" @click="cancel">Cancel</button>
-        <button ref="deleteButton" type="button" class="btn btn-danger-solid" :disabled="busy" @click="confirm">Delete my data</button>
-      </div>
+  <UiDialog
+    v-model:open="open"
+    labelledby="reset-title"
+    describedby="reset-body"
+    role="alertdialog"
+    :dismissible="!busy"
+    @close="emit('close')"
+  >
+    <h2 id="reset-title" class="onb-title">Reset my data?</h2>
+    <p id="reset-body" class="onb-lede">This permanently deletes your goals, activities and habits, weeks and journal notes from this account and starts again from the beginning. Your sign-in stays. This cannot be undone.</p>
+    <p v-if="error" class="field-error" role="alert">{{ error }}</p>
+    <div class="onb-actions onb-actions-spaced">
+      <button type="button" class="btn btn-outline" :disabled="busy" @click="cancel">Cancel</button>
+      <button type="button" class="btn btn-danger-solid" :disabled="busy" @click="confirm">Delete my data</button>
     </div>
-  </div>
+  </UiDialog>
 </template>

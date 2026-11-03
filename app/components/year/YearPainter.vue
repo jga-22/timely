@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerFill } from '~/composables/usePlannerFill'
-import { inkOn } from '~/utils/palette'
+import { FALLBACK_TEMPLATE_COLOR } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
 import { ERASE_TOOL, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 import type { WeekTemplate } from '~/types/planner'
@@ -16,10 +16,10 @@ import type { WeekTemplate } from '~/types/planner'
 const planner = usePlannerStore()
 const { templates, appliedWeeks } = storeToRefs(planner)
 const { year, weeks, currentWeekIndex } = usePlannerYear()
-const { fill } = usePlannerFill()
+const { fill, areaVars } = usePlannerFill()
 
 // The paint colour of a template: the same fill on the year grid, in the paint tools and in the switcher
-const templateFill = (t: WeekTemplate) => fill(t.color ?? '#5d6b7a')
+const templateFill = (t: WeekTemplate) => fill(t.color ?? FALLBACK_TEMPLATE_COLOR)
 
 // ── Year painter ──
 const paintTool = ref(templates.value[0]?.id ?? '')
@@ -62,8 +62,7 @@ const cellStyle = (startDate: string) => {
   const tpl = templateById.value.get(appliedByDate.value.get(startDate) ?? '')
   if (!tpl) return undefined
 
-  const color = templateFill(tpl)
-  return { '--c': color, '--c-ink': inkOn(color) }
+  return areaVars(tpl.color ?? FALLBACK_TEMPLATE_COLOR)
 }
 
 // ── Apply to several weeks (FR-YEAR-7): the paint tool's week type for a range of weeks. Closed by default ──

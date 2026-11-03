@@ -29,6 +29,10 @@ const hourly = computed(() => isHourlyTemplate(template.value))
 
 // Weekday nights (or every night) and weekend nights; a single row when they are the same
 const split = ref(false)
+const NIGHTS_OPTIONS: { value: 'same' | 'split'; label: string }[] = [
+  { value: 'same', label: 'Same every night' },
+  { value: 'split', label: 'Weekdays and weekend' },
+]
 const weekdays = reactive<SleepWindow>({ ...DEFAULT_SLEEP })
 const weekend = reactive<SleepWindow>({ ...DEFAULT_SLEEP })
 
@@ -83,10 +87,7 @@ defineExpose({ isValid, apply })
   <fieldset class="sched-days sleep-editor">
     <legend class="field-label">Sleep in {{ template?.name ?? 'this week type' }}</legend>
 
-    <div class="segmented" role="group" aria-label="Which nights">
-      <button type="button" :data-active="!split" :aria-pressed="!split" @click="setSplit(false)">Same every night</button>
-      <button type="button" :data-active="split" :aria-pressed="split" @click="setSplit(true)">Weekdays and weekend</button>
-    </div>
+    <UiSegmented :model-value="split ? 'split' : 'same'" :options="NIGHTS_OPTIONS" label="Which nights" @update:model-value="setSplit($event === 'split')" />
 
     <div class="sleep-rows">
       <div class="sleep-row-item">

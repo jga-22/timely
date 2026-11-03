@@ -1,0 +1,31 @@
+/* Deprecated names, kept as aliases of the new tokens so the feature CSS keeps working (spec/design-system.md, Deprecations).
+   Use the new name in new CSS. Each line goes when its last use is gone; the ratchet in tests/unit/designSystem.test.ts counts them. */
+:root {
+  --bg: var(--surface);                /* deprecated: --surface (the page is --paper) */
+  --bg-2: var(--surface-2);            /* deprecated: --surface-2 */
+  --bg-3: var(--surface-hover);        /* deprecated: --surface-hover */
+  --bg-4: var(--accent-soft);          /* deprecated: --accent-soft */
+  --rule: var(--line);                 /* deprecated: --line */
+  --rule-2: var(--line-2);             /* deprecated: --line-2 */
+  --ink-4: var(--control-border);      /* deprecated: decoration, use --control-border or --line */
+  --accent-deep: var(--accent-hover);  /* deprecated: --accent-hover */
+  --on-accent: var(--accent-ink);      /* deprecated: --accent-ink */
+  --attention: var(--danger);          /* deprecated: --danger */
+  --warn: var(--warn-ink);             /* deprecated: --warn-ink */
+  --shadow: var(--elev-2);             /* deprecated: --elev-1 (cards) or --elev-2 (menus) */
+  --focus-ring: 0 0 0 var(--focus-width) var(--accent-soft); /* deprecated: the focus ring comes from base.css */
+  --font-ui: var(--font);              /* deprecated: --font */
+  --fs-xs: var(--text-caption);        /* deprecated: --text-caption */
+  --fs-sm: var(--text-small);          /* deprecated: --text-small */
+  --fs-md: var(--text-ui);             /* deprecated: --text-ui */
+  --fs-lg: var(--text-title-s);        /* deprecated: --text-title-s */
+  --fs-xl: var(--text-title-l);        /* deprecated: --text-title-l */
+  --radius: var(--radius-sm);          /* deprecated: --radius-sm (or a role radius) */
+  --space-1: var(--sp-1);              /* deprecated: --sp-1 */
+  --space-2: var(--sp-2);              /* deprecated: --sp-2 */
+  --space-3: var(--sp-3);              /* deprecated: --sp-3 */
+  --space-4: var(--sp-4);              /* deprecated: --sp-4 */
+  --space-5: var(--sp-6);              /* deprecated: --sp-6 (the old 24px) */
+  --space-6: var(--sp-8);              /* deprecated: --sp-8 (the old 32px) */
+  --space-7: var(--sp-12);             /* deprecated: --sp-12 (the old 48px) */
+}

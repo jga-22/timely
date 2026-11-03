@@ -1,0 +1,42 @@
+/* Surfaces: .card (a raised panel), .card-focal (the one panel a screen leads with), .section (a hairline-divided block
+   of a screen) and the inline confirmation box. Layer ui (spec/design-system.md, Components). */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-8);
+  box-shadow: var(--elev-1);
+}
+.card-focal { padding: var(--sp-10); box-shadow: var(--elev-2); }
+@media (max-width: 768px) {
+  .card { padding: var(--sp-5); }
+  .card-focal { padding: var(--sp-6); }
+}
+
+/* Sections: hairline dividers instead of boxes */
+.section {
+  margin-top: var(--sp-12);
+  padding-top: var(--sp-8);
+  border-top: 1px solid var(--line-2);
+}
+.section-head { margin-bottom: var(--sp-6); }
+.section-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--text-title-s);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 768px) {
+  .section { margin-top: var(--sp-6); padding-top: var(--sp-5); }
+}
+
+/* Inline confirmation for a destructive action: nothing changes before its button (FR-UX-7) */
+.inline-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.inline-confirm-text { margin: 0; font-size: var(--text-small); color: var(--ink-2); }

@@ -1,18 +1,31 @@
 /**
  * One colour rule for every planned fill: the year grid, the week grid, the Home timeline and the Insights bars
  * (spec/frontend-design.md, section 5). A category, activity or template colour is shown as given when it reaches
- * 3:1 against the surface of the theme (WCAG 1.4.11, non-text). Otherwise it is shaded toward black (light) or white
+ * 3:1 against every surface of the theme (WCAG 1.4.11, non-text). Otherwise it is shaded toward black (light) or white
  * (dark) until it does: the hue stays, only the lightness moves. Pure functions, so they run in node.
  */
 
-/** The empty surface of each theme: equals --cell-empty in main.css */
-export const SURFACE = { light: '#ffffff', dark: '#0f1624' } as const
+/**
+ * The surfaces of each theme a fill sits on: the card first, then the paper behind it. Equal to --surface and --paper in
+ * tokens.css (checked by tests/unit/designContrast.test.ts). A block sits on a card; a dot can sit on the paper.
+ */
+export const SURFACE = {
+  light: ['#fffefb', '#f4f2ec'],
+  dark: ['#1b1e23', '#121417'],
+} as const
 
-/** Text on a planned fill: white or the dark surface, whichever contrasts more */
+/** Text on a planned fill: white or the dark paper, whichever contrasts more */
 const INK_ON_LIGHT_FILL = '#ffffff'
-const INK_ON_DARK_FILL = '#0f1624'
+const INK_ON_DARK_FILL = '#121417'
 
 export const FILL_MIN_CONTRAST = 3
+
+/** Fallbacks for an item with no colour of its own. Kept here so no component carries a colour literal. */
+export const FALLBACK_COLOR = '#888'
+export const FALLBACK_AREA_COLOR = '#ccc'
+export const FALLBACK_BLOCK_COLOR = '#999999'
+export const FALLBACK_TEMPLATE_COLOR = '#5d6b7a'
+export const FALLBACK_EMPTY_COLOR = '#d6d3d1'
 
 const parse = (hex: string): [number, number, number] | null => {
   const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex)
@@ -51,14 +64,14 @@ const mix = (hex: string, toward: string, amount: number): string => {
   return toHex(from.map((value, index) => value + (to[index]! - value) * amount) as [number, number, number])
 }
 
-/** The colour to paint for a planned hour, week or segment in the given theme */
+/** The colour to paint for a planned hour, week or segment in the given theme: 3:1 on every surface of that theme */
 export const fillFor = (color: string, dark: boolean): string => {
-  const surface = dark ? SURFACE.dark : SURFACE.light
+  const surfaces: readonly string[] = dark ? SURFACE.dark : SURFACE.light
   const toward = dark ? '#ffffff' : '#000000'
 
   for (let step = 0; step <= 50; step += 1) {
     const candidate = step === 0 ? color : mix(color, toward, step / 50)
-    if (contrastRatio(candidate, surface) >= FILL_MIN_CONTRAST) return candidate
+    if (surfaces.every(surface => contrastRatio(candidate, surface) >= FILL_MIN_CONTRAST)) return candidate
   }
 
   return mix(color, toward, 1)

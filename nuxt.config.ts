@@ -1,3 +1,6 @@
+import { defineNuxtModule } from 'nuxt/kit'
+import { PREPAINT_SCRIPT } from './app/utils/prepaint'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
 // Vercel Web Analytics (page views, no cookies). Vercel serves the script at /_vercel/insights/script.js, so it is added
@@ -9,10 +12,23 @@ const vercelAnalytics = (globalThis as { process?: { env: Record<string, string 
       { src: '/_vercel/insights/script.js', defer: true },
     ]
   : []
+// The living style guide (app/dev/StyleGuide.vue) is the page /_styleguide: in dev, and in a build with TIMELY_STYLEGUIDE=1.
+// A normal production build adds no route, so the page is not in its output.
+const styleGuideModule = defineNuxtModule({
+  meta: { name: 'timely-styleguide' },
+  setup(_options, nuxt) {
+    const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env
+    if (!nuxt.options.dev && env?.TIMELY_STYLEGUIDE !== '1') return
+    nuxt.hook('pages:extend', (pages) => {
+      pages.push({ name: 'styleguide', path: '/_styleguide', file: '~/dev/StyleGuide.vue' })
+    })
+  },
+})
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@pinia/nuxt'],
+  modules: ['@pinia/nuxt', styleGuideModule],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
@@ -31,11 +47,8 @@ export default defineNuxtConfig({
       ],
       script: [
         ...vercelAnalytics,
-        // Applies a saved dark theme before first paint (same key as app/app.vue), so dark users do not see a light flash
-        {
-          tagPosition: 'head',
-          innerHTML: "try{if(localStorage.getItem('timely.dark')==='true')document.documentElement.setAttribute('data-theme','dark')}catch(e){}"
-        },
+        // Before first paint: the saved theme, motion and part of the day on <html> (utils/prepaint.ts; the nonce is added by server/plugins/security.ts)
+        { tagPosition: 'head', innerHTML: PREPAINT_SCRIPT },
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

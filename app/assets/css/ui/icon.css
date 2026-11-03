@@ -1,0 +1,13 @@
+/* Icons (components/ui/Icon.vue): .ic is the 20px glyph, stroked with currentColor; .ic-sm is 16px for dense controls.
+   Layer ui. */
+.ic {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ic-sm { width: var(--icon-sm); height: var(--icon-sm); stroke-width: 2; }

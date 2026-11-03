@@ -112,7 +112,7 @@ onBeforeUnmount(() => {
 
     <template v-if="today && selected">
       <div class="journal-nav">
-        <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" @click="selectDay(addDays(selected, -1))">‹</button>
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" @click="selectDay(addDays(selected, -1))"><UiIcon name="left" size="sm" /></button>
         <input
           type="date"
           class="timely-input journal-date"
@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
           :max="today"
           @change="onPick"
         >
-        <button type="button" class="btn btn-sm btn-outline" aria-label="Next day" :disabled="isToday" @click="selectDay(addDays(selected, 1))">›</button>
+        <button type="button" class="btn btn-sm btn-outline" aria-label="Next day" :disabled="isToday" @click="selectDay(addDays(selected, 1))"><UiIcon name="right" size="sm" /></button>
         <button v-if="!isToday" type="button" class="btn btn-sm btn-outline" @click="selectDay(today)">Today</button>
       </div>
 

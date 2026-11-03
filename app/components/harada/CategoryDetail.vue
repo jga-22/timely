@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FALLBACK_COLOR } from '~/utils/palette'
 import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
 import { isSleepActivity } from '~/utils/sleep'
@@ -63,7 +64,7 @@ function onRemoved() {
       </button>
       <div class="detail-title">
         <h3 class="detail-name">
-          <span class="dot dot-lg" :style="{ background: category.color ?? '#888' }" aria-hidden="true" />
+          <span class="dot dot-lg" :style="{ background: category.color ?? FALLBACK_COLOR }" aria-hidden="true" />
           {{ category.name }}
         </h3>
         <EditButton v-if="!editing" ref="editButton" :label="`Edit ${category.name}`" @click="startEdit" />

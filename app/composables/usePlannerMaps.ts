@@ -1,3 +1,4 @@
+import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import { usePlannerStore } from '~/stores/planner'
 
 export const usePlannerMaps = () => {
@@ -8,8 +9,8 @@ export const usePlannerMaps = () => {
 
   const getActivityColor = (activityId: string): string => {
     const activity = activityMap.value.get(activityId)
-    if (!activity) return '#d6d3d1'
-    return activity.color ?? categoryMap.value.get(activity.categoryId)?.color ?? '#d6d3d1'
+    if (!activity) return FALLBACK_EMPTY_COLOR
+    return activity.color ?? categoryMap.value.get(activity.categoryId)?.color ?? FALLBACK_EMPTY_COLOR
   }
 
   return { activityMap, categoryMap, getActivityColor }

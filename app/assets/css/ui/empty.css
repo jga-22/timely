@@ -1,0 +1,9 @@
+/* Empty state: what a view shows before there is anything in it (a line of text and the action that fills it). Layer ui. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-6) 0;
+  color: var(--ink-2);
+}

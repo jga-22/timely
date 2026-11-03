@@ -1,0 +1,65 @@
+/* Buttons: .btn and its variants (spec/design-system.md, Components). Layer ui: feature files restyle a button
+   only with a contextual selector. Targets are at least --hit on a touch screen; --btn-h is the component token. */
+.btn {
+  --btn-h: var(--hit);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--btn-h);
+  padding: 0 var(--sp-5);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.btn:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--ink-2); }
+.btn:disabled,
+.btn:disabled:hover { opacity: 0.45; cursor: default; }
+
+/* Dense rows: 36px with a pointer, the 44px target on a touch screen */
+.btn-sm { --btn-h: 36px; padding: 0 var(--sp-4); font-size: var(--text-small); }
+.btn-xs { --btn-h: 28px; padding: 0 var(--sp-3); font-size: var(--text-caption); }
+@media (pointer: coarse) {
+  .btn-sm { --btn-h: var(--hit); }
+}
+
+.btn-outline { border-color: var(--control-border); }
+
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-primary:disabled,
+.btn-primary:disabled:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Quiet: text in the accent, no border; the one action of a row that is not the primary one */
+.btn-quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 var(--sp-3); }
+.btn-quiet:hover:not(:disabled) { border-color: transparent; background: var(--accent-soft); color: var(--accent); }
+
+/* Destructive: text in --danger, never a filled red (Reset my data uses btn-danger-solid to confirm) */
+.btn-danger { color: var(--danger); }
+.btn-danger:hover:not(:disabled) { background: var(--danger-tint); border-color: var(--danger); color: var(--danger); }
+.btn-danger-solid,
+.btn-danger-solid:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+
+/* Icon button: a round target of --hit holding one icon (the name is its aria-label). Quiet until hovered; the
+   pressed state (aria-expanded) is the tint of the hover. EditButton and the year stepper use it. */
+.btn-icon {
+  width: var(--btn-h);
+  padding: 0;
+  border-color: transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+}
+.btn-icon:hover:not(:disabled) { background: var(--surface-hover); border-color: transparent; color: var(--ink); }
+.btn-icon[aria-expanded="true"] { background: var(--surface-hover); color: var(--accent); }
+.btn-icon:disabled { opacity: 0.45; }
+.edit-btn { color: var(--ink-3); }
+.edit-btn:hover:not(:disabled),
+.edit-btn[aria-expanded="true"] { color: var(--accent); }

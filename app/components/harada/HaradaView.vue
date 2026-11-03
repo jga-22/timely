@@ -21,6 +21,10 @@ const editing = computed(() => !!selected.value && edit.value)
 // The choice lasts for the session (useState), not the saved state
 const view = useState<'list' | 'grid'>('goals-view', () => 'list')
 const gridView = computed(() => view.value === 'grid')
+const VIEW_OPTIONS: { value: 'list' | 'grid'; label: string }[] = [
+  { value: 'list', label: 'List' },
+  { value: 'grid', label: 'Grid' },
+]
 
 // ── Ambition (HaradaAmbitionCard) and its edit flag. Only one item is in edit mode: the ambition opening ends a life area edit
 const visionEditing = ref(false)
@@ -95,10 +99,7 @@ onUnmounted(() => window.removeEventListener('keydown', onWindowKeydown))
 
       <!-- List or Grid: the toggle shows from 1100px only; below it the list is the only view -->
       <div v-if="categories.length" class="goals-view-toggle">
-        <div class="segmented" role="group" aria-label="Life areas view">
-          <button type="button" :data-active="!gridView" :aria-pressed="!gridView" @click="view = 'list'">List</button>
-          <button type="button" :data-active="gridView" :aria-pressed="gridView" @click="view = 'grid'">Grid</button>
-        </div>
+        <UiSegmented :model-value="gridView ? 'grid' : 'list'" :options="VIEW_OPTIONS" label="Life areas view" @update:model-value="view = $event" />
       </div>
 
       <HaradaMap
