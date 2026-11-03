@@ -284,7 +284,7 @@ A later layer wins whatever the specificity. Inside `features` the files keep th
 
 ## 6. Components
 
-Built in 0.0.3 (slice 3b). A primitive is either a class in `app/assets/css/ui/` or a Vue component in `app/components/ui/` (the Vue ones own ARIA, focus, keys or timing). Every one is in the living style guide (section 6.4) in every state. New ones follow the recipe in section 8.2.
+Built in 0.0.2 (slice 3b). A primitive is either a class in `app/assets/css/ui/` or a Vue component in `app/components/ui/` (the Vue ones own ARIA, focus, keys or timing). Every one is in the living style guide (section 6.4) in every state. New ones follow the recipe in section 8.2.
 
 ### 6.1 Classes and Vue primitives
 
@@ -402,35 +402,35 @@ The guards read the source and the tokens; they do not render. The browser check
 
 Old names are aliases in `tokens-legacy.css`. Each goes when its count reaches zero; the total is the ratchet's `legacyTokenUse` (450 after slice 3b, down from 587). Target: slice 12, when the last screens are rewritten.
 
-| Old name | Use it as | Deprecated in | Remaining uses (0.0.3) |
+| Old name | Use it as | Deprecated in | Remaining uses (0.0.2) |
 | --- | --- | --- | --- |
-| `--bg` | `--surface` (the page is `--paper`) | 0.0.3 | 15 |
-| `--bg-2` | `--surface-2` | 0.0.3 | 9 |
-| `--bg-3` | `--surface-hover` | 0.0.3 | 8 |
-| `--bg-4` | `--accent-soft` | 0.0.3 | 5 |
-| `--rule` | `--line` | 0.0.3 | 18 |
-| `--rule-2` | `--line-2` | 0.0.3 | 19 |
-| `--ink-4` | `--control-border` or `--line` (decoration) | 0.0.3 | 3 |
-| `--accent-deep` | `--accent-hover` | 0.0.3 | 3 |
-| `--on-accent` | `--accent-ink` | 0.0.3 | 5 |
-| `--attention` | `--danger` | 0.0.3 | 3 |
-| `--warn` | `--warn-ink` | 0.0.3 | 4 |
-| `--shadow` | `--elev-1` (cards) or `--elev-2` (menus) | 0.0.3 | 6 |
-| `--focus-ring` | the focus rule in `base.css` | 0.0.3 | 2 |
-| `--font-ui` | `--font` | 0.0.3 | 5 |
-| `--fs-xs` | `--text-caption` | 0.0.3 | 24 |
-| `--fs-sm` | `--text-small` | 0.0.3 | 49 |
-| `--fs-md` | `--text-ui` | 0.0.3 | 19 |
-| `--fs-lg` | `--text-title-s` | 0.0.3 | 7 |
-| `--fs-xl` | `--text-title-l` | 0.0.3 | 1 |
-| `--radius` | `--radius-sm` (or a role radius) | 0.0.3 | 15 |
-| `--space-1` | `--sp-1` | 0.0.3 | 13 |
-| `--space-2` | `--sp-2` | 0.0.3 | 81 |
-| `--space-3` | `--sp-3` | 0.0.3 | 69 |
-| `--space-4` | `--sp-4` | 0.0.3 | 39 |
-| `--space-5` | `--sp-6` (24px, not 20px) | 0.0.3 | 15 |
-| `--space-6` | `--sp-8` (32px) | 0.0.3 | 10 |
-| `--space-7` | `--sp-12` (48px) | 0.0.3 | 3 |
+| `--bg` | `--surface` (the page is `--paper`) | 0.0.2 | 15 |
+| `--bg-2` | `--surface-2` | 0.0.2 | 9 |
+| `--bg-3` | `--surface-hover` | 0.0.2 | 8 |
+| `--bg-4` | `--accent-soft` | 0.0.2 | 5 |
+| `--rule` | `--line` | 0.0.2 | 18 |
+| `--rule-2` | `--line-2` | 0.0.2 | 19 |
+| `--ink-4` | `--control-border` or `--line` (decoration) | 0.0.2 | 3 |
+| `--accent-deep` | `--accent-hover` | 0.0.2 | 3 |
+| `--on-accent` | `--accent-ink` | 0.0.2 | 5 |
+| `--attention` | `--danger` | 0.0.2 | 3 |
+| `--warn` | `--warn-ink` | 0.0.2 | 4 |
+| `--shadow` | `--elev-1` (cards) or `--elev-2` (menus) | 0.0.2 | 6 |
+| `--focus-ring` | the focus rule in `base.css` | 0.0.2 | 2 |
+| `--font-ui` | `--font` | 0.0.2 | 5 |
+| `--fs-xs` | `--text-caption` | 0.0.2 | 24 |
+| `--fs-sm` | `--text-small` | 0.0.2 | 49 |
+| `--fs-md` | `--text-ui` | 0.0.2 | 19 |
+| `--fs-lg` | `--text-title-s` | 0.0.2 | 7 |
+| `--fs-xl` | `--text-title-l` | 0.0.2 | 1 |
+| `--radius` | `--radius-sm` (or a role radius) | 0.0.2 | 15 |
+| `--space-1` | `--sp-1` | 0.0.2 | 13 |
+| `--space-2` | `--sp-2` | 0.0.2 | 81 |
+| `--space-3` | `--sp-3` | 0.0.2 | 69 |
+| `--space-4` | `--sp-4` | 0.0.2 | 39 |
+| `--space-5` | `--sp-6` (24px, not 20px) | 0.0.2 | 15 |
+| `--space-6` | `--sp-8` (32px) | 0.0.2 | 10 |
+| `--space-7` | `--sp-12` (48px) | 0.0.2 | 3 |
 
 Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour literals in `.vue` (1), the colour literals in CSS (3, the week grid's dark overlay), font sizes in px (9), radius literals (15), z-index literals (6), `@keyframes` outside `motion.css` (9), ungated `animation` (11), literal `transition` durations (3), legacy `@media` widths (6), colour keys in `:style` (16) and `!important` outside reset (4).
 
@@ -440,6 +440,6 @@ Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour 
 
 Dated entries with the app version. No separate version for the system.
 
-- **0.0.3, 2026-11-03: design foundation.** Cascade layers (`reset`, `tokens`, `base`, `ui`, `features`, `motion`, `utilities`); the feature CSS moved to `features/`. Tokens in three tiers with the A2 palette (paper and card surfaces, cobalt accent, neutral dark) and rem type; old names aliased. `fillFor` checks both surfaces; the fallback colours are constants. `app/utils/breakpoints.ts` (768 is the phone edge). Preferences (`utils/prefs.ts`, `usePref`), dark mode and motion (`useTheme`, `useMotion`) and the head script (`utils/prepaint.ts`) set `data-theme`, `data-motion`, `data-choice` and `data-part` before first paint. The guards and the contrast test. This document. The focus ring is 3px.
-- **0.0.3, slice 3b: primitives and the style guide.** The legacy button, form, list, section, shared and layout files moved to `ui/`, and their look follows the A2 prototype (pill buttons and chips, a 44px target, the fields at 16px text). New Vue primitives: `UiIcon`, `UiRing` (replaces `AdherenceRing`), `UiSwitch` (replaces `SleepToggle` and the dark-mode toggle), `UiSegmented`, `UiTick` (the Home done checks), `UiDialog` (the reset dialog). The living style guide at `/_styleguide` (dev, or `TIMELY_STYLEGUIDE=1`). The ambient tint of the page under lively motion. The Motion choice in the Account menu. The active guards: the bare primitive selector and the style guide coverage.
+- **0.0.2, 2026-11-03: design foundation.** Cascade layers (`reset`, `tokens`, `base`, `ui`, `features`, `motion`, `utilities`); the feature CSS moved to `features/`. Tokens in three tiers with the A2 palette (paper and card surfaces, cobalt accent, neutral dark) and rem type; old names aliased. `fillFor` checks both surfaces; the fallback colours are constants. `app/utils/breakpoints.ts` (768 is the phone edge). Preferences (`utils/prefs.ts`, `usePref`), dark mode and motion (`useTheme`, `useMotion`) and the head script (`utils/prepaint.ts`) set `data-theme`, `data-motion`, `data-choice` and `data-part` before first paint. The guards and the contrast test. This document. The focus ring is 3px.
+- **0.0.2, slice 3b: primitives and the style guide.** The legacy button, form, list, section, shared and layout files moved to `ui/`, and their look follows the A2 prototype (pill buttons and chips, a 44px target, the fields at 16px text). New Vue primitives: `UiIcon`, `UiRing` (replaces `AdherenceRing`), `UiSwitch` (replaces `SleepToggle` and the dark-mode toggle), `UiSegmented`, `UiTick` (the Home done checks), `UiDialog` (the reset dialog). The living style guide at `/_styleguide` (dev, or `TIMELY_STYLEGUIDE=1`). The ambient tint of the page under lively motion. The Motion choice in the Account menu. The active guards: the bare primitive selector and the style guide coverage.
 - 0.0.2: Vuetify and its icon font removed (no token change).

@@ -2,7 +2,7 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
-## 0.0.3 - design foundation
+## 0.0.2 - a lighter app and a calmer look
 
 A calmer look and the groundwork for the next changes. The screens keep their layout and behaviour; the colours, corners and type sizes are softer.
 
@@ -17,6 +17,9 @@ A calmer look and the groundwork for the next changes. The screens keep their la
 - Reset my data keeps its dialog and its buttons. The dialog uses the browser's own dialog: Tab stays inside it, and focus goes back to the account button when it closes.
 - Done ticks on Home keep their labels and behaviour.
 
+- Smaller download: the main style sheet drops from about 560 KB to about 52 KB (from 90 KB to 10 KB compressed).
+- Dark mode works as before: the same switch in the Account menu, and the choice is kept across reloads.
+
 ### Added
 - The design system: `spec/design-system.md` (tokens, colour, motion, the CSS structure, the checks that keep them in line) and the plan behind it (`spec/ux-design-system-plan.md`).
 - A Motion choice in the Account menu: Lively (the default) or Calm. Calm stops the movement (the tick pop, the rings and bars drawing in, the tint); every number and state stays. When the system asks for less motion, the page is calm and the menu says so.
@@ -26,14 +29,6 @@ A calmer look and the groundwork for the next changes. The screens keep their la
 
 ### Notes
 - Saved data is unchanged.
-
-## 0.0.2 - lighter app
-
-The app downloads less. The screens look and behave as before.
-
-### Changed
-- Smaller download: the main style sheet drops from about 560 KB to about 52 KB (from 90 KB to 10 KB compressed).
-- Dark mode works as before: the same switch in the Account menu, and the choice is kept across reloads.
 
 ### Removed
 - The component library that drew the page frame and the theme, its icon font (four font files) and the packages behind them.

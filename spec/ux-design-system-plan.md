@@ -1,4 +1,4 @@
-> Planner output (2026-11-03) behind the design system of 0.0.3: the decisions, the three-tier tokens, the layers and the guards. The rules it sets live in `spec/design-system.md`; this file keeps the reasoning.
+> Planner output (2026-11-03) behind the design system of 0.0.2: the decisions, the three-tier tokens, the layers and the guards. The rules it sets live in `spec/design-system.md`; this file keeps the reasoning.
 
 # Timely design system plan (A2-based)
 
@@ -273,7 +273,7 @@ Already there: `fileSize.test.ts` (400 lines; it also covers `app/dev/`).
 8. Recipes (6.1).
 9. Guards (6.2) and how to read a failure.
 10. Deprecations: old name, new name, deprecated in, removal target, remaining count.
-11. Changelog: dated entries with the app version ("0.0.3, 2026-11-xx: added --text-hero; changed dark --accent to #9ab8f5"). No separate semver for the system.
+11. Changelog: dated entries with the app version ("0.0.2, 2026-11-xx: added --text-hero; changed dark --accent to #9ab8f5"). No separate semver for the system.
 
 **Living style guide** [rec]: a dev route that renders the real components with the real CSS.
 - `app/dev/StyleGuide.vue` (theme, motion and part switches at the top, section index) plus `app/dev/styleguide/Tokens.vue`, `Controls.vue`, `Feedback.vue`, `Data.vue` (each under 200 lines). Tokens shows computed values with live contrast numbers per pair; area swatches run through `fillFor`.

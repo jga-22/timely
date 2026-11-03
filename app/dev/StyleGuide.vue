@@ -36,7 +36,7 @@ const setPart = (value: Part) => {
 <template>
   <main class="view sg">
     <header class="page-head">
-      <p class="eyebrow">Design system, 0.0.3</p>
+      <p class="eyebrow">Design system, 0.0.2</p>
       <h1 class="page-title">Style guide</h1>
       <p class="lede">Every component and token in use, in the real CSS. Switch the theme, the motion and the part of the day
         above; the numbers in Tokens follow them.</p>
