@@ -66,6 +66,12 @@ const ALLOWED_WIDTHS = new Set(
   Object.values(BREAKPOINTS).flatMap(px => [px, px + 1]),
 )
 
+/** The raw colour names of tokens.css (tier 1). The docs name them by family, so they are not checked one by one */
+const PRIMITIVE = /^--(white$|(stone|blue|sand|red|green|night|peach|sage|sky|cream|lilac|rose)-)/
+
+/** Names that components set on themselves (inline style or CSS), not tokens */
+const LOCAL_NAMES = new Set(['--c', '--c-ink', '--d', '--fill', '--v', '--i', '--p'])
+
 const cssFiles = walk(join(APP, 'assets', 'css'), /\.css$/)
 const vueFiles = walk(APP, /\.vue$/)
 const tsFiles = walk(APP, /\.ts$/)
@@ -208,5 +214,26 @@ describe('design system: ratchet', () => {
     }
 
     expect(problems).toEqual([])
+  })
+})
+
+describe('design system: docs', () => {
+  it('names every semantic token in spec/design-system.md, and every token the document names exists', () => {
+    const doc = readText(join(APP, '..', 'spec', 'design-system.md'))
+    const defined = new Set(
+      [...cssCode(readText(tokensFile)).matchAll(/(--[\w-]+)\s*:/g)].map(match => match[1]!),
+    )
+    const legacy = new Set(legacyNames())
+
+    // Primitives (the raw values) are named by family in the doc, not one by one; the rest must each be named
+    const semantic = [...defined].filter(name => !PRIMITIVE.test(name))
+    const unnamed = semantic.filter(name => !doc.includes(name))
+
+    // A name the doc mentions must exist. A trailing dash is a family ("--text-*"), and the component-local names are set by the components
+    const named = [...new Set([...doc.matchAll(/--[a-z][\w-]*/g)].map(match => match[0]))]
+      .filter(name => !name.endsWith('-'))
+    const unknown = named.filter(name => !defined.has(name) && !legacy.has(name) && !LOCAL_NAMES.has(name))
+
+    expect({ unnamed, unknown }).toEqual({ unnamed: [], unknown: [] })
   })
 })

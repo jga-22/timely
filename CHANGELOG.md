@@ -2,6 +2,22 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
+## 0.0.3 - design foundation
+
+A calmer look and the groundwork for the next changes. The screens keep their layout and behaviour; the colours, corners and type sizes are softer.
+
+### Changed
+- A calmer palette: a warm paper page with white cards and one blue accent. Dark mode is a neutral grey. Planned colours stay readable on both.
+- Rounder corners, a 3-pixel focus ring, and type sizes in rem, so the browser's font size is respected.
+- Dark mode is applied before the first paint, so a dark page no longer flashes light on load.
+
+### Added
+- The design system: `spec/design-system.md` (tokens, colour, motion, the CSS structure, the checks that keep them in line) and the plan behind it (`spec/ux-design-system-plan.md`).
+- The groundwork for a Calm or Lively motion choice and the tint by time of day, set before the first paint. There is no control for them yet.
+
+### Notes
+- Saved data is unchanged.
+
 ## 0.0.2 - lighter app
 
 The app downloads less. The screens look and behave as before.
