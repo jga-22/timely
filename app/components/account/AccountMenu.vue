@@ -19,7 +19,7 @@ const accountOpen = ref(false)
 const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
-const themeRef = ref<HTMLButtonElement | null>(null)
+const themeRef = ref<{ $el: HTMLButtonElement } | null>(null)
 
 /** Replays the tour from Plan your week; without an ambition and a life area with habits there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
@@ -39,7 +39,7 @@ const toggleAccount = async () => {
   accountOpen.value = !accountOpen.value
   if (!accountOpen.value) return
   await nextTick()
-  focusEditField(themeRef.value, menuRef.value)
+  focusEditField(themeRef.value?.$el, menuRef.value)
 }
 
 /** Escape closes the menu from anywhere inside it and returns focus to the avatar */
@@ -107,18 +107,15 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       </div>
 
       <div class="account-items">
-        <button
+        <UiSwitch
           ref="themeRef"
-          type="button"
           class="account-item account-switch"
-          role="switch"
-          :aria-checked="dark ? 'true' : 'false'"
-          @click="toggleDark"
+          :model-value="dark"
+          @update:model-value="toggleDark"
         >
-          <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" /></svg>
+          <UiIcon name="moon" size="sm" />
           <span class="account-label">Dark mode</span>
-          <span class="account-track" aria-hidden="true"><span class="account-knob" /></span>
-        </button>
+        </UiSwitch>
 
         <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayTour">
           <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" /></svg>

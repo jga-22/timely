@@ -11,12 +11,14 @@ const props = defineProps<{
 }>()
 
 const ticks = computed(() => axisTicks(props.range))
+// The Show sleep switch (FR-SLEEP-4): the preference is shared with Week and Year, so one press changes all three
+const { showSleep, setShowSleep } = useShowSleep()
 </script>
 
 <template>
   <!-- Timeline directly below the title: coloured hours only; the text is in each segment's title and aria-label -->
   <div class="home-sleep-line">
-    <SleepToggle />
+    <UiSwitch :model-value="showSleep" @update:model-value="setShowSleep">Show sleep</UiSwitch>
   </div>
 
   <div class="home-timeline" role="group" aria-label="Hours by activity">

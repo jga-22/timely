@@ -138,7 +138,7 @@ watch(() => props.closeToken, () => {
 
         <template v-else>
           <div v-if="sleepId" class="wk-tools">
-            <SleepToggle />
+            <UiSwitch :model-value="showSleep" @update:model-value="setShowSleep">Show sleep</UiSwitch>
           </div>
 
           <div class="wk-scroll">

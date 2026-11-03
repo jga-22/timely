@@ -24,7 +24,7 @@ const { link } = useNav()
 const { categoryMap } = usePlannerMaps()
 const { fill } = usePlannerFill()
 // Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4, 7): hidden, it is neither planned nor available time
-const { showSleep } = useShowSleep()
+const { showSleep, setShowSleep } = useShowSleep()
 
 const granularity = ref<InsightsGranularity>('month')
 const span = ref<'one' | 'several'>('one')
@@ -91,7 +91,7 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
           <div class="insights-chart-head">
             <p class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
             <div class="insights-chart-tools">
-              <SleepToggle />
+              <UiSwitch :model-value="showSleep" @update:model-value="setShowSleep">Show sleep</UiSwitch>
             </div>
           </div>
           <YearPlannedBars
