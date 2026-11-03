@@ -1,6 +1,7 @@
 /* App shell and topbar: the tab bar and its layout. */
 /* ── App shell and topbar ── */
 .app {
+  position: relative;
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;

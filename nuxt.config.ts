@@ -12,7 +12,7 @@ const vercelAnalytics = (globalThis as { process?: { env: Record<string, string 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@pinia/nuxt', 'vuetify-nuxt-module'],
+  modules: ['@pinia/nuxt'],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
@@ -48,7 +48,4 @@ export default defineNuxtConfig({
       ],
     },
   },
-  vuetify: {
-    vuetifyOptions: './vuetify.config.ts'
-  }
 })

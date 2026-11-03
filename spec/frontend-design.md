@@ -1,6 +1,6 @@
 # Timely front-end design spec
 
-This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/` (`tokens.css` and the feature files), the component `<style>` blocks, `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
+This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/` (`tokens.css` and the feature files), the component `<style>` blocks, `app/app.vue`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
 
 Source of truth: the code. The old `design/` folder (terracotta and serif look) is a stale export and must not be used. The Harada prototype in `spec/references/grille-harada-meilleure-version.html` is the origin of the blue palette and the Goals layout; it is a reference only.
 
@@ -37,7 +37,6 @@ Reference screenshots (current build, headless Edge, light unless noted):
 | --- | --- | --- |
 | Light palette and all non-colour tokens | `app/assets/css/tokens.css`, `:root` | Colours, font, type scale, spacing, radius, `--shadow`, `--focus-ring`. |
 | Dark palette | `app/assets/css/tokens.css`, `html[data-theme="dark"]` | Redefines the colour tokens only; also sets `color-scheme: dark`. |
-| Vuetify themes | `vuetify.config.ts`, themes `timely` (light) and `timelyDark` | Hex values copied by hand from the CSS tokens. The file comment says "keep in sync"; nothing enforces it. |
 | Category palette (data) | `app/utils/planner/templates.ts`, `DESIGN_COLORS` | 16 swatches offered for categories, activities and templates. Data, not UI chrome. |
 | Hard-coded fallbacks | components and store | `#ccc` (chart segment), `#888` (category/activity dot), `#999` (block), `#5d6b7a` (template colour), `#685847` (new activity when its category has no colour, `app/stores/planner.ts`). |
 
@@ -50,7 +49,7 @@ Fonts: `nuxt.config.ts` loads `IBM Plex Sans` 400, 500, 600 with `display=swap` 
 - The theme is switched in the Account menu (the avatar at the right end of the topbar, section 3.2): a `role="switch"` row labelled "Dark mode" with `aria-checked` and a track (`.account-switch`, `.account-track`). The menu stays open after the switch. The topbar has no separate theme toggle.
 - State lives in `app/app.vue`: `useState('dark', () => false)`. The default is **light**. The app does not read `prefers-color-scheme`.
 - On mount, `localStorage['timely.dark']` (`"true"` or `"false"`) overrides the default.
-- A watcher (client only, not immediate) sets `document.documentElement` `data-theme` to `dark`, or to an empty string for light, and sets the Vuetify theme to `timelyDark` or `timely`. `toggleDark` also writes the attribute and the localStorage key.
+- A watcher (client only, not immediate) sets `document.documentElement` `data-theme` to `dark`, or to an empty string for light. `toggleDark` also writes the attribute and the localStorage key.
 - Before first paint, an inline script in `nuxt.config.ts` (`app.head.script`) reads `localStorage['timely.dark']` and sets `data-theme="dark"` when it is `"true"`, so a saved dark theme does not flash light on load. Measured in headless Edge: the first animation frame already has `data-theme="dark"`. `onMounted` still reads the key to set the state. The watcher does not run at setup, so it does not reset the attribute.
 
 ### 2.3 Colour tokens
@@ -68,7 +67,7 @@ Contrast ratios were computed with the WCAG 2.x formula from the hex values in `
 | `--ink-3` | `#6b7385` | `#98a2b5` | Muted text: lede, hints, hours, counts | 4.76 / 7.04 on bg |
 | `--ink-4` | `#9aa1b1` | `#5d6780` | Decoration only, never text: untargeted goal fill, scrollbar hover | 2.59 / 3.20 on bg (non-text, below 3:1) |
 | `--rule` | `#e2e6ee` | `#28324a` | Hairline frames and dividers: week and Harada frames, popovers and menus, the remove-and-move panel. Not for control boundaries | 1.25 / 1.42 on bg. Decorative by design, so below 3:1 |
-| `--control-border` | `#737e95` | `#78859e` | Boundary of interactive controls only: inputs, selects, textareas, outline buttons, Vuetify outlined fields, colour swatch and dot rings, the erase swatch | Light: 4.08 on bg, 3.87 on bg-2, 3.66 on bg-3, 3.26 on bg-4. Dark: 4.87, 4.59, 4.13, 3.44. At least 3:1 on every surface a control sits on |
+| `--control-border` | `#737e95` | `#78859e` | Boundary of interactive controls only: inputs, selects, textareas, outline buttons, colour swatch and dot rings, the erase swatch | Light: 4.08 on bg, 3.87 on bg-2, 3.66 on bg-3, 3.26 on bg-4. Dark: 4.87, 4.59, 4.13, 3.44. At least 3:1 on every surface a control sits on |
 | `--cell-empty` | `#ffffff` | `#0f1624` | Empty hour, empty week, empty bar: the page surface. Planned fills and the empty outline are in section 5 | Equals `--bg` |
 | `--cell-line` | `#7d879b` | `#67738f` | Outline of empty cells and unplanned time | 3.61 / 3.81 on `--cell-empty` |
 | `--rule-2` | `#eef1f6` | `#1d2639` | Hairlines: topbar bottom, section tops, row dividers, hour grid lines | Decorative |
@@ -86,7 +85,6 @@ Notes on use:
 
 - Accent is the only action colour. There is no second brand colour.
 - `--warn` is text colour for gentle prompts. It is not used for error states; errors have no dedicated treatment yet (see gaps).
-- Vuetify reads the same values through `vuetify.config.ts`. Vuetify also computes its own `on-primary`, which is not defined in the config **(unverified)**.
 
 ### 2.4 Typography
 
@@ -110,7 +108,7 @@ Letter spacing: `.brand` `-0.01em`; `.page-title` `-0.015em`; `.section-title`, 
 
 Numerals: any number that is compared, summed or aligned uses `font-variant-numeric: tabular-nums`. This includes tab numbers, hour labels, hour totals, stat values, metric values, goal figures, breakdown percentages, the year counter, week numbers, block times, the selection duration and chip hours.
 
-Case: sentence case. A repository search for `text-transform`, `uppercase` and `small-caps` finds only the Vuetify neutralisation (`text-transform: none`).
+Case: sentence case. A repository search for `text-transform`, `uppercase` and `small-caps` finds no rule, so the text is sentence case as written.
 
 Font smoothing: `-webkit-font-smoothing: antialiased` on body.
 
@@ -258,7 +256,7 @@ Base `.btn`: inline flex, centred, gap 8px, height 36px, padding 0 16px, radius 
 | Extra small | `.btn-xs` | 26px high, padding 0 8px, 12px text | | Life area move and delete, week type delete |
 | Disabled | `:disabled` | Opacity 0.45, hover reset | | Quiet and outline lose their hover; primary keeps its accent fill at the same 0.45 opacity |
 
-Vuetify buttons (`v-btn`) are used in the Goals view only: "Load starter grid" (primary, flat, `mdi-sprout-outline`), "Add habit" (primary, flat, `mdi-plus`, disabled while empty), and "Remove" in habit details (text, error colour, small, `mdi-delete-outline`). `base.css` neutralises them: `font-family: inherit`, `text-transform: none`, `letter-spacing: normal`, radius 6px.
+The Goals buttons use the shared `.btn` classes (`btn-primary`, `btn-outline`, `btn-danger`); there is no component library. `base.css` sets the button and field font to `inherit`.
 
 Rules: one primary action per block. Destructive actions are text-coloured, never filled red. Icon-only buttons need `aria-label`.
 
@@ -297,7 +295,7 @@ Paint tools (`.paint-tools`, Planner year section): same chip style, with a `.do
 - Disabled: primary button only; inputs have no disabled style.
 - Error: no inline error style exists (see gaps).
 
-Habit fields are different. Inside habit details, count, period, minutes, and linked activity use Vuetify `v-text-field` and `v-select` with `variant="outlined"` and `density="compact"`. They do not use `.timely-input`. Their outline uses `--control-border` and their labels use `--ink-2` at full opacity (no stylesheet rule sets it today; the Vuetify neutralisation is in `base.css`), so they match the other fields in colour, but their heights and radii still differ (see gaps).
+The entry form (`ActivityForm.vue`) uses the same field styles as the other forms; there are no Vuetify fields.
 
 ### 4.8 AutoTextarea (`app/components/AutoTextarea.vue`, scoped)
 
@@ -306,7 +304,7 @@ Habit fields are different. Inside habit details, count, period, minutes, and li
 - Box: width 100%, padding 8px 12px, 1px `--control-border` border, radius 6px, `--bg`, 15px text, line height 1.5, `overflow: hidden; overflow-wrap: anywhere; resize: none`. Placeholder `--ink-3`.
 - Focus: accent border and `--focus-ring`.
 - Auto-grow: on mount, on every `input`, on each change of `modelValue` (next tick), on window resize, once fonts are ready, and when the box's width changes (`ResizeObserver`, fitted in `requestAnimationFrame`). The height is reset to `auto`, then set to `scrollHeight` plus the border height.
-- Hidden boxes (inside a closed `<details>`, or an inactive Vuetify window) are skipped until they are visible.
+- Hidden boxes (inside a closed `<details>`) are skipped until they are visible.
 - Font size: 15px by default. Goals uses the default 15px; the old 16px override was removed in slice 3.
 
 ### 4.9 Goals (Harada), `app/components/harada/HaradaView.vue` (scoped)
@@ -648,7 +646,7 @@ Text on a planned fill: the lowest contrast is teal at 4.33:1 (both themes), jus
 
 Do:
 
-- Use the existing tokens. Add a token to `tokens.css` `:root` and to `html[data-theme="dark"]` together, then mirror it in `vuetify.config.ts` if Vuetify needs it.
+- Use the existing tokens. Add a token to `tokens.css` `:root` and to `html[data-theme="dark"]` together.
 - Use `var(--space-*)` and `var(--fs-*)`. Use `tabular-nums` for any number.
 - Use `.btn`, `.btn-primary`, `.btn-outline`, `.btn-danger` and the size modifiers. Use `.chip` for selectable pills and `.timely-input` or `.timely-select` for fields.
 - Separate sections with hairlines (`.section`, `.goal-row`, `.cat-row`).
@@ -668,7 +666,7 @@ Don't:
 - Don't use a red filled button for destructive actions. Use `.btn-danger`.
 - Don't add a second primary button in the same group.
 - Don't make a resizable textarea. Use `AutoTextarea`.
-- Don't add a Vuetify component where a `.btn`, `.chip` or `.timely-*` class does the same job, unless the Vuetify component is needed for behaviour (the Harada tabs and window, the checkbox).
+- Don't add a component library where a `.btn`, `.chip` or `.timely-*` class does the same job. Behaviour (focus, keys, ARIA) is written in the component.
 - Don't use `alert()`, `confirm()` or `prompt()` in new code. The existing `confirm()` for template deletion is a known exception.
 - Don't add horizontal scrolling to the page body. Only the activity grid, the year grid, charts and tables may scroll, each in its own container.
 
@@ -708,7 +706,7 @@ These are facts about the code as it is today. They are not requirements for new
 8. No `prefers-reduced-motion` handling.
 9. Theme is light by default and does not follow the OS setting.
 10. Resolved: `DESIGN_COLORS` no longer has an `fg` field; text on a planned fill is `inkOn` (section 5.2). Known limit: teal (`#4a8683`) reaches only 4.33:1 with its text, below 4.5:1 for 13px text, in both themes.
-11. The tokens in `vuetify.config.ts` are duplicated by hand from `tokens.css`. Only the `VApp` root uses them; no Vuetify component is rendered.
+11. Resolved in 0.0.2: the Vuetify theme that copied the tokens by hand went with the library.
 12. The 12px chart text is hard-coded rather than a token.
 13. Disabled buttons keep the 0.45 opacity rule, so "Add category" and "Add activity" are 2.44 to 3.05:1. Disabled controls are exempt; the dark one is faint but readable.
 14. The journal experiment on Home (FR-HOME-11 to 13) is not built; it is slice 6.

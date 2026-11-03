@@ -11,7 +11,7 @@ First-time users get a short guided setup (ambition, one or two goals with a hab
 
 ## Stack
 
-Nuxt 4, Vue 3, Pinia, TypeScript. Vuetify is used only as a neutral shell. Storage is pluggable: browser `localStorage` (default) or Supabase. There is no Timely backend. Hosting is on Vercel, with Vercel Web Analytics (page views, no cookies).
+Nuxt 4, Vue 3, Pinia, TypeScript. There is no component library: the styles are plain CSS. Storage is pluggable: browser `localStorage` (default) or Supabase. There is no Timely backend. Hosting is on Vercel, with Vercel Web Analytics (page views, no cookies).
 
 ## Run it
 
