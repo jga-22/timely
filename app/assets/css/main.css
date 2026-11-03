@@ -38,5 +38,6 @@
 @import './features/insights.css' layer(features);
 @import './features/adherence.css' layer(features);
 @import './features/home.css' layer(features);
+@import './features/styleguide.css' layer(features);
 @import './motion.css' layer(motion);
 @import './utilities.css' layer(utilities);

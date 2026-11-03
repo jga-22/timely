@@ -46,6 +46,7 @@
 /* Round colour dots and swatches: solid colour, with the 3:1 boundary ring where the colour is pale */
 .dot {
   display: inline-block;
+  background: var(--c, var(--cell-empty));
   flex: none;
   width: var(--dot);
   height: var(--dot);

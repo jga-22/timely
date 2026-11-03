@@ -24,6 +24,7 @@
 }
 /* 24px hit area; the 2px padding is transparent, so the visible swatch stays 20px */
 .color-pop button {
+  background: var(--c, var(--cell-empty));
   width: 24px;
   height: 24px;
   padding: 2px;

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BREAKPOINTS } from '../../app/utils/breakpoints'
 import { APP, appRelative, cssCode, cssRules, readText, walk } from './helpers/css'
@@ -235,5 +235,15 @@ describe('design system: docs', () => {
     const unknown = named.filter(name => !defined.has(name) && !legacy.has(name) && !LOCAL_NAMES.has(name))
 
     expect({ unnamed, unknown }).toEqual({ unnamed: [], unknown: [] })
+  })
+})
+
+describe('design system: style guide', () => {
+  it('shows every components/ui/*.vue in the style guide (app/dev), so a primitive is seen in every state before it is used', () => {
+    const guide = walk(join(APP, 'dev'), /\.vue$/).map(file => readText(file)).join('\n')
+    const missing = walk(join(APP, 'components', 'ui'), /\.vue$/)
+      .map(file => basename(file, '.vue'))
+      .filter(name => !guide.includes(`Ui${name}`))
+    expect(missing).toEqual([])
   })
 })

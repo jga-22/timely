@@ -1,0 +1,101 @@
+/* Style guide (app/dev): the layout of the specimens only. The components and their rules are the real ones. Layer features. */
+.sg { display: grid; gap: var(--sp-8); }
+.sg-switches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-5) var(--sp-8);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--line-2);
+}
+.sg-switch-group { display: grid; gap: var(--sp-2); }
+.sg-index { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); font-size: var(--text-small); }
+.sg-section { margin-top: var(--sp-8); }
+.sg-spec { display: grid; gap: var(--sp-3); padding: var(--sp-5) 0; border-top: 1px solid var(--line-2); }
+.sg-label { margin: 0; font-size: var(--text-small); color: var(--ink-3); }
+.sg-note { margin: 0; font-size: var(--text-small); color: var(--ink-2); }
+.sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
+.sg-stack { display: grid; gap: var(--sp-3); max-width: 480px; }
+.sg-fields { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+.sg-fields .field { min-width: 180px; }
+.sg-stats { gap: var(--sp-10); }
+.sg-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); }
+
+.sg-table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.sg-table th,
+.sg-table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line-2);
+  text-align: left;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+.sg-table thead th { color: var(--ink-3); font-weight: 500; }
+.sg-table tbody th { font-weight: 400; color: var(--ink-2); }
+.sg-swatch {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  margin-right: var(--sp-2);
+  border-radius: var(--radius-xs);
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px var(--control-border);
+  vertical-align: middle;
+}
+.sg-pair {
+  display: inline-block;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-xs);
+  background: var(--sw);
+  color: var(--sg-ink);
+}
+.sg-type { margin: 0; line-height: var(--leading-snug); color: var(--ink); }
+.sg-type[data-size="caption"] { font-size: var(--text-caption); }
+.sg-type[data-size="small"] { font-size: var(--text-small); }
+.sg-type[data-size="meta"] { font-size: var(--text-meta); }
+.sg-type[data-size="ui"] { font-size: var(--text-ui); }
+.sg-type[data-size="body"] { font-size: var(--text-body); }
+.sg-type[data-size="lede"] { font-size: var(--text-lede); }
+.sg-type[data-size="title-s"] { font-size: var(--text-title-s); }
+.sg-type[data-size="title-m"] { font-size: var(--text-title-m); }
+.sg-type[data-size="title-l"] { font-size: var(--text-title-l); }
+.sg-type[data-size="page"] { font-size: var(--text-page); }
+.sg-type[data-size="hero"] { font-size: var(--text-hero); }
+.sg-type[data-size="number"] { font-size: var(--text-number); }
+.sg-space { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: var(--sp-3); font-size: var(--text-small); }
+.sg-space-label { color: var(--ink-3); }
+.sg-space-bar { display: block; width: var(--sg-w); height: 12px; border-radius: var(--radius-xs); background: var(--accent); }
+.sg-radius {
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 56px;
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  font-size: var(--text-small);
+  color: var(--ink-2);
+}
+.sg-r-xl { border-radius: var(--radius-xl); }
+.sg-r-lg { border-radius: var(--radius-lg); }
+.sg-r-md { border-radius: var(--radius-md); }
+.sg-r-sm { border-radius: var(--radius-sm); }
+.sg-r-xs { border-radius: var(--radius-xs); }
+.sg-r-pill { border-radius: var(--radius-pill); }
+.sg-concentric { max-width: 320px; margin-top: var(--sp-4); padding: var(--sp-4); }
+.sg-concentric-inner {
+  padding: var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--text-small);
+}
+.sg-elev {
+  display: inline-grid;
+  place-items: center;
+  width: 120px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--sg-e);
+  font-size: var(--text-small);
+  color: var(--ink-2);
+}
