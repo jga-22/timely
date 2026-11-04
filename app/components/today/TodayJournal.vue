@@ -107,15 +107,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="section journal" aria-labelledby="journal-title">
+  <section class="section today-journal" aria-labelledby="journal-title">
     <h2 id="journal-title" class="section-title">Journal</h2>
 
     <template v-if="today && selected">
-      <div class="journal-nav">
+      <div class="today-journal-nav">
         <button type="button" class="btn btn-sm btn-outline" aria-label="Previous day" @click="selectDay(addDays(selected, -1))"><UiIcon name="left" size="sm" /></button>
         <input
           type="date"
-          class="timely-input journal-date"
+          class="timely-input today-journal-date"
           aria-label="Journal day"
           :value="selected"
           :max="today"
@@ -125,21 +125,21 @@ onBeforeUnmount(() => {
         <button v-if="!isToday" type="button" class="btn btn-sm btn-outline" @click="selectDay(today)">Today</button>
       </div>
 
-      <div v-if="!editing" class="journal-view">
-        <p v-if="note" class="journal-text">{{ note }}</p>
-        <p v-else class="journal-empty">No note for {{ label }} yet.</p>
+      <div v-if="!editing" class="today-journal-view">
+        <p v-if="note" class="today-journal-text">{{ note }}</p>
+        <p v-else class="today-journal-empty">No note for {{ label }} yet.</p>
         <EditButton v-if="note" ref="editButton" :label="isToday ? 'Edit today’s note' : `Edit the note for ${dayText}`" @click="startEdit" />
         <button v-else ref="editButton" type="button" class="btn btn-sm btn-outline" @click="startEdit">Write {{ isToday ? 'today’s note' : 'a note for this day' }}</button>
       </div>
 
-      <div v-else ref="editor" class="journal-edit" tabindex="-1" @keydown.esc="finishEdit()">
+      <div v-else ref="editor" class="today-journal-edit" tabindex="-1" @keydown.esc="finishEdit()">
         <AutoTextarea
           :model-value="draft"
           :label="isToday ? 'Today’s note' : `Note for ${dayText}`"
           @update:model-value="onInput"
         />
-        <div class="journal-actions">
-          <span class="journal-status" aria-live="polite">{{ status }}</span>
+        <div class="today-journal-actions">
+          <span class="today-journal-status" aria-live="polite">{{ status }}</span>
           <button type="button" class="btn btn-sm btn-primary" @click="finishEdit()">Done</button>
         </div>
       </div>

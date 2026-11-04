@@ -9,15 +9,10 @@ import {
   dayHeaderLine,
   dayHours,
   dayRange,
-  dayTitle,
-  donePercent,
   formatDayLabel,
   habitHasDay,
   habitProgressText,
   habitTicked,
-  isAllDone,
-  isNowBlock,
-  progressText,
   timelineSegments
 } from '~/utils/home'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
@@ -315,45 +310,10 @@ describe('timeline and axis', () => {
   })
 })
 
-describe('day progress', () => {
-  it('is done only when every item is done, and never for an empty day', () => {
-    expect(isAllDone(3, 3)).toBe(true)
-    expect(isAllDone(2, 3)).toBe(false)
-    expect(isAllDone(0, 0)).toBe(false)
-  })
-
-  it('gives the share done, or null when nothing is planned', () => {
-    expect(donePercent(1, 4)).toBe(25)
-    expect(donePercent(0, 0)).toBeNull()
-  })
-
-  it('words the line for the day', () => {
-    expect(progressText(2, 5, 'today')).toBe('2 of 5 done')
-    expect(progressText(5, 5, 'today')).toBe('All done for today')
-    expect(progressText(5, 5, 'Sunday 25 October 2026')).toBe('All done for Sunday 25 October 2026')
-  })
-
-  it('marks the current hour only on today, once the clock is read', () => {
-    const block = { start: 9, end: 10, activityId: 'work' }
-
-    expect(isNowBlock(block, 9, true)).toBe(true)
-    expect(isNowBlock(block, 10, true)).toBe(false)
-    expect(isNowBlock(block, 9, false)).toBe(false)
-    expect(isNowBlock(block, null, true)).toBe(false)
-  })
-})
-
 describe('day header and navigation', () => {
-  it('titles today and any other day, and "Today" until the day is known', () => {
-    expect(dayTitle('2026-10-25', true)).toBe('Today')
-    expect(dayTitle('2026-10-25', false)).toBe('Sunday 25 October 2026')
-    expect(dayTitle(null, false)).toBe('Today')
-  })
-
-  it('gives the day label on today and the ISO week, and nothing until the day is known', () => {
-    expect(dayHeaderLine('2026-10-25', true)).toBe('Sunday 25 October 2026 · Week 43')
-    expect(dayHeaderLine('2026-10-25', false)).toBe('Week 43')
-    expect(dayHeaderLine(null, false)).toBeNull()
+  it('gives the day label and the ISO week, and nothing until the day is known', () => {
+    expect(dayHeaderLine('2026-10-25')).toBe('Sunday 25 October 2026 · Week 43')
+    expect(dayHeaderLine(null)).toBeNull()
   })
 
   it('refuses a future day and a day before the back limit', () => {

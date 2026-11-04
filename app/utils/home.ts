@@ -1,4 +1,4 @@
-import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
+import type { Habit, PlannerState } from '~/types/planner'
 import { isoWeekOf, weekdayOf } from '~/utils/dates'
 import { habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
 import { formatHour } from '~/utils/planner/format'
@@ -138,27 +138,6 @@ export interface TimelineSegment {
   title: string
 }
 
-/** One activity block of the day with its done state (FR-HOME-14) */
-export interface HomeDayRow {
-  key: string
-  block: TimeBlock
-  activity: Activity
-  color: string
-  category: Category | undefined
-  done: boolean
-  now: boolean
-}
-
-/** One habit listed under the day (FR-HOME-15, 16) */
-export interface HomeHabitRow {
-  key: string
-  habit: Habit
-  name: string
-  category: Category | undefined
-  progress: string | null
-  done: boolean
-}
-
 /** The hour labels on the timeline axis (FR-HOME-4) */
 const AXIS_HOURS = [9, 12, 18, 22]
 
@@ -186,29 +165,8 @@ export const timelineSegments = (
     }
   })
 
-/** Whether a block is the current hour (the "Now" mark): only on today, and only once the clock is read (FR-DATE-6) */
-export const isNowBlock = (block: TimeBlock, hour: number | null, isToday: boolean): boolean =>
-  isToday && hour !== null && hour >= block.start && hour < block.end
-
-/** Whether every item of a list is done; an empty list is not done */
-export const isAllDone = (done: number, total: number): boolean => total > 0 && done === total
-
-/** The arc of the day's progress ring (FR-HOME-19): the share done in percent, null when nothing is planned */
-export const donePercent = (done: number, total: number): number | null => (total ? (done / total) * 100 : null)
-
-/** The day's progress line (FR-HOME-17): "All done for today", or "2 of 5 done" */
-export const progressText = (done: number, total: number, label: string): string =>
-  isAllDone(done, total) ? `All done for ${label}` : `${done} of ${total} done`
-
-/** The title of Home: "Today", or the day's label on another day */
-export const dayTitle = (day: string | null, isToday: boolean): string => (day && !isToday ? formatDayLabel(day) : 'Today')
-
-/** The line under the title: the day's label (on today only) and its ISO week; null until the day is known (FR-DATE-6) */
-export const dayHeaderLine = (day: string | null, isToday: boolean): string | null => {
-  if (!day) return null
-
-  return [isToday ? formatDayLabel(day) : null, `Week ${isoWeekOf(day).week}`].filter(Boolean).join(' · ')
-}
+/** The line under the day switch: the day's label and its ISO week; null until the day is known (FR-DATE-6) */
+export const dayHeaderLine = (day: string | null): string | null => (day ? `${formatDayLabel(day)} · Week ${isoWeekOf(day).week}` : null)
 
 /** Whether Home may show a day: not after today, and not earlier than the back limit (FR-HOME-18) */
 export const dayAllowed = (key: string, today: string | null, earliest: string | null): boolean =>

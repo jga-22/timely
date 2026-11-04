@@ -12,7 +12,7 @@ const { surface } = useNav()
        browser. Rendering them on the server draws the empty default and then mismatches the saved state on hydration, so they render on the client only. -->
   <main id="main" tabindex="-1" class="shell-main">
     <ClientOnly>
-      <HomeView          v-if="surface === 'today'" />
+      <TodayView         v-if="surface === 'today'" />
       <PlanView          v-else-if="surface === 'plan'" />
       <ProgressView      v-else />
     </ClientOnly>
