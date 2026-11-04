@@ -49,7 +49,7 @@ const shareRows = computed(() => (split.value?.rows ?? []).map(row => ({
   color: colorOf(row.categoryId),
   value: hoursText(row.hours),
   pct: row.share,
-  to: link('goals', { item: row.categoryId })
+  to: link('dreams', { item: row.categoryId })
 })))
 const restRow = computed(() => ({ key: NOT_PLANNED_KEY, value: notPlannedText.value, pct: notPlannedShare.value }))
 

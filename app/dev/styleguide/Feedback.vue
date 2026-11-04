@@ -58,7 +58,7 @@ const confirmOpen = ref(true)
       <p class="sg-label">Empty state</p>
       <div class="empty-state">
         <p>Nothing planned on this day.</p>
-        <NuxtLink class="btn btn-sm btn-outline" to="/?tab=planner">Open Week</NuxtLink>
+        <NuxtLink class="btn btn-sm btn-outline" to="/?tab=plan&view=week">Open Week</NuxtLink>
       </div>
     </div>
   </section>

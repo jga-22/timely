@@ -1,4 +1,4 @@
-import type { NavTarget, TabId } from '~/composables/useNav'
+import type { NavTarget, Place } from '~/utils/nav'
 import { localDateKey, isoWeekOf, isoWeekStarts } from '~/utils/dates'
 import { createInitialState, ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { buildOnboardingState, type OnboardingAnswers } from '~/utils/onboarding'
@@ -26,12 +26,12 @@ export const useOnboarding = () => {
   /** Where the intro was opened from: after Welcome it leads to step 1, from the tour it returns to the tour */
   const introFrom = useState<'welcome' | 'tour'>('onboarding-intro-from', () => 'welcome')
 
-  /** The tab each tour card shows: Plan your week opens Week (its entries are not selected there any more), then Year and Home */
-  const stepTarget = (index: number): { tab: TabId, target?: NavTarget } | null => {
+  /** The place each tour card shows: Plan your week opens Plan > Week (its entries are not selected there any more), then Plan > Year and Today */
+  const stepTarget = (index: number): { place: Place, target?: NavTarget } | null => {
     switch (index) {
-      case 0: return { tab: 'planner' }
-      case 1: return { tab: 'year' }
-      case 2: return { tab: 'home' }
+      case 0: return { place: 'week' }
+      case 1: return { place: 'year' }
+      case 2: return { place: 'today' }
       default: return null
     }
   }
@@ -40,7 +40,7 @@ export const useOnboarding = () => {
     step.value = index
 
     const target = stepTarget(index)
-    if (target) go(target.tab, target.target)
+    if (target) go(target.place, target.target)
   }
 
   const openWelcome = () => {

@@ -1,6 +1,6 @@
 # Timely: information architecture options
 
-Status: options for discussion, not built and not decided. Written 2026-11-03 as a companion to `spec/ux-journey-map.md` and `spec/ux-proposal.md` (section 6c, Model C, is the navigation the proposal currently recommends). This document does not pick a winner. Two prototypes are being built to answer the questions in section 7; the decision is recorded with the template in section 8.
+Status: option A (Today, Plan, Progress) chosen by the owner on 2026-11-04 and built in slice 4 (0.1.0); the decision record is section 8.1. The other options are kept for reference, not built. Written 2026-11-03 as a companion to `spec/ux-journey-map.md` and `spec/ux-proposal.md` (section 6c, Model C, is the navigation the proposal currently recommends). This document does not pick a winner. Two prototypes are being built to answer the questions in section 7; the decision is recorded with the template in section 8.
 
 **Scope.** Where screens and concepts live, the names of the surfaces, the order of setup, and the code each option implies. It changes no data: the model (`app/types/planner.ts`, `PLANNER_STATE_VERSION` 8, the storage keys) is the same in every option (section 6.4).
 
@@ -428,6 +428,49 @@ Next review date: <yyyy-mm-dd>
 ```
 
 ---
+
+### 8.1 Decision record: option A (2026-11-04)
+
+This is the filled template for the owner's decision. The owner's reasons are recorded here as the reasons this document gives for option A (section 2 and the scorecard, section 3). Test results are not in the repo: the fields that need them say so.
+
+```
+Decision: Option A, three surfaces: Today, Plan, Progress. Plan holds Dreams, Week and Year (its sub-nav), Progress holds the adherence view.
+Date: 2026-11-04
+Decided by: the owner
+
+Evidence used:
+- Prototype A test (participants, tasks, date): not recorded in the repo. The prototype shown is A2 (spec/mockups/prototype-a2.html, with its CSS and script).
+- Prototype B test (participants, tasks, date): not recorded in the repo. Option B was not built.
+- Baseline (current build, Task 0 and Task 1): not recorded in the repo.
+- Measures: Task 0 not recorded; time to accepted plan not recorded; time to first tick not recorded; fit not recorded; wrong turns not recorded.
+
+Scores observed (the section 3 judgement stands; nothing was re-measured for this decision):
+- Time to value: good (the tour lands on Plan > Week; Today is the default and holds the tick).
+- Setup effort: fair (three labels; the Plan segment).
+- Daily effort: good (Today is the default; Progress is one tap).
+- Dream-to-day link: good (Dreams sits in Plan beside Week and Year; Today can show the ambition line, a later slice).
+- Discoverability: fair (Dreams and Year are segments of Plan; Progress is a surface).
+- Build cost (confirmed): medium to large, as estimated; slice 4 (this change) is the switch, with the renames at the call sites.
+- Risk (new evidence): the Dreams word and the segment in Plan are still to be tested with users; see the open risks.
+
+Vocabulary accepted: Today, Plan, Progress, Dreams, Week, Year.
+Vocabulary rejected: Home, Goals and Insights as the names of surfaces (they stay as the old URL names, which still open the new screens). Goals and Insights remain as names inside some copy until slices 5 to 9 rewrite it (the intro, the Progress copy).
+
+Options rejected and why:
+- Option 0 (five tabs): five equal labels suggest five equal jobs, and the dream link stays one tab away from the daily screen.
+- Option 1 (four tabs, Year inside Week): Year can be missed as a view under Week, and Week becomes the heaviest tab.
+- Option B (one stream and a plan drawer): the largest build (a drawer with full-screen behaviour, a stream layout and the grid inside a sheet), and Dreams and Year hidden behind the drawer.
+
+Code change plan: section 6.3 (option A), done in slice 4 of the migration plan (`spec/ux-migration-plan.md`, version 0.1.0). Order: the place model and its tests (`app/utils/nav.ts`); the composable and the URL rewrite (`useNav.ts`, `useNavSync.ts`); the shell (`components/shell/`); the Plan and Progress frames with the `headless` prop; the call sites and the tour; the docs and the version. Owner: the owner decides the copy and the slices that follow.
+Model check: confirmed unchanged (section 6.5). PlannerState, the storage version (8) and the saved shape are not changed by the navigation.
+Open risks:
+- "Dreams" may read as a wish list. It needs a test with users; the copy change went ahead on the owner's decision.
+- A segmented control inside Plan may feel like three apps.
+- The top bar has a theme switch and the Account menu keeps its own Dark mode switch: two controls for one setting. The owner decides whether the menu row stays.
+- Old docs and screenshots name the old tabs (copy only; no data).
+Next review date: proposed 2026-12-04, or after slice 8 (Progress), whichever comes first.
+```
+
 
 ## 9. Open items
 

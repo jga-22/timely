@@ -267,6 +267,8 @@ Every slice: branch from `main` (`feat/a2-<n>-<name>`), CRLF kept, one PR, CI gr
 - Docs: `spec/frontend-design.md` palette, radius, type, motion (Q1).
 
 ### Slice 4. Shell and routes: Today / Plan / Progress (M-L, 2.5 sessions)
+
+**Done 2026-11-04** on `feat/three-screens` (not pushed), version 0.1.0: the place model (`app/utils/nav.ts`, the route model of 2.7 as built), the shell (rail, tab bar, top bar, skip link, `<main>`), Plan (Dreams, Week, Year) and Progress as frames over the unchanged views (`headless`), the call sites, the tour's places and the old-URL rewrite. The owner chose option A on the same day (`ux-information-architecture.md`, section 8.1). Deviations: the skip link sits in `app.vue` (the first stop in the DOM, before the rail); the theme switch is a top bar button and the Account menu keeps its Dark mode switch (the owner decides whether the menu row goes); the Plan sub-nav class is `plan-subnav`; the CSS for the shell and Plan is in `features/shell.css` (no `plan.css`).
 - Files: new `app/utils/nav.ts` (`resolveNav`, `PLACES`, `toQuery`), `composables/useNav.ts` (places API; `tab`, `view`, `item`, `edit`), `shell/AppRail.vue`, `AppTabBar.vue`, `AppTopBar.vue`, `app/app.vue`, `pages/index.vue` (3 branches), `plan/PlanView.vue` + `PlanSubnav.vue`, a `headless` prop (no `<h1>`) on `HaradaView`, `PlannerView`, `YearView`, `progress/ProgressView.vue` (wraps today's Insights content), all call sites listed in 2.7, `useOnboarding.ts` `stepTarget` (places), new `plan.css` and rail styles in `shell.css`.
 - A2 delivered: rail, tab bar, top bar, sub-nav, three surfaces, account name line. Alternatives: name per 2.3; screens inside are still today's (A2 content comes in 5 to 8).
 - Tests: `nav.test.ts` (every old `?tab=` with and without `item`/`edit`, unknown, `plan` without `view`, round trip). `plannerStoreActions.test.ts` unchanged.
@@ -365,7 +367,7 @@ Old tabs: [rec] **direct replacement, no feature flag.** Dev mode, no users, sol
 
 ### 6.3 Rollout
 - Patch tag per merged slice (0.0.1 = slice 1, 0.0.2, ...), CHANGELOG section in each PR.
-- **0.1.0** after slice 9: new navigation, look, Today, Plan, Progress, first run; old links redirected; saved state version 8 unchanged. Release notes in CHANGELOG and the GitHub release.
+- **0.1.0**: owner decision on 2026-11-04, cut at slice 4 (three screens: Today, Plan, Progress; old links redirected; saved state version 8 unchanged). It was planned after slice 9; the first-run rebuild (slice 9) follows in a later version. Release notes in CHANGELOG; the tag and the GitHub release are the owner's to make.
 - **0.2.0** after slice 12: Year kept, stages, ring, dream path, lively layer, milestones.
 - Before 0.1.0: load an export of the owner's save in a local build and walk every surface.
 

@@ -18,14 +18,14 @@ const BASELINE = {
   rawColourTs: 0,
   fontSizePx: 9,
   radiusLiteral: 15,
-  zIndexLiteral: 6,
+  zIndexLiteral: 5,
   keyframesOutsideMotion: 9,
   animationUngated: 11,
-  transitionLiteral: 3,
+  transitionLiteral: 2,
   mediaWidthLegacy: 6,
   inlineColourKey: 16,
   importantOutsideReset: 4,
-  legacyTokenUse: 450,
+  legacyTokenUse: 445,
 } as const
 
 /** The 16 .vue files with a scoped <style> block today. A file leaves this list when its block moves to features/ (ratchet) */

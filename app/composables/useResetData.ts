@@ -28,7 +28,7 @@ export const useResetData = () => {
     // Session state back to its first-run values, then the first-run flow from the start
     resetYear()
     onboarding.close()
-    go('home')
+    go('today')
     onboarding.openWelcome()
     return null
   }

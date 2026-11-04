@@ -6,6 +6,9 @@ import type { InsightsGranularity } from '~/utils/insights'
 
 // Insights is the adherence view only (PRD FR-INS-P6): planned against ticked on Home, over the range shown. Read-only.
 // The planned hours and the life areas are on the Year tab. The range controls set the granularity and the range.
+// headless: mounted under Progress, which holds the page title (the title row is not shown)
+defineProps<{ headless?: boolean }>()
+
 const planner = usePlannerStore()
 const { year } = usePlannerYear()
 
@@ -22,7 +25,7 @@ const adherence = computed(() => (years.value.length
 
 <template>
   <div class="view">
-    <header class="page-head">
+    <header v-if="!headless" class="page-head">
       <h1 class="page-title">Insights</h1>
     </header>
 

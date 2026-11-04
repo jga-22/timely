@@ -1,6 +1,9 @@
 <script setup lang="ts">
 // The Week tab: the week type bar, the week grid, the entry buttons (+ Add activity, Sleep hours) and the Time split. Each part is its own component;
 // this view holds what they share: the Edit week type panel's open state and the week type added last. The Year (the painter and the Weeks row) is the Year tab.
+// headless: mounted under Plan, which holds the page title (the title row is not shown)
+defineProps<{ headless?: boolean }>()
+
 const { item, edit, setSelection, link } = useNav()
 const planner = usePlannerStore()
 const templateEditOpen = ref(false)
@@ -38,7 +41,7 @@ function onTemplateCreated(templateId: string) {
 <template>
   <div class="view">
     <!-- Page header -->
-    <header class="page-head">
+    <header v-if="!headless" class="page-head">
       <h1 class="page-title">Week</h1>
     </header>
 

@@ -32,7 +32,7 @@ const allDone = computed(() => isAllDone(done.value, props.rows.length))
         <div class="home-row-main">
           <span class="home-row-name">{{ row.name }}</span>
           <span class="home-row-meta">
-            <NuxtLink v-if="row.category" class="home-row-cat" :to="link('goals', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
+            <NuxtLink v-if="row.category" class="home-row-cat" :to="link('dreams', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
             <span v-if="row.progress" class="home-row-progress">{{ row.progress }}</span>
           </span>
         </div>
