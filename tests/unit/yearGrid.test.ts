@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isoWeekStarts } from '~/utils/dates'
-import { ERASE_TOOL, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, monthMarks, toolTemplateId, weekCellName, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 
 describe('yearRows', () => {
   it('cuts 2026 (53 weeks) into rows of 13, each labelled with the months its first and last week start in', () => {
@@ -48,10 +48,48 @@ describe('toolTemplateId', () => {
 })
 
 describe('weekRangeHint and weekRangeResult', () => {
-  it('say what Apply does with the paint tool: the week type, or clearing for Erase', () => {
+  it('say what Apply does with the paint tool: the schedule, or clearing to the default one for Clear', () => {
     expect(weekRangeHint('Vacation')).toBe('Applies Vacation to these weeks.')
-    expect(weekRangeHint(null)).toBe('Erase clears these weeks.')
+    expect(weekRangeHint(null, 'Standard Week')).toBe('Clears these weeks to Standard Week.')
+    expect(weekRangeHint(null)).toBe('Clears these weeks to the active schedule.')
     expect(weekRangeResult(2, 5, 'Vacation')).toBe('Weeks 2 to 5 use Vacation.')
-    expect(weekRangeResult(2, 5, null)).toBe('Weeks 2 to 5 have no week type.')
+    expect(weekRangeResult(2, 5, null, 'Standard Week')).toBe('Weeks 2 to 5 are cleared to Standard Week.')
+  })
+})
+
+describe('monthMarks', () => {
+  it('labels the column of the first week of each month, by its Thursday, in each row of 14 weeks', () => {
+    const rows = monthMarks(isoWeekStarts(2026))
+
+    expect(rows).toHaveLength(4)
+    // Row 1: January from the first week, February from the sixth (Thursday 5 February), March from the tenth; April would have one column
+    // left in the row, so it is not labelled
+    expect(rows[0]).toEqual([
+      { col: 0, label: 'Jan' },
+      { col: 5, label: 'Feb' },
+      { col: 9, label: 'Mar' },
+    ])
+  })
+
+  it('never puts two labels within one column of each other, nor in the last column', () => {
+    for (const row of monthMarks(isoWeekStarts(2026))) {
+      row.forEach((mark, index) => {
+        const next = row[index + 1]?.col ?? 14
+        expect(next - mark.col).toBeGreaterThanOrEqual(2)
+      })
+    }
+  })
+
+  it('takes the number of weeks per row as an option, one list of marks per row', () => {
+    expect(monthMarks(isoWeekStarts(2026), 13)).toHaveLength(5)
+  })
+})
+
+describe('weekCellName', () => {
+  it('says the week, its month and year (the month of its Thursday), and its schedule or unassigned', () => {
+    // Week 45 of 2026 starts on Monday 2 November; its Thursday is in November
+    expect(weekCellName('2026-11-02', 44, 'Standard Week')).toBe('Week 45, November 2026, Standard Week')
+    // Week 1 of 2026 starts on Monday 29 December 2025; its Thursday is 1 January 2026
+    expect(weekCellName('2025-12-29', 0, null)).toBe('Week 1, January 2026, unassigned')
   })
 })

@@ -23,7 +23,7 @@ const BASELINE = {
   animationUngated: 11,
   transitionLiteral: 2,
   mediaWidthLegacy: 6,
-  inlineColourKey: 14,
+  inlineColourKey: 13,
   importantOutsideReset: 4,
   legacyTokenUse: 374,
 } as const

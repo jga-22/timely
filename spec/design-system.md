@@ -438,6 +438,7 @@ Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour 
 
 ## 11. Changelog
 
+- **2026-11-04, Plan > Year (slice 7):** new classes in `features/year.css` (`.year-lede`, `.year-card`, `.year-paint`, `.year-summary`, `.year-sum-head`, `.year-big`, `.year-stack`, `.year-legend`, `.year-swatch`, `.year-swatch.is-blank`, `.year-detail`, `.year-empty`, `.year-months`, `.year-month`, `.year-row-block`) and rules on `.year-grid .week-cell`; no new token. Keyframes `year-grow` and `year-cell-in` are in `motion.css` (Lively only). The paint chip dot takes its colour through `areaVars`, so the inline colour ratchet falls from 14 to 13.
 - **2026-11-04, Plan > Week (slice 6):** the schedule chips on Week are the 44 px target (`.template-switch .chip`), the card "Where the week goes" is `features/week-where.css` (`.where*`, `.where-donut*`, the ring's stroke 16 and 20 units), the grid card is on `--radius-xl` and `--elev-1`, and the selection ghost is an outline (dashed) over a 12% tint. The ratchet: `radiusLiteral` 13, `legacyTokenUse` 375, the style-block list 15 (the donut's block moved to features).
 
 Dated entries with the app version. No separate version for the system.

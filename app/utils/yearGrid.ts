@@ -39,12 +39,60 @@ export const weekRangeError = (from: number, to: number, count: number): string 
   return ''
 }
 
-/** What Apply will do with the chosen paint tool, under the weeks fields: the week type's name, or Erase's clearing */
-export const weekRangeHint = (templateName: string | null): string => (templateName
-  ? `Applies ${templateName} to these weeks.`
-  : 'Erase clears these weeks.')
+/** A month label above a row of the year grid: the column (0 for the row's first week) it sits over, and the month's short name */
+export interface MonthMark {
+  col: number
+  label: string
+}
 
-/** The result line after a range was applied: the week type's name, or that the weeks have none (Erase) */
-export const weekRangeResult = (from: number, to: number, templateName: string | null): string => (templateName
+/** The month a week falls in, decided by its Thursday, as the bars are (insightsBars): the same month for every week of a bar */
+const monthOfWeek = (monday: string): string => {
+  const thursday = new Date(`${monday}T00:00:00Z`)
+  thursday.setUTCDate(thursday.getUTCDate() + 3)
+  return MONTHS[thursday.getUTCMonth()]!
+}
+
+/**
+ * The month labels above each row of the year grid (`perRow` weeks a row): one at the column of the first week of each month, the first
+ * week of the year included. A label is left out when it would have no room, fewer than two columns before the next label or the row's end,
+ * so no two labels touch on a phone.
+ */
+export const monthMarks = (weeks: string[], perRow = 14): MonthMark[][] => {
+  const months = weeks.map(monthOfWeek)
+  const rows: MonthMark[][] = []
+
+  for (let start = 0; start < weeks.length; start += perRow) {
+    const end = Math.min(start + perRow, weeks.length)
+    const marks: MonthMark[] = []
+
+    for (let wi = start; wi < end; wi++) {
+      if (wi === 0 || months[wi] !== months[wi - 1]) marks.push({ col: wi - start, label: months[wi]! })
+    }
+
+    rows.push(marks.filter((mark, index) => (marks[index + 1]?.col ?? end - start) - mark.col >= 2))
+  }
+
+  return rows
+}
+
+/** What Apply will do with the chosen paint tool, under the weeks fields: the schedule's name, or Clear's reset to the default one */
+export const weekRangeHint = (templateName: string | null, defaultName: string | null = null): string => (templateName
+  ? `Applies ${templateName} to these weeks.`
+  : `Clears these weeks to ${defaultName ?? 'the active schedule'}.`)
+
+/** The result line after a range was applied: the schedule's name, or that the weeks were cleared to the default one (Clear) */
+export const weekRangeResult = (from: number, to: number, templateName: string | null, defaultName: string | null = null): string => (templateName
   ? `Weeks ${from} to ${to} use ${templateName}.`
-  : `Weeks ${from} to ${to} have no week type.`)
+  : `Weeks ${from} to ${to} are cleared to ${defaultName ?? 'the active schedule'}.`)
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/**
+ * The name a week's cell has for a screen reader, since the grid no longer shows row labels: "Week 45, November 2026, Standard Week",
+ * or "unassigned" for a week with no schedule of its own. The month is the one the week's Thursday falls in, as the month labels are.
+ */
+export const weekCellName = (monday: string, wi: number, scheduleName: string | null): string => {
+  const thursday = new Date(`${monday}T00:00:00Z`)
+  thursday.setUTCDate(thursday.getUTCDate() + 3)
+  return `Week ${wi + 1}, ${MONTH_NAMES[thursday.getUTCMonth()]} ${thursday.getUTCFullYear()}, ${scheduleName ?? 'unassigned'}`
+}

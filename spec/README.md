@@ -56,14 +56,14 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
-| `year-desktop-light.png` | 1280 px wide | Year, light: the painter with its paint tools and the closed "Apply to several weeks" button, the planned hours by month stacked by life area with the available-time key, and the Life areas list ending in "Not planned" (sample data, the seed plus ticks) |
-| `year-desktop-dark.png` | 1280 px wide | Year, dark, the same layout |
-| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: "Apply to several weeks" open under the paint tools: "for weeks" 1 to 1, Apply, and the hint "Applies Standard Week to these weeks." (2026-11-04) |
+| `year-desktop-light.png` | 1280 px wide | Year, light, Plan > Year (slice 7, 2026-11-04), sample data: the lede, the paint tools with "Clear to Standard Week", the schedule card with the year grid, its legend and the count of weeks each schedule uses, the summary card (the planned hours of the year against the awake time, one stacked bar, the life areas with Free last, Show sleep in its head) and More detail closed |
+| `year-desktop-dark.png` | 1280 px wide | Year, dark, the same layout (slice 7) |
+| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: "Apply to several weeks" open under the paint tools: "for weeks" 1 to 1, Apply, and the hint "Applies Standard Week to these weeks." (2026-11-04, slice 7) |
 | `year-apply-several-mobile-light.png` | 400 px wide | Year, light, the same options at phone width: the panel took focus, not the field (FR-UX-9) |
-| `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width: the painter wraps, the chart and the Life areas list fit with no overflow |
-| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width |
-| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the new week type is chosen in Paint with and the options are open (`?tab=year&item=<id>`; this copy is named "Vacation 2" because the sample already has a Vacation) |
-| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, Start empty: "0 of 53 weeks assigned", no planned hours, and "Plan the week in Week and the hours show here." with Open Week |
+| `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width (slice 7): the lede, the paint tools wrap, the schedule card and the summary card fit with no page overflow |
+| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width (slice 7) |
+| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the new schedule is chosen in Paint with and the options are open (`?tab=plan&view=year&item=<id>`; slice 7) |
+| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours: the schedule card (unassigned weeks are blank and use the active schedule), then the card "Plan the week in Week and the hours show here." with Open Week (slice 7) |
 | `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
 | `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page, the same layout |
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
