@@ -31,14 +31,13 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `home-desktop-light.png` | 1280 px wide | Today, light, sleep hidden, one block ticked: the hour bar (7h to 22h), "1 of 4 done" with the small day ring beside it (blocks only), the Activities rows, and the Habits summary "0 of 10 ticked", collapsed; the linked habits with a block this week are not listed (2026-11-06) |
-| `home-desktop-dark.png` | 1280 px wide | Today, dark, the same state (2026-11-06) |
-| `home-mobile-light.png` | 400 px wide | Today, light, full page: the progress line and the ring on one row at the right end, the Habits summary collapsed (2026-11-06) |
-| `home-mobile-dark.png` | 400 px wide | Today, dark, full page (2026-11-06) |
-| `home-all-done-desktop-light.png` | 1280 px wide | Today, light, every block ticked: the ring is a green check with "All done for today"; the Habits summary has no check, its habits unticked (2026-11-06) |
-| `home-all-done-mobile-light.png` | 400 px wide | Today, light, every block ticked, phone width (2026-11-06) |
-| `home-habits-done-desktop-light.png` | 1280 px wide | Today, light, every listed habit ticked with the Habits section open: "10 of 10 ticked" with its own green check and "All ticked"; the blocks are not all done ("0 of 4 done", the ring) (2026-11-06) |
-| `home-yesterday-desktop-light.png` | 1280 px wide | The previous day (Wednesday 28 October): the day label as title, "Today" button shown, its own ticks |
+| `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (next block, countdown pill, "Behind this" line), the day line with the now marker, "1 of 7 done today", Also today, the week strip, the journal line and All habits collapsed (2026-11-05) |
+| `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |
+| `today-mobile-light.png` | 400 px wide, full page | Today, light, phone: the focus card above the fold, the tab bar at the foot, nothing hidden at the end |
+| `today-all-done-desktop-light.png` | 1280 px wide, full page | Today, light, every item ticked: "Today is done." with the check, "Plan tomorrow" and the day line "All done today" |
+| `today-mobile-dark-all-done.png` | 400 px wide, full page | Today, dark, Calm, every item ticked (phone) |
+| `today-nothing-desktop-light.png` | 1280 px wide, full page | Today, light, nothing planned: the illustration, "Plan Run in Week" (the weekly habit furthest behind, with an activity) |
+| `today-past-desktop-light.png` | 1280 px wide, full page | The previous day (Tuesday 3 November): "A past day" eyebrow, "Looking back at this day.", the day switch with Back to today |
 | `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 5-year goal (a target icon under the name) and each 1-year target status (no time comparison since 2026-10-29) |
 | `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
 | `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
@@ -141,6 +140,14 @@ Built: a local-first Nuxt 4 app with three surfaces, Today, Plan (Dreams, Week a
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Unreleased, Today screen (2026-11-05, branch `feat/today-screen`, from `main`, not pushed)
+
+- Slice 5 of `ux-migration-plan.md`: Today in the A2 look. The focus card (the next block or habit, its countdown pill, "Behind this: <1-year target>"), the day line on the awake range with the now marker, "Also today", the week strip with its forgiving note, the one-line journal (kept, restyled), All habits, and the three states (focus, "Today is done." with "Plan tomorrow", "Nothing planned" with "Plan <habit> in Week"). The ring and the Today sleep switch are gone.
+- PRD: FR-TODAY-1 to 9 (new, with evidence); FR-HOME-4, 10, 15, 17, 19, P2, P3 and FR-SLEEP-4 and 8 noted as changed. Decisions 7 (daily habits in the count) and 8 (All habits) are the owner's to confirm.
+- Rules in `app/utils/today.ts` (tests `tests/unit/today.test.ts`); components in `app/components/today/`; CSS `features/today.css` replaces `home.css`; screens `today-*` replace `home-*`.
+- Fidelity pass (2026-11-05, new commits on the same branch): Today matched to the mockup (`spec/mockups/prototype-a2`): the day line, the focal card and its pill, the free-day picture, the one-line journal, All habits with Tick chips; the shell glow, the brand mark and the icons. Screens `today-*` re-captured at 9:20 with the mockup's sample plan.
+- Storage version unchanged (8); no data-model change. The version and the tag are not changed on this branch.
 
 ### Version 0.1.0, three screens (2026-11-04, branch `feat/three-screens`, from `main`, not pushed)
 

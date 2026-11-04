@@ -15,7 +15,7 @@ const { link } = useNav()
   <header class="topbar">
     <div class="topbar-inner">
       <NuxtLink :to="link('today')" class="shell-brand shell-top-brand">
-        <UiIcon name="brand" />
+        <span class="shell-brand-mark" aria-hidden="true"><UiIcon name="check" size="sm" /></span>
         <span>Timely</span>
       </NuxtLink>
 

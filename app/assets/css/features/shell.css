@@ -6,8 +6,32 @@
   min-height: 100vh;
   display: flex;
   overflow-x: clip;
-  background: var(--paper);
+  background: transparent;
 }
+
+/* The ambient layer (A2): two glows of the part of the day, fixed behind the page on the paper (the body). Lively only: Calm hides
+   it. Its colours are the time-of-day tokens (--am-1, --am-2), which are the full tints here; the drift is in motion.css. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 55% at 10% -6%, var(--am-1), transparent 70%),
+    radial-gradient(60% 48% at 100% -4%, var(--am-2), transparent 72%);
+}
+.ambient::before {
+  content: "";
+  position: absolute;
+  top: -34vmax;
+  left: -22vmax;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--am-2), transparent);
+  opacity: 0.5;
+}
+:root[data-motion="calm"] .ambient { display: none; }
 
 /* The skip link: the first stop on the page, out of sight until it has focus */
 .shell-skip {
@@ -36,7 +60,17 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.shell-brand .ic { width: var(--sp-8); height: var(--sp-8); color: var(--accent); }
+/* The brand mark (A2): a 28px accent disc with the check in it */
+.shell-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
 
 /* The desktop rail (A2): sticky, the brand and the three surfaces. Shown from 769px */
 .shell-rail {
@@ -78,19 +112,20 @@
 
 /* The column: the top bar, the page and the footer */
 .shell-column {
+  position: relative;
+  z-index: var(--z-raised);
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* The top bar: the brand on a phone (and when there is no rail), the theme switch and the account menu */
+/* The top bar: the brand on a phone (and when there is no rail), the theme switch and the account menu. It scrolls with the page
+   and has no paper of its own, so the ambient glow shows behind it (the mockup's top bar) */
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
+  position: relative;
   padding-top: var(--sp-4);
-  background: var(--paper);
+  background: transparent;
 }
 /* The row sits in the page's width (the .view maximum, 1120px) and keeps the side padding of the views, so the tools line up with the content */
 .topbar-inner {

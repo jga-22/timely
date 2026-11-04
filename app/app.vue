@@ -26,6 +26,9 @@ onMounted(() => {
 
 <template>
   <div class="app">
+    <!-- The ambient glow of the time of day (Lively only; Calm hides it in shell.css). Decorative, behind the page -->
+    <div class="ambient" aria-hidden="true" />
+
     <!-- The first stop on the page: it moves focus past the navigation to the main landmark (FR-NAV-7) -->
     <a class="shell-skip" href="#main">Skip to content</a>
 

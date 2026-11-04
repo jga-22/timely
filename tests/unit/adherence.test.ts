@@ -111,13 +111,13 @@ describe('adherenceReport', () => {
     expect(report.percent).toBe(0)
   })
 
-  it('judges a habit with a day assigned in its week through the block only', () => {
-    // focus is linked to the Monday work block, so its week has a day for it: it expects nothing on any other day (as Home lists it)
+  it('judges a habit through its block on the day the block is planned, and as a habit on the other days (as Today lists it)', () => {
+    // focus is linked to the Monday work block: on Monday it is the block, on Tuesday and Wednesday a habit to tick
     const state = withDone(planned([walk, focus]), MONDAY, ['h:walk'])
     const report = adherenceReport(withDone(state, TUESDAY, ['h:walk']), [2026], TODAY, 'month')
 
-    // walk: 1 a day over 3 days; focus has a day assigned, so it expects no ticks
-    expect(report.measure.habits.planned).toBe(3)
+    // walk: 1 a day over 3 days; focus: 2 days (Tuesday, Wednesday), none ticked
+    expect(report.measure.habits.planned).toBe(5)
     expect(report.measure.habits.done).toBe(2)
   })
 

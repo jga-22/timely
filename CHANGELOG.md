@@ -2,6 +2,21 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
+## Unreleased
+
+### Changed
+- Today has a new look. The next thing to do is the large card at the top, with its time, a countdown ("In 40 min", "On now · 1 h left") and the 1-year target it stands behind. Below it: the rest of the day, the week so far, the journal line and all your habits.
+- When the day is done, Today says so with a check and offers to plan tomorrow. When nothing is planned, it offers to plan the habit furthest behind its count in Week.
+- The day line is one track over your awake hours: a segment for each block of the day, filled when you tick it, a marker for now, and the hours 7 AM, 12 PM, 6 PM and 10 PM under it.
+- The progress ring on Today is now a count line ("2 of 7 done today"). It counts your blocks and your daily habits; weekly and monthly habits are not counted there.
+- All habits lists every habit by life area, with a Tick for the day, or "Planned as a block" on a day a block of its activity is scheduled.
+- Today matches the A2 mockup more closely: the glow of the time of day behind the page (Lively only), the brand mark and the Today, Plan and Progress icons, the 788px column, the one-line journal for the day shown, "Last one for today", a warm line after a tick, and "Behind this: <area>. No 1-year target yet." when an area has no target.
+- The Show sleep switch is no longer on Today. The setting is still in Week and Year, and Today follows it.
+- Ticks work with the keyboard. After a tick, the keyboard stays on the next thing to do.
+
+### Added
+- A week strip on Today shows each day so far: all done, some done, not ticked, nothing planned, and the days still to come.
+
 ## 0.1.0 - three screens
 
 Timely has three screens now: **Today**, **Plan** and **Progress**. The five tabs are gone, and what is inside each screen works as before. Your saved data is unchanged.

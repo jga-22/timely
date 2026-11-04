@@ -1,24 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannerState } from '~/types/planner'
 import {
-  axisLeft,
-  axisTicks,
   dayAllowed,
   dayBlocks,
   dayHabits,
   dayHeaderLine,
-  dayHours,
   dayRange,
-  dayTitle,
-  donePercent,
-  formatDayLabel,
   habitHasDay,
   habitProgressText,
-  habitTicked,
-  isAllDone,
-  isNowBlock,
-  progressText,
-  timelineSegments
+  habitTicked
 } from '~/utils/home'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { activity, applyWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots, withTemplate } from './fixtures'
@@ -75,19 +65,6 @@ describe('dayBlocks', () => {
   })
 })
 
-describe('dayHours', () => {
-  it('gives the activity of each of the 24 hours, null when unplanned', () => {
-    const hours = dayHours(withActivities(planned([work]), [deepWorkActivity]), MONDAY)
-
-    expect(hours).toHaveLength(24)
-    expect(hours[7]).toBeNull()
-    expect(hours[8]).toBe('work')
-    expect(hours[11]).toBe('work')
-    expect(hours[12]).toBeNull()
-    expect(hours[23]).toBeNull()
-  })
-})
-
 describe('dayRange', () => {
   it('trims the sleep at the start and the end of the day when sleep is hidden', () => {
     // The default night is 10 PM to 7 AM: the bar runs from 7 to 22
@@ -126,11 +103,11 @@ describe('dayHabits', () => {
     expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual(['walk'])
   })
 
-  it('leaves out a linked habit whose activity has a block that week, on its own day and on the others', () => {
+  it('leaves out a linked habit on the day its activity has a block, and lists it on the other days (as Today does)', () => {
     const state = withHabits(withActivities(planned([work]), [deepWorkActivity]), [focus])
 
     expect(dayHabits(state, MONDAY).map(habit => habit.id)).toEqual([])
-    expect(dayHabits(state, TUESDAY).map(habit => habit.id)).toEqual([])
+    expect(dayHabits(state, TUESDAY).map(habit => habit.id)).toEqual(['focus'])
   })
 
   it('lists a linked habit whose activity has no block that week', () => {
@@ -271,89 +248,10 @@ describe('habitTicked', () => {
   })
 })
 
-describe('formatDayLabel', () => {
-  it('reads the weekday, day, month and year in English', () => {
-    expect(formatDayLabel('2026-10-25')).toBe('Sunday 25 October 2026')
-    expect(formatDayLabel('2026-01-01')).toBe('Thursday 1 January 2026')
-  })
-})
-
-describe('timeline and axis', () => {
-  const full = { start: 0, end: 24 }
-  const trimmed = { start: 7, end: 22 }
-
-  it('labels the axis hours inside the span only', () => {
-    expect(axisTicks(full)).toEqual([9, 12, 18, 22])
-    expect(axisTicks(trimmed)).toEqual([9, 12, 18])
-    expect(axisTicks({ start: 9, end: 12 })).toEqual([])
-  })
-
-  it('places an hour as a percentage of the span', () => {
-    expect(axisLeft(12, full)).toBe('50%')
-    expect(axisLeft(7, trimmed)).toBe('0%')
-    expect(axisLeft(18, trimmed)).toBe(`${(11 / 15) * 100}%`)
-  })
-
-  it('builds one segment per hour of the span, named and coloured by its activity', () => {
-    const hours: Array<string | null> = Array.from({ length: 24 }, () => null)
-    hours[8] = 'work'
-    hours[9] = 'work'
-    const names: Record<string, string> = { work: 'Deep work' }
-    const segments = timelineSegments(hours, { start: 8, end: 11 }, id => names[id] ?? '', id => `colour-${id}`)
-
-    expect(segments).toEqual([
-      { key: 'h8', color: 'colour-work', title: '8AM, Deep work' },
-      { key: 'h9', color: 'colour-work', title: '9AM, Deep work' },
-      { key: 'h10', color: '', title: '10AM, unplanned' }
-    ])
-  })
-
-  it('titles an activity with no name as unplanned, keeping its colour', () => {
-    const hours: Array<string | null> = Array.from({ length: 24 }, () => 'ghost')
-
-    expect(timelineSegments(hours, { start: 0, end: 1 }, () => '', id => id)[0]).toEqual({ key: 'h0', color: 'ghost', title: '12AM, unplanned' })
-  })
-})
-
-describe('day progress', () => {
-  it('is done only when every item is done, and never for an empty day', () => {
-    expect(isAllDone(3, 3)).toBe(true)
-    expect(isAllDone(2, 3)).toBe(false)
-    expect(isAllDone(0, 0)).toBe(false)
-  })
-
-  it('gives the share done, or null when nothing is planned', () => {
-    expect(donePercent(1, 4)).toBe(25)
-    expect(donePercent(0, 0)).toBeNull()
-  })
-
-  it('words the line for the day', () => {
-    expect(progressText(2, 5, 'today')).toBe('2 of 5 done')
-    expect(progressText(5, 5, 'today')).toBe('All done for today')
-    expect(progressText(5, 5, 'Sunday 25 October 2026')).toBe('All done for Sunday 25 October 2026')
-  })
-
-  it('marks the current hour only on today, once the clock is read', () => {
-    const block = { start: 9, end: 10, activityId: 'work' }
-
-    expect(isNowBlock(block, 9, true)).toBe(true)
-    expect(isNowBlock(block, 10, true)).toBe(false)
-    expect(isNowBlock(block, 9, false)).toBe(false)
-    expect(isNowBlock(block, null, true)).toBe(false)
-  })
-})
-
 describe('day header and navigation', () => {
-  it('titles today and any other day, and "Today" until the day is known', () => {
-    expect(dayTitle('2026-10-25', true)).toBe('Today')
-    expect(dayTitle('2026-10-25', false)).toBe('Sunday 25 October 2026')
-    expect(dayTitle(null, false)).toBe('Today')
-  })
-
-  it('gives the day label on today and the ISO week, and nothing until the day is known', () => {
-    expect(dayHeaderLine('2026-10-25', true)).toBe('Sunday 25 October 2026 · Week 43')
-    expect(dayHeaderLine('2026-10-25', false)).toBe('Week 43')
-    expect(dayHeaderLine(null, false)).toBeNull()
+  it('gives the day label and the ISO week, and nothing until the day is known', () => {
+    expect(dayHeaderLine('2026-10-25')).toBe('Sunday 25 October · week 43')
+    expect(dayHeaderLine(null)).toBeNull()
   })
 
   it('refuses a future day and a day before the back limit', () => {

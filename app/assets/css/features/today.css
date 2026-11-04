@@ -1,0 +1,276 @@
+/* Today (FR-TODAY, FR-HOME): the eyebrow and the day switch, the greeting and the ambition line, the focus card with its countdown and
+   day line, the rest of the day, the week strip, the journal line and the All habits list. The look is the mockup's A2 Today
+   (spec/mockups/prototype-a2/a2.css, section 5). Layer features; the classes are prefixed today-. Calm mode shows every state and
+   number; the moving parts (the live dot) are under :root[data-motion="lively"] in motion.css. Values are tokens, or the mockup's
+   sizes where no token exists (the pips, the tick ring, the track). */
+
+.today { display: grid; gap: var(--sp-2); min-width: 0; padding: var(--sp-5) var(--sp-4); }
+/* On a desktop the column keeps the mockup's measure: 788px from the rail, with 56px on its left (the mockup's page padding), so the
+   focus card reads as one panel and not the full width of the page. The page padding is the mockup's too (40px top, 64px bottom) */
+@media (min-width: 769px) {
+  .today { max-width: 788px; margin: 0 auto 0 var(--sp-14); padding: var(--sp-10) 0 var(--sp-16); }
+}
+
+/* The eyebrow and the day switch under it (FR-HOME-18) */
+.today-head { display: grid; gap: var(--sp-1); margin-bottom: var(--sp-5); }
+.today-eyebrow { margin: 0; font-size: var(--text-meta); color: var(--ink-3); }
+.today-daynav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.today-daynav .btn-icon { width: var(--hit); height: var(--hit); }
+.today-daynav .chip { --chip-h: var(--hit); }
+
+.today-greet {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--text-title-m);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.01em;
+}
+.today-dream { margin: 0 0 var(--sp-5); font-size: var(--text-lede); color: var(--ink-2); }
+.today-dream span { color: var(--ink); font-weight: var(--weight-medium); }
+.today-dream a { color: var(--accent); }
+
+/* The focus card: the one thing to do next, or the done and nothing-planned states. The mockup's panel: 36px inside, the shadow
+   of a card (it lifts on hover) */
+.today-focus {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: calc(var(--sp-8) + var(--sp-1));
+  box-shadow: var(--elev-1);
+}
+.today-focus:hover { box-shadow: var(--elev-2); }
+.today-focus-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-8);
+}
+.today-focus-text { display: grid; gap: var(--sp-2); min-width: 0; }
+.today-title {
+  margin: 0;
+  font-size: var(--text-hero);
+  font-weight: var(--weight-bold);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.today-title:focus { outline: none; }
+.today-title.is-quiet { color: var(--ink-2); }
+.today-focus.is-done .today-title { color: var(--accent); }
+.today-eyebrow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--ink-3);
+}
+/* The pill beside the focus: the countdown ("On now · 40 min left", the live dot), "Last one for today", or the habit's line */
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 30px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--ink-2);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.today-pill[data-state="now"] { background: var(--accent); color: var(--accent-ink); }
+.today-pill[data-state="last"] { background: var(--line-2); color: var(--ink-2); }
+.today-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+:root[data-motion="lively"] .today-live-dot { animation: breathe 2.2s ease-in-out infinite; }
+.today-behind { margin: 0; font-size: var(--text-lede); color: var(--ink-2); overflow-wrap: anywhere; }
+.today-line { margin: 0; font-size: var(--text-lede); color: var(--ink-2); }
+.today-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+/* A quiet button: the accent words, no border (the mockup's "Plan tomorrow") */
+.today-quiet { min-height: var(--hit); padding: 0 var(--sp-3); border-color: transparent; background: transparent; color: var(--accent); }
+.today-quiet:hover { background: var(--accent-soft); border-color: transparent; }
+
+/* The focus tick: a done tick fills with the accent (the mockup), and its check is the accent ink */
+.today-focus .tick[aria-checked="true"] .tick-box,
+.today-row .tick[aria-checked="true"] .tick-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* The nothing-planned picture (the mockup's free day): a tint disc, a dashed ring and the ground line */
+.today-ill { width: 120px; height: 90px; flex: none; overflow: visible; color: var(--ink-3); }
+.today-ill-ring { fill: none; stroke: var(--line); stroke-width: 1.6; stroke-dasharray: 2 5; }
+.today-ill-disc { fill: var(--accent-tint); }
+.today-ill-ground { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+
+/* The day line (FR-TODAY-7): the count, then one track with a segment for each block, a now marker and the hour labels */
+.today-dayline { display: grid; }
+.today-cap { margin: 0; font-size: var(--text-ui); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.today-cap b { font-weight: var(--weight-bold); color: var(--ink); }
+.today-track {
+  position: relative;
+  height: 22px;
+  margin-top: var(--sp-8);
+  border-radius: var(--radius-pill);
+  background: var(--line-2);
+}
+/* A block: its life area's colour. Ticked, it is filled; to do, a tint with a ring of the same colour (the shape carries the state) */
+.today-seg {
+  position: absolute;
+  top: calc(var(--sp-1) / 2);
+  bottom: calc(var(--sp-1) / 2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--c) 26%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px var(--c);
+}
+.today-seg.is-done { background: var(--c); box-shadow: none; }
+/* The now marker crosses the track; its label sits above it (text, so Calm shows it too) */
+.today-now {
+  position: absolute;
+  top: calc(var(--sp-2) * -0.75);
+  bottom: calc(var(--sp-2) * -0.75);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.today-now-label {
+  position: absolute;
+  top: calc(var(--sp-4) * -1 - var(--sp-1) / 2);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--text-caption);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.today-axis { position: relative; height: var(--sp-6); margin-top: var(--sp-2); font-size: var(--text-caption); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.today-axis-label { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; line-height: 1; }
+.today-axis-label.is-start { transform: none; }
+.today-axis-label.is-end { transform: translateX(-100%); }
+.today-cheer { margin: var(--sp-4) 0 0; font-size: var(--text-body); color: var(--ink-2); min-height: 1.5em; }
+
+/* Sections of the page: no hairline, a 40px rhythm (the mockup) */
+.today-items,
+.today-week,
+.today-journal {
+  margin-top: var(--sp-10);
+  padding-top: 0;
+  border-top: 0;
+}
+.today-items .section-title,
+.today-week .section-title { margin-bottom: var(--sp-2); }
+
+/* The lists of the day and the habits: a hairline row, the tick on the left (the habit's chip on the right) */
+.today-list { margin: 0; padding: 0; list-style: none; }
+.today-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: calc(var(--hit) + var(--sp-3));
+  border-top: 1px solid var(--line-2);
+}
+.today-row:last-child { border-bottom: 1px solid var(--line-2); }
+.today-row.is-habit { grid-template-columns: minmax(0, 1fr) auto; min-height: calc(var(--hit) + var(--sp-2)); }
+.today-row .tick { width: var(--hit); height: var(--hit); margin: 0; }
+.today-row .tick-box { width: 28px; height: 28px; border: 1.5px solid var(--ink-3); background: transparent; }
+.today-row .tick-box .ic { width: var(--icon-sm); height: var(--icon-sm); }
+.today-row-text { min-width: 0; display: grid; }
+.today-row-name { margin: 0; font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink); overflow-wrap: anywhere; }
+.today-row-meta { margin: 0; font-size: var(--text-meta); color: var(--ink-3); }
+.today-row-meta a { color: var(--ink-3); text-decoration: none; }
+.today-row-meta a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.today-row.is-done .today-row-name { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.today-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 var(--sp-1);
+  border-radius: 50%;
+  background: var(--c);
+  vertical-align: middle;
+}
+.today-planned { font-size: var(--text-meta); color: var(--ink-2); white-space: nowrap; }
+/* A habit's tick in All habits: a pill toggle, "Tick" or "Ticked" (aria-pressed) */
+.today-tick-chip {
+  min-height: var(--hit);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-ui);
+  white-space: nowrap;
+}
+.today-tick-chip:hover { background: var(--surface-hover); }
+.today-tick-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: var(--weight-medium); }
+
+/* The week strip: seven pips from Monday, each its own state (FR-TODAY-6) */
+.today-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.today-day { display: grid; justify-items: center; gap: var(--sp-2); font-size: var(--text-meta); color: var(--ink-3); }
+.today-pip {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  color: var(--accent-ink);
+}
+.today-pip .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+.today-day.is-full .today-pip { background: var(--accent); border-color: var(--accent); }
+.today-day.is-part .today-pip { background: var(--accent-tint); border-color: var(--accent-tint); }
+.today-day.is-none .today-pip { border-style: dashed; border-color: var(--ink-3); }
+.today-day.is-future .today-pip { border-style: dotted; border-color: var(--line); }
+.today-day[aria-current="date"] { color: var(--ink); font-weight: var(--weight-bold); }
+.today-day[aria-current="date"] .today-pip { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--accent); }
+.today-strip-note { margin: var(--sp-4) 0 0; font-size: var(--text-ui); color: var(--ink-2); }
+
+/* The journal (FR-HOME-11 to 13): one line for the day shown, saved as you type */
+.today-journal-field { display: grid; gap: var(--sp-2); }
+.today-journal-label { font-size: var(--text-meta); color: var(--ink-3); }
+.today-journal-input {
+  width: 100%;
+  min-height: var(--hit);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-body);
+}
+.today-journal-input:focus { border-color: var(--accent); }
+.today-journal-status { min-height: 1.2em; font-size: var(--text-small); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* All habits (FR-TODAY-8): a disclosure with a plus that turns to a minus, then each area's rows */
+.today-habits { margin-top: var(--sp-10); }
+.today-habits > summary {
+  min-height: var(--hit);
+  padding: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  color: var(--accent);
+}
+.today-habits > summary::before { content: none; }
+.today-habits > summary::after { content: "+"; font-size: var(--text-title-s); line-height: 1; margin-left: var(--sp-1); }
+.today-habits[open] > summary::after { content: "\2212"; }
+.today-habits > summary:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.today-habit-group { margin-top: var(--sp-5); }
+.today-habit-area {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+
+@media (max-width: 768px) {
+  .today-focus { padding: var(--sp-6); }
+  .today-focus-main { grid-template-columns: 1fr; gap: var(--sp-5); }
+  .today-focus-main > .tick { justify-self: start; }
+}
+
+@media (max-width: 480px) {
+  .today-strip { gap: var(--sp-1); }
+  .today-row { gap: var(--sp-2); }
+}

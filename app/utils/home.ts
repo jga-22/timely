@@ -1,7 +1,6 @@
-import type { Activity, Category, Habit, PlannerState } from '~/types/planner'
+import type { Habit, PlannerState } from '~/types/planner'
 import { isoWeekOf, weekdayOf } from '~/utils/dates'
 import { habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
-import { formatHour } from '~/utils/planner/format'
 import { HOURS_PER_DAY, slotsToBlocks, type TimeBlock } from '~/utils/planner/slots'
 import { effectiveTemplate } from '~/utils/planner/templates'
 import { getActivityMap } from '~/utils/planner/activities'
@@ -29,17 +28,6 @@ export const dayBlocks = (state: PlannerState, date: string, showSleep = false):
   const sleepId = showSleep ? null : sleepActivityId(state)
 
   return slotsToBlocks(template.slots, weekdayOf(date)).filter(block => activities.has(block.activityId) && block.activityId !== sleepId)
-}
-
-/** The 24 hours of one date in order: the activity id planned in each hour, or null when unplanned (sleep counts as unplanned unless shown) */
-export const dayHours = (state: PlannerState, date: string, showSleep = false): Array<string | null> => {
-  const hours: Array<string | null> = Array.from({ length: HOURS_PER_DAY }, () => null)
-
-  for (const block of dayBlocks(state, date, showSleep)) {
-    for (let hour = block.start; hour < block.end; hour += 1) hours[hour] = block.activityId
-  }
-
-  return hours
 }
 
 /**
@@ -76,7 +64,14 @@ export const habitHasDay = (state: PlannerState, habit: Habit, date: string): bo
 }
 
 /**
- * Habits listed under the day (FR-HOME-15): the habits with no day assigned in the week of the date (`habitHasDay`). A habit of
+ * Whether a habit is planned as a block on the date (FR-TODAY-8): its linked activity has a block on that very day. The habit
+ * then shows through the block; on any other day of the week it is a row of its own (the mockup's rule, per day)
+ */
+export const habitPlannedOn = (state: PlannerState, habit: Habit, date: string): boolean =>
+  !!habit.activityId && dayBlocks(state, date, true).some(block => block.activityId === habit.activityId)
+
+/**
+ * Habits listed under the day (FR-HOME-15): the habits not planned as a block on the date (`habitPlannedOn`). A habit of
  * the Sleep activity is left out while sleep is hidden. A candidate is listed when it is due on the day (`habitDue`): a daily
  * habit always, a weekly or monthly one only while it needs more ticks in its period
  */
@@ -86,7 +81,7 @@ export const dayHabits = (state: PlannerState, date: string, showSleep = false):
   return state.habits.filter(habit => {
     if (sleepId && habit.activityId === sleepId) return false
 
-    if (habitHasDay(state, habit, date)) return false
+    if (habitPlannedOn(state, habit, date)) return false
 
     return habitDue(state, habit, date)
   })
@@ -119,95 +114,18 @@ export const habitDue = (state: PlannerState, habit: Habit, date: string): boole
   return (period === 'week' ? weekTicks(state, habit.id, date) : monthTicks(state, habit.id, date)) < count
 }
 
-/** "Sunday 25 October 2026" */
-export const formatDayLabel = (key: string): string => {
-  const [year, month, day] = key.split('-').map(Number)
-  return `${WEEKDAY_NAMES[weekdayOf(key)]} ${day} ${MONTH_NAMES[month! - 1]} ${year}`
-}
-
 /** The hours a day bar spans: `end` is exclusive */
 export interface HourRange {
   start: number
   end: number
 }
 
-/** One segment of the day's timeline (FR-HOME-4): its colour is '' when unplanned */
-export interface TimelineSegment {
-  key: string
-  color: string
-  title: string
-}
-
-/** One activity block of the day with its done state (FR-HOME-14) */
-export interface HomeDayRow {
-  key: string
-  block: TimeBlock
-  activity: Activity
-  color: string
-  category: Category | undefined
-  done: boolean
-  now: boolean
-}
-
-/** One habit listed under the day (FR-HOME-15, 16) */
-export interface HomeHabitRow {
-  key: string
-  habit: Habit
-  name: string
-  category: Category | undefined
-  progress: string | null
-  done: boolean
-}
-
-/** The hour labels on the timeline axis (FR-HOME-4) */
-const AXIS_HOURS = [9, 12, 18, 22]
-
-/** The axis labels inside the bar's span; the range's own ends are labelled separately when they are trimmed */
-export const axisTicks = (range: HourRange): number[] => AXIS_HOURS.filter(hour => hour > range.start && hour < range.end)
-
-/** The left offset of an hour on the axis, as a CSS percentage of the bar */
-export const axisLeft = (hour: number, range: HourRange): string => `${((hour - range.start) / (range.end - range.start)) * 100}%`
-
-/** The timeline segments of a day over its range: one per hour, with the activity name and colour (unplanned hours have no colour) */
-export const timelineSegments = (
-  hours: Array<string | null>,
-  range: HourRange,
-  nameOf: (activityId: string) => string,
-  colorOf: (activityId: string) => string
-): TimelineSegment[] =>
-  hours.slice(range.start, range.end).map((activityId, index) => {
-    const hour = range.start + index
-    const name = activityId ? nameOf(activityId) : ''
-
-    return {
-      key: `h${hour}`,
-      color: activityId ? colorOf(activityId) : '',
-      title: `${formatHour(hour)}, ${name || 'unplanned'}`
-    }
-  })
-
-/** Whether a block is the current hour (the "Now" mark): only on today, and only once the clock is read (FR-DATE-6) */
-export const isNowBlock = (block: TimeBlock, hour: number | null, isToday: boolean): boolean =>
-  isToday && hour !== null && hour >= block.start && hour < block.end
-
-/** Whether every item of a list is done; an empty list is not done */
-export const isAllDone = (done: number, total: number): boolean => total > 0 && done === total
-
-/** The arc of the day's progress ring (FR-HOME-19): the share done in percent, null when nothing is planned */
-export const donePercent = (done: number, total: number): number | null => (total ? (done / total) * 100 : null)
-
-/** The day's progress line (FR-HOME-17): "All done for today", or "2 of 5 done" */
-export const progressText = (done: number, total: number, label: string): string =>
-  isAllDone(done, total) ? `All done for ${label}` : `${done} of ${total} done`
-
-/** The title of Home: "Today", or the day's label on another day */
-export const dayTitle = (day: string | null, isToday: boolean): string => (day && !isToday ? formatDayLabel(day) : 'Today')
-
-/** The line under the title: the day's label (on today only) and its ISO week; null until the day is known (FR-DATE-6) */
-export const dayHeaderLine = (day: string | null, isToday: boolean): string | null => {
+/** The line under the day switch (FR-TODAY-1): "Wednesday 4 November · week 45"; null until the day is known (FR-DATE-6) */
+export const dayHeaderLine = (day: string | null): string | null => {
   if (!day) return null
 
-  return [isToday ? formatDayLabel(day) : null, `Week ${isoWeekOf(day).week}`].filter(Boolean).join(' · ')
+  const [, month, date] = day.split("-").map(Number)
+  return `${WEEKDAY_NAMES[weekdayOf(day)]} ${date} ${MONTH_NAMES[month! - 1]} · week ${isoWeekOf(day).week}`
 }
 
 /** Whether Home may show a day: not after today, and not earlier than the back limit (FR-HOME-18) */
