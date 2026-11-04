@@ -31,7 +31,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
-| `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (next block, countdown pill, "Behind this" line), the day line with the now marker, "1 of 7 done today", Also today, the week strip, the journal line and All habits collapsed (2026-11-05) |
+| `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (the block in focus with its pill: a countdown, or "Done · next at 1 PM" when ticked; "Behind this" line), the day line with the now marker, "1 of 7 done today", Today's list (every item, the one in focus marked), the week strip, the journal line and All habits collapsed (2026-11-05) |
 | `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |
 | `today-mobile-light.png` | 400 px wide, full page | Today, light, phone: the focus card above the fold, the tab bar at the foot, nothing hidden at the end |
 | `today-all-done-desktop-light.png` | 1280 px wide, full page | Today, light, every item ticked: "Today is done." with the check, "Plan tomorrow" and the day line "All done today" |
