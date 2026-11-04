@@ -15,7 +15,7 @@ import { getActivityMap } from '~/utils/planner/activities'
  * first tick nothing is counted, so a new user is not measured against the days before they began. Sleep never counts (its blocks
  * and its habits are left out, as Home does).
  *
- * Blocks: each date's planned blocks are `dayBlocks` (its effective template, so week types and time off apply). A block is done
+ * Blocks: each date's planned blocks are `dayBlocks` (the week type of its week, so week types and time off apply; a blank week plans nothing). A block is done
  * when its key is ticked that day. Blocks are weighted by hours.
  *
  * Habits: a habit with a day assigned in its week (its linked activity has a block that week) is judged through that block and not

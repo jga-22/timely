@@ -263,3 +263,6 @@
   .today-strip { gap: var(--sp-1); }
   .today-row { gap: var(--sp-2); }
 }
+
+/* A blank week (2026-11-05): one quiet line above the list, with its link to Year */
+.today-blank-note { margin: 0 0 var(--sp-6); font-size: var(--text-ui); color: var(--ink-2); }

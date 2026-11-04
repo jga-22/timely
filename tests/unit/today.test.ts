@@ -26,7 +26,7 @@ import {
   todayItems,
   weekStrip
 } from '~/utils/today'
-import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots } from './fixtures'
+import { activity, assignEveryWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots } from './fixtures'
 
 // 2026-10-26 is a Monday (day 0 of the week); 2026-10-28 a Wednesday; 2026-10-29 a Thursday
 const MONDAY = '2026-10-26'
@@ -38,7 +38,8 @@ const THURSDAY = '2026-10-29'
 const planned = (runs: Run[], base: PlannerState = empty()): PlannerState => {
   const slots = base.templates.find(template => template.id === ONBOARDING_TEMPLATE_ID)!.slots
 
-  return withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots))
+  // Every week of the year has this week type (a blank week plans nothing, 2026-11-05)
+  return assignEveryWeek(withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots)), 2026, ONBOARDING_TEMPLATE_ID)
 }
 
 /** Weekly ticks count the days of the week that carry the key, so a tick is put on each of several days */

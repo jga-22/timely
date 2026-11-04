@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { PlannerState } from '~/types/planner'
 import {
   availableShares,
+  blankWeeks,
   capacityLabel,
   categoryShares,
   chartScale,
@@ -20,10 +21,10 @@ import { sleepActivityId } from '~/utils/sleep'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { createEmptySlots } from '~/utils/planner/slots'
 import type { WeekTemplate } from '~/types/planner'
-import { activity, applyWeek, empty, Run, seed, slotsWith, withActivities, withSlots, withTemplate } from './fixtures'
+import { activity, applyWeek, assignEveryWeek, empty, Run, seed, slotsWith, withActivities, withSlots, withTemplate } from './fixtures'
 
 /**
- * A new user's state with two activities planned in the one week type that every unassigned week uses:
+ * A new user's state with two activities planned in the one week type, applied to every week of 2026 (as the onboarding build does):
  * 4 h of work on Monday (professional) and 2 h of family on Tuesday (relationship). The default night stays painted.
  */
 const planned = (): PlannerState => {
@@ -34,11 +35,14 @@ const planned = (): PlannerState => {
   ]
   const slots = base.templates.find(template => template.id === ONBOARDING_TEMPLATE_ID)!.slots
 
-  return withActivities(withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots)), [
+  return assignEveryWeek(withActivities(withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots)), [
     activity('work', 'professionnelle'),
     activity('family', 'relationnelle'),
-  ])
+  ]), 2026, ONBOARDING_TEMPLATE_ID)
 }
+
+/** The empty state with every week of 2026 on the one week type: the capacity of the year is the awake time of its weeks */
+const everyWeek = (): PlannerState => assignEveryWeek(empty(), 2026, ONBOARDING_TEMPLATE_ID)
 
 const WEEKS_2026 = 53
 /** Hours of a week: 7 days of 24 */
@@ -65,7 +69,7 @@ describe('formatInUnit', () => {
 
 describe('insightsBars', () => {
   it('makes 12 month bars for a year that together hold the 53 ISO weeks', () => {
-    const bars = insightsBars(empty(), 'month', [2026], true)
+    const bars = insightsBars(everyWeek(), 'month', [2026], true)
 
     expect(bars.map(bar => bar.label)).toEqual(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
     expect(bars.reduce((sum, bar) => sum + bar.weeks, 0)).toBe(WEEKS_2026)
@@ -73,7 +77,7 @@ describe('insightsBars', () => {
   })
 
   it('makes one bar per ISO week, numbered from 1 to 53 in 2026', () => {
-    const bars = insightsBars(empty(), 'week', [2026], true)
+    const bars = insightsBars(everyWeek(), 'week', [2026], true)
 
     expect(bars).toHaveLength(WEEKS_2026)
     expect(bars.every(bar => bar.weeks === 1 && bar.days === 7)).toBe(true)
@@ -82,22 +86,22 @@ describe('insightsBars', () => {
   })
 
   it('makes four quarter bars and one year bar', () => {
-    expect(insightsBars(empty(), 'quarter', [2026], true).map(bar => bar.label)).toEqual(['Q1', 'Q2', 'Q3', 'Q4'])
+    expect(insightsBars(everyWeek(), 'quarter', [2026], true).map(bar => bar.label)).toEqual(['Q1', 'Q2', 'Q3', 'Q4'])
 
-    const year = insightsBars(empty(), 'year', [2026], true)
+    const year = insightsBars(everyWeek(), 'year', [2026], true)
     expect(year).toHaveLength(1)
     expect(year[0]).toMatchObject({ key: '2026', weeks: WEEKS_2026, capacity: WEEKS_2026 * WEEK_HOURS })
   })
 
   it('counts the available hours of sleep as taken out when sleep is hidden', () => {
-    const shown = insightsBars(empty(), 'year', [2026], true)[0]!
-    const hidden = insightsBars(empty(), 'year', [2026], false)[0]!
+    const shown = insightsBars(everyWeek(), 'year', [2026], true)[0]!
+    const hidden = insightsBars(everyWeek(), 'year', [2026], false)[0]!
 
     expect(shown.capacity).toBe(WEEKS_2026 * WEEK_HOURS)
     expect(hidden.capacity).toBe(WEEKS_2026 * WEEK_HOURS - WEEKS_2026 * SLEEP_HOURS_PER_WEEK)
   })
 
-  it('counts a week under the week type that governs it: unassigned weeks use the active one', () => {
+  it('counts a week under the week type applied to it', () => {
     const bars = insightsBars(planned(), 'year', [2026], false)[0]!
 
     // 4 h of work and 2 h of family in each of the 53 weeks
@@ -122,7 +126,7 @@ describe('insightsBars', () => {
   })
 
   it('gives a bar with no plan no segments', () => {
-    const bars = insightsBars(empty(), 'month', [2026], false)
+    const bars = insightsBars(everyWeek(), 'month', [2026], false)
 
     expect(bars.every(bar => bar.segments.length === 0 && bar.total === 0)).toBe(true)
   })
@@ -146,20 +150,20 @@ describe('weekCategoryHours', () => {
 
 describe('capacityLabel', () => {
   it('states the available time of a single bar', () => {
-    const bars = insightsBars(empty(), 'year', [2026], true)
+    const bars = insightsBars(everyWeek(), 'year', [2026], true)
 
     expect(capacityLabel('year', bars, 'hours')).toBe('Available per year: 8,904 h')
   })
 
   it('says "up to" when the bars differ in length, as months do', () => {
-    const bars = insightsBars(empty(), 'month', [2026], true)
+    const bars = insightsBars(everyWeek(), 'month', [2026], true)
     const largest = Math.max(...bars.map(bar => bar.capacity))
 
     expect(capacityLabel('month', bars, 'hours')).toBe(`Available per month: up to ${largest.toLocaleString('en-US')} h`)
   })
 
   it('reads the unit it is given', () => {
-    const bars = insightsBars(empty(), 'week', [2026], true)
+    const bars = insightsBars(everyWeek(), 'week', [2026], true)
 
     expect(capacityLabel('week', bars, 'hours')).toBe('Available per week: 168 h')
     expect(capacityLabel('week', bars, 'days')).toBe('Available per week: 7 d')
@@ -200,7 +204,7 @@ describe('categoryShares', () => {
   })
 
   it('has no rows and no total for bars with no plan', () => {
-    expect(categoryShares(insightsBars(empty(), 'year', [2026], false))).toEqual({ total: 0, rows: [] })
+    expect(categoryShares(insightsBars(everyWeek(), 'year', [2026], false))).toEqual({ total: 0, rows: [] })
   })
 })
 
@@ -327,11 +331,18 @@ describe('templateSplit', () => {
 })
 
 describe('weeksUsing', () => {
-  it('counts every week of the year under the active week type when none is assigned', () => {
+  it('counts every week of the year for the week type applied to all of them', () => {
     expect(weeksUsing(planned(), ONBOARDING_TEMPLATE_ID, 2026)).toBe(WEEKS_2026)
   })
 
-  it('counts an assigned week for its own week type and the rest for the active one', () => {
+  it('counts a blank week for no week type (2026-11-05: no fallback to the active one)', () => {
+    const blank = { ...planned(), appliedWeeks: [] }
+
+    expect(weeksUsing(blank, ONBOARDING_TEMPLATE_ID, 2026)).toBe(0)
+    expect(blankWeeks(blank, 2026)).toBe(WEEKS_2026)
+  })
+
+  it('counts an assigned week for its own week type, and the rest of the year for the one they keep', () => {
     const withRest = withTemplate(planned(), {
       id: 'rest',
       name: 'Rest',
@@ -342,6 +353,7 @@ describe('weeksUsing', () => {
 
     expect(weeksUsing(state, 'rest', 2026)).toBe(2)
     expect(weeksUsing(state, ONBOARDING_TEMPLATE_ID, 2026)).toBe(WEEKS_2026 - 2)
+    expect(blankWeeks(state, 2026)).toBe(0)
   })
 
   it('is zero for a week type that no week uses', () => {

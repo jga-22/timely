@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Habit, PlannerState } from '~/types/planner'
 import { adherenceMode, adherenceReport, basisOf, calendarDays, trackingStartOf } from '~/utils/adherence'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
-import { activity, empty, type Run, slotsWith, withActivities, withDone, withHabits, withJournal, withSlots } from './fixtures'
+import { activity, assignEveryWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withJournal, withSlots } from './fixtures'
 
 // Monday 26 October 2026 is the first tracked day in these tests; today is Wednesday 28 October
 const MONDAY = '2026-10-26'
@@ -19,7 +19,8 @@ const focus: Habit = { id: 'focus', categoryId: 'professionnelle', name: 'Focus'
 const planned = (habits: Habit[] = [walk]): PlannerState => {
   const base = empty()
   const slots = base.templates.find(template => template.id === ONBOARDING_TEMPLATE_ID)!.slots
-  const withPlan = withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith([work], slots))
+  // Every week of the year has this week type (a blank week plans nothing, 2026-11-05)
+  const withPlan = assignEveryWeek(withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith([work], slots)), 2026, ONBOARDING_TEMPLATE_ID)
 
   return withHabits(withActivities(withPlan, [activity('work', 'professionnelle')]), habits)
 }

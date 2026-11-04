@@ -1,7 +1,7 @@
 import type { PlannerState, WeekTemplate } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
 import { aggregateTemplate, aggregateTemplateByCategory } from '~/utils/planner/aggregate'
-import { effectiveTemplate } from '~/utils/planner/templates'
+import { weekTemplate } from '~/utils/planner/templates'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**
@@ -11,9 +11,10 @@ import { sleepActivityId } from '~/utils/sleep'
  *
  * Each ISO week counts once and belongs to the year, quarter and month of its Thursday (ISO convention), so the totals agree
  * across granularities. Each activity counts once: in its primary category (PRD FR-PLAN-20). A week counts the template that
- * governs it: its assigned week type, else the active one, as Home and Planner do (PRD 23.1).
- * A bar is a whole number of ISO weeks, so its available time is its days times 24 (the days of those weeks):
- * a calendar month would not match the hours planned in its weeks, and the free time would be wrong.
+ * applies to it: its own week type, or none for a blank week (2026-11-05: no fallback to the active one; PRD 23.1 superseded).
+ * A bar is a whole number of ISO weeks, so its available time is the days of its planned weeks times 24:
+ * a calendar month would not match the hours planned in its weeks, and the free time would be wrong. Only the planned weeks have
+ * available time: a blank week adds none (2026-11-05).
  */
 
 export type InsightsGranularity = 'year' | 'quarter' | 'month' | 'week'
@@ -59,11 +60,13 @@ export interface InsightsBar {
   year: number
   /** ISO week number, for the week granularity only (0 otherwise) */
   week: number
-  /** ISO weeks in the bar */
+  /** ISO weeks in the bar, blank ones included */
   weeks: number
   /** Days of those weeks: the weeks times 7 */
   days: number
-  /** Hours available in the bar: days times 24, less the sleep hours when sleep is hidden (FR-SLEEP-7) */
+  /** The weeks of the bar that have a week type of their own: a blank week has no available time (2026-11-05) */
+  plannedWeeks: number
+  /** Hours available in the bar: the days of the planned weeks times 24, less their sleep hours when sleep is hidden (FR-SLEEP-7) */
   capacity: number
   /** Hours planned in the bar */
   total: number
@@ -77,11 +80,11 @@ export const rangeYears = (startYear: number, count: number): number[] =>
   Array.from({ length: count }, (_, index) => startYear + index)
 
 /**
- * Planned hours of one ISO week by category, from the template that governs it (effectiveTemplate); primary categories only.
+ * Planned hours of one ISO week by category, from the week type applied to it; a blank week plans nothing (weekTemplate). Primary categories only.
  * Sleep is left out unless `showSleep` is on: when it is on, it counts under its own life area, Physical (FR-SLEEP-7)
  */
 export const weekCategoryHours = (state: PlannerState, monday: string, showSleep = false): Map<string, number> => {
-  const template = effectiveTemplate(state, monday)
+  const template = weekTemplate(state, monday)
   if (!template) return new Map()
 
   const sleepId = showSleep ? null : sleepActivityId(state)
@@ -90,10 +93,10 @@ export const weekCategoryHours = (state: PlannerState, monday: string, showSleep
   return aggregateTemplateByCategory(visible, state)
 }
 
-/** Sleep hours of one ISO week from the template that governs it: what hidden sleep takes out of the available time */
+/** Sleep hours of one ISO week from the week type applied to it: what hidden sleep takes out of the available time */
 const weekSleepHours = (state: PlannerState, monday: string): number => {
   const sleepId = sleepActivityId(state)
-  const template = effectiveTemplate(state, monday)
+  const template = weekTemplate(state, monday)
 
   return sleepId && template ? aggregateTemplate(template, state.activities).get(sleepId) ?? 0 : 0
 }
@@ -116,7 +119,7 @@ const periodOfWeek = (monday: string, granularity: InsightsGranularity): { key: 
  * (`showSleep` off, the default) its hours are neither planned nor available
  */
 export const insightsBars = (state: PlannerState, granularity: InsightsGranularity, years: number[], showSleep = false): InsightsBar[] => {
-  const bars = new Map<string, { period: ReturnType<typeof periodOfWeek>; weeks: number; hours: Map<string, number>; sleep: number }>()
+  const bars = new Map<string, { period: ReturnType<typeof periodOfWeek>; weeks: number; plannedWeeks: number; hours: Map<string, number>; sleep: number }>()
 
   for (const year of years) {
     for (const monday of isoWeekStarts(year)) {
@@ -124,12 +127,16 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
       let entry = bars.get(period.key)
 
       if (!entry) {
-        entry = { period, weeks: 0, hours: new Map(), sleep: 0 }
+        entry = { period, weeks: 0, plannedWeeks: 0, hours: new Map(), sleep: 0 }
         bars.set(period.key, entry)
       }
 
       entry.weeks += 1
-      if (!showSleep) entry.sleep += weekSleepHours(state, monday)
+      // A blank week (no week type of its own) has no planned hours and no available time: it adds no capacity
+      if (weekTemplate(state, monday)) {
+        entry.plannedWeeks += 1
+        if (!showSleep) entry.sleep += weekSleepHours(state, monday)
+      }
 
       for (const [categoryId, hours] of weekCategoryHours(state, monday, showSleep)) {
         entry.hours.set(categoryId, (entry.hours.get(categoryId) ?? 0) + hours)
@@ -137,11 +144,11 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
     }
   }
 
-  return [...bars.values()].map(({ period, weeks, hours, sleep }) => {
+  return [...bars.values()].map(({ period, weeks, plannedWeeks, hours, sleep }) => {
     const segments = [...hours].map(([categoryId, value]) => ({ categoryId, hours: value }))
     const total = segments.reduce((sum, segment) => sum + segment.hours, 0)
     const days = weeks * 7
-    const capacity = days * HOURS_PER_DAY - sleep
+    const capacity = plannedWeeks * 7 * HOURS_PER_DAY - sleep
 
     return {
       key: period.key,
@@ -150,6 +157,7 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
       week: period.week,
       weeks,
       days,
+      plannedWeeks,
       capacity,
       total,
       free: Math.max(0, capacity - total),
@@ -304,6 +312,7 @@ export const templateSplit = (state: PlannerState, template: WeekTemplate, showS
     week: 0,
     weeks: 1,
     days: 7,
+    plannedWeeks: 1,
     capacity,
     total,
     free: Math.max(0, capacity - total),
@@ -318,8 +327,13 @@ export const templateSplit = (state: PlannerState, template: WeekTemplate, showS
 export const FREE_LABEL = 'Free'
 
 /**
- * The weeks of an ISO year that use a week type (the Week tab's "used in N weeks"): an applied week counts for its own week type,
- * an unassigned week for the active one, as effectiveTemplate reads them (FR-INS-P3). The year is passed in, so nothing reads the clock.
+ * The weeks of an ISO year whose own week type is this one (the Week tab's "used in N weeks", the Year counts). A blank week uses no week
+ * type, so it counts for none (FR-INS-P3, superseded 2026-11-05: an unassigned week no longer counts for the active one). The year is
+ * passed in, so nothing reads the clock.
  */
 export const weeksUsing = (state: PlannerState, templateId: string, year: number): number =>
-  isoWeekStarts(year).filter(monday => effectiveTemplate(state, monday)?.id === templateId).length
+  isoWeekStarts(year).filter(monday => weekTemplate(state, monday)?.id === templateId).length
+
+/** The weeks of an ISO year with no week type of their own (blank: no schedule, no planned hours) */
+export const blankWeeks = (state: PlannerState, year: number): number =>
+  isoWeekStarts(year).filter(monday => !weekTemplate(state, monday)).length

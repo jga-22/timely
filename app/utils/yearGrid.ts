@@ -75,24 +75,24 @@ export const monthMarks = (weeks: string[], perRow = 14): MonthMark[][] => {
   return rows
 }
 
-/** What Apply will do with the chosen paint tool, under the weeks fields: the schedule's name, or Clear's reset to the default one */
-export const weekRangeHint = (templateName: string | null, defaultName: string | null = null): string => (templateName
+/** What Apply will do with the chosen paint tool, under the weeks fields: the schedule's name, or Clear, which leaves the weeks with no schedule */
+export const weekRangeHint = (templateName: string | null): string => (templateName
   ? `Applies ${templateName} to these weeks.`
-  : `Clears these weeks to ${defaultName ?? 'the active schedule'}.`)
+  : 'Clears these weeks: they get no schedule.')
 
-/** The result line after a range was applied: the schedule's name, or that the weeks were cleared to the default one (Clear) */
-export const weekRangeResult = (from: number, to: number, templateName: string | null, defaultName: string | null = null): string => (templateName
+/** The result line after a range was applied: the schedule's name, or that the weeks now have no schedule (Clear) */
+export const weekRangeResult = (from: number, to: number, templateName: string | null): string => (templateName
   ? `Weeks ${from} to ${to} use ${templateName}.`
-  : `Weeks ${from} to ${to} are cleared to ${defaultName ?? 'the active schedule'}.`)
+  : `Weeks ${from} to ${to} have no schedule now.`)
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 /**
  * The name a week's cell has for a screen reader, since the grid no longer shows row labels: "Week 45, November 2026, Standard Week",
- * or "unassigned" for a week with no schedule of its own. The month is the one the week's Thursday falls in, as the month labels are.
+ * or "no schedule" for a week with no schedule of its own (blank). The month is the one the week's Thursday falls in, as the month labels are.
  */
 export const weekCellName = (monday: string, wi: number, scheduleName: string | null): string => {
   const thursday = new Date(`${monday}T00:00:00Z`)
   thursday.setUTCDate(thursday.getUTCDate() + 3)
-  return `Week ${wi + 1}, ${MONTH_NAMES[thursday.getUTCMonth()]} ${thursday.getUTCFullYear()}, ${scheduleName ?? 'unassigned'}`
+  return `Week ${wi + 1}, ${MONTH_NAMES[thursday.getUTCMonth()]} ${thursday.getUTCFullYear()}, ${scheduleName ?? 'no schedule'}`
 }

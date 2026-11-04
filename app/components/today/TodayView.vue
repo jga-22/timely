@@ -5,6 +5,7 @@ import { useShownDay } from '~/composables/useShownDay'
 import { useNowMinutes } from '~/composables/useNowMinutes'
 import { habitDoneKey } from '~/utils/done'
 import { dayRange, habitProgressText } from '~/utils/home'
+import { weekTemplate } from '~/utils/planner/templates'
 import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import {
   LAST_ONE_TEXT,
@@ -44,6 +45,8 @@ const { link } = useNav()
 const { state: auth } = useAuth()
 const minute = useNowMinutes()
 const { viewed, isToday, canPrevious, canNext, headerLine, goPrevious, goNext, goToday } = useShownDay()
+// A day in a week with no schedule of its own: nothing is planned in it, and Week (the active schedule) does not fill it (2026-11-05)
+const blankWeek = computed(() => !!viewed.value && !weekTemplate(planner.$state, viewed.value))
 const { today } = usePlannerYear()
 
 // The sign-in name's first word, in Supabase mode only (there is no name in the local mode)
@@ -227,7 +230,10 @@ watch(
       <TodayDayLine v-bind="dayLine" />
     </TodayDone>
 
-    <TodayNothing v-else :is-today="isToday" :habit="nextHabit" :has-ambition="!!ambition" />
+    <TodayNothing v-else :is-today="isToday" :habit="nextHabit" :has-ambition="!!ambition" :blank-week="blankWeek" />
+
+    <!-- A blank week (no schedule of its own, 2026-11-05): the blocks of the day are none; the habits still show. Say so, and where to give the week one -->
+    <p v-if="blankWeek" class="today-blank-note">This week has no schedule, so nothing is planned in it. <NuxtLink :to="link('year')">Give the week a schedule in Year</NuxtLink></p>
 
     <TodayItems
       v-if="items.length"

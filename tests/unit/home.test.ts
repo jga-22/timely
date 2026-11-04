@@ -11,7 +11,7 @@ import {
   habitTicked
 } from '~/utils/home'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
-import { activity, applyWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots, withTemplate } from './fixtures'
+import { activity, applyWeek, assignEveryWeek, empty, type Run, slotsWith, withActivities, withDone, withHabits, withSlots, withTemplate } from './fixtures'
 
 // 2026-10-26 is a Monday (day 0 of the week), 2026-10-27 a Tuesday
 const MONDAY = '2026-10-26'
@@ -21,7 +21,7 @@ const TUESDAY = '2026-10-27'
 const planned = (runs: Run[], base: PlannerState = empty()): PlannerState => {
   const slots = base.templates.find(template => template.id === ONBOARDING_TEMPLATE_ID)!.slots
 
-  return withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots))
+  return assignEveryWeek(withSlots(base, ONBOARDING_TEMPLATE_ID, slotsWith(runs, slots)), 2026, ONBOARDING_TEMPLATE_ID)
 }
 
 const withoutSleep = (state: PlannerState): PlannerState => ({

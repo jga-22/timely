@@ -2,12 +2,12 @@ import type { Habit, PlannerState } from '~/types/planner'
 import { isoWeekOf, weekdayOf } from '~/utils/dates'
 import { habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
 import { HOURS_PER_DAY, slotsToBlocks, type TimeBlock } from '~/utils/planner/slots'
-import { effectiveTemplate } from '~/utils/planner/templates'
+import { weekTemplate } from '~/utils/planner/templates'
 import { getActivityMap } from '~/utils/planner/activities'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**
- * Home calculations (PRD section 17, Home): the blocks and hours of today, from the effective template of that date.
+ * Home calculations (PRD section 17, Home): the blocks and hours of today, from the week type of that date's week (blank weeks have none).
  * Pure functions over the planner state, so they run in node.
  * Hours are whole numbers: templates are hourly and every date has 24 slots (DST changes nothing in the grid).
  */
@@ -16,11 +16,11 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 /**
- * Time blocks of one date in time order, from the effective template of that date (FR-HOME-4). Unknown activities are dropped.
+ * Time blocks of one date in time order, from the week type of that date's week (FR-HOME-4); none in a blank week. Unknown activities are dropped.
  * Sleep is left out unless `showSleep` is on (FR-SLEEP-4): its hours then count as unplanned
  */
 export const dayBlocks = (state: PlannerState, date: string, showSleep = false): TimeBlock[] => {
-  const template = effectiveTemplate(state, date)
+  const template = weekTemplate(state, date)
 
   if (!template) return []
 
@@ -36,7 +36,7 @@ export const dayBlocks = (state: PlannerState, date: string, showSleep = false):
  * and counts as unplanned. A day that is all sleep keeps all 24 hours
  */
 export const dayRange = (state: PlannerState, date: string, showSleep = false): HourRange => {
-  const template = effectiveTemplate(state, date)
+  const template = weekTemplate(state, date)
   const sleepId = showSleep ? null : sleepActivityId(state)
 
   if (!template || !sleepId) return { start: 0, end: HOURS_PER_DAY }
@@ -52,13 +52,13 @@ export const dayRange = (state: PlannerState, date: string, showSleep = false): 
 
 /**
  * Whether a habit has a day assigned in the week of the date (FR-HOME-15): its linked activity has at least one block in the
- * effective template of that week (the same template as `dayBlocks`). A habit with no linked activity, or whose activity has
+ * week type of that week (the same as `dayBlocks`). A habit with no linked activity, or whose activity has
  * no block that week, has no day. The habit then belongs to its day as a block (in the activities list), never as a habit row
  */
 export const habitHasDay = (state: PlannerState, habit: Habit, date: string): boolean => {
   if (!habit.activityId || !getActivityMap(state.activities).has(habit.activityId)) return false
 
-  const template = effectiveTemplate(state, date)
+  const template = weekTemplate(state, date)
 
   return !!template && template.slots.includes(habit.activityId)
 }
