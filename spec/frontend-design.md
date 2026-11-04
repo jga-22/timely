@@ -37,33 +37,28 @@ Moved to [design-system.md](design-system.md), section 2 (tiers, colour roles wi
 
 ## 3. Layout
 
-### 3.1 App shell
+### 3.1 App shell (FR-NAV, slice 4, 0.1.0)
 
-`app/app.vue` renders `VApp` > `.app` (`display: grid; grid-template-rows: auto 1fr; min-height: 100vh; overflow-x: clip`) > `header.topbar` and `<NuxtPage>`. The page component (`app/pages/index.vue`) switches on the `tab` route query, read by `useNav()` (`app/composables/useNav.ts`). An unknown or missing tab shows Home. Tab clicks push history entries, so Back and Forward work. Query parameters: `tab` (home, goals, planner, year, insights), `item` (id of the selected category, activity or habit) and `edit=1` (edit mode). Edit links to another screen use `link(tab, { item, edit })` or `go(tab, { item, edit })`. Goals' "+ Add" opens its own form (FR-GOALS-20). No screen reads `add` or `category` any more: the Week tab has no list (2026-11-04). On the Year tab `item` is a week type id.
+The shell has three surfaces, Today, Plan and Progress (option A of `spec/ux-information-architecture.md`, chosen 2026-11-04). Its parts are in `app/components/shell/`: `AppRail.vue` (the desktop rail), `AppTabBar.vue` (the phone bar), `AppTopBar.vue` (the top bar) and `AppNavLink.vue` (one surface link). `app/app.vue` renders `.app` (a flex row: the rail, then `.shell-column` with the top bar, the page and the footer; the phone bar is fixed) and the dialogs. The page component (`app/pages/index.vue`) is the `<main id="main">` and switches on the surface, read by `useNav()` (`app/composables/useNav.ts`, the rules in `app/utils/nav.ts`).
+
+- **Rail (769px and wider).** Sticky, the full height of the window, `--rail-w` (232px) wide, with its own padding (`--sp-8` at the top and `--sp-6` at the bottom). The brand (the `brand` icon and "Timely") links to Today; below it the three surfaces, Today, Plan and Progress, each with its icon. A surface is a 48px row (`--hit-lg`) with `--radius-md`; the current one sits on the card surface with `--elev-1` and a semibold label, and its icon is in the accent.
+- **Top bar.** `.topbar`, sticky, `--z-sticky`, on the page colour (`--paper`). Its row is the page's width (`max-width` 1120px, the `.view` maximum) with the views' side padding, so the tools line up with the content. On a phone it shows the brand (the link to Today); on a desktop the rail carries it. At the right: the theme switch (a 44px icon button, moon or sun, `aria-pressed`, labelled "Dark mode"; the same state as the switch in the Account menu) and the account menu.
+- **Phone bar (768px and narrower).** Fixed to the foot of the screen, `--z-tabbar`, three equal columns, on the card surface with a hairline above. Each item is an icon above its label (13px), at least 48px high, with the safe-area inset at the bottom. The column leaves room for the bar (its padding is the bar's height plus `--sp-8` and the safe area), so the last content and the footer are never under it.
+- **Current surface.** Each link has `aria-current="page"` on the surface shown. The links are not tabs: the rail and the bar are `nav` landmarks, and no element has `role="tab"`.
+- **Skip link.** "Skip to content" is the first stop on the page (`.shell-skip`, hidden until it has focus). It targets `#main`, the page's `<main>`, which has `tabindex="-1"` and no focus ring. The legal pages and the sign-in page have the same `<main id="main">`.
+- **Plan sub-nav.** Under the page title Plan: `nav.plan-subnav` with Dreams, Week and Year as a row of pills (44px, `--radius-pill`, the current one on the card surface). Each view below it is mounted with the `headless` prop, so it shows no title of its own; its controls stay (the year switcher on Year, the List or Grid choice in Dreams).
+- **Progress.** The title "Progress" over the adherence view; the view is mounted headless.
+- **Account menu.** `AccountMenu.vue` keeps its place in the top bar, its rules and its look (`features/account.css`). It has the save status, the Dark mode switch (the same state as the top bar's button), Motion, Replay tour, Reset my data and Sign out.
 
 `NuxtRouteAnnouncer` is mounted. Its visually hidden span measures 199px wide and is `overflow: hidden`, so the overflow probe reports it. It is not a layout issue.
 
-### 3.2 Topbar and tabs
+### 3.2 Phones and the top bar
 
-Desktop (above 768px):
+- At 768px and narrower the rail is hidden and the phone bar is shown. The top bar keeps the brand, the theme switch and the account menu in one row.
+- Plan's sub-nav wraps on a narrow screen; each pill keeps at least 44px of height.
+- The page has no horizontal overflow at 400px in any surface (checked in the slice 4 captures: Lively in light and dark, Calm in light).
 
-- `.topbar`: `position: sticky; top: 0; z-index: 10; height: 64px; padding: 0 40px; gap: 32px; background: var(--bg); border-bottom: 1px solid var(--rule-2)`. Measured: 64px at 1280.
-- `.brand`: "timely", lowercase, `--fs-lg` 600, `-0.01em`, `--ink`.
-- `.tabs`: `flex: 1; height: 100%; gap: 24px;` `overflow-x: auto` with the scrollbar hidden. Order is Home, Goals, Week, Year, Insights (five tabs; route ids home, goals, planner, year, insights; the Week tab is labelled Week; Configuration was removed in slice 3).
-- `.tab`: 15px 500, `--ink-3`; hover and selected `--ink`. Height 100% of the bar. Tabs carry no numerals (the `.tab-num` numerals were removed in feat/ux-simplify).
-- Active indicator: `.tab::after` is a 2px bar in `--accent`, `left:0; right:0; bottom:-1px`, scaled from `scaleX(0)` to `scaleX(1)` over 0.18s on `[aria-selected="true"]`.
-- `.account-button` (the avatar, one per topbar): a 36px circle, `--accent-soft` with `--accent-deep` initials (readable in light and dark); hover and open `--accent` with `--on-accent`. It is the last flex item, so it sits at the right edge. The initials come from the Google name, or from the email (`app/utils/account.ts`); local mode and an account with no letters show a person glyph (inline SVG). Its accessible name is "Account menu", then the name or email, then "saving" or "not saved" when the save needs attention.
-- Save dot (`.account-dot`, 10px, top right of the avatar): shown only while saving (`--ink-4`, pulsing, static with reduced motion) and when not saved (`--danger`). Saved, loading and local mode show no dot. The state is also in the menu as text, so the dot is never the only signal.
-- The topbar has no save text and no theme toggle.
-
-Phones (768px and below):
-
-- `.topbar` wraps: `height: auto; padding: 12px 16px 0; gap: 0 16px`.
-- Row one: `.brand` (flex 1) and the account avatar at the right.
-- Row two: `.tabs` at `order: 3`, `flex-basis: 100%`, `height: 44px`, gap 24px.
-- Measured at 400px and 360px with five tabs (feat/year-tab): `.tabs` overflow is 0 at both widths (`scrollWidth - clientWidth`), and the page has no horizontal overflow.
-
-Tab semantics: each tab is `<button role="tab" aria-selected>` inside `<nav role="tablist">`. There is no `aria-controls` and no `role="tabpanel"` (see gaps).
+Tab semantics: none. The rail and the phone bar are `nav` landmarks with `aria-current` on the surface shown; Plan's sub-nav is a `nav` with the same attribute.
 
 ### 3.3 Content width and gutters
 
@@ -97,7 +92,7 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 
 | Area | Behaviour |
 | --- | --- |
-| Topbar | Two rows, sticky. The five tabs fit on one line at 400px and 360px (overflow 0). |
+| Shell | The rail is hidden; the top bar holds the brand, the theme switch and the account menu; the Today, Plan and Progress bar is fixed at the foot, with the safe-area inset, and the page leaves room for it. No horizontal overflow at 400px on any surface (checked). |
 | Goals | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
 | Planner | The week grid (`ActivityGrid.vue`, section 4.12) has a 52px hour column, seven day columns and 28px hour rows, always editable for an hourly template. Its frame is at least 540px and scrolls sideways inside `.wk-scroll` on phones. |
 | Year grid | Fits: min width 360px inside `.year-grid-scroll`, available width about 368px. |

@@ -136,11 +136,19 @@ Desktop captures are 1280 px wide. The Planner captures and the phone captures a
 
 ## 1. Status summary
 
-Built: a local-first Nuxt 4 app with four tabs, Home, Goals, Planner and Visualization. Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
+Built: a local-first Nuxt 4 app with three surfaces, Today, Plan (Dreams, Week and Year) and Progress (version 0.1.0; the five tabs before it). Data lives in `localStorage`; no backend, no login. One stylesheet, blue accent, IBM Plex Sans, light and dark themes.
 
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Version 0.1.0, three screens (2026-11-04, branch `feat/three-screens`, from `main`, not pushed)
+
+- Slice 4 of `ux-migration-plan.md`: the five tabs are three surfaces, Today (the old Home), Plan (Dreams, the old Goals; Week; Year) and Progress (the old Insights), with a rail on a desktop, a bar at the foot of a phone, a top bar with the theme switch and the account menu, a skip link and a `<main>` landmark. Option A of `ux-information-architecture.md`, chosen by the owner on 2026-11-04; the decision record is its section 8.1.
+- The place model is `app/utils/nav.ts` (pure, tested in `tests/unit/nav.test.ts`, 43 cases); the composable `useNav` takes places (`link`, `go`, `setSelection`); `useNavSync` rewrites an old `?tab=` once. Old URLs keep working: `home`, `goals` (its `category` is the item), `planner`, `year`, `insights`, `visualization`, unknown values. The Plan views are mounted with a `headless` prop, so each shows its title once.
+- PRD: section 9.16 (FR-NAV-1 to 9, with status and evidence); FR-UX-5 changed; the history row. `spec/frontend-design.md` section 3 is the shell. `design-system.md`: `--z-tabbar` is 15 (was 40), so the grid popups and the colour pop open over the phone bar; the ratchet baselines fall with the removed legacy values (zIndexLiteral 5, transitionLiteral 2, legacyTokenUse 445).
+- Version 0.1.0 (`package.json`, the lockfile, `CHANGELOG.md`). The tag and the release are the owner's. Storage version unchanged (8); no data-model change.
+- Checks: `npm test` 689 of 689 (34 files; the guards pass); `npx nuxi typecheck` 0 errors; `npm run build` clean (in a copy of the working tree, see the report); a grid trace of 108 snapshots at 1280 (mouse) and 400 (touch), light and dark, against `main`: the same grid markup, popups (apart from their horizontal position, which the rail moves) and saved state, and no console errors; 16 of 16 deep links; Back and Forward; the skip link and the Tab order; the Escape order in Dreams and in the Week box; the phone footer and the last grid row above the bar; screens at 1280 and 400, light and dark (Lively), and light (Calm), no console errors and no horizontal overflow.
 
 ### Version 0.0.2, part 2: design foundation (2026-11-03, branch `feat/design-foundation`, from `main`, not pushed)
 
