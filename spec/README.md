@@ -52,25 +52,25 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-grid-block-selected-desktop-light.png` | 1280 px wide | Week, light: a block tapped, its edge handles at once, and the action bar beside its day column (Change…, the word button Edit, Delete, Save disabled, Cancel) (2026-11-05) |
 | `planner-grid-block-selected-mobile-light.png` | 400 px wide | Week, light: the same block on a phone; the action bar at the bottom of the screen and the handles on the block's edges (2026-11-05) |
-| `planner-desktop-light.png` | 1280 px wide | Week, light, full page, sample data (slice 6, 2026-11-04): the lede and the schedule chips, Where the week goes above the grid, the week grid with Show sleep above it, "+ Add activity" and "Sleep hours" (10 PM to 7 AM) under it; no Activities list |
+| `planner-desktop-light.png` | 1280 px wide | Week, light, full page at 1280 px, sample data (2026-11-05): the lede, the Week card (the schedule chips, the grid with Show sleep and its hours, the entry buttons), then Where the week goes as a card below it |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
-| `year-desktop-light.png` | 1280 px wide | Year, light, Plan > Year (slice 7, 2026-11-04), sample data: the lede, the paint tools with "Clear to Standard Week", the schedule card with the year grid, its legend and the count of weeks each schedule uses, the summary card (the planned hours of the year against the awake time, one stacked bar, the life areas with Free last, Show sleep in its head) and More detail closed |
-| `year-desktop-dark.png` | 1280 px wide | Year, dark, the same layout (slice 7) |
-| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: "Apply to several weeks" open under the paint tools: "for weeks" 1 to 1, Apply, and the hint "Applies Standard Week to these weeks." (2026-11-04, slice 7) |
-| `year-apply-several-mobile-light.png` | 400 px wide | Year, light, the same options at phone width: the panel took focus, not the field (FR-UX-9) |
-| `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width (slice 7): the lede, the paint tools wrap, the schedule card and the summary card fit with no page overflow |
-| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width (slice 7) |
-| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the new schedule is chosen in Paint with and the options are open (`?tab=plan&view=year&item=<id>`; slice 7) |
-| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours: the schedule card (unassigned weeks are blank and use the active schedule), then the card "Plan the week in Week and the hours show here." with Open Week (slice 7) |
+| `year-desktop-light.png` | 1280 px wide | Year, light, full page at 1280 px, sample data (2026-11-05): the Year planner card (the title, the count of weeks each schedule uses, the year switcher, the hint, the paint tools with "Clear", "Apply to several weeks", the year grid with its legend and the current week outlined); the summary card (the planned hours against the awake time, Free last, Show sleep); More detail closed |
+| `year-desktop-dark.png` | 1280 px wide | Year, dark, full page at 1280 px: the same layout (2026-11-05) |
+| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: the Year planner card with "Apply to several weeks" open (the Week tab link opens it with Vacation chosen): "for weeks 1 to 1", the hint "Applies Vacation to these weeks.", the grid below (2026-11-05) |
+| `year-apply-several-mobile-light.png` | 400 px wide | Year, light, the same options at 400 px: the panel took focus, not the field (FR-UX-9; 2026-11-05) |
+| `year-mobile-light.png` | 400 px wide, full page | Year, light, full page at 400 px (2026-11-05): the year switcher on its own line under the title, the paint tools wrap, the squares take the width |
+| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, full page at 400 px: the same layout (2026-11-05) |
+| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened with `item=vacation-week` (the Week tab link after Vacation was added): Vacation chosen in Paint with, the options open (2026-11-05) |
+| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours (Start empty): the Year planner card with its blank weeks, then the card "Plan the week in Week and the hours show here." with Open Week (2026-11-05) |
 | `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
-| `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page, the same layout |
+| `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page at 1280 px: the same layout (2026-11-05) |
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
 | `planner-add-activity-desktop-light.png` | 1280 px wide | Week, light: "+ Add activity" open, the form "New activity or habit" under the buttons with its name focused (2026-11-04) |
 | `planner-sleep-hours-desktop-light.png` | 1280 px wide | Week, light: "Sleep hours" open, the Sleep form ("Edit Sleep") with the editor for every night (2026-11-04) |
 | `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit schedule with Done in the panel head (Escape and Done close it, FR-TPL-9) |
-| `planner-mobile-light.png` | 400 px wide | Week, light, full page at 400 px: the grid scrolls sideways inside its box, the two buttons wrap under it, no page overflow |
+| `planner-mobile-light.png` | 400 px wide | Week, light, full page at 400 px (2026-11-05): the Week card, the grid scrolls sideways inside its box, the two buttons wrap under it, Where the week goes below, no page overflow |
 | `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: Where the week goes above the grid for Standard Week (slice 6, 2026-11-04): the ring of the typical week's available time and the list with hours and percent, Free last |
 | `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: Where the week goes (slice 6) |
 | `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: Where the week goes above the grid, the ring above the words |
@@ -140,6 +140,14 @@ Built: a local-first Nuxt 4 app with three surfaces, Today, Plan (Dreams, Week a
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Unreleased, Year planner and Week card (2026-11-05, branch `feat/year-planner-layout`, from `origin/main`, committed locally, not pushed)
+
+- Owner's five UX fixes on Plan > Year and Plan > Week. Year: the schedule card is "Year planner"; its year switcher, the paint tools (with "Clear", whose tooltip says it sends the week back to the active schedule) and "Apply to several weeks" are inside it, under one hint line; the Year lede and the "above" hint are removed; the grid has room under its last row. Week: the schedules, the grid (Show sleep) and the entry buttons are one card, with "Where the week goes" below it; the Week lede names no schedule.
+- PRD: FR-PLAN-13, FR-PLAN-27, FR-YEAR-7 and FR-YEAR-8 noted as changed (2026-11-05); a changelog row. `frontend-design.md` 4.9c, 4.11a and 4.12; `ux-migration-plan.md` slices 6 and 7 follow-up.
+- Checks: the Year painter trace (11 steps at 1280 and 400) has the same saved state at every step as the 0.1.1 build; the Week grid trace (320 steps at 1280 and 400) matches apart from positions and the lede text. Year at 1280, 400 and 360 px and Week at 1280 and 400 px, light and dark, Calm and Lively: no console errors, no horizontal overflow, the year switcher and Clear reached by keyboard.
+- Screens re-captured: `year-*` and `planner-desktop-*`, `planner-mobile-light.png`. Not re-captured (captured before this change, the Week tab then had Where the week goes above the grid): `planner-time-split-*`, `planner-grid-*`, `planner-activity-edit-desktop-light.png`, `planner-add-activity-desktop-light.png`, `planner-sleep-hours-desktop-light.png`, `planner-template-edit-desktop-light.png`, `planner-vacation-added-desktop-light.png`, `planner-new-week-type-*`.
+- Storage version unchanged (8); no data-model change; no version bump (0.1.1; notes under Unreleased).
 
 ### Unreleased, Today screen (2026-11-05, branch `feat/today-screen`, from `main`, not pushed)
 

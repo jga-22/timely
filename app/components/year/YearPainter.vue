@@ -9,9 +9,10 @@ import { ERASE_TOOL, monthMarks, toolTemplateId, weekCellName, weekRangeError, w
 import type { WeekTemplate } from '~/types/planner'
 
 /**
- * The year painter of the Year tab (FR-YEAR-7, A2 words and look, slice 7): the paint tools (a schedule, or Clear to the active one), the
- * schedule card with the year grid, its legend and the count of weeks each schedule uses, and the "Apply to several weeks" options that apply
- * the paint tool to a range of weeks. The card is open by default. The paint tool is the schedule a range gets: there is no second choice.
+ * The year painter of the Year tab (FR-YEAR-7, A2 words and look, slice 7): the Year planner card, with its head (the title, the count of weeks
+ * each schedule uses, the year switcher) and its body (the paint tools, a schedule or Clear, the "Apply to several weeks" options that apply
+ * the paint tool to a range of weeks, the year grid and its legend). The card is open by default. The paint tool is the schedule a range
+ * gets: there is no second choice.
  * A schedule id in the URL (the Week tab's link after a new schedule) preselects it in Paint with and opens the options.
  */
 const planner = usePlannerStore()
@@ -21,6 +22,8 @@ const { areaVars } = usePlannerFill()
 
 // The active schedule: the one a week without its own uses (named by Clear and in the lede)
 const activeName = computed(() => activeTemplate.value?.name ?? null)
+/** Clear's name and tooltip: what the chip does (its visible text is only "Clear") */
+const clearName = computed(() => `Clear: sends the week back to ${activeName.value ?? 'the active schedule'}`)
 
 // ── Year painter ──
 const paintTool = ref(templates.value[0]?.id ?? '')
@@ -140,95 +143,102 @@ function applyWeekRange() {
 
 <template>
   <div class="year-painter">
-    <!-- Paint with: the schedules, and Clear (to the active schedule, the one a week without its own uses) -->
-    <div class="paint-tools year-paint" role="group" aria-label="Paint with">
-      <span class="field-label">Paint with</span>
-      <button
-        v-for="t in templates"
-        :key="t.id"
-        class="chip"
-        :data-active="paintTool === t.id"
-        @click="paintTool = t.id"
-      >
-        <span class="dot year-dot" :style="areaVars(t.color ?? FALLBACK_TEMPLATE_COLOR)" />
-        {{ t.name }}
-      </button>
-      <button class="chip" :data-active="paintTool === ERASE_TOOL" @click="paintTool = ERASE_TOOL">
-        <span class="dot dot-erase" />
-        Clear to {{ activeName ?? 'the active schedule' }}
-      </button>
-    </div>
-
-    <!-- Apply to several weeks: a disclosure under the paint tools (FR-YEAR-7), closed by default -->
-    <div class="weeks-toggle-row">
-      <button
-        ref="weeksToggle"
-        type="button"
-        class="btn btn-sm btn-outline"
-        :aria-expanded="weeksOpen"
-        aria-controls="weeks-panel"
-        @click="toggleWeeks"
-      >Apply to several weeks</button>
-    </div>
-
-    <!-- The range: the paint tool's schedule (or Clear) for the weeks from and to; typed rather than painted -->
-    <div
-      v-show="weeksOpen"
-      id="weeks-panel"
-      ref="weeksPanel"
-      class="weeks-row"
-      role="group"
-      aria-label="Apply to several weeks"
-      tabindex="-1"
-      @keydown.esc="closeWeeks"
-    >
-      <div class="weeks-row-line">
-        <label class="weeks-part" for="weeks-from">for weeks</label>
-        <input
-          id="weeks-from"
-          ref="weekFromInput"
-          v-model.number="weekFrom"
-          class="timely-input weeks-num"
-          type="number"
-          inputmode="numeric"
-          min="1"
-          :max="weekCount"
-          :aria-invalid="!!rangeError"
-          aria-describedby="weeks-error"
-        />
-        <label class="weeks-part" for="weeks-to">to</label>
-        <input
-          id="weeks-to"
-          v-model.number="weekTo"
-          class="timely-input weeks-num"
-          type="number"
-          inputmode="numeric"
-          min="1"
-          :max="weekCount"
-          :aria-invalid="!!rangeError"
-          aria-describedby="weeks-error"
-        />
-        <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
-      </div>
-      <p class="weeks-hint">{{ weekRangeHint(paintName, activeName) }}</p>
-      <p v-if="rangeError" id="weeks-error" class="field-error" role="alert">{{ rangeError }}</p>
-      <p v-else-if="rangeResult" class="weeks-result" role="status">{{ rangeResult }}</p>
-    </div>
-
-    <!-- The schedule card: which weeks use which schedule, the year grid and the legend (A2: one card, open by default) -->
+    <!-- The Year planner card (A2 words, FR-YEAR-7): its head holds the title, the count and the year switcher; its body the paint tools,
+         the Apply options, the year grid and the legend. The card is open by default -->
     <section class="year-card year-schedule" aria-labelledby="year-title">
-      <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
-        <summary class="year-summary">
-          <h2 id="year-title" class="section-title">Which weeks use which schedule</h2>
-          <span v-if="year !== null" class="year-count">{{ usageLine }}</span>
-        </summary>
+      <div class="year-head">
+        <!-- The year switcher: the same control as everywhere (YearNav), beside the title (first in the page's order; at the right on a desktop) -->
+        <YearNav />
+        <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
+          <summary class="year-summary">
+            <h2 id="year-title" class="section-title">Year planner</h2>
+            <span v-if="year !== null" class="year-count">{{ usageLine }}</span>
+          </summary>
 
-        <div class="year-body">
-          <p class="year-hint">
-            Pick a schedule above, then click or drag across the weeks.
-            <template v-if="currentWeekIndex >= 0">Week {{ currentWeekIndex + 1 }} is outlined.</template>
-          </p>
-          <p v-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
+          <div class="year-body">
+            <p class="year-hint">Pick a schedule, then click or drag across the weeks.</p>
+            <p v-if="templates.length === 1 && year !== null" class="year-line">{{ yearLine }}</p>
+
+            <!-- Paint with: the schedules, and Clear (to the active schedule, the one a week without its own uses) -->
+            <div class="paint-tools year-paint" role="group" aria-label="Paint with">
+              <span class="field-label">Paint with</span>
+              <button
+                v-for="t in templates"
+                :key="t.id"
+                class="chip"
+                :data-active="paintTool === t.id"
+                @click="paintTool = t.id"
+              >
+                <span class="dot year-dot" :style="areaVars(t.color ?? FALLBACK_TEMPLATE_COLOR)" />
+                {{ t.name }}
+              </button>
+              <button
+                class="chip"
+                :data-active="paintTool === ERASE_TOOL"
+                :title="clearName"
+                :aria-label="clearName"
+                @click="paintTool = ERASE_TOOL"
+              >
+                <span class="dot dot-erase" />
+                Clear
+              </button>
+            </div>
+
+            <!-- Apply to several weeks: a disclosure under the paint tools (FR-YEAR-7), closed by default -->
+            <div class="weeks-toggle-row">
+              <button
+                ref="weeksToggle"
+                type="button"
+                class="btn btn-sm btn-outline"
+                :aria-expanded="weeksOpen"
+                aria-controls="weeks-panel"
+                @click="toggleWeeks"
+              >Apply to several weeks</button>
+            </div>
+
+            <!-- The range: the paint tool's schedule (or Clear) for the weeks from and to; typed rather than painted -->
+            <div
+              v-show="weeksOpen"
+              id="weeks-panel"
+              ref="weeksPanel"
+              class="weeks-row"
+              role="group"
+              aria-label="Apply to several weeks"
+              tabindex="-1"
+              @keydown.esc="closeWeeks"
+            >
+              <div class="weeks-row-line">
+                <label class="weeks-part" for="weeks-from">for weeks</label>
+                <input
+                  id="weeks-from"
+                  ref="weekFromInput"
+                  v-model.number="weekFrom"
+                  class="timely-input weeks-num"
+                  type="number"
+                  inputmode="numeric"
+                  min="1"
+                  :max="weekCount"
+                  :aria-invalid="!!rangeError"
+                  aria-describedby="weeks-error"
+                />
+                <label class="weeks-part" for="weeks-to">to</label>
+                <input
+                  id="weeks-to"
+                  v-model.number="weekTo"
+                  class="timely-input weeks-num"
+                  type="number"
+                  inputmode="numeric"
+                  min="1"
+                  :max="weekCount"
+                  :aria-invalid="!!rangeError"
+                  aria-describedby="weeks-error"
+                />
+                <button type="button" class="btn btn-sm btn-primary" @click="applyWeekRange">Apply</button>
+              </div>
+              <p class="weeks-hint">{{ weekRangeHint(paintName, activeName) }}</p>
+              <p v-if="rangeError" id="weeks-error" class="field-error" role="alert">{{ rangeError }}</p>
+              <p v-else-if="rangeResult" class="weeks-result" role="status">{{ rangeResult }}</p>
+            </div>
 
           <div v-if="weeks.length" class="year-grid-scroll">
             <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
@@ -277,8 +287,9 @@ function applyWeekRange() {
             </span>
             <span v-else class="muted">unassigned, uses {{ activeName ?? 'the active schedule' }}. Click to paint.</span>
           </div>
-        </div>
-      </details>
+          </div>
+        </details>
+      </div>
     </section>
   </div>
 </template>

@@ -8,7 +8,7 @@ import { usePlannerYear } from '~/composables/usePlannerYear'
 import { FREE_LABEL, NOT_PLANNED_KEY, templateSplit, weeksUsing } from '~/utils/insights'
 
 // Where the week goes (the Week tab, FR-PLAN-27): how the typical week of the active schedule divides its available time, as a ring and
-// the life areas list (the same shares as Year, for one week). It sits above the grid. The selected slice is session state here: a change
+// the life areas list (the same shares as Year, for one week). It sits below the Week card. The selected slice is session state here: a change
 // of schedule or a slice that leaves the ring clears it.
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)

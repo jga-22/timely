@@ -1,15 +1,6 @@
-/* Plan > Year (A2 words and look, slice 7): the lede, the paint tools, the schedule card with its grid and legend, the summary card (one bar
-   and the life areas), More detail, and the Apply to several weeks options (FR-YEAR-7). Layer features. */
-
-/* ── The lede: which schedule a week without its own uses, and what the bar shows (as the Week lede) ── */
-.year-lede {
-  max-width: 60ch;
-  margin: 0 0 var(--sp-6);
-  font-size: var(--text-lede);
-  line-height: var(--leading-body);
-  color: var(--ink-2);
-}
-.year-lede b { font-weight: var(--weight-bold); color: var(--ink); }
+/* Plan > Year (A2 words and look, slice 7; the Year planner card, 2026-11-05): the card with its head (the title, the count and the year
+   switcher) and body (the paint tools, the Apply options, the grid and the legend), the summary card (one bar and the life areas), More detail,
+   and the Apply to several weeks options (FR-YEAR-7). Layer features. */
 
 /* ── Cards: the surface, the xl radius and the card shadow, as Where the week goes ── */
 .year-card {
@@ -42,7 +33,16 @@
   font-size: var(--text-ui);
 }
 
-/* ── The schedule card: the title and the count of weeks each schedule uses (wraps on a phone) ── */
+/* ── The Year planner card's head: the disclosure (the title and the count of weeks each schedule uses, which wraps on a phone) beside the
+   year switcher, which stays at the top right ── */
+.year-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.year-head > .year-details { flex: 1 1 auto; min-width: 0; }
+.year-head > .year-nav { flex: none; order: 1; }
 .year-details > .year-summary { margin-bottom: var(--sp-2); }
 .year-details[open] > .year-summary .section-title::before { transform: rotate(45deg); }
 .year-count {
@@ -65,6 +65,7 @@
 /* ── The year grid: four rows of 14 weeks; each week a square in its schedule's colour, the current week outlined ── */
 .year-grid-scroll {
   min-width: 0;
+  padding-bottom: var(--sp-2);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -112,6 +113,10 @@
    so the 14 columns are as wide as the layout allows */
 @media (max-width: 480px) {
   .year-schedule { padding-inline: var(--sp-3); }
+  /* The year switcher takes its own line under the title, so the disclosure keeps the full width for the squares */
+  .year-head { flex-wrap: wrap; }
+  .year-head > .year-details { flex-basis: 100%; }
+  .year-head > .year-nav { order: 0; }
   .year-grid,
   .year-row,
   .year-months { gap: calc(var(--sp-1) / 2); }
