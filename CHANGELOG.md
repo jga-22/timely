@@ -2,6 +2,21 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
+## 0.1.0 - three screens
+
+Timely has three screens now: **Today**, **Plan** and **Progress**. The five tabs are gone, and what is inside each screen works as before. Your saved data is unchanged.
+
+### Changed
+- Today (was Home) is the first screen, as before.
+- Plan holds Dreams (was Goals), Week and Year. A row of three links at the top moves between them. Plan opens on the one you used last, until you close the tab.
+- Progress (was Insights) shows your adherence, as before.
+- On a computer, the three screens are in a rail on the left. On a phone, they are a bar at the foot of the screen, and the page leaves room for it.
+- The top bar has the dark mode switch and the account menu.
+- Old links still work. A link to Home, Goals, Week, Year or Insights opens the matching screen, and the address is tidied to the new form once.
+
+### Added
+- A "Skip to content" link, the first stop for keyboard users, goes past the navigation to the page.
+
 ## 0.0.2 - a lighter app and a calmer look
 
 A calmer look and the groundwork for the next changes. The screens keep their layout and behaviour; the colours, corners and type sizes are softer.
