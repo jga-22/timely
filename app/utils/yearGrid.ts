@@ -39,12 +39,18 @@ export const weekRangeError = (from: number, to: number, count: number): string 
   return ''
 }
 
-/** What Apply will do with the chosen paint tool, under the weeks fields: the week type's name, or Erase's clearing */
-export const weekRangeHint = (templateName: string | null): string => (templateName
-  ? `Applies ${templateName} to these weeks.`
-  : 'Erase clears these weeks.')
+/**
+ * The schedule a week's cell shows: the one the week is assigned to, else the active one, since an unassigned week uses the active
+ * schedule (effectiveTemplate). Null when there is no schedule at all.
+ */
+export const scheduleOfWeek = (assigned: string | undefined, activeId: string | null): string | null => assigned ?? activeId
 
-/** The result line after a range was applied: the week type's name, or that the weeks have none (Erase) */
-export const weekRangeResult = (from: number, to: number, templateName: string | null): string => (templateName
+/** What Apply will do with the chosen paint tool, under the weeks fields: the schedule's name, or Clear's reset to the default one */
+export const weekRangeHint = (templateName: string | null, defaultName: string | null = null): string => (templateName
+  ? `Applies ${templateName} to these weeks.`
+  : `Clears these weeks to ${defaultName ?? 'the active schedule'}.`)
+
+/** The result line after a range was applied: the schedule's name, or that the weeks were cleared to the default one (Clear) */
+export const weekRangeResult = (from: number, to: number, templateName: string | null, defaultName: string | null = null): string => (templateName
   ? `Weeks ${from} to ${to} use ${templateName}.`
-  : `Weeks ${from} to ${to} have no week type.`)
+  : `Weeks ${from} to ${to} are cleared to ${defaultName ?? 'the active schedule'}.`)

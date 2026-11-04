@@ -25,3 +25,14 @@
 
 /* The Week tab's ring: its slices draw in when the view opens (lively only; Calm shows the ring at once). */
 :root[data-motion="lively"] .where-donut-seg { animation: draw var(--dur-draw) var(--ease-out) both; }
+
+/* Plan > Year: the summary bar's segments grow from the left, and the grid's squares settle in one after another (lively only;
+   Calm shows the bar and the grid at once). */
+@keyframes year-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes year-cell-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}

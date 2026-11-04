@@ -1,35 +1,68 @@
-/* Year tab: the paint section, the Weeks row under the paint tools, the planned-hours grid rows (FR-YEAR-7). Layer features. */
-/* Weeks row under the year paint tools: one week type for a range of weeks (FR-YEAR-7) */
-.weeks-row { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-4); }
+/* Plan > Year (A2 words and look, slice 7): the lede, the paint tools, the schedule card with its grid and legend, the summary card (one bar
+   and the life areas), More detail, and the Apply to several weeks options (FR-YEAR-7). Layer features. */
+
+/* ── The lede: which schedule a week without its own uses, and what the bar shows (as the Week lede) ── */
+.year-lede {
+  max-width: 60ch;
+  margin: 0 0 var(--sp-6);
+  font-size: var(--text-lede);
+  line-height: var(--leading-body);
+  color: var(--ink-2);
+}
+.year-lede b { font-weight: var(--weight-bold); color: var(--ink); }
+
+/* ── Cards: the surface, the xl radius and the card shadow, as Where the week goes ── */
+.year-card {
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-6) var(--sp-8);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-1);
+}
+
+/* ── Paint tools: 44 px chips at every pointer, as the Week schedule chips; the dot takes the schedule's colour ── */
+.year-paint { margin-bottom: var(--sp-5); }
+.year-paint .chip {
+  min-height: var(--hit);
+  font-size: var(--text-ui);
+  padding-inline: var(--sp-5);
+}
+.year-paint .year-dot { background: var(--c); }
+
+/* ── Apply to several weeks: the disclosure button and its range panel (FR-YEAR-7) ── */
+.weeks-row { display: flex; flex-direction: column; gap: var(--sp-2); margin: 0 0 var(--sp-5); }
 .weeks-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .weeks-part { font-size: var(--text-small); color: var(--ink-2); }
-.weeks-select { width: auto; max-width: 100%; min-width: 0; }
 .weeks-num { width: 72px; }
 .weeks-result { margin: 0; font-size: var(--text-small); color: var(--ink-2); }
 .weeks-hint { margin: 0; font-size: var(--text-small); color: var(--ink-3); }
-.weeks-toggle-row { margin-top: var(--sp-4); }
-/* Year: full width, 13 week columns with a quarter label per row */
-.year-section { margin-top: var(--sp-8); }
+.weeks-toggle-row { margin: var(--sp-4) 0 var(--sp-5); }
+.weeks-toggle-row .btn {
+  min-height: var(--hit);
+  font-size: var(--text-ui);
+}
+
+/* ── The schedule card: the title and the count of weeks each schedule uses (wraps on a phone) ── */
+.year-details > .year-summary { margin-bottom: var(--sp-2); }
+.year-details[open] > .year-summary .section-title::before { transform: rotate(45deg); }
 .year-count {
   font-size: var(--text-small);
   color: var(--ink-3);
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.year-body { margin-top: var(--sp-4); }
+.year-hint {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--text-meta);
+  color: var(--ink-2);
+}
 .year-line {
-  margin: var(--sp-6) 0 0;
+  margin: 0 0 var(--sp-4);
   font-size: var(--text-small);
   color: var(--ink-2);
 }
-.year-body { margin-top: var(--sp-4); }
-.year-paint-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--sp-3) var(--sp-6);
-  margin-bottom: var(--sp-4);
-}
+
+/* ── The year grid: four rows of 14 weeks; each week a square in its schedule's colour, the current week outlined ── */
 .year-grid-scroll {
   min-width: 0;
   overflow-x: auto;
@@ -38,19 +71,139 @@
 .year-grid {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 360px;
+  gap: var(--sp-1);
+  min-width: 0;
 }
 .year-row {
   display: grid;
-  grid-template-columns: 56px repeat(13, minmax(0, 1fr));
+  grid-template-columns: 52px repeat(14, minmax(0, 1fr));
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-1);
 }
 .year-row-label {
-  font-size: var(--text-caption);
+  font-size: var(--text-small);
   color: var(--ink-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.year-details[open] > .year-summary .section-title::before { transform: rotate(45deg); }
+.year-grid .week-cell {
+  height: auto;
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: var(--radius-xs);
+}
+.year-grid .week-cell:hover { filter: brightness(0.95); }
+.year-grid .week-cell.is-current {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ── The legend: each schedule's swatch, and This week ── */
+.year-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-meta);
+  color: var(--ink-2);
+}
+.year-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.year-swatch {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-xs);
+  background: var(--c);
+}
+.year-swatch.is-current {
+  background: transparent;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ── The summary card: the planned hours against the available time, one bar and the life areas (YearSummary) ── */
+.year-sum-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+.year-eyebrow {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--ink-3);
+}
+.year-big {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--text-hero);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.year-of {
+  font-size: var(--text-lede);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0;
+  color: var(--ink-3);
+}
+/* The stacked bar: each life area's share of the available time, the rest hatched as Free */
+.year-stack {
+  display: flex;
+  height: 40px;
+  margin: var(--sp-5) 0 var(--sp-4);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--hatch);
+}
+.year-stack i {
+  display: block;
+  flex: none;
+  height: 100%;
+  background: var(--c);
+  transform-origin: left center;
+}
+/* The life areas list in the summary card: 15 px rows, as the mockup (the shared list is 13 px) */
+.year-summary-card .share-row,
+.year-summary-card .share-value,
+.year-summary-card .share-pct { font-size: var(--text-ui); }
+.year-note {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--text-meta);
+  color: var(--ink-3);
+}
+
+/* The empty state: a card with its line and the way to Week */
+.year-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-4);
+}
+
+/* ── More detail: the range controls and the planned hours per period, closed by default ── */
+.year-detail { margin: 0 0 var(--sp-5); }
+.year-detail > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--hit);
+  font-size: var(--text-ui);
+  color: var(--ink-2);
+}
+.year-detail > .disclosure-body { padding-top: var(--sp-4); }
+/* The capacity mark is a neutral line, not the attention red of the other charts (A2) */
+.year-detail .insights-cap-key { color: var(--ink-2); }
+.year-detail .insights-cap-swatch { background: var(--ink-2); }
+.year-detail .insights-cap { background: var(--ink-2); }
+
+/* ── Motion (lively only; the keyframes are in motion.css): the summary bar grows, the squares of the grid settle in ── */
+:root[data-motion="lively"] .year-stack i { animation: year-grow var(--dur-enter) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 90ms); }
+:root[data-motion="lively"] .year-grid .week-cell { animation: year-cell-in var(--dur-enter) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 7ms); }

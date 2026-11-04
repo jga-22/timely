@@ -13,6 +13,7 @@ import {
   templateSplit,
   weekCategoryHours,
   weeksUsing,
+  yearSummary,
 } from '~/utils/insights'
 import { awakeMinutes } from '~/utils/awake'
 import { sleepActivityId } from '~/utils/sleep'
@@ -229,6 +230,39 @@ describe('availableShares', () => {
       notPlannedShare: 0,
       rows: [],
     })
+  })
+})
+
+describe('yearSummary', () => {
+  it('has a planned total that is the sum of the monthly bars, and a Free that is the awake time less the planned hours', () => {
+    const state = planned()
+    const monthly = insightsBars(state, 'month', [2026], false)
+    const result = yearSummary(state, [2026], false)
+
+    expect(result.planned).toBe(monthly.reduce((total, bar) => total + bar.total, 0))
+    expect(result.available).toBe(monthly.reduce((total, bar) => total + bar.capacity, 0))
+    expect(result.notPlannedHours).toBe(result.available - result.planned)
+  })
+
+  it('counts the same hours whatever the granularity of the chart: the summary only reads the months', () => {
+    const state = planned()
+
+    expect(yearSummary(state, [2026], false).planned).toBe(
+      insightsBars(state, 'week', [2026], false).reduce((total, bar) => total + bar.total, 0)
+    )
+  })
+
+  it('takes the sleep out of the available time when sleep is hidden, and keeps it when shown', () => {
+    const state = planned()
+
+    expect(yearSummary(state, [2026], false).available).toBe(WEEKS_2026 * WEEK_HOURS - WEEKS_2026 * SLEEP_HOURS_PER_WEEK)
+    expect(yearSummary(state, [2026], true).available).toBe(WEEKS_2026 * WEEK_HOURS)
+  })
+
+  it('makes the shares add up to 100', () => {
+    const result = yearSummary(planned(), [2026], false)
+
+    expect(result.rows.reduce((total, row) => total + row.share, 0) + result.notPlannedShare).toBe(100)
   })
 })
 

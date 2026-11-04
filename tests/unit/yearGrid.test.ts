@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isoWeekStarts } from '~/utils/dates'
-import { ERASE_TOOL, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, scheduleOfWeek, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 
 describe('yearRows', () => {
   it('cuts 2026 (53 weeks) into rows of 13, each labelled with the months its first and last week start in', () => {
@@ -48,10 +48,19 @@ describe('toolTemplateId', () => {
 })
 
 describe('weekRangeHint and weekRangeResult', () => {
-  it('say what Apply does with the paint tool: the week type, or clearing for Erase', () => {
+  it('say what Apply does with the paint tool: the schedule, or clearing to the default one for Clear', () => {
     expect(weekRangeHint('Vacation')).toBe('Applies Vacation to these weeks.')
-    expect(weekRangeHint(null)).toBe('Erase clears these weeks.')
+    expect(weekRangeHint(null, 'Standard Week')).toBe('Clears these weeks to Standard Week.')
+    expect(weekRangeHint(null)).toBe('Clears these weeks to the active schedule.')
     expect(weekRangeResult(2, 5, 'Vacation')).toBe('Weeks 2 to 5 use Vacation.')
-    expect(weekRangeResult(2, 5, null)).toBe('Weeks 2 to 5 have no week type.')
+    expect(weekRangeResult(2, 5, null, 'Standard Week')).toBe('Weeks 2 to 5 are cleared to Standard Week.')
+  })
+})
+
+describe('scheduleOfWeek', () => {
+  it('is the schedule a week is assigned to, else the active one (an unassigned week uses it)', () => {
+    expect(scheduleOfWeek('vacation-1', 'standard')).toBe('vacation-1')
+    expect(scheduleOfWeek(undefined, 'standard')).toBe('standard')
+    expect(scheduleOfWeek(undefined, null)).toBeNull()
   })
 })

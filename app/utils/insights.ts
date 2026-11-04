@@ -272,6 +272,14 @@ export const availableShares = (bars: InsightsBar[]): AvailableShares => {
   }
 }
 
+/**
+ * The Year summary (A2, slice 7): the planned hours of the years and the available time, as one bar and the life areas. It is built
+ * from the monthly bars, so its planned total is the sum of the monthly planned hours, whatever the chart below shows.
+ * Free is the available time less the planned hours (the not planned rest).
+ */
+export const yearSummary = (state: PlannerState, years: number[], showSleep = false): AvailableShares =>
+  availableShares(insightsBars(state, 'month', years, showSleep))
+
 /** The key of the "Not planned" slice and row (FR-INS-P5): it is not a life area, so it has no category id */
 export const NOT_PLANNED_KEY = 'not-planned'
 

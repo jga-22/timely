@@ -5,6 +5,10 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Changed
+- Plan > Year reads like the A2 mockup, in its words and look. A line at the top says which schedule a week without its own uses. The paint tools are the schedules and "Clear to <schedule>", which sends a week back to that schedule.
+- "Which weeks use which schedule" is a card: the count of weeks each schedule uses, the year grid with its legend, and the current week outlined. Each week shows the schedule it uses, so a week with no schedule of its own shows the active one.
+- The planned hours of the year are a card: the hours against the awake time, one bar with Free hatched, the life areas with Free as the last row, and Show sleep. The monthly bars and the range controls are under "More detail", closed by default. The card and its list are in hours; the unit applies to the bars.
+- The Year view says "schedule" where it said "week type". The entry form still says "week type".
 - The Week grid's edge handles are the border of the selected run: a flat line across its full width, 4px thick (6px and darker while hovered or pressed), with no round grip and no room taken inside the block. Each edge takes a 32px target on a mouse, centred on the edge, and a one-hour run splits its height between its top and bottom targets. Touch keeps the 44px target.
 
 ### Fixed

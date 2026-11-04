@@ -1,33 +1,26 @@
 <script setup lang="ts">
-import { FALLBACK_AREA_COLOR } from '~/utils/palette'
+import { storeToRefs } from 'pinia'
 import { usePlannerStore } from '~/stores/planner'
-import { usePlannerMaps } from '~/composables/usePlannerMaps'
-import { usePlannerFill } from '~/composables/usePlannerFill'
 import {
-  UNITS,
-  availableShares,
   capacityLabel,
-  categoryShares,
-  formatInUnit,
   insightsBars,
-  NOT_PLANNED_KEY,
+  yearSummary,
   type InsightsGranularity,
   type InsightsUnit
 } from '~/utils/insights'
 
-// The Year tab: the year painter and the Weeks row (which week type each week uses), then the planned hours of the range
-// (the bars with their range controls) and the life areas of that range. The page's YearNav is the year for all of it.
-// The range controls are session state here: the granularity, the range and the unit reset when the tab is left.
+// The Year tab (A2 words and look, slice 7): the lede, the year painter (the paint tools and the schedule card with its grid), the summary
+// of the year (one bar and the life areas) and More detail (the range controls and the planned hours per period). The page's YearNav is the
+// year for all of it. The range controls are session state here: the granularity, the span and the unit reset when the tab is left.
 // headless: mounted under Plan, which holds the page title. The title is not shown; the year switcher stays
 defineProps<{ headless?: boolean }>()
 
 const planner = usePlannerStore()
+const { activeTemplate } = storeToRefs(planner)
 const { year } = usePlannerYear()
 const { link } = useNav()
-const { categoryMap } = usePlannerMaps()
-const { fill } = usePlannerFill()
 // Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4, 7): hidden, it is neither planned nor available time
-const { showSleep, setShowSleep } = useShowSleep()
+const { showSleep } = useShowSleep()
 
 const granularity = ref<InsightsGranularity>('month')
 const span = ref<'one' | 'several'>('one')
@@ -35,32 +28,14 @@ const unit = ref<InsightsUnit>('hours')
 const { years } = useRangeYears(span)
 
 const bars = computed(() => (years.value.length ? insightsBars(planner.$state, granularity.value, years.value, showSleep.value) : []))
-const shares = computed(() => categoryShares(bars.value))
-// The available time of the range (FR-INS-P5): hours per life area and the not planned rest, as shares that add up to 100
-const available = computed(() => availableShares(bars.value))
+// The summary of the years shown: its planned total is the sum of the monthly bars (yearSummary)
+const summary = computed(() => yearSummary(planner.$state, years.value, showSleep.value))
+const hasPlan = computed(() => summary.value.planned > 0)
 
-const unitShort = computed(() => UNITS.find(option => option.id === unit.value)!.short)
-const amount = (hours: number) => `${formatInUnit(hours, unit.value)} ${unitShort.value}`
+// The schedule every week without its own uses: named in the lede
+const activeName = computed(() => activeTemplate.value?.name ?? 'the active schedule')
 
-const colorOf = (categoryId: string) => fill(categoryMap.value.get(categoryId)?.color ?? FALLBACK_AREA_COLOR)
-const nameOf = (categoryId: string) => categoryMap.value.get(categoryId)?.name ?? 'Unknown'
-
-// The life areas list: one row per life area, its name linking to Goals; the not planned rest is the last row
-const shareRows = computed(() => available.value.rows.map(row => ({
-  key: row.categoryId,
-  label: nameOf(row.categoryId),
-  color: colorOf(row.categoryId),
-  value: amount(row.hours),
-  pct: row.share,
-  to: link('dreams', { item: row.categoryId })
-})))
-const restRow = computed(() => ({
-  key: NOT_PLANNED_KEY,
-  value: amount(available.value.notPlannedHours),
-  pct: available.value.notPlannedShare
-}))
-
-// The chart header: what the red lines are, for the granularity (FR-INS-4)
+// The chart header: what the capacity marks are, for the granularity (FR-INS-4)
 const capacityText = computed(() => capacityLabel(granularity.value, bars.value, unit.value))
 </script>
 
@@ -74,28 +49,35 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
     </header>
 
     <template v-if="year !== null">
-      <!-- The year painter and the Weeks row (FR-YEAR-7) -->
+      <!-- The lede (A2 words): what a week without its own schedule uses, and what the bar below shows -->
+      <p class="year-lede">
+        Weeks with no schedule of their own use <b>{{ activeName }}</b>. Paint the exceptions, such as a holiday. The bar shows what the year holds.
+      </p>
+
+      <!-- The paint tools and the schedule card with the year grid and its legend (FR-YEAR-7) -->
       <YearPainter />
 
-      <section class="section">
-        <div class="section-head">
-          <h2 class="section-title">Planned hours</h2>
-        </div>
+      <!-- The summary of the year: the planned hours against the available time, and the life areas (Free last) -->
+      <YearSummary v-if="hasPlan" :years="years" :summary="summary" />
+      <section v-else class="year-card year-empty">
+        <p class="insights-empty">Plan the week in Week and the hours show here.</p>
+        <NuxtLink class="btn btn-sm btn-outline" :to="link('week')">Open Week</NuxtLink>
+      </section>
 
-        <RangeControls
-          v-model:granularity="granularity"
-          v-model:span="span"
-          v-model:unit="unit"
-          state-key="year"
-          :with-year="false"
-        />
+      <!-- More detail: the range controls and the planned hours per period. Closed by default; the controls stay as they were -->
+      <details v-if="hasPlan" class="disclosure year-detail">
+        <summary>More detail</summary>
+        <div class="disclosure-body">
+          <RangeControls
+            v-model:granularity="granularity"
+            v-model:span="span"
+            v-model:unit="unit"
+            state-key="year"
+            :with-year="false"
+          />
 
-        <template v-if="shares.total">
           <div class="insights-chart-head">
             <p class="insights-cap-key"><span class="insights-cap-swatch" aria-hidden="true" />{{ capacityText }}</p>
-            <div class="insights-chart-tools">
-              <UiSwitch :model-value="showSleep" @update:model-value="setShowSleep">Show sleep</UiSwitch>
-            </div>
           </div>
           <YearPlannedBars
             :bars="bars"
@@ -103,22 +85,8 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
             :unit="unit"
             :years="years"
           />
-          <p v-if="showSleep" class="page-meta insights-sleep-note">Sleep is counted under Physical.</p>
-        </template>
-      </section>
-
-      <section v-if="shares.total" class="section">
-        <div class="section-head">
-          <h2 class="section-title">Life areas</h2>
         </div>
-
-        <ShareList :rows="shareRows" :rest="restRow" :selectable="false" :selected="null" />
-      </section>
-
-      <section v-else class="section insights-empty-state">
-        <p class="insights-empty">Plan the week in Week and the hours show here.</p>
-        <NuxtLink class="btn btn-sm btn-outline" :to="link('week')">Open Week</NuxtLink>
-      </section>
+      </details>
     </template>
   </div>
 </template>
