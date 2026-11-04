@@ -63,7 +63,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `year-mobile-light.png` | 400 px wide, full page | Year, light, at phone width (slice 7): the lede, the paint tools wrap, the schedule card and the summary card fit with no page overflow |
 | `year-mobile-dark.png` | 400 px wide, full page | Year, dark, at phone width (slice 7) |
 | `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened from the Week tab link after Vacation was added: the new schedule is chosen in Paint with and the options are open (`?tab=plan&view=year&item=<id>`; slice 7) |
-| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours: the schedule card (every week uses the active schedule), then the card "Plan the week in Week and the hours show here." with Open Week (slice 7) |
+| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours: the schedule card (unassigned weeks are blank and use the active schedule), then the card "Plan the week in Week and the hours show here." with Open Week (slice 7) |
 | `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
 | `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page, the same layout |
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
