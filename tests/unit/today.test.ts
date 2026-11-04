@@ -6,8 +6,12 @@ import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import {
   allItemsDone,
   behindLine,
+  cheerLine,
+  clockHour,
   countdownText,
-  doneLine,
+  dayLineAxis,
+  dayLineBlocks,
+  doneCount,
   firstNameOf,
   firstUndone,
   focusItem,
@@ -17,6 +21,7 @@ import {
   nextHabitAction,
   nowPosition,
   stripNote,
+  timeSpan,
   todayItems,
   weekStrip
 } from '~/utils/today'
@@ -139,17 +144,78 @@ describe('firstUndone, allItemsDone, habitMissing', () => {
   })
 })
 
-describe('doneLine', () => {
+describe('doneCount', () => {
   const items = todayItems(withHabits(withActivities(planned([work]), [workActivity]), [walk]), MONDAY)
 
-  it('gives the count for the day, or that it is all done', () => {
-    expect(doneLine(items, true)).toBe('0 of 2 done today')
-    expect(doneLine(items.map(item => ({ ...item, done: true })), true)).toBe('All done today')
-    expect(doneLine(items.slice(0, 1), false)).toBe('0 of 1 done that day')
+  it('counts the ticked items of the day, and the numbers show when all are done (Calm keeps every number)', () => {
+    expect(doneCount(items, true)).toEqual({ done: 0, total: 2, when: 'today' })
+    expect(doneCount(items.map(item => ({ ...item, done: true })), true)).toEqual({ done: 2, total: 2, when: 'today' })
+    expect(doneCount(items.slice(0, 1), false)).toEqual({ done: 0, total: 1, when: 'that day' })
   })
 
-  it('says nothing is planned for an empty day', () => {
-    expect(doneLine([], true)).toBe('Nothing planned')
+  it('counts an empty day as nothing', () => {
+    expect(doneCount([], true)).toEqual({ done: 0, total: 0, when: 'today' })
+  })
+})
+
+describe('clockHour and timeSpan', () => {
+  it('writes an hour as the mockup does: a space, AM or PM, and 12 at the turn of the half-day', () => {
+    expect(clockHour(0)).toBe('12 AM')
+    expect(clockHour(7)).toBe('7 AM')
+    expect(clockHour(12)).toBe('12 PM')
+    expect(clockHour(18)).toBe('6 PM')
+    expect(clockHour(22)).toBe('10 PM')
+    expect(clockHour(24)).toBe('12 AM')
+  })
+
+  it('writes a span of the clock as "from to"', () => {
+    expect(timeSpan(9, 10)).toBe('9 AM to 10 AM')
+  })
+})
+
+describe('cheerLine', () => {
+  it('says nothing for an empty day or a done one', () => {
+    expect(cheerLine({ done: 0, total: 0 })).toBe('')
+    expect(cheerLine({ done: 2, total: 2 })).toBe('')
+  })
+
+  it('names the last one, the first one, and otherwise one of three steady lines by the count', () => {
+    expect(cheerLine({ done: 4, total: 5 })).toBe('Last one for today. You are nearly there.')
+    expect(cheerLine({ done: 1, total: 5 })).toBe('A first one is a real start.')
+    expect(cheerLine({ done: 2, total: 5 })).toBe('Good rhythm. No rush.')
+    expect(cheerLine({ done: 3, total: 5 })).toBe('Steady. Nicely paced.')
+  })
+})
+
+describe('dayLineBlocks and dayLineAxis', () => {
+  const day = { start: 7, end: 22 }
+  const blockItem = { key: 'a:work@9', kind: 'block' as const, title: 'work', start: 9, end: 12, categoryId: 'professionnelle', done: true }
+
+  it('places each block of the day as a share of the range, and leaves out the habits', () => {
+    const habit = { key: 'h:walk', kind: 'habit' as const, title: 'Walk', start: null, end: null, categoryId: 'physique', done: false }
+
+    expect(dayLineBlocks([blockItem, habit], day)).toEqual([
+      { key: 'a:work@9', left: '13.33%', width: '20.00%', categoryId: 'professionnelle', done: true },
+    ])
+  })
+
+  it('clips a block to the range', () => {
+    const early = { ...blockItem, start: 5, end: 8 }
+
+    expect(dayLineBlocks([early], day)[0]).toMatchObject({ left: '0.00%', width: '6.67%' })
+  })
+
+  it('labels the two ends of the range, and 12 and 18 inside it (the mockup axis: 7 AM, 12 PM, 6 PM, 10 PM)', () => {
+    expect(dayLineAxis(day)).toEqual([
+      { hour: 7, label: '7 AM', left: '0.00%', edge: 'start' },
+      { hour: 12, label: '12 PM', left: '33.33%', edge: 'middle' },
+      { hour: 18, label: '6 PM', left: '73.33%', edge: 'middle' },
+      { hour: 22, label: '10 PM', left: '100.00%', edge: 'end' },
+    ])
+  })
+
+  it('leaves out the hours that a short range does not reach', () => {
+    expect(dayLineAxis({ start: 9, end: 12 }).map(label => label.label)).toEqual(['9 AM', '12 PM'])
   })
 })
 
@@ -161,7 +227,7 @@ describe('countdownText', () => {
   })
 
   it('gives the start hour when the block is more than three hours away', () => {
-    expect(countdownText(720, 780, 480)).toEqual({ state: 'later', text: 'Starts at 12PM' })
+    expect(countdownText(720, 780, 480)).toEqual({ state: 'later', text: 'Starts at 12 PM' })
   })
 
   it('reads the time left while the block runs, from its start to its end', () => {
@@ -171,8 +237,8 @@ describe('countdownText', () => {
   })
 
   it('says the block ended and asks for a tick once its end has passed', () => {
-    expect(countdownText(540, 720, 800)).toEqual({ state: 'ended', text: 'Ended at 12PM. Tick it if it happened.' })
-    expect(countdownText(540, 720, 720)).toEqual({ state: 'ended', text: 'Ended at 12PM. Tick it if it happened.' })
+    expect(countdownText(540, 720, 800)).toEqual({ state: 'ended', text: 'Ended at 12 PM. Tick it if it happened.' })
+    expect(countdownText(540, 720, 720)).toEqual({ state: 'ended', text: 'Ended at 12 PM. Tick it if it happened.' })
   })
 })
 
@@ -207,10 +273,13 @@ describe('behindLine', () => {
     expect(behindLine(category)).toBe('Behind this: Exercise at least three times a week.')
   })
 
-  it('gives no line when the area has no target, or the target is to be defined', () => {
-    expect(behindLine({ ...category, target1y: undefined })).toBeNull()
-    expect(behindLine({ ...category, target1y: '   ' })).toBeNull()
-    expect(behindLine({ ...category, targetTbd: true })).toBeNull()
+  it('names the life area and says it has no 1-year target yet, when the target is missing or to be defined', () => {
+    expect(behindLine({ ...category, target1y: undefined })).toBe('Behind this: Physical. No 1-year target yet.')
+    expect(behindLine({ ...category, target1y: '   ' })).toBe('Behind this: Physical. No 1-year target yet.')
+    expect(behindLine({ ...category, targetTbd: true })).toBe('Behind this: Physical. No 1-year target yet.')
+  })
+
+  it('gives no line without a life area at all', () => {
     expect(behindLine(undefined)).toBeNull()
   })
 })
@@ -279,7 +348,7 @@ describe('habitRows', () => {
 
     expect(rows.map(row => [row.key, row.done, row.meta])).toEqual([
       ['h:walk', false, 'Every day · Not yet today'],
-      ['h:read', false, '3 a week · 1 of 3 this week'],
+      ['h:read', false, '3 times a week · 1 of 3 this week'],
     ])
   })
 

@@ -10,11 +10,15 @@
   100% { transform: scale(1); }
 }
 
-/* Ambient: a soft wash of the part of the day (30% of --am-1, then --am-2, then the paper; a colour-mix, not a text pair,
-   checked in designContrast.test.ts). Lively only: Calm keeps the plain paper. The top bar takes the same colour as the top of it. */
-:root[data-motion="lively"] body {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--am-1) 30%, var(--paper)) 0%, color-mix(in srgb, var(--am-2) 30%, var(--paper)) 32rem, var(--paper) 58rem) fixed no-repeat;
+/* Ambient: the glow of the part of the day behind the page (the layer is in shell.css). The glow drifts under lively only; Calm
+   has no ambient layer. Text on the glow keeps 4.5:1 (designContrast.test.ts). */
+@keyframes drift {
+  from { transform: translate3d(-3vw, 0, 0) scale(1); }
+  to { transform: translate3d(4vw, 3vh, 0) scale(1.08); }
 }
-:root[data-motion="lively"] .app { background: transparent; }
-/* The top bar holds the wash colour of the top of the page, so the content does not show through it when it scrolls under */
-:root[data-motion="lively"] .topbar { background: color-mix(in srgb, var(--am-1) 30%, var(--paper)); }
+:root[data-motion="lively"] .ambient::before { animation: drift 26s ease-in-out infinite alternate; }
+/* The live dot of a pill on the block now breathes (Today); Calm shows it still */
+@keyframes breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}

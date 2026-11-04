@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
-import { formatHour } from '~/utils/planner/format'
-import type { TodayItem } from '~/utils/today'
+import { timeSpan, type TodayItem } from '~/utils/today'
 
 /**
  * The rest of the day (FR-TODAY-2): each block or daily habit with its tick (FR-HOME-14), its time, and its life area, which
@@ -16,7 +15,7 @@ const { categoryMap } = usePlannerMaps()
 const { areaVars } = usePlannerFill()
 
 const areaOf = (item: TodayItem) => (item.categoryId ? categoryMap.value.get(item.categoryId) : undefined)
-const timeOf = (item: TodayItem) => (item.kind === 'block' ? `${formatHour(item.start!)}–${formatHour(item.end!)}` : 'Habit, every day')
+const timeOf = (item: TodayItem) => (item.kind === 'block' ? timeSpan(item.start!, item.end!) : 'Habit, every day')
 </script>
 
 <template>
@@ -30,7 +29,7 @@ const timeOf = (item: TodayItem) => (item.kind === 'block' ? `${formatHour(item.
           <p class="today-row-meta">
             {{ timeOf(item) }}
             <template v-if="areaOf(item)">
-              · <span class="dot" :style="areaVars(areaOf(item)!.color ?? FALLBACK_EMPTY_COLOR)" aria-hidden="true" />
+              · <span class="today-dot" :style="areaVars(areaOf(item)!.color ?? FALLBACK_EMPTY_COLOR)" aria-hidden="true" />
               <NuxtLink :to="link('dreams', { item: areaOf(item)!.id })">{{ areaOf(item)!.name }}</NuxtLink>
             </template>
           </p>

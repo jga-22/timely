@@ -1,9 +1,7 @@
 import type { Category, Habit, PlannerState } from '~/types/planner'
 import { addDays, mondayOf } from '~/utils/dates'
 import { blockDoneKey, habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
-import { dayBlocks, dayHabits, habitHasDay, habitProgressText, habitTicked, type HourRange } from '~/utils/home'
-import { frequencyText } from '~/utils/entries/text'
-import { formatHour } from '~/utils/planner/format'
+import { dayBlocks, dayHabits, habitHasDay, habitPlannedOn, habitProgressText, habitTicked, type HourRange } from '~/utils/home'
 import { partOfDay } from '~/utils/motion'
 import { sleepActivityId } from '~/utils/sleep'
 
@@ -56,8 +54,32 @@ export interface TodayHabitRow {
 
 /** The state of a countdown to a block, and its text as Today shows it */
 export interface Countdown {
-  state: 'soon' | 'later' | 'now' | 'ended'
+  state: 'soon' | 'later' | 'now' | 'ended' | 'last'
   text: string
+}
+
+/** The count of a day (FR-HOME-17): the ticked items, all of them, and the word for the day ("today" or "that day") */
+export interface DoneCount {
+  done: number
+  total: number
+  when: string
+}
+
+/** A label under the day line (FR-TODAY-7): the hour, its text, its place as a CSS percentage and the edge it sits on */
+export interface AxisLabel {
+  hour: number
+  label: string
+  left: string
+  edge: 'start' | 'middle' | 'end'
+}
+
+/** One block on the day line (FR-TODAY-7): its place as CSS percentages of the range, its life area and whether it is ticked */
+export interface DayLineBlock {
+  key: string
+  left: string
+  width: string
+  categoryId: string | null
+  done: boolean
 }
 
 /** The ids of the focus tick and of its heading: the shell keeps the keyboard on them when the focus moves */
@@ -72,6 +94,23 @@ const STRIP_WORDS: Record<StripState, string> = {
   none: 'not ticked',
   free: 'nothing planned',
   future: 'not yet'
+}
+
+/** An hour of the clock as the mockup writes it: "7 AM", "12 PM", "10 PM" (midnight is "12 AM") */
+export const clockHour = (hour: number): string => {
+  const h = hour % 24
+  return `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'AM' : 'PM'}`
+}
+
+/** A span of the clock: "9 AM to 10 AM" */
+export const timeSpan = (start: number, end: number): string => `${clockHour(start)} to ${clockHour(end)}`
+
+/** How often a habit is due, in the mockup's words: "Every day", "Once a week", "3 times a week", "2 times a month" */
+export const habitFrequencyText = ({ count, period }: Habit['frequency']): string => {
+  if (period === 'day') return 'Every day'
+  if (count === 1) return `Once a ${period}`
+
+  return `${count} times a ${period}`
 }
 
 /** A minute count as "40 min", "1 h" or "1 h 20 min" */
@@ -162,19 +201,70 @@ export const focusItem = (state: PlannerState, date: string, showSleep = false):
   return best ? habitItem(state, best, date) : null
 }
 
-/** The day's count line (FR-HOME-17): "2 of 5 done today", "All done today", or "that day" on another day */
-export const doneLine = (items: TodayItem[], isToday: boolean): string => {
-  if (!items.length) return 'Nothing planned'
+/** The count of a day (FR-HOME-17): the ticked items and all of them. The numbers always show (Calm keeps every number) */
+export const doneCount = (items: TodayItem[], isToday: boolean): DoneCount => ({
+  done: items.filter(item => item.done).length,
+  total: items.length,
+  when: isToday ? 'today' : 'that day'
+})
 
-  const done = items.filter(item => item.done).length
-  const when = isToday ? 'today' : 'that day'
+/**
+ * The line after a tick (the mockup's cheer): nothing once the day is done, a word for the last one, a start for the first one,
+ * then one of three steady lines by the count. Warm, never a score
+ */
+export const cheerLine = ({ done, total }: Pick<DoneCount, 'done' | 'total'>): string => {
+  if (!total || done === total) return ''
+  if (total - done === 1) return 'Last one for today. You are nearly there.'
+  if (done === 1) return 'A first one is a real start.'
 
-  return done === items.length ? `All done ${when}` : `${done} of ${items.length} done ${when}`
+  return ['Steady. Nicely paced.', 'That is how a week gets built.', 'Good rhythm. No rush.'][done % 3]!
+}
+
+/** The quiet pill on the last item still to do on today (the mockup's "Last one for today") */
+export const LAST_ONE_TEXT = 'Last one for today'
+
+/**
+ * The day line's blocks (FR-TODAY-7): the day's blocks clipped to the range, each as a place on it. Daily habits are not on the
+ * line: they have no hours. A block ticked is filled; one not yet ticked is a tint with its outline (the shell draws both)
+ */
+export const dayLineBlocks = (items: TodayItem[], range: HourRange): DayLineBlock[] => {
+  const span = range.end - range.start
+
+  return items
+    .filter(item => item.kind === 'block')
+    .map((item): DayLineBlock => {
+      const start = Math.max(item.start!, range.start)
+      const end = Math.min(item.end!, range.end)
+
+      return {
+        key: item.key,
+        left: `${(((start - range.start) / span) * 100).toFixed(2)}%`,
+        width: `${(((end - start) / span) * 100).toFixed(2)}%`,
+        categoryId: item.categoryId,
+        done: item.done
+      }
+    })
 }
 
 /**
- * The countdown to a block, minutes from midnight (FR-TODAY-3): "In 40 min" within three hours before it, "Starts at 9AM" before
- * that, "On now · 1 h left" while it runs, and "Ended at 3PM. Tick it if it happened." after it
+ * The hour labels under the day line (FR-TODAY-7): the two ends of the range, and 12 and 18 when they fall inside it. With the
+ * usual awake range of 7 AM to 10 PM this is the mockup's axis: 7 AM, 12 PM, 6 PM, 10 PM
+ */
+export const dayLineAxis = (range: HourRange): AxisLabel[] => {
+  const hours = [range.start, ...[12, 18].filter(hour => hour > range.start && hour < range.end), range.end]
+  const span = range.end - range.start
+
+  return hours.map((hour, index) => ({
+    hour,
+    label: clockHour(hour),
+    left: `${(((hour - range.start) / span) * 100).toFixed(2)}%`,
+    edge: index === 0 ? 'start' : index === hours.length - 1 ? 'end' : 'middle'
+  }))
+}
+
+/**
+ * The countdown to a block, minutes from midnight (FR-TODAY-3): "In 40 min" within three hours before it, "Starts at 9 AM" before
+ * that, "On now · 1 h left" while it runs, and "Ended at 3 PM. Tick it if it happened." after it
  */
 export const countdownText = (start: number, end: number, minute: number): Countdown => {
   if (minute < start) {
@@ -182,12 +272,12 @@ export const countdownText = (start: number, end: number, minute: number): Count
 
     return diff <= 180
       ? { state: 'soon', text: `In ${durationText(diff)}` }
-      : { state: 'later', text: `Starts at ${formatHour(Math.floor(start / 60))}` }
+      : { state: 'later', text: `Starts at ${clockHour(Math.floor(start / 60))}` }
   }
 
   if (minute < end) return { state: 'now', text: `On now · ${durationText(end - minute)} left` }
 
-  return { state: 'ended', text: `Ended at ${formatHour(Math.floor(end / 60))}. Tick it if it happened.` }
+  return { state: 'ended', text: `Ended at ${clockHour(Math.floor(end / 60))}. Tick it if it happened.` }
 }
 
 const GREETINGS = { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' } as const
@@ -199,13 +289,14 @@ export const greeting = (minute: number, name = ''): string => `${GREETINGS[part
 export const firstNameOf = (fullName: string): string => fullName.trim().split(/\s+/)[0] ?? ''
 
 /**
- * The line under the focal item (FR-TODAY-4): "Behind this: <1-year target>". Null when the life area has no target (no line
- * rather than a line about nothing); a target marked to be defined does not count
+ * The line under the focal item (FR-TODAY-4): "Behind this: <1-year target>". With no target (or one marked to be defined) it
+ * names the life area and says so: "Behind this: Economic. No 1-year target yet." (the mockup). Null with no life area at all
  */
 export const behindLine = (category: Category | null | undefined): string | null => {
-  const target = category?.target1y?.trim()
+  if (!category) return null
 
-  if (!category || !target || category.targetTbd) return null
+  const target = category.target1y?.trim()
+  if (!target || category.targetTbd) return `Behind this: ${category.name}. No 1-year target yet.`
 
   return `Behind this: ${target}`
 }
@@ -291,8 +382,8 @@ export const habitRows = (state: PlannerState, date: string, showSleep = false):
         key: habitDoneKey(habit.id),
         habit,
         done,
-        planned: habitHasDay(state, habit, date),
-        meta: `${frequencyText(habit.frequency)} · ${progress}`
+        planned: habitPlannedOn(state, habit, date),
+        meta: `${habitFrequencyText(habit.frequency)} · ${progress}`
       }
     })
 }

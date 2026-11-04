@@ -1,25 +1,29 @@
 <script setup lang="ts">
 import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
-import { usePlannerFill } from '~/composables/usePlannerFill'
 import { useShownDay } from '~/composables/useShownDay'
 import { useNowMinutes } from '~/composables/useNowMinutes'
 import { habitDoneKey } from '~/utils/done'
-import { dayHours, dayRange, habitProgressText, timelineSegments } from '~/utils/home'
-import { formatHour } from '~/utils/planner/format'
+import { dayRange, habitProgressText } from '~/utils/home'
+import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import {
+  LAST_ONE_TEXT,
   TODAY_FOCUS_TICK,
   TODAY_FOCUS_TITLE,
   allItemsDone,
   behindLine,
+  cheerLine,
   countdownText,
-  doneLine,
+  dayLineAxis,
+  dayLineBlocks,
+  doneCount,
   firstNameOf,
   focusItem,
   greeting,
   habitRows,
   nextHabitAction,
   nowPosition,
+  timeSpan,
   todayItems,
   weekStrip,
   type Countdown
@@ -32,8 +36,7 @@ import {
  * Everything date-dependent waits for mount (FR-DATE-6): the clock is read after mount, and the day is null until today is known.
  */
 const planner = usePlannerStore()
-const { categoryMap, getActivityColor } = usePlannerMaps()
-const { fill } = usePlannerFill()
+const { categoryMap } = usePlannerMaps()
 // Sleep is hidden unless 'Show sleep' is on (FR-SLEEP-4), set in Week and Year; its hours are left out of the items and the day line
 const { showSleep } = useShowSleep()
 const { link } = useNav()
@@ -60,6 +63,7 @@ const focus = computed(() => (viewed.value ? focusItem(planner.$state, viewed.va
 const rest = computed(() => items.value.filter(item => item.key !== focus.value?.key))
 const allDone = computed(() => !focus.value && allItemsDone(items.value))
 const nothing = computed(() => !focus.value && !items.value.length)
+const undone = computed(() => items.value.filter(item => !item.done).length)
 
 // The habit behind a habit focus, for its progress pill
 const focusHabit = computed(() => {
@@ -74,13 +78,13 @@ const focusEyebrow = computed(() => {
 
   if (item.kind === 'block') {
     const area = item.categoryId ? categoryMap.value.get(item.categoryId)?.name : ''
-    return ['Next', `${formatHour(item.start!)}–${formatHour(item.end!)}`, area].filter(Boolean).join(' · ')
+    return ['Next', timeSpan(item.start!, item.end!), area].filter(Boolean).join(' · ')
   }
 
   return isToday.value ? 'Next · a habit for today' : 'Next · a habit for that day'
 })
 
-// The pill beside the focus: a live countdown to a block today; for a habit, its progress or "any time"
+// The pill beside the focus: a live countdown to a block today; for a habit, the last one of the day, its progress or "any time"
 const pill = computed<Countdown | null>(() => {
   const item = focus.value
   if (!item) return null
@@ -88,6 +92,8 @@ const pill = computed<Countdown | null>(() => {
   if (item.kind === 'block') {
     return isToday.value && minute.value !== null ? countdownText(item.start! * 60, item.end! * 60, minute.value) : null
   }
+
+  if (isToday.value && undone.value === 1) return { state: 'last', text: LAST_ONE_TEXT }
 
   const habit = focusHabit.value
   if (!habit) return null
@@ -100,24 +106,16 @@ const behind = computed(() => {
   return categoryId ? behindLine(categoryMap.value.get(categoryId)) : null
 })
 
-// The day line: one segment per hour over the awake range (sleep trimmed from the edges unless shown), coloured by its activity
+// The day line over the awake range (sleep trimmed from the edges unless shown): a segment per block, in its life area's colour
 const range = computed(() => (viewed.value ? dayRange(planner.$state, viewed.value, showSleep.value) : { start: 0, end: 24 }))
-const segments = computed(() =>
-  viewed.value
-    ? timelineSegments(
-        dayHours(planner.$state, viewed.value, showSleep.value),
-        range.value,
-        activityId => planner.activities.find(item => item.id === activityId)?.name ?? '',
-        activityId => fill(getActivityColor(activityId))
-      )
-    : []
-)
 const dayLine = computed(() => ({
-  segments: segments.value,
-  range: range.value,
-  caption: doneLine(items.value, isToday.value),
-  now: isToday.value ? nowPosition(minute.value, range.value) : null,
-  planned: items.value.some(item => item.kind === 'block')
+  blocks: dayLineBlocks(items.value, range.value).map(block => ({
+    ...block,
+    color: (block.categoryId ? categoryMap.value.get(block.categoryId)?.color : undefined) ?? FALLBACK_EMPTY_COLOR
+  })),
+  axis: dayLineAxis(range.value),
+  count: doneCount(items.value, isToday.value),
+  now: isToday.value ? nowPosition(minute.value, range.value) : null
 }))
 
 // Plan Run in Week: the habit furthest behind its count, shown only when nothing is planned today
@@ -127,6 +125,10 @@ const nextHabit = computed(() => (nothing.value && viewed.value ? nextHabitActio
 const strip = computed(() => (today.value ? weekStrip(planner.$state, today.value, showSleep.value) : null))
 const habits = computed(() => (viewed.value ? habitRows(planner.$state, viewed.value, showSleep.value) : []))
 
+// The warm line after a tick (the mockup's cheer): set by a tick on today, cleared when the day changes
+const cheer = ref('')
+watch(viewed, () => (cheer.value = ''))
+
 const toggle = (key: string) => {
   if (!viewed.value) return
 
@@ -135,6 +137,7 @@ const toggle = (key: string) => {
   const inToday = !!document.activeElement?.closest('.today')
 
   planner.toggleDone(viewed.value, key)
+  cheer.value = isToday.value ? cheerLine(doneCount(items.value, true)) : ''
 
   if (!inToday) return
 
@@ -171,6 +174,7 @@ const toggle = (key: string) => {
       :eyebrow="focusEyebrow"
       :pill="pill"
       :behind="behind"
+      :cheer="cheer"
       @toggle="toggle"
     >
       <TodayDayLine v-if="items.length" v-bind="dayLine" />
@@ -180,13 +184,13 @@ const toggle = (key: string) => {
       <TodayDayLine v-bind="dayLine" />
     </TodayDone>
 
-    <TodayNothing v-else :is-today="isToday" :habit="nextHabit" />
+    <TodayNothing v-else :is-today="isToday" :habit="nextHabit" :has-ambition="!!ambition" />
 
     <TodayItems v-if="rest.length" :title="focus ? 'Also today' : 'Ticked today'" :items="rest" @toggle="toggle" />
 
     <TodayWeekStrip v-if="strip" :strip="strip" />
 
-    <TodayJournal />
+    <TodayJournal :day="viewed" :is-today="isToday" />
 
     <TodayHabits v-if="habits.length" :rows="habits" @toggle="toggle" />
   </div>

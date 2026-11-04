@@ -1,47 +1,39 @@
 <script setup lang="ts">
-import { axisLeft, axisTicks, type HourRange, type TimelineSegment } from '~/utils/home'
+import type { AxisLabel, DayLineBlock, DoneCount } from '~/utils/today'
 
 /**
- * The day line (FR-TODAY-7): one segment per hour of the awake range, coloured by its activity, with a now marker on today and
- * the hour labels under it. The count of the day sits above it in a live region, so a tick is read out (FR-HOME-17). The
- * segments are visual only: the list of the day says what each one is.
+ * The day line (FR-TODAY-7): the count of the day above it, then one track with a segment for each block of the day, coloured by
+ * its life area (a ticked block is filled; one to do is a tint with its outline), a now marker on today, and the hour labels under
+ * it. The count sits in a live region, so a tick is read out (FR-HOME-17). The track is visual only: the list says what each is.
  */
-const props = defineProps<{
-  segments: TimelineSegment[]
-  range: HourRange
-  caption: string
+defineProps<{
+  blocks: Array<DayLineBlock & { color: string }>
+  axis: AxisLabel[]
+  count: DoneCount
   now: string | null
-  planned: boolean
 }>()
 
-const ticks = computed(() => axisTicks(props.range))
+const { areaVars } = usePlannerFill()
 </script>
 
 <template>
   <div class="today-dayline">
-    <p class="today-cap" role="status">{{ caption }}</p>
+    <p class="today-cap" role="status"><b>{{ count.done }}</b> of {{ count.total }} done {{ count.when }}</p>
 
-    <div v-if="planned" class="today-track">
-      <div class="today-bar" aria-hidden="true">
+    <template v-if="blocks.length">
+      <div class="today-track" aria-hidden="true">
         <span
-          v-for="segment in segments"
-          :key="segment.key"
+          v-for="block in blocks"
+          :key="block.key"
           class="today-seg"
-          :class="{ 'is-unplanned': !segment.color }"
-          :style="{ background: segment.color || undefined }"
+          :class="{ 'is-done': block.done }"
+          :style="{ left: block.left, width: block.width, ...areaVars(block.color) }"
         />
+        <span v-if="now" class="today-now" :style="{ left: now }"><span class="today-now-label">now</span></span>
       </div>
-      <span v-if="now" class="today-now" aria-hidden="true" :style="{ left: now }" />
       <div class="today-axis" aria-hidden="true">
-        <span
-          v-for="hour in ticks"
-          :key="hour"
-          class="today-axis-tick"
-          :style="{ left: axisLeft(hour, range) }"
-        >{{ hour }}h</span>
-        <span v-if="range.start > 0" class="today-axis-tick is-start" style="left: 0%">{{ range.start }}h</span>
-        <span v-if="range.end < 24" class="today-axis-tick is-end" style="left: 100%">{{ range.end }}h</span>
+        <span v-for="label in axis" :key="label.hour" class="today-axis-label" :class="`is-${label.edge}`" :style="{ left: label.left }">{{ label.label }}</span>
       </div>
-    </div>
+    </template>
   </div>
 </template>

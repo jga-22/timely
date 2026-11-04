@@ -4,9 +4,9 @@
  */
 export const ICONS = {
   check: ['M5 12.5l4.2 4.2L19 7'],
-  today: ['M4 6h16v14H4z', 'M4 10h16', 'M8 4v4', 'M16 4v4'],
-  plan: ['M4 4h16v16H4z', 'M4 9h16', 'M9 9v11'],
-  progress: ['M21 12a9 9 0 1 1-9-9', 'M12 7v5l3.5 2'],
+  today: ['M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0', 'M12 7.5v4.8l3 1.7'],
+  plan: ['M6.5 5h11a3 3 0 0 1 3 3v9.5a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z', 'M3.5 10h17', 'M8 3v4', 'M16 3v4'],
+  progress: ['M4 20V4', 'M4 20h16', 'M8 16l4-5 3 2.5 5-6'],
   left: ['M15 18l-6-6 6-6'],
   right: ['M9 18l6-6-6-6'],
   plus: ['M12 5v14', 'M5 12h14'],
@@ -18,7 +18,6 @@ export const ICONS = {
   ],
   pencil: ['M12 20h9', 'M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z'],
   close: ['M6 6l12 12', 'M18 6L6 18'],
-  brand: ['M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18Z', 'M12 7v5l3 2'],
 } as const
 
 export type IconName = keyof typeof ICONS

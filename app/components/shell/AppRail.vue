@@ -11,7 +11,7 @@ const { surface, link } = useNav()
 <template>
   <div class="shell-rail">
     <NuxtLink :to="link('today')" class="shell-brand">
-      <UiIcon name="brand" />
+      <span class="shell-brand-mark" aria-hidden="true"><UiIcon name="check" size="sm" /></span>
       <span>Timely</span>
     </NuxtLink>
     <nav class="shell-rail-nav" aria-label="Main">

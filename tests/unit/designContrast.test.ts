@@ -60,26 +60,15 @@ describe('token contrast, per theme and part of the day', () => {
   }
 })
 
-/** The Lively wash: this share of the part colour (--am-1, --am-2) over the paper. motion.css uses the same share */
-const AMBIENT_WASH = 0.3
-
-/** sRGB mix of two hex colours, as color-mix(in srgb) does it: share a of a, the rest of b */
-const mixHex = (a: string, b: string, share: number): string => {
-  const channels = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16))
-  const mixed = channels(a).map((value, i) => Math.round(value * share + channels(b)[i]! * (1 - share)))
-  return '#' + mixed.map(value => value.toString(16).padStart(2, '0')).join('')
-}
-
-describe('the ambient wash (Lively) keeps the text contrast', () => {
+describe('the ambient glow (Lively) keeps the text contrast', () => {
   it('ink, secondary and muted text and the accent reach 4.5:1 on the wash of every part and theme', () => {
     const failures: string[] = []
     for (const state of STATES) {
       const values = tokenValues(state)
-      const paper = colourToken(values, 'paper')
       for (const part of ['am-1', 'am-2'] as const) {
-        const wash = mixHex(colourToken(values, part), paper, AMBIENT_WASH)
+        // The ambient glows are the part colour at full strength at their centre (shell.css): the worst case for the text
         for (const text of ['ink', 'ink-2', 'ink-3', 'accent'] as const) {
-          const ratio = contrastRatio(colourToken(values, text), wash)
+          const ratio = contrastRatio(colourToken(values, text), colourToken(values, part))
           if (ratio < 4.5) failures.push(`${text} on ${part} wash, ${state.theme} ${state.part}: ${ratio.toFixed(2)}`)
         }
       }
