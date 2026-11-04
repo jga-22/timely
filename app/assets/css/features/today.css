@@ -180,6 +180,7 @@
 .today-row-text { min-width: 0; display: grid; }
 .today-row-name { margin: 0; font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink); overflow-wrap: anywhere; }
 .today-row-meta { margin: 0; font-size: var(--text-meta); color: var(--ink-3); }
+.today-row-mark { color: var(--accent); font-weight: var(--weight-medium); }
 .today-row-meta a { color: var(--ink-3); text-decoration: none; }
 .today-row-meta a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .today-row.is-done .today-row-name { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--ink-3); }

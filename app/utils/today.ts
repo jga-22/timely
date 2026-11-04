@@ -52,9 +52,9 @@ export interface TodayHabitRow {
   meta: string
 }
 
-/** The state of a countdown to a block, and its text as Today shows it */
+/** The state of a countdown to a block, and its text as Today shows it ("done" for a block ticked while it is focal) */
 export interface Countdown {
-  state: 'soon' | 'later' | 'now' | 'ended' | 'last'
+  state: 'soon' | 'later' | 'now' | 'ended' | 'last' | 'done'
   text: string
 }
 
@@ -163,13 +163,43 @@ export const firstUndone = (items: TodayItem[]): TodayItem | null => items.find(
 export const allItemsDone = (items: TodayItem[]): boolean => items.length > 0 && items.every(item => item.done)
 
 /**
- * The one item to do next (FR-TODAY-2): the first undone item of the day in list order, that is the first undone block in time
- * order, then the first undone daily habit. The focus walks only the day's items (`todayItems`), so a tick by the focus and a
- * tick in the list leave the same state. Null when the day has no items (nothing planned: the plan action shows instead) and
- * when every item is done (today is done)
+ * The one item of the focal card (FR-TODAY-2). On the real today the focus follows the clock: `minute` is the minute of the day
+ * (null on a past day and before the clock is known, then the first undone item of the day). Otherwise: 1. the block in progress
+ * (start <= minute < end), ticked or not, the earliest start first; 2. else the next block that starts later, ticked or not;
+ * 3. else the most recent ended block not ticked; then the first undone daily habit. Every item is done: null. The focus walks
+ * only the day's items (`todayItems`): a weekly or monthly habit is never the focus. Null too when the day has no items
  */
-export const focusItem = (state: PlannerState, date: string, showSleep = false): TodayItem | null =>
-  firstUndone(todayItems(state, date, showSleep))
+export const focusItem = (state: PlannerState, date: string, showSleep = false, minute: number | null = null): TodayItem | null => {
+  const items = todayItems(state, date, showSleep)
+  if (minute === null || allItemsDone(items)) return firstUndone(items)
+
+  const blocks = items.filter(item => item.kind === 'block')
+  const running = blocks.find(item => item.start! * 60 <= minute && minute < item.end! * 60)
+  if (running) return running
+
+  const later = blocks.find(item => item.start! * 60 > minute)
+  if (later) return later
+
+  const ended = blocks.filter(item => !item.done).reduce<TodayItem | null>((last, item) => (!last || item.end! >= last.end! ? item : last), null)
+
+  return ended ?? firstUndone(items.filter(item => item.kind === 'habit'))
+}
+
+/** The word that opens a block's line: "On now" while it runs, "Ended" once it is over, "Next" before it and with no clock */
+export const blockWord = (item: TodayItem, minute: number | null): string => {
+  if (minute === null) return 'Next'
+  if (minute >= item.end! * 60) return 'Ended'
+
+  return minute >= item.start! * 60 ? 'On now' : 'Next'
+}
+
+/** The pill of a ticked block on today: "Done", with the start of the next block still to come ("Done · next at 2 PM") */
+export const donePill = (items: TodayItem[], block: TodayItem, minute: number): Countdown => {
+  const after = Math.max(minute, block.start! * 60)
+  const next = items.find(item => item.kind === 'block' && item.start! * 60 > after)
+
+  return { state: 'done', text: next ? `Done · next at ${clockHour(next.start!)}` : 'Done' }
+}
 
 /** The count of a day (FR-HOME-17): the ticked items and all of them. The numbers always show (Calm keeps every number) */
 export const doneCount = (items: TodayItem[], isToday: boolean): DoneCount => ({

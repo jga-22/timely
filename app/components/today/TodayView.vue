@@ -11,10 +11,12 @@ import {
   TODAY_FOCUS_TITLE,
   allItemsDone,
   behindLine,
+  blockWord,
   cheerLine,
   countdownText,
   dayLineAxis,
   dayLineBlocks,
+  donePill,
   doneCount,
   firstNameOf,
   focusItem,
@@ -29,7 +31,7 @@ import {
 } from '~/utils/today'
 
 /**
- * Today (FR-TODAY-1 to 9): the day's next item in focus, the rest of the day, the week strip, the journal line and all habits.
+ * Today (FR-TODAY-1 to 9): the day's item in focus, the day's list, the week strip, the journal line and all habits.
  * The day shown is today until the user steps back (FR-HOME-18). This shell holds the store and the day, and picks one of three
  * states: the focus (an item still to do), done (all of the day ticked), or nothing planned. Its parts are in components/today/.
  * Everything date-dependent waits for mount (FR-DATE-6): the clock is read after mount, and the day is null until today is known.
@@ -56,10 +58,12 @@ const greetLine = computed(() => {
 
 const ambition = computed(() => planner.ambition?.statement.trim() ?? '')
 
-// The day's items (blocks, then daily habits), the one to do next, and the others
+// The day's items (blocks, then daily habits), the one in focus, and the others. Only the real today follows the clock (FR-TODAY-2)
+const clock = computed(() => (isToday.value ? minute.value : null))
 const items = computed(() => (viewed.value ? todayItems(planner.$state, viewed.value, showSleep.value) : []))
-const focus = computed(() => (viewed.value ? focusItem(planner.$state, viewed.value, showSleep.value) : null))
-const rest = computed(() => items.value.filter(item => item.key !== focus.value?.key))
+const focus = computed(() => (viewed.value ? focusItem(planner.$state, viewed.value, showSleep.value, clock.value) : null))
+// The word of the focus, for its eyebrow and its mark in the list: "On now", "Next" or "Ended" for a block, "Next" for a habit
+const focusWord = computed(() => (focus.value?.kind === 'block' ? blockWord(focus.value, clock.value) : 'Next'))
 const allDone = computed(() => !focus.value && allItemsDone(items.value))
 const nothing = computed(() => !focus.value && !items.value.length)
 const undone = computed(() => items.value.filter(item => !item.done).length)
@@ -77,19 +81,22 @@ const focusEyebrow = computed(() => {
 
   if (item.kind === 'block') {
     const area = item.categoryId ? categoryMap.value.get(item.categoryId)?.name : ''
-    return ['Next', timeSpan(item.start!, item.end!), area].filter(Boolean).join(' · ')
+    return [blockWord(item, clock.value), timeSpan(item.start!, item.end!), area].filter(Boolean).join(' · ')
   }
 
   return isToday.value ? 'Next · a habit for today' : 'Next · a habit for that day'
 })
 
-// The pill beside the focus: a live countdown to a block today; for a habit, the last one of the day, its progress or "any time"
+// The pill beside the focus: a block today counts down (or says it is done, when ticked); for a habit, the last one of the day, its
+// progress or "any time"
 const pill = computed<Countdown | null>(() => {
   const item = focus.value
   if (!item) return null
 
   if (item.kind === 'block') {
-    return isToday.value && minute.value !== null ? countdownText(item.start! * 60, item.end! * 60, minute.value) : null
+    if (clock.value === null) return null
+
+    return item.done ? donePill(items.value, item, clock.value) : countdownText(item.start! * 60, item.end! * 60, clock.value)
   }
 
   if (isToday.value && undone.value === 1) return { state: 'last', text: LAST_ONE_TEXT }
@@ -154,10 +161,39 @@ const toggle = (key: string) => {
     target?.focus({ preventScroll: true })
   })
 }
+
+// The clock moves the focus by itself (FR-TODAY-2): the card is redrawn, and the keyboard goes back to the item it was on (its tick
+// in the list, or the heading when the item was the card), never to the item that took its place. The item is the last one the
+// keyboard was on in this screen; a click on nothing forgets it
+let kept = ''
+const onFocusIn = (event: FocusEvent) => {
+  const el = event.target as HTMLElement
+  kept = el.dataset.tick ?? (el.id === TODAY_FOCUS_TITLE ? TODAY_FOCUS_TITLE : '')
+}
+// A focus lost to nothing (a click on the page) forgets the item. A removal can also fire focusout, so the check waits and looks again:
+// the element is then gone from the page, and the item is kept
+const onFocusOut = (event: FocusEvent) => {
+  const lost = event.target as HTMLElement
+  window.setTimeout(() => {
+    if (lost.isConnected && document.activeElement === document.body) kept = ''
+  })
+}
+
+watch(
+  () => focus.value?.key,
+  () =>
+    nextTick(() => {
+      const now = document.activeElement
+      if (!kept || (now && now !== document.body)) return
+
+      const target = (kept !== TODAY_FOCUS_TITLE && tickOf(kept)) || document.getElementById(TODAY_FOCUS_TITLE)
+      target?.focus({ preventScroll: true })
+    })
+)
 </script>
 
 <template>
-  <div v-if="viewed" class="view today">
+  <div v-if="viewed" class="view today" @focusin="onFocusIn" @focusout="onFocusOut">
     <TodayHeader
       :eyebrow="eyebrow"
       :is-today="isToday"
@@ -176,6 +212,7 @@ const toggle = (key: string) => {
 
     <TodayFocus
       v-if="focus"
+      :key="focus.key"
       :item="focus"
       :eyebrow="focusEyebrow"
       :pill="pill"
@@ -192,7 +229,14 @@ const toggle = (key: string) => {
 
     <TodayNothing v-else :is-today="isToday" :habit="nextHabit" :has-ambition="!!ambition" />
 
-    <TodayItems v-if="rest.length" :title="focus ? 'Also today' : 'Ticked today'" :items="rest" @toggle="toggle" />
+    <TodayItems
+      v-if="items.length"
+      title="Today's list"
+      :items="items"
+      :focus-key="focus?.key ?? null"
+      :focus-word="focusWord"
+      @toggle="toggle"
+    />
 
     <TodayWeekStrip v-if="strip" :strip="strip" />
 

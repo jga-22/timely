@@ -3,10 +3,11 @@ import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import { timeSpan, type TodayItem } from '~/utils/today'
 
 /**
- * The rest of the day (FR-TODAY-2): each block or daily habit with its name, its time and its life area (a link to Dreams), and its
- * tick at the right end (FR-TODAY-9). The tick is the same circle as the focus tick; each is a checkbox named for its thing.
+ * The day's list (FR-TODAY-2): every block and daily habit of the day in time order, the one in focus included, with its name, its
+ * time and its life area (a link to Dreams), and its tick at the right end (FR-TODAY-9). The tick is the same circle as the focus
+ * tick; each is a checkbox named for its thing. The item in focus carries a quiet mark ("On now", "Next") and aria-current.
  */
-const props = defineProps<{ title: string; items: TodayItem[] }>()
+const props = defineProps<{ title: string; items: TodayItem[]; focusKey: string | null; focusWord: string }>()
 
 const emit = defineEmits<{ toggle: [key: string] }>()
 
@@ -22,10 +23,17 @@ const timeOf = (item: TodayItem) => (item.kind === 'block' ? timeSpan(item.start
   <section class="section today-items" aria-labelledby="today-items-title">
     <h2 id="today-items-title" class="section-title">{{ title }}</h2>
     <ul class="today-list">
-      <li v-for="item in props.items" :key="item.key" class="today-row" :class="{ 'is-done': item.done }">
+      <li
+        v-for="item in props.items"
+        :key="item.key"
+        class="today-row"
+        :class="{ 'is-done': item.done }"
+        :aria-current="item.key === focusKey ? 'true' : undefined"
+      >
         <div class="today-row-text">
           <p class="today-row-name">{{ item.title }}</p>
           <p class="today-row-meta">
+            <span v-if="item.key === focusKey" class="today-row-mark">{{ focusWord }} · </span>
             {{ timeOf(item) }}
             <template v-if="areaOf(item)">
               · <span class="today-dot" :style="areaVars(areaOf(item)!.color ?? FALLBACK_EMPTY_COLOR)" aria-hidden="true" />
