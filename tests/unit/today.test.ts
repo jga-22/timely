@@ -6,11 +6,13 @@ import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import {
   allItemsDone,
   behindLine,
+  blockWord,
   cheerLine,
   clockHour,
   countdownText,
   dayLineAxis,
   dayLineBlocks,
+  donePill,
   doneCount,
   firstNameOf,
   firstUndone,
@@ -170,6 +172,113 @@ describe('focusItem', () => {
 
     expect(doneCount(todayItems(ticked, MONDAY), true)).toEqual({ done: 0, total: 1, when: 'today' })
     expect(focusItem(ticked, MONDAY)?.key).toBe('a:work@8')
+  })
+})
+
+/** A minute of the day from an hour and a minute: at(9, 20) is 9:20 */
+const at = (hour: number, minute = 0): number => hour * 60 + minute
+
+describe('focusItem on the clock (FR-TODAY-2)', () => {
+  const runAt = (start: number, end: number, day = 0): Run => ({ activityId: 'work', day, start, end })
+  const planAt = (runs: Run[], habits: Habit[] = []): PlannerState => withHabits(withActivities(planned(runs), [workActivity]), habits)
+
+  it('is the block in progress over an earlier undone one', () => {
+    const state = planAt([runAt(8, 9), runAt(10, 12)])
+
+    expect(focusItem(state, MONDAY, false, at(10, 30))?.start).toBe(10)
+  })
+
+  it('still shows the block in progress when it is ticked', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(10, 12)]), MONDAY, [blockDoneKey('work', 10)])
+    const focus = focusItem(state, MONDAY, false, at(10, 30))
+
+    expect(focus?.start).toBe(10)
+    expect(focus?.done).toBe(true)
+  })
+
+  it('is the next block that starts later when none is in progress', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(13, 14)]), MONDAY, [blockDoneKey('work', 8)])
+
+    expect(focusItem(state, MONDAY, false, at(10))?.start).toBe(13)
+  })
+
+  it('is the next block even when it is ticked, as it starts later', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(13, 14)]), MONDAY, [blockDoneKey('work', 13)])
+
+    expect(focusItem(state, MONDAY, false, at(10))?.start).toBe(13)
+  })
+
+  it('is the most recently ended block not ticked when all blocks are over', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(10, 11), runAt(13, 14)]), MONDAY, [blockDoneKey('work', 13)])
+
+    expect(focusItem(state, MONDAY, false, at(22, 30))?.start).toBe(10)
+  })
+
+  it('takes the first undone daily habit after the blocks are over', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(10, 11)], [walk, read]), MONDAY, [blockDoneKey('work', 8), blockDoneKey('work', 10)])
+
+    expect(focusItem(state, MONDAY, false, at(22, 30))?.key).toBe('h:walk')
+  })
+
+  it('leaves a block not ticked in focus before a daily habit not ticked', () => {
+    const state = planAt([runAt(8, 9)], [walk])
+
+    expect(focusItem(state, MONDAY, false, at(22, 30))?.key).toBe('a:work@8')
+  })
+
+  it('is null when every item is ticked, even while a block is in progress', () => {
+    const state = withDone(planAt([runAt(8, 12)], [walk]), MONDAY, [blockDoneKey('work', 8), 'h:walk'])
+
+    expect(focusItem(state, MONDAY, false, at(10, 30))).toBeNull()
+    expect(focusItem(state, MONDAY, false, at(22, 30))).toBeNull()
+  })
+
+  it('never focuses a weekly habit, even when the clock is past every block', () => {
+    const state = withDone(planAt([runAt(8, 9)], [read]), MONDAY, [blockDoneKey('work', 8)])
+
+    expect(focusItem(state, MONDAY, false, at(22, 30))).toBeNull()
+  })
+
+  it('uses the first undone item when there is no clock (a past day, or before the clock is known)', () => {
+    const state = withDone(planAt([runAt(8, 9), runAt(10, 11)], [walk]), MONDAY, [blockDoneKey('work', 8)])
+
+    expect(focusItem(state, MONDAY)?.start).toBe(10)
+    expect(focusItem(state, MONDAY, false, null)?.start).toBe(10)
+  })
+
+  it('takes the block that starts at the minute, not the one that ended at it', () => {
+    // Two activities, so the hours do not merge into one block
+    const gym = activity('gym', 'physique')
+    const state = withActivities(planned([runAt(8, 9), { activityId: 'gym', day: 0, start: 9, end: 10 }]), [workActivity, gym])
+
+    expect(focusItem(state, MONDAY, false, at(8))?.start).toBe(8)
+    expect(focusItem(state, MONDAY, false, at(9))?.start).toBe(9)
+    expect(focusItem(state, MONDAY, false, at(10))?.start).toBe(9)
+  })
+
+  it('treats the minute of a block end as over, and a block that has not started as later', () => {
+    const state = planAt([runAt(9, 10)])
+
+    expect(focusItem(state, MONDAY, false, at(8, 59))?.start).toBe(9)
+    expect(focusItem(state, MONDAY, false, at(10))?.start).toBe(9)
+  })
+})
+
+describe('blockWord and donePill', () => {
+  const block = { key: 'a:work@8', kind: 'block', title: 'work', start: 8, end: 9, categoryId: null, done: false } as const
+
+  it('names a block by the clock: On now while it runs, Ended after it, Next before it or with no clock', () => {
+    expect(blockWord(block, at(8, 30))).toBe('On now')
+    expect(blockWord(block, at(9))).toBe('Ended')
+    expect(blockWord(block, at(7, 59))).toBe('Next')
+    expect(blockWord(block, null)).toBe('Next')
+  })
+
+  it('says a ticked block is done, with the start of the next block still to come', () => {
+    const next = { ...block, key: 'a:work@13', start: 13, end: 14 }
+
+    expect(donePill([block, next], { ...block, done: true }, at(8, 30))).toEqual({ state: 'done', text: 'Done · next at 1 PM' })
+    expect(donePill([block], { ...block, done: true }, at(8, 30))).toEqual({ state: 'done', text: 'Done' })
   })
 })
 
