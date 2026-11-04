@@ -1,8 +1,7 @@
 <script setup lang="ts">
 /**
- * The Time split of the Week tab as a ring (FR-INS-P5): the available time of a typical week, one slice per life area in its colour,
- * planned hours, then the rest of the
- * ring is "Not planned". Shares add up to 100 (the parent computes them). SVG only.
+ * Where the week goes (the Week tab, FR-INS-P5): the available time of a typical week as a ring, one slice per life area in its colour,
+ * planned hours, then the rest of the ring, named by its label (Free). Shares add up to 100 (the parent computes them). SVG only.
  *
  * Selection (session state, held by the parent): a click or tap on a slice (or on the Not planned ring) selects it; the others are
  * dimmed and the selected one is drawn thicker, so the choice is never colour alone. The centre shows the selected slice's name,
@@ -24,6 +23,8 @@ export interface DonutSlice {
 
 export interface DonutRest {
   key: string
+  /** The word for the rest: Free on the Week tab */
+  label: string
   /** Percent of the available time that is not planned */
   share: number
   /** Available hours not planned, in the unit shown */
@@ -107,11 +108,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 </script>
 
 <template>
-  <div class="donut">
-    <svg ref="svg" class="donut-svg" viewBox="0 0 200 200" role="group" :aria-label="label" focusable="false">
-      <!-- The Not planned ring is drawn first, under the planned slices; it is also a button -->
+  <div class="where-donut">
+    <svg ref="svg" class="where-donut-svg" viewBox="0 0 200 200" role="group" :aria-label="label" focusable="false">
+      <!-- The rest ring is drawn first, under the planned slices; it is also a button -->
       <circle
-        class="donut-rest"
+        class="where-donut-rest"
         :class="{ 'is-selected': isSelected(notPlanned.key), 'is-dim': isDimmed(notPlanned.key) }"
         cx="100"
         cy="100"
@@ -120,17 +121,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
         tabindex="0"
         :data-slice="notPlanned.key"
         :aria-pressed="pressed(notPlanned.key)"
-        :aria-label="`Not planned: ${notPlanned.hours}, ${notPlanned.share}% of the available time`"
+        :aria-label="`${notPlanned.label}: ${notPlanned.hours}, ${notPlanned.share}% of the available time`"
         @click="toggle(notPlanned.key)"
         @keydown="onSliceKey($event, notPlanned.key)"
       >
-        <title>Not planned: {{ notPlanned.hours }}, {{ notPlanned.share }}%</title>
+        <title>{{ notPlanned.label }}: {{ notPlanned.hours }}, {{ notPlanned.share }}%</title>
       </circle>
       <circle
         v-for="(slice, index) in slices"
         v-show="slice.share > 0"
         :key="slice.key"
-        class="donut-seg"
+        class="where-donut-seg"
         :class="{ 'is-selected': isSelected(slice.key), 'is-dim': isDimmed(slice.key) }"
         cx="100"
         cy="100"
@@ -152,106 +153,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
       </circle>
     </svg>
 
-    <div class="donut-centre" :class="{ 'is-clearable': !!selectedDetail }" aria-live="polite" @click="clearSelection">
+    <div class="where-donut-centre" :class="{ 'is-clearable': !!selectedDetail }" aria-live="polite" @click="clearSelection">
       <template v-if="selectedDetail">
-        <span class="donut-name" :title="selectedDetail.name">{{ selectedDetail.name }}</span>
-        <span class="donut-value">{{ selectedDetail.percent }}%</span>
-        <span class="donut-sub">{{ selectedDetail.hours }}</span>
+        <span class="where-donut-name" :title="selectedDetail.name">{{ selectedDetail.name }}</span>
+        <span class="where-donut-value">{{ selectedDetail.percent }}%</span>
+        <span class="where-donut-sub">{{ selectedDetail.hours }}</span>
       </template>
       <template v-else>
-        <span class="donut-value">{{ centerValue }}</span>
-        <span class="donut-sub">{{ centerLabel }}</span>
+        <span class="where-donut-value">{{ centerValue }}</span>
+        <span class="where-donut-sub">{{ centerLabel }}</span>
       </template>
     </div>
   </div>
 </template>
-
-<style scoped>
-.donut {
-  position: relative;
-  width: min(240px, 100%);
-  aspect-ratio: 1;
-  margin: 0 auto;
-}
-.donut-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.donut-rest,
-.donut-seg {
-  fill: none;
-  stroke-width: 28;
-  cursor: pointer;
-}
-.donut-rest { stroke: var(--bg-3); }
-.donut-seg { stroke-linecap: butt; }
-
-/* Selected: drawn thicker. Others are dimmed; the selected one keeps its full colour and the words say the rest */
-.donut-rest.is-selected,
-.donut-seg.is-selected { stroke-width: 34; }
-.donut-rest.is-selected { stroke: var(--bg-4); }
-.donut-rest.is-dim,
-.donut-seg.is-dim { opacity: 0.5; }
-
-/* A circle's outline is the square around the whole ring, so no browser outline: a tap must not box the donut. Keyboard focus is
-   drawn on the slice itself (thicker, with a halo in the accent colour) */
-.donut-svg,
-.donut-rest,
-.donut-seg {
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.donut-rest:focus-visible,
-.donut-seg:focus-visible {
-  stroke-width: 34;
-  filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 2px var(--accent));
-}
-
-/* The centre sits over the hole of the ring. While a slice is selected it is a button that clears the selection */
-.donut-centre {
-  position: absolute;
-  /* Only the hole of the ring: a box over the whole chart would swallow the clicks meant for the slices */
-  inset: 24%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 0 6px;
-  text-align: center;
-}
-.donut-centre.is-clearable { cursor: pointer; }
-.donut-value {
-  font-size: var(--fs-xl);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.donut-sub {
-  max-width: 100%;
-  /* Wraps rather than cuts: the hole of the ring is narrow and "72 h planned of 105 h" must read in full */
-  text-wrap: balance;
-  font-size: var(--fs-xs);
-  line-height: 1.3;
-  color: var(--ink-3);
-}
-.donut-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--ink);
-}
-.donut-centre.is-clearable .donut-value { font-size: var(--fs-lg); }
-
-/* Motion: the only transitions are the emphasis and the dimming, and they are off for reduced motion */
-@media (prefers-reduced-motion: no-preference) {
-  .donut-rest,
-  .donut-seg { transition: stroke-width 0.15s ease, opacity 0.15s ease; }
-}
-</style>

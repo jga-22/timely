@@ -1,0 +1,185 @@
+/* Plan > Week (A2 words and look, slice 6): the lede, and Where the week goes, the card above the grid with the typical week's ring and its list. */
+
+/* ── The lede: which schedule every week uses, and how to use the grid ── */
+.week-lede {
+  max-width: 60ch;
+  margin: 0 0 var(--sp-6);
+  font-size: var(--text-lede);
+  line-height: var(--leading-body);
+  color: var(--ink-2);
+}
+.week-lede b { font-weight: var(--weight-bold); color: var(--ink); }
+
+/* ── The schedule chips (A2): 44 px high at every pointer, 15 px text; the chosen one is a little heavier ── */
+.template-switch .chip {
+  --chip-h: var(--hit);
+  min-height: var(--hit);
+  font-size: var(--text-ui);
+  padding-inline: var(--sp-5);
+}
+.template-switch .chip[data-active="true"] { font-weight: var(--weight-medium); }
+.template-switch .chip-add {
+  min-height: var(--hit);
+  font-size: var(--text-ui);
+}
+
+/* ── Where the week goes: a card, the ring at the left, the words and the list at the right ── */
+.where {
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-6) var(--sp-8);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-1);
+}
+.where-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--sp-8);
+  align-items: center;
+}
+.where-ring { min-width: 0; }
+.where-text {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+  align-content: start;
+}
+.where-title {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+.where-sum {
+  margin: 0;
+  font-size: var(--text-lede);
+  line-height: var(--leading-snug);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.where-sum b { font-weight: var(--weight-bold); color: var(--ink); }
+.where-note {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--ink-3);
+}
+.where .acts-empty { margin: 0; }
+
+/* The legend: one row a life area, 34 px high, the name in the Week tab's words; no rules between the rows */
+.where-list { margin-top: var(--sp-2); }
+.where .share-row {
+  min-height: 34px;
+  padding: var(--sp-1) 0;
+  border-bottom: 0;
+  font-size: var(--text-ui);
+  color: var(--ink-2);
+}
+.where .share-link {
+  font-size: var(--text-ui);
+  font-weight: var(--weight-regular);
+  color: var(--ink-2);
+}
+.where .share-value {
+  min-width: 4em;
+  color: var(--ink-2);
+}
+.where .share-row.is-selected { padding-inline: var(--sp-3); }
+
+/* ── The ring: one slice per life area, the rest Free. Selected slices are drawn thicker; the others dim ── */
+.where-donut {
+  position: relative;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.where-donut-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.where-donut-rest,
+.where-donut-seg {
+  fill: none;
+  stroke-width: 16;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.where-donut-rest { stroke: var(--line); }
+.where-donut-seg { stroke-linecap: butt; }
+
+/* Selected: drawn thicker. Others are dimmed; the selected one keeps its full colour and the words say the rest */
+.where-donut-rest.is-selected,
+.where-donut-seg.is-selected { stroke-width: 20; }
+.where-donut-rest.is-selected { stroke: var(--track); }
+.where-donut-rest.is-dim,
+.where-donut-seg.is-dim { opacity: 0.5; }
+
+/* A circle's outline is the square around the whole ring, so no browser outline: a tap must not box the ring. Keyboard focus is drawn on
+   the slice itself (thicker, with a halo in the accent colour) */
+.where-donut-rest:focus-visible,
+.where-donut-seg:focus-visible {
+  stroke-width: 20;
+  filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 2px var(--accent));
+}
+
+/* The centre sits over the hole of the ring. While a slice is selected it is a button that clears the selection */
+.where-donut-centre {
+  position: absolute;
+  /* Only the hole of the ring: a box over the whole chart would swallow the clicks meant for the slices */
+  inset: 24%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 6px;
+  text-align: center;
+}
+.where-donut-centre.is-clearable { cursor: pointer; }
+.where-donut-value {
+  font-size: var(--text-title-l);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.where-donut-sub {
+  max-width: 100%;
+  /* Wraps rather than cuts: the hole of the ring is narrow and "37 h planned" must read in full */
+  text-wrap: balance;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
+  color: var(--ink-3);
+}
+.where-donut-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  font-weight: var(--weight-bold);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.where-donut-centre.is-clearable .where-donut-value { font-size: var(--text-title-s); }
+
+/* Motion: the emphasis and the dimming ease, and only where motion is allowed; the arcs draw in under lively (motion.css) */
+@media (prefers-reduced-motion: no-preference) {
+  .where-donut-rest,
+  .where-donut-seg { transition: stroke-width var(--dur-fast) ease, opacity var(--dur-fast) ease; }
+}
+
+/* Phones (480 px and narrower): the ring above the words, both centred and full width */
+@media (max-width: 480px) {
+  .where { padding: var(--sp-5); }
+  .where-grid {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: var(--sp-5);
+  }
+  .where-text { width: 100%; }
+}

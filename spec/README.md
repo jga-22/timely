@@ -52,7 +52,7 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
 | `planner-grid-block-selected-desktop-light.png` | 1280 px wide | Week, light: a block tapped, its edge handles at once, and the action bar beside its day column (Change…, the word button Edit, Delete, Save disabled, Cancel) (2026-11-05) |
 | `planner-grid-block-selected-mobile-light.png` | 400 px wide | Week, light: the same block on a phone; the action bar at the bottom of the screen and the handles on the block's edges (2026-11-05) |
-| `planner-desktop-light.png` | 1280 px wide | Week, light, full page, sample data: the week type bar, the week grid, "+ Add activity" and "Sleep hours" (10 PM to 7 AM) under it, the Time split; no Activities list (2026-11-04) |
+| `planner-desktop-light.png` | 1280 px wide | Week, light, full page, sample data (slice 6, 2026-11-04): the lede and the schedule chips, Where the week goes above the grid, the week grid with Show sleep above it, "+ Add activity" and "Sleep hours" (10 PM to 7 AM) under it; no Activities list |
 | `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
 | `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
 | `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
@@ -69,12 +69,12 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
 | `planner-add-activity-desktop-light.png` | 1280 px wide | Week, light: "+ Add activity" open, the form "New activity or habit" under the buttons with its name focused (2026-11-04) |
 | `planner-sleep-hours-desktop-light.png` | 1280 px wide | Week, light: "Sleep hours" open, the Sleep form ("Edit Sleep") with the editor for every night (2026-11-04) |
-| `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit week type with Done in the panel head (Escape and Done close it, FR-TPL-9) |
+| `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit schedule with Done in the panel head (Escape and Done close it, FR-TPL-9) |
 | `planner-mobile-light.png` | 400 px wide | Week, light, full page at 400 px: the grid scrolls sideways inside its box, the two buttons wrap under it, no page overflow |
-| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: the Time split under the entry buttons for Standard Week: the ring of the typical week's available time and the life areas list with hours and percent, Not planned last |
-| `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: the Time split |
-| `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: the Time split |
-| `planner-time-split-selected-desktop-light.png` | 1280 px wide | Week, light: the Time split with Professional selected: the others dimmed, the centre names it (40%, 42 h), its row marked |
+| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: Where the week goes above the grid for Standard Week (slice 6, 2026-11-04): the ring of the typical week's available time and the list with hours and percent, Free last |
+| `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: Where the week goes (slice 6) |
+| `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: Where the week goes above the grid, the ring above the words |
+| `planner-time-split-selected-desktop-light.png` | 1280 px wide | Week, light: Where the week goes with Professional selected: the others dimmed, the centre names it (40%, 42 h), its row marked |
 | `insights-adherence-desktop-light.png` | 1280 px wide | Insights, light, Adherence view (month, one year): the headline "Done 5% of planned", the week bars with dashed future weeks, By life area, Habits, the journal nudge. Sample data: the seed plus ticks over the last three weeks (from 9 to 29 October 2026); the chart starts at the first tick and ends at the current week, so earlier weeks are not drawn |
 | `insights-adherence-desktop-dark.png` | 1280 px wide | Insights, dark, Adherence view (month) |
 | `insights-adherence-week-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with Week: one bar per weekday, Monday to Sunday |

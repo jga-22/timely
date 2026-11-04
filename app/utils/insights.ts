@@ -302,3 +302,16 @@ export const templateSplit = (state: PlannerState, template: WeekTemplate, showS
     segments
   }])
 }
+
+/**
+ * The word for the hours no life area has, in the Week tab's Where the week goes (A2 words, 2026-11-04). Year keeps "Not planned"
+ * until its own slice (the shares are the same numbers).
+ */
+export const FREE_LABEL = 'Free'
+
+/**
+ * The weeks of an ISO year that use a week type (the Week tab's "used in N weeks"): an applied week counts for its own week type,
+ * an unassigned week for the active one, as effectiveTemplate reads them (FR-INS-P3). The year is passed in, so nothing reads the clock.
+ */
+export const weeksUsing = (state: PlannerState, templateId: string, year: number): number =>
+  isoWeekStarts(year).filter(monday => effectiveTemplate(state, monday)?.id === templateId).length

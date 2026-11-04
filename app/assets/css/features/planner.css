@@ -88,4 +88,3 @@
   color: var(--ink-2);
 }
 .week-readout .muted { font-style: italic; }
-.acts-details[open] > .section-summary .section-title::before { transform: rotate(45deg); }

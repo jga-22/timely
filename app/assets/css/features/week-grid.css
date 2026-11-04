@@ -12,10 +12,11 @@
 .wk-head-line .section-title { margin: 0; }
 /* The disclosure takes the whole width; the Show sleep button is inside it, on its own row above the grid */
 .wk-details { flex: 1 1 100%; min-width: 0; }
+/* Show sleep sits at the left, above the grid (A2: the switch leads the grid's row) */
 .wk-tools {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--space-2);
+  justify-content: flex-start;
+  margin-bottom: var(--sp-3);
 }
 .wk-meta {
   margin: 0;
@@ -36,11 +37,13 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+/* The grid is a card (A2): a surface with the xl radius and the card shadow, the hours and the days on it without a band */
 .wk {
   min-width: 540px;
-  background: var(--bg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3) var(--sp-2);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-1);
   overflow: hidden;
   user-select: none;
 }
@@ -50,10 +53,10 @@
   grid-template-columns: 52px repeat(7, minmax(0, 1fr));
 }
 .wk-head {
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  border-bottom: 1px solid var(--line-2);
 }
-.wk-corner { border-right: 1px solid var(--rule); }
+.wk-corner { border-right: 0; }
 .wk-day-head {
   position: relative;
   display: flex;
@@ -61,13 +64,14 @@
   align-items: flex-start;
   gap: 2px;
   padding: var(--space-2);
-  border-right: 1px solid var(--rule-2);
+  border-right: 1px solid var(--line-2);
 }
 .wk-day-head:last-child { border-right: 0; }
+/* The day names read as column heads (A2): regular weight, the secondary ink */
 .wk-day-name {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--ink);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-regular);
+  color: var(--ink-2);
 }
 .wk-day-hours {
   font-size: var(--fs-xs);
@@ -96,20 +100,18 @@
 .wk-clear-day:hover { background: var(--bg-3); color: var(--danger); }
 
 .wk-body { position: relative; }
-.wk-hours {
-  background: var(--bg-2);
-  border-right: 1px solid var(--rule);
-}
+.wk-hours { background: transparent; }
+/* Every hour is labelled (A2); the rows are still 28 px (the grid's geometry), so the labels fit */
 .wk-hour {
   height: 28px;
   padding: 2px var(--space-2) 0 0;
-  font-size: var(--fs-xs);
-  color: var(--ink-4);
+  font-size: var(--text-small);
+  color: var(--ink-3);
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.wk-hour.is-major { color: var(--ink-3); font-weight: 500; }
+.wk-hour.is-major { color: var(--ink-2); }
 .wk-day {
   position: relative;
   min-width: 0;
@@ -139,6 +141,12 @@
   cursor: pointer;
 }
 .wk-band.is-top { border-bottom: 1px solid var(--rule); }
+/* The top band sits inside the card (its padding), so it runs to the card's edges: a button does not stretch, so its width is
+   the card's content plus the padding on both sides */
+.wk > .wk-band.is-top {
+  width: calc(100% + var(--sp-2) + var(--sp-4));
+  margin-left: calc(var(--sp-2) * -1);
+}
 .wk-band.is-bottom { border-top: 1px solid var(--rule); }
 .wk-band:hover { color: var(--ink); }
 .wk-band:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
@@ -185,6 +193,20 @@
   white-space: nowrap;
   padding-right: 24px;
   font-weight: 600;
+}
+/* Name on wide screens, code on phones (480 px and narrower, the phone breakpoint): one of the two is shown, the other is not
+   in the layout or the accessibility tree. Long names end in an ellipsis */
+.wk-block-full,
+.wk-block-code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wk-block-code { display: none; }
+@media (max-width: 480px) {
+  .wk-block-full { display: none; }
+  .wk-block-code { display: block; }
 }
 .wk-block-time {
   font-size: 11px;

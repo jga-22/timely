@@ -5,13 +5,17 @@ import {
   capacityLabel,
   categoryShares,
   chartScale,
+  FREE_LABEL,
   formatInUnit,
   insightsBars,
   largestRemainderShares,
   rangeYears,
   templateSplit,
   weekCategoryHours,
+  weeksUsing,
 } from '~/utils/insights'
+import { awakeMinutes } from '~/utils/awake'
+import { sleepActivityId } from '~/utils/sleep'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
 import { createEmptySlots } from '~/utils/planner/slots'
 import type { WeekTemplate } from '~/types/planner'
@@ -249,6 +253,17 @@ describe('templateSplit', () => {
     expect(result.notPlannedHours).toBe(WEEK_HOURS - SLEEP_HOURS_PER_WEEK - 6)
   })
 
+  it('has the same awake hours as the one awake rule (FR-SLEEP-9) when sleep is hidden', () => {
+    const state = planned()
+    const awake = awakeMinutes(typicalWeek(state), sleepActivityId(state)).awake / 60
+
+    expect(templateSplit(state, typicalWeek(state), false).available).toBe(awake)
+  })
+
+  it('labels the hours no life area has as Free', () => {
+    expect(FREE_LABEL).toBe('Free')
+  })
+
   it('counts sleep under its life area when it is shown: 168 available', () => {
     const state = planned()
     const result = templateSplit(state, typicalWeek(state), true)
@@ -274,6 +289,29 @@ describe('templateSplit', () => {
 
     expect(result.planned).toBe(1.5)
     expect(result.rows[0]?.hours).toBe(1.5)
+  })
+})
+
+describe('weeksUsing', () => {
+  it('counts every week of the year under the active week type when none is assigned', () => {
+    expect(weeksUsing(planned(), ONBOARDING_TEMPLATE_ID, 2026)).toBe(WEEKS_2026)
+  })
+
+  it('counts an assigned week for its own week type and the rest for the active one', () => {
+    const withRest = withTemplate(planned(), {
+      id: 'rest',
+      name: 'Rest',
+      granularityMinutes: 60,
+      slots: createEmptySlots(60),
+    })
+    const state = applyWeek(applyWeek(withRest, '2026-10-26', 'rest'), '2026-11-02', 'rest')
+
+    expect(weeksUsing(state, 'rest', 2026)).toBe(2)
+    expect(weeksUsing(state, ONBOARDING_TEMPLATE_ID, 2026)).toBe(WEEKS_2026 - 2)
+  })
+
+  it('is zero for a week type that no week uses', () => {
+    expect(weeksUsing(planned(), 'nothing-uses-me', 2026)).toBe(0)
   })
 })
 

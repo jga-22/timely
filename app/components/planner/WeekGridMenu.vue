@@ -28,8 +28,9 @@ const hoursText = (hours: number) => (Number.isInteger(hours) ? String(hours) : 
     <div class="wk-pop-head">
       <span class="wk-pop-day">{{ DAYS[selection.day] }}</span>
       <span class="wk-pop-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
-      <span class="wk-pop-dur">{{ selection.end - selection.start }}h</span>
+      <span class="wk-pop-dur">{{ selection.end - selection.start }} h</span>
     </div>
+    <p class="wk-menu-lede">Choose what goes in these hours. It replaces what is there.</p>
     <div class="wk-menu-list">
       <button
         v-for="activity in activities"

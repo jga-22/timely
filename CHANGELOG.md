@@ -5,6 +5,11 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## 0.1.1 - Today, rebuilt
 
 ### Changed
+- Plan > Week reads like the A2 mockup, in its words and look. A line at the top says which schedule every week uses ("Schedule: Standard Week. Every week uses it unless Year says otherwise."). The schedules are the chips under it, at the 44 px target; "Schedule" labels them and "+ New schedule" adds one.
+- "Where the week goes" is a card above the grid: the ring, the planned, free and awake hours, and a list whose last row is Free. Before, the time split was the last section of the tab and its last row was "Not planned".
+- Blocks on the week grid print the activity's name on wide screens and its short code on phones (480 px and narrower). Before, every block showed only its code.
+- The grid: Show sleep sits at the left above it; every hour has its label; the selection is a dashed frame with its hours in a pill; the first button on an empty run is "Add to these hours…", and its menu says what the choice does. The grid works as before.
+- The schedule panels say "schedule" as well: "New schedule", "Edit schedule", "Add schedule" and "Delete schedule". The entry form and Year still say "week type" for now.
 - Today's focus follows the clock on today: the block in progress (ticked or not), else the next block, else the most recent ended block not ticked, else the first undone daily habit. Before, it was the first undone item in list order, so a block in progress could sit behind an earlier one left undone. The list under the focus is now "Today's list": every item of the day, the one in focus marked "On now", "Next" or "Ended". A ticked block in focus reads "Done · next at 2 PM". A clock tick keeps the keyboard on the same item.
 - Today has a new look. The next thing to do is the large card at the top, with its time, a countdown ("In 40 min", "On now · 1 h left") and the 1-year target it stands behind. Below it: the rest of the day, the week so far, the journal line and all your habits.
 - When the day is done, Today says so with a check and offers to plan tomorrow. When nothing is planned, it offers to plan the habit furthest behind its count in Week.
@@ -19,6 +24,7 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 - Ticking your day from the focus card now ends in the same state as ticking it from the list. The focus had walked into weekly and monthly habits, ticking them and showing habits that are not part of the day. The focus now walks only your blocks and your daily habits, and the day is done when they are.
 
 ### Added
+- "Where the week goes" tells you how many weeks of the year use the schedule you are looking at ("used in 37 weeks of 2026").
 - A week strip on Today shows each day so far: all done, some done, not ticked, nothing planned, and the days still to come.
 
 ## 0.1.0 - three screens

@@ -22,3 +22,6 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.7); }
 }
+
+/* The Week tab's ring: its slices draw in when the view opens (lively only; Calm shows the ring at once). */
+:root[data-motion="lively"] .where-donut-seg { animation: draw var(--dur-draw) var(--ease-out) both; }
