@@ -1,7 +1,7 @@
 import type { PlannerState, WeekTemplate } from '~/types/planner'
 import { addDays, isoWeekOf, isoWeekStarts } from '~/utils/dates'
 import { aggregateTemplate, aggregateTemplateByCategory } from '~/utils/planner/aggregate'
-import { weekTemplate } from '~/utils/planner/templates'
+import { getActiveTemplate, weekTemplate } from '~/utils/planner/templates'
 import { sleepActivityId } from '~/utils/sleep'
 
 /**
@@ -12,9 +12,9 @@ import { sleepActivityId } from '~/utils/sleep'
  * Each ISO week counts once and belongs to the year, quarter and month of its Thursday (ISO convention), so the totals agree
  * across granularities. Each activity counts once: in its primary category (PRD FR-PLAN-20). A week counts the template that
  * applies to it: its own week type, or none for a blank week (2026-11-05: no fallback to the active one; PRD 23.1 superseded).
- * A bar is a whole number of ISO weeks, so its available time is the days of its planned weeks times 24:
- * a calendar month would not match the hours planned in its weeks, and the free time would be wrong. Only the planned weeks have
- * available time: a blank week adds none (2026-11-05).
+ * A bar is a whole number of ISO weeks, so its available time is 168 hours a week, less the Sleep hours (sleep hidden): a calendar
+ * month would not match the hours planned in its weeks, and the free time would be wrong. A blank week (no week type of its own) plans
+ * nothing, but its awake hours count as Free (owner decision, 2026-11-05).
  */
 
 export type InsightsGranularity = 'year' | 'quarter' | 'month' | 'week'
@@ -93,6 +93,17 @@ export const weekCategoryHours = (state: PlannerState, monday: string, showSleep
   return aggregateTemplateByCategory(visible, state)
 }
 
+/**
+ * Sleep hours a blank week takes out of its awake time: the Sleep of the active week type, since a blank week has no Sleep of its own
+ * (2026-11-05). None when the active week type has no Sleep activity, so the week is then 168 hours
+ */
+const blankWeekSleepHours = (state: PlannerState): number => {
+  const sleepId = sleepActivityId(state)
+  const active = getActiveTemplate(state)
+
+  return sleepId && active ? aggregateTemplate(active, state.activities).get(sleepId) ?? 0 : 0
+}
+
 /** Sleep hours of one ISO week from the week type applied to it: what hidden sleep takes out of the available time */
 const weekSleepHours = (state: PlannerState, monday: string): number => {
   const sleepId = sleepActivityId(state)
@@ -120,10 +131,12 @@ const periodOfWeek = (monday: string, granularity: InsightsGranularity): { key: 
  */
 export const insightsBars = (state: PlannerState, granularity: InsightsGranularity, years: number[], showSleep = false): InsightsBar[] => {
   const bars = new Map<string, { period: ReturnType<typeof periodOfWeek>; weeks: number; plannedWeeks: number; hours: Map<string, number>; sleep: number }>()
+  const blankSleep = blankWeekSleepHours(state)
 
   for (const year of years) {
     for (const monday of isoWeekStarts(year)) {
       const period = periodOfWeek(monday, granularity)
+      const template = weekTemplate(state, monday)
       let entry = bars.get(period.key)
 
       if (!entry) {
@@ -132,11 +145,9 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
       }
 
       entry.weeks += 1
-      // A blank week (no week type of its own) has no planned hours and no available time: it adds no capacity
-      if (weekTemplate(state, monday)) {
-        entry.plannedWeeks += 1
-        if (!showSleep) entry.sleep += weekSleepHours(state, monday)
-      }
+      // Every week has its awake hours (168 less its Sleep). A blank week plans nothing: its awake hours are Free
+      if (template) entry.plannedWeeks += 1
+      if (!showSleep) entry.sleep += template ? weekSleepHours(state, monday) : blankSleep
 
       for (const [categoryId, hours] of weekCategoryHours(state, monday, showSleep)) {
         entry.hours.set(categoryId, (entry.hours.get(categoryId) ?? 0) + hours)
@@ -148,7 +159,7 @@ export const insightsBars = (state: PlannerState, granularity: InsightsGranulari
     const segments = [...hours].map(([categoryId, value]) => ({ categoryId, hours: value }))
     const total = segments.reduce((sum, segment) => sum + segment.hours, 0)
     const days = weeks * 7
-    const capacity = plannedWeeks * 7 * HOURS_PER_DAY - sleep
+    const capacity = weeks * HOURS_PER_WEEK - sleep
 
     return {
       key: period.key,

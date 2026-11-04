@@ -5,7 +5,7 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Changed
-- A week with no schedule of its own is blank everywhere (owner decision, 2026-11-05). Today shows nothing planned for a day in such a week, and says so, with a link to Year to give the week a schedule. Year and Progress count no hours for it, and the Year count line reads "N with no schedule". Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
+- A week with no schedule plans nothing: Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free (168 h less the active schedule's Sleep, or 168 h with Show sleep on), so the Year bar, its Free row and "of N awake hours" include blank weeks. Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
 - The Year planner's Clear leaves a week with no schedule; its tooltip says so. Its hint and result lines no longer name an active schedule, and the legend reads "No schedule".
 - The Week tab's card is titled "Schedules" (it was "Week"), with the schedule chips at its top.
 - Plan > Year: the card is called "Year planner". Its year switcher is in the card's head; the paint tools and "Apply to several weeks" are in the card, under a one-line hint. The last paint chip reads "Clear", and its tooltip says it sends the week back to the active schedule. The lede at the top is gone, and the grid has room under its last row.

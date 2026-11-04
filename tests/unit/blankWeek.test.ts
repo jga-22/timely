@@ -55,16 +55,34 @@ describe('a blank week (no week type of its own)', () => {
     expect(weekCategoryHours(state, ASSIGNED_MONDAY).get('professionnelle')).toBe(4)
   })
 
-  it('adds nothing to the planned hours or the available time of the Year: 52 planned weeks of 53', () => {
+  it('plans nothing in a blank week, but its awake hours are Free: 53 weeks of awake time, 52 planned', () => {
     const state = withBlankWeek()
     const bar = insightsBars(state, 'year', [2026], false)[0]!
 
     expect(bar.weeks).toBe(53)
     expect(bar.plannedWeeks).toBe(52)
     expect(bar.total).toBe(4 * 52)
-    // Sleep hidden (the default): the default night, 63 h a week, is not available; the blank week adds neither hours nor time
+    // Sleep hidden (the default): every week is 168 h less its Sleep, 63 h under the default night, the blank week's taken from the active schedule
+    expect(bar.capacity).toBe(53 * (168 - 63))
     expect(yearSummary(state, [2026], false).planned).toBe(4 * 52)
-    expect(yearSummary(state, [2026], false).available).toBe(52 * (168 - 63))
+    expect(yearSummary(state, [2026], false).available).toBe(53 * (168 - 63))
+    expect(yearSummary(state, [2026], false).notPlannedHours).toBe(53 * (168 - 63) - 4 * 52)
+  })
+
+  it('has awake time for a blank week, the 168 hours less the active Sleep, and 168 with Show sleep on', () => {
+    const state = withBlankWeek()
+
+    const blank = insightsBars(state, 'week', [2026], false).find(bar => bar.weeks === 1 && bar.plannedWeeks === 0)!
+    expect(blank.total).toBe(0)
+    expect(blank.capacity).toBe(168 - 63)
+    expect(insightsBars(state, 'week', [2026], true).find(bar => bar.plannedWeeks === 0)!.capacity).toBe(168)
+  })
+
+  it('keeps Free plus planned equal to the awake hours of the year', () => {
+    const shares = yearSummary(withBlankWeek(), [2026], false)
+
+    expect(shares.planned + shares.notPlannedHours).toBe(shares.available)
+    expect(shares.available).toBe(53 * (168 - 63))
   })
 
   it('is counted by no schedule, and by blankWeeks', () => {
