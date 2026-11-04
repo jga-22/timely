@@ -216,7 +216,7 @@ function applyWeekRange() {
     </div>
 
     <!-- The schedule card: which weeks use which schedule, the year grid and the legend (A2: one card, open by default) -->
-    <section class="year-card" aria-labelledby="year-title">
+    <section class="year-card year-schedule" aria-labelledby="year-title">
       <details class="year-details" :open="yearOpen" @toggle="yearOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="year-summary">
           <h2 id="year-title" class="section-title">Which weeks use which schedule</h2>

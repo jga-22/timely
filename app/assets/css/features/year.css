@@ -88,7 +88,7 @@
   align-items: end;
   gap: var(--sp-1);
   height: var(--sp-4);
-  margin-bottom: var(--sp-2); /* room for the current week outline (2px, 2px out) above the squares */
+  margin-bottom: var(--sp-1);
 }
 .year-month {
   font-size: var(--text-caption);
@@ -103,9 +103,19 @@
   border-radius: var(--radius-xs);
 }
 .year-grid .week-cell:hover { filter: brightness(0.95); }
+/* The current week: a 2px ink frame drawn inside the square, so the scroll area and the next row never clip it */
 .year-grid .week-cell.is-current {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+/* Phone (480 px and narrower): the squares take the width. Square corners, a thin gap between squares, and the schedule card's sides trimmed,
+   so the 14 columns are as wide as the layout allows */
+@media (max-width: 480px) {
+  .year-schedule { padding-inline: var(--sp-3); }
+  .year-grid,
+  .year-row,
+  .year-months { gap: calc(var(--sp-1) / 2); }
+  .year-grid .week-cell { border-radius: 0; }
 }
 
 /* ── The legend: each schedule's swatch, and This week ── */
