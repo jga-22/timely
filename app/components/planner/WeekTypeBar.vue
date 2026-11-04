@@ -70,7 +70,7 @@ function closeEdit() {
 
 <template>
   <div class="template-switch">
-    <span class="field-label">Week type</span>
+    <span class="field-label">Schedule</span>
 
     <div v-for="t in templates" :key="t.id" class="template-chip-wrap">
       <input
@@ -111,9 +111,9 @@ function closeEdit() {
       </div>
     </div>
 
-    <button v-if="!newTemplateOpen" ref="newTemplateTrigger" class="chip-add" @click="openNewTemplate">+ New week type</button>
+    <button v-if="!newTemplateOpen" ref="newTemplateTrigger" class="chip-add" @click="openNewTemplate">+ New schedule</button>
 
-    <EditButton v-if="activeTemplate" ref="templateEditButton" label="Edit week type" :expanded="editOpen" @click="editOpen = !editOpen" />
+    <EditButton v-if="activeTemplate" ref="templateEditButton" label="Edit schedule" :expanded="editOpen" @click="editOpen = !editOpen" />
   </div>
 
   <!-- New week type: a name and a Start from choice (empty, a copy, or a preset with its role mapping) -->

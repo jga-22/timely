@@ -3,7 +3,7 @@ import { DAYS, formatHour } from '~/utils/planner/format'
 import { rangeLabel, type Range } from '~/utils/weekGrid'
 
 /**
- * The action bar of the week grid (FR-PLAN-23). On an empty run: Apply… and Cancel. On a block: Change…, Edit (a word button that opens the entry's form),
+ * The action bar of the week grid (FR-PLAN-23). On an empty run: Add to these hours… and Cancel. On a block: Change…, Edit (a word button that opens the entry's form),
  * Delete, Save (enabled once an edge has moved) and Cancel. It opens where the parent sets pos (beside the release point, or at the bottom
  * on phones). The parent focuses its first button through el.
  */
@@ -26,11 +26,11 @@ defineExpose({ el })
     <div class="wk-pop-head">
       <span class="wk-pop-day">{{ DAYS[selection.day] }}</span>
       <span class="wk-pop-range">{{ formatHour(selection.start) }} – {{ formatHour(selection.end) }}</span>
-      <span class="wk-pop-dur">{{ selection.end - selection.start }}h</span>
+      <span class="wk-pop-dur">{{ selection.end - selection.start }} h</span>
     </div>
     <div class="wk-pop-actions">
       <button type="button" class="btn btn-sm btn-primary" @click="$emit('pick')">
-        {{ hasActivity ? 'Change…' : 'Apply…' }}
+        {{ hasActivity ? 'Change…' : 'Add to these hours…' }}
       </button>
       <button v-if="hasActivity" type="button" class="btn btn-sm btn-outline" aria-label="Edit activity" @click="$emit('edit')">Edit</button>
       <button v-if="hasActivity" type="button" class="btn btn-sm btn-danger" @click="$emit('delete')">Delete</button>

@@ -1,26 +1,30 @@
 /* Week grid selection (FR-PLAN-23): run, handles, undo line and the action bar and menu popups. */
-/* Selection: a tinted run with a hairline frame. A run that holds an activity gets its edge handles (Save and Cancel are in the action bar) */
+/* Selection: a ghost block, a dashed accent frame over a light tint (A2). A run that holds an activity gets its edge handles (Save and
+   Cancel are in the action bar). The frame is an outline, so it moves nothing; while an activity is being edited it is solid */
 .wk-sel {
   position: absolute;
   left: 0;
   right: 0;
   z-index: 4;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: var(--radius-md);
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
   pointer-events: none;
 }
-.wk[data-editing="true"] .wk-sel { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 2px var(--accent); }
+.wk[data-editing="true"] .wk-sel { outline-style: solid; }
+/* The ghost's label: the run's hours in a pill at its top right (A2) */
 .wk-dur {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: var(--bg);
+  top: var(--sp-2);
+  right: var(--sp-2);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
   color: var(--accent);
-  font-size: var(--fs-xs);
-  font-weight: 600;
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
@@ -79,15 +83,16 @@
   z-index: 29;
   touch-action: none;
 }
+/* The action bar and the menu are cards that lift (A2's selection bar): surface, the lg radius and the lift shadow */
 .wk-pop {
   position: fixed;
   z-index: 30;
   width: 260px;
   max-width: calc(100vw - 32px);
-  background: var(--bg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-2);
 }
 .wk-bar { padding: var(--space-3) var(--space-4) var(--space-4); }
 .wk-pop-head {
@@ -116,8 +121,17 @@
 .wk-menu .wk-pop-head {
   flex: none;
   padding: var(--space-2) var(--space-4);
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--rule-2);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-2);
+}
+/* The menu's line: what the choice does, before the list (A2: "Choose what goes in these hours. It replaces what is there.") */
+.wk-menu-lede {
+  flex: none;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
+  color: var(--ink-2);
 }
 .wk-menu-list {
   display: flex;

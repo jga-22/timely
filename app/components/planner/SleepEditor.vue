@@ -85,7 +85,7 @@ defineExpose({ isValid, apply })
 
 <template>
   <fieldset class="sched-days sleep-editor">
-    <legend class="field-label">Sleep in {{ template?.name ?? 'this week type' }}</legend>
+    <legend class="field-label">Sleep in {{ template?.name ?? 'this schedule' }}</legend>
 
     <UiSegmented :model-value="split ? 'split' : 'same'" :options="NIGHTS_OPTIONS" label="Which nights" @update:model-value="setSplit($event === 'split')" />
 
@@ -130,7 +130,7 @@ defineExpose({ isValid, apply })
     <p class="form-hint">{{ totalText }}</p>
     <p v-for="line in allocation" :key="line" class="form-hint">{{ line }}</p>
     <p v-if="refusal" class="field-error" role="alert">{{ refusal }}</p>
-    <p v-else-if="!hourly" class="form-hint">This week type has 30-minute slots, so Sleep cannot be painted in it.</p>
+    <p v-else-if="!hourly" class="form-hint">This schedule has 30-minute slots, so Sleep cannot be painted in it.</p>
   </fieldset>
 </template>
 

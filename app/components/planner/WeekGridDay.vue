@@ -119,7 +119,7 @@ const isCursor = (hour: number) => props.cursor.day === props.day && props.curso
           @keydown="emit('handle-key', 'bottom', $event)"
         ><span /></button>
       </template>
-      <span class="wk-dur">{{ selection.end - selection.start }}h</span>
+      <span class="wk-dur">{{ selection.end - selection.start }} h</span>
     </div>
   </div>
 </template>

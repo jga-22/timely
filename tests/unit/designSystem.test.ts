@@ -17,7 +17,7 @@ const BASELINE = {
   rawColourVue: 1,
   rawColourTs: 0,
   fontSizePx: 8,
-  radiusLiteral: 14,
+  radiusLiteral: 13,
   zIndexLiteral: 5,
   keyframesOutsideMotion: 9,
   animationUngated: 11,
@@ -25,10 +25,10 @@ const BASELINE = {
   mediaWidthLegacy: 6,
   inlineColourKey: 14,
   importantOutsideReset: 4,
-  legacyTokenUse: 404,
+  legacyTokenUse: 375,
 } as const
 
-/** The 16 .vue files with a scoped <style> block today. A file leaves this list when its block moves to features/ (ratchet) */
+/** The 15 .vue files with a scoped <style> block today. A file leaves this list when its block moves to features/ (ratchet) */
 const STYLE_BLOCK_FILES = [
   'components/ActivityForm.vue',
   'components/AutoTextarea.vue',
@@ -45,7 +45,6 @@ const STYLE_BLOCK_FILES = [
   'components/harada/LifeAreaList.vue',
   'components/planner/EntryActions.vue',
   'components/planner/SleepEditor.vue',
-  'components/planner/TimeSplitDonut.vue',
 ]
 
 /** .ts files that may hold colour literals: palette, seed and template data, sleep and store defaults */

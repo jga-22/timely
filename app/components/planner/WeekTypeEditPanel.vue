@@ -56,7 +56,7 @@ function confirmDeleteActiveTemplate() {
 <template>
   <div v-if="props.open && activeTemplate" class="act-panel template-edit" @keydown.escape.stop="emit('close')">
     <div class="act-panel-head">
-      <h3 class="act-panel-title">Edit week type</h3>
+      <h3 class="act-panel-title">Edit schedule</h3>
       <button type="button" class="btn btn-sm btn-primary" @click="emit('close')">Done</button>
     </div>
     <div class="form-stack">
@@ -90,11 +90,11 @@ function confirmDeleteActiveTemplate() {
             :checked="activeTemplate.kind === 'break'"
             @change="planner.setTemplateKind(activeTemplate.id, ($event.target as HTMLInputElement).checked ? 'break' : undefined)"
           />
-          Time off: Goals reads its hours from a working week type
+          Time off: Goals reads its hours from a working schedule
         </label>
       </div>
       <div v-if="templates.length > 1" class="form-actions">
-        <button ref="deleteTemplateTrigger" type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete week type</button>
+        <button ref="deleteTemplateTrigger" type="button" class="btn btn-sm btn-danger" @click="askDeleteTemplate">Delete schedule</button>
       </div>
     </div>
   </div>
@@ -108,7 +108,7 @@ function confirmDeleteActiveTemplate() {
   >
     <p id="template-delete-text" class="act-confirm-text">{{ templateDeleteText }}</p>
     <div class="act-actions">
-      <button type="button" class="btn btn-sm btn-danger" @click="confirmDeleteActiveTemplate">Delete week type</button>
+      <button type="button" class="btn btn-sm btn-danger" @click="confirmDeleteActiveTemplate">Delete schedule</button>
       <button ref="cancelTemplateDeleteButton" type="button" class="btn btn-sm" @click="cancelDeleteTemplate">Cancel</button>
     </div>
   </div>

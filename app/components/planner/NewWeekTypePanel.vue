@@ -70,7 +70,7 @@ function handleNewTemplate() {
 <template>
   <div ref="newTemplatePanel" class="act-panel new-template-panel" tabindex="-1" @keydown.escape.stop="close">
     <div class="act-panel-head">
-      <h3 class="act-panel-title">New week type</h3>
+      <h3 class="act-panel-title">New schedule</h3>
     </div>
     <div class="form-stack">
       <div class="field">
@@ -116,7 +116,7 @@ function handleNewTemplate() {
     </div>
 
     <div class="act-actions">
-      <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add week type</button>
+      <button class="btn btn-sm btn-primary" @click="handleNewTemplate">Add schedule</button>
       <button class="btn btn-sm" @click="close">Cancel</button>
     </div>
   </div>

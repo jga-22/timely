@@ -32,7 +32,7 @@ const sleepHidden = computed(() => !!sleepId.value && !showSleep.value)
 const slots = computed(() => activeTemplate.value?.slots ?? [])
 const shownSlots = computed(() => (sleepHidden.value ? withoutSleep(slots.value, sleepId.value) : slots.value))
 const hourly = computed(() => isHourlyTemplate(activeTemplate.value))
-const templateName = computed(() => activeTemplate.value?.name ?? 'no week type')
+const templateName = computed(() => activeTemplate.value?.name ?? 'no schedule')
 // The meta line is the awake-hours rule (utils/awake.ts): Sleep is not planned and is left out of the week, sleep shown or not
 const metaText = computed(() => awakeHoursText(activeTemplate.value, sleepId.value))
 const hoursPerDay = computed(() => DAYS.map((_, day) => shownSlots.value.slice(day * 24, day * 24 + 24).filter(Boolean).length))
@@ -134,7 +134,7 @@ watch(() => props.closeToken, () => {
           <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
         </summary>
 
-        <p v-if="!hourly" class="wk-helper">This week type has 30-minute slots, and this grid edits hourly week types only.</p>
+        <p v-if="!hourly" class="wk-helper">This schedule has 30-minute slots, and this grid edits hourly schedules only.</p>
 
         <template v-else>
           <div v-if="sleepId" class="wk-tools">
@@ -174,7 +174,7 @@ watch(() => props.closeToken, () => {
                 <div class="wk-hours" aria-hidden="true">
                   <template v-for="row in flow" :key="row.kind === 'hour' ? `h${row.hour}` : `g${row.from}`">
                     <div v-if="row.kind === 'gap'" class="wk-gap" />
-                    <div v-else class="wk-hour" :class="{ 'is-major': row.hour % 3 === 0 }">{{ row.hour % 3 === 0 ? formatHour(row.hour) : '' }}</div>
+                    <div v-else class="wk-hour" :class="{ 'is-major': row.hour % 3 === 0 }">{{ formatHour(row.hour) }}</div>
                   </template>
                 </div>
 

@@ -438,6 +438,8 @@ Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour 
 
 ## 11. Changelog
 
+- **2026-11-04, Plan > Week (slice 6):** the schedule chips on Week are the 44 px target (`.template-switch .chip`), the card "Where the week goes" is `features/week-where.css` (`.where*`, `.where-donut*`, the ring's stroke 16 and 20 units), the grid card is on `--radius-xl` and `--elev-1`, and the selection ghost is an outline (dashed) over a 12% tint. The ratchet: `radiusLiteral` 13, `legacyTokenUse` 375, the style-block list 15 (the donut's block moved to features).
+
 Dated entries with the app version. No separate version for the system.
 
 - **0.1.0, 2026-11-04: three screens.** The shell (the rail, the phone bar, the top bar, the skip link) is built from the tokens and `features/shell.css`. `--z-tabbar` is 15 (was 40): the bar is over the page and the sticky bar, and under the popovers (the grid box and menu, the colour pop), so they open over it. The guard baselines fall with the removed legacy values (zIndexLiteral 6 to 5, transitionLiteral 3 to 2, legacyTokenUse 450 to 445).
