@@ -146,6 +146,7 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 - Slice 5 of `ux-migration-plan.md`: Today in the A2 look. The focus card (the next block or habit, its countdown pill, "Behind this: <1-year target>"), the day line on the awake range with the now marker, "Also today", the week strip with its forgiving note, the one-line journal (kept, restyled), All habits, and the three states (focus, "Today is done." with "Plan tomorrow", "Nothing planned" with "Plan <habit> in Week"). The ring and the Today sleep switch are gone.
 - PRD: FR-TODAY-1 to 9 (new, with evidence); FR-HOME-4, 10, 15, 17, 19, P2, P3 and FR-SLEEP-4 and 8 noted as changed. Decisions 7 (daily habits in the count) and 8 (All habits) are the owner's to confirm.
 - Rules in `app/utils/today.ts` (tests `tests/unit/today.test.ts`); components in `app/components/today/`; CSS `features/today.css` replaces `home.css`; screens `today-*` replace `home-*`.
+- Fidelity pass (2026-11-05, new commits on the same branch): Today matched to the mockup (`spec/mockups/prototype-a2`): the day line, the focal card and its pill, the free-day picture, the one-line journal, All habits with Tick chips; the shell glow, the brand mark and the icons. Screens `today-*` re-captured at 9:20 with the mockup's sample plan.
 - Storage version unchanged (8); no data-model change. The version and the tag are not changed on this branch.
 
 ### Version 0.1.0, three screens (2026-11-04, branch `feat/three-screens`, from `main`, not pushed)
