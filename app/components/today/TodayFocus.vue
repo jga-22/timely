@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TODAY_FOCUS_TICK, TODAY_FOCUS_TITLE, type Countdown, type TodayItem } from '~/utils/today'
+import { TODAY_FOCUS_TITLE, type Countdown, type TodayItem } from '~/utils/today'
 
 /**
  * The item to do next (FR-TODAY-2): a large tick, the time and life area above the title, a pill with the countdown to a block
@@ -15,7 +15,7 @@ const emit = defineEmits<{ toggle: [key: string] }>()
   <section class="card card-focal today-focus" aria-labelledby="today-focal-title">
     <div class="today-focus-main">
       <UiTick
-        :id="TODAY_FOCUS_TICK"
+        :data-tick="item.key"
         :model-value="item.done"
         size="lg"
         :label="`Mark ${item.title} done`"

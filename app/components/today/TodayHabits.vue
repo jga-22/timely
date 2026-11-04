@@ -2,8 +2,9 @@
 import type { TodayHabitRow } from '~/utils/today'
 
 /**
- * All habits (FR-TODAY-8), grouped by life area in the order of the areas. Each has its tick for the day ("Tick" or "Ticked", a
- * toggle button); a habit a block of that day already stands for says so instead ("Planned as a block"). Closed until opened.
+ * All habits (FR-TODAY-8), grouped by life area in the order of the areas. Each has its tick for the day at the right end, the same
+ * circle as the rest of Today (named "Tick <name>"); a habit a block of that day already stands for says so instead ("Planned as
+ * a block") and has no tick. Closed until opened.
  */
 const props = defineProps<{ rows: TodayHabitRow[] }>()
 
@@ -32,14 +33,13 @@ const groups = computed(() =>
               <p class="today-row-meta">{{ row.meta }}</p>
             </div>
             <span v-if="row.planned" class="today-planned">Planned as a block</span>
-            <button
+            <UiTick
               v-else
-              type="button"
-              class="today-tick-chip"
-              :aria-pressed="row.done ? 'true' : 'false'"
-              :aria-label="`Tick ${row.habit.name}`"
-              @click="emit('toggle', row.key)"
-            >{{ row.done ? 'Ticked' : 'Tick' }}</button>
+              :data-tick="row.key"
+              :model-value="row.done"
+              :label="`Tick ${row.habit.name}`"
+              @update:model-value="emit('toggle', row.key)"
+            />
           </li>
         </ul>
       </div>
