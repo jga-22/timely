@@ -161,18 +161,19 @@
 .today-items .section-title,
 .today-week .section-title { margin-bottom: var(--sp-2); }
 
-/* The lists of the day and the habits: a hairline row, the tick on the left (the habit's chip on the right) */
+/* The lists of the day and the habits: a hairline row, the name on the left and the tick on the right end (the same circle for
+   a block and a habit); a habit planned as a block keeps its words in the same place */
 .today-list { margin: 0; padding: 0; list-style: none; }
 .today-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--sp-3);
   min-height: calc(var(--hit) + var(--sp-3));
   border-top: 1px solid var(--line-2);
 }
 .today-row:last-child { border-bottom: 1px solid var(--line-2); }
-.today-row.is-habit { grid-template-columns: minmax(0, 1fr) auto; min-height: calc(var(--hit) + var(--sp-2)); }
+.today-row.is-habit { min-height: calc(var(--hit) + var(--sp-2)); }
 .today-row .tick { width: var(--hit); height: var(--hit); margin: 0; }
 .today-row .tick-box { width: 28px; height: 28px; border: 1.5px solid var(--ink-3); background: transparent; }
 .today-row .tick-box .ic { width: var(--icon-sm); height: var(--icon-sm); }
@@ -192,19 +193,6 @@
   vertical-align: middle;
 }
 .today-planned { font-size: var(--text-meta); color: var(--ink-2); white-space: nowrap; }
-/* A habit's tick in All habits: a pill toggle, "Tick" or "Ticked" (aria-pressed) */
-.today-tick-chip {
-  min-height: var(--hit);
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink-2);
-  font-size: var(--text-ui);
-  white-space: nowrap;
-}
-.today-tick-chip:hover { background: var(--surface-hover); }
-.today-tick-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: var(--weight-medium); }
 
 /* The week strip: seven pips from Monday, each its own state (FR-TODAY-6) */
 .today-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }

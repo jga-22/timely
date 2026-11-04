@@ -16,7 +16,6 @@ import {
   firstUndone,
   focusItem,
   greeting,
-  habitMissing,
   habitRows,
   nextHabitAction,
   nowPosition,
@@ -44,10 +43,24 @@ const planned = (runs: Run[], base: PlannerState = empty()): PlannerState => {
 const ticksOn = (state: PlannerState, days: Array<[string, string[]]>): PlannerState =>
   days.reduce((next, [date, keys]) => withDone(next, date, keys), state)
 
+/** The keys the focal card takes, one tick at a time, until it has nothing left (the path of a user who ticks the focus) */
+const focusPath = (state: PlannerState, date: string): string[] => {
+  const keys: string[] = []
+  let next = state
+
+  for (let focus = focusItem(next, date); focus; focus = focusItem(next, date)) {
+    keys.push(focus.key)
+    next = withDone(next, date, [...keys])
+  }
+
+  return keys
+}
+
 const work = { activityId: 'work', day: 0, start: 8, end: 12 }
 const workActivity = activity('work', 'professionnelle')
 const walk: Habit = { id: 'walk', categoryId: 'physique', name: 'Walk', frequency: { count: 1, period: 'day' } }
 const read: Habit = { id: 'read', categoryId: 'spirituelle', name: 'Read', frequency: { count: 3, period: 'week' } }
+const pray: Habit = { id: 'pray', categoryId: 'spirituelle', name: 'Pray', frequency: { count: 2, period: 'month' } }
 const focus: Habit = { id: 'focus', categoryId: 'professionnelle', name: 'Focus', frequency: { count: 3, period: 'week' }, activityId: 'work' }
 
 describe('todayItems', () => {
@@ -86,11 +99,29 @@ describe('focusItem', () => {
     expect(focusItem(state, MONDAY)?.start).toBe(13)
   })
 
-  it('is a habit when no block is left: the habit furthest behind its count', () => {
-    // Walk is a daily habit (one tick short); Read is weekly with none of three ticks (three short), so Read is the focus
+  it('is the first undone daily habit when no block is left, and never a weekly one', () => {
+    // Walk is a daily habit, one tick short. Read is weekly with none of its three ticks, so it is short too, but it is not an item of
+    // the day: the focus stays on Walk
     const state = withHabits(empty(), [walk, read])
 
-    expect(focusItem(state, WEDNESDAY)?.key).toBe('h:read')
+    expect(focusItem(state, WEDNESDAY)?.key).toBe('h:walk')
+  })
+
+  it('walks only the items of the day: the blocks in time order, then the daily habits', () => {
+    const state = withHabits(withActivities(planned([work, { activityId: 'work', day: 0, start: 13, end: 14 }]), [workActivity]), [walk, read, pray])
+
+    expect(focusPath(state, MONDAY)).toEqual(['a:work@8', 'a:work@13', 'h:walk'])
+  })
+
+  it('ends in the same state whether the focus or the list ticks the day, with no weekly or monthly habit ticked', () => {
+    const state = withHabits(withActivities(planned([work, { activityId: 'work', day: 0, start: 13, end: 14 }]), [workActivity]), [walk, read, pray])
+    const byFocus = withDone(state, MONDAY, focusPath(state, MONDAY))
+    const byList = withDone(state, MONDAY, todayItems(state, MONDAY).map(item => item.key))
+
+    expect([...(byFocus.done?.[MONDAY] ?? [])].sort()).toEqual([...(byList.done?.[MONDAY] ?? [])].sort())
+    expect([...(byFocus.done?.[MONDAY] ?? [])].sort()).toEqual(['a:work@13', 'a:work@8', 'h:walk'].sort())
+    expect(focusItem(byFocus, MONDAY)).toBeNull()
+    expect(allItemsDone(todayItems(byFocus, MONDAY))).toBe(true)
   })
 
   it('picks a daily habit when the weekly ones are on their count', () => {
@@ -119,9 +150,30 @@ describe('focusItem', () => {
   it('is null once every item of the day is done, even when a weekly habit is still short', () => {
     expect(focusItem(withDone(withHabits(empty(), [walk, read]), WEDNESDAY, ['h:walk']), WEDNESDAY)).toBeNull()
   })
+
+  it('never focuses a weekly or monthly habit, even while a block or a daily habit of the day is left', () => {
+    const state = withHabits(withActivities(planned([work]), [workActivity]), [walk, read, pray])
+
+    expect(focusPath(state, MONDAY)).toEqual(['a:work@8', 'h:walk'])
+  })
+
+  it('is done when every item of the day is ticked, even with a weekly or monthly habit still undone', () => {
+    const state = withDone(withHabits(withActivities(planned([work]), [workActivity]), [walk, read, pray]), MONDAY, ['a:work@8', 'h:walk'])
+
+    expect(focusItem(state, MONDAY)).toBeNull()
+    expect(allItemsDone(todayItems(state, MONDAY))).toBe(true)
+  })
+
+  it('does not count a weekly or monthly habit in the day, so a tick of one leaves the count and the focus as they were', () => {
+    const state = withHabits(withActivities(planned([work]), [workActivity]), [read, pray])
+    const ticked = withDone(state, MONDAY, ['h:read', 'h:pray'])
+
+    expect(doneCount(todayItems(ticked, MONDAY), true)).toEqual({ done: 0, total: 1, when: 'today' })
+    expect(focusItem(ticked, MONDAY)?.key).toBe('a:work@8')
+  })
 })
 
-describe('firstUndone, allItemsDone, habitMissing', () => {
+describe('firstUndone and allItemsDone', () => {
   it('returns the first item not done, and nothing for an empty list', () => {
     const items = todayItems(withDone(withHabits(empty(), [walk]), MONDAY, ['h:walk']), MONDAY)
 
@@ -135,12 +187,6 @@ describe('firstUndone, allItemsDone, habitMissing', () => {
     expect(allItemsDone(items)).toBe(false)
     expect(allItemsDone([])).toBe(false)
     expect(allItemsDone(todayItems(withDone(withHabits(empty(), [walk]), MONDAY, ['h:walk']), MONDAY))).toBe(true)
-  })
-
-  it('counts a daily habit as one tick short, and a weekly habit by the ticks still missing', () => {
-    expect(habitMissing(empty(), walk, MONDAY)).toBe(1)
-    expect(habitMissing(withDone(empty(), MONDAY, ['h:read']), read, WEDNESDAY)).toBe(2)
-    expect(habitMissing(ticksOn(empty(), [[MONDAY, ['h:read']], [TUESDAY, ['h:read']], [THURSDAY, ['h:read']]]), read, WEDNESDAY)).toBe(0)
   })
 })
 

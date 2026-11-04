@@ -1,6 +1,6 @@
 import type { Category, Habit, PlannerState } from '~/types/planner'
 import { addDays, mondayOf } from '~/utils/dates'
-import { blockDoneKey, habitDoneKey, isDone, monthTicks, weekTicks } from '~/utils/done'
+import { blockDoneKey, habitDoneKey, isDone, weekTicks } from '~/utils/done'
 import { dayBlocks, dayHabits, habitHasDay, habitPlannedOn, habitProgressText, habitTicked, type HourRange } from '~/utils/home'
 import { partOfDay } from '~/utils/motion'
 import { sleepActivityId } from '~/utils/sleep'
@@ -9,9 +9,9 @@ import { sleepActivityId } from '~/utils/sleep'
  * Today (FR-TODAY-1 to 9): the rules the screen reads, pure over the planner state. Every date and minute is passed in, so the
  * tests need no clock (FR-DATE-6). The ticks are the done keys of utils/done.ts; nothing here stores anything.
  *
- * A day's items are its scheduled blocks (in time order) and its daily habits (the habits due every day). They are what
- * "x of y done" counts. Weekly and monthly habits are not counted there: they can be the focus of the day (`focusItem`), and
- * they sit in the All habits list.
+ * A day's items are its scheduled blocks (in time order) and its daily habits (the habits due every day). They are the only
+ * things the focus walks, the only things "x of y done" counts, and the only things that make the day done. Weekly and monthly
+ * habits are never items: they sit in the All habits list, and a tick there changes none of this.
  */
 
 /** One thing to do on a day (FR-HOME-14): a scheduled block, or a habit. Times are whole hours; a habit has none */
@@ -82,8 +82,7 @@ export interface DayLineBlock {
   done: boolean
 }
 
-/** The ids of the focus tick and of its heading: the shell keeps the keyboard on them when the focus moves */
-export const TODAY_FOCUS_TICK = 'today-focal-tick'
+/** The id of the heading of the card: the shell moves the keyboard there when the day is done and no tick is left to take it */
 export const TODAY_FOCUS_TITLE = 'today-focal-title'
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -163,43 +162,14 @@ export const firstUndone = (items: TodayItem[]): TodayItem | null => items.find(
 /** Whether there is at least one item and every item is done (the "Today is done" state) */
 export const allItemsDone = (items: TodayItem[]): boolean => items.length > 0 && items.every(item => item.done)
 
-/** The ticks a habit still needs in its period: one for a daily habit, the rest of its count for a weekly or monthly one */
-export const habitMissing = (state: PlannerState, habit: Habit, date: string): number => {
-  const { count, period } = habit.frequency
-
-  if (period === 'day') return 1
-
-  const ticks = period === 'week' ? weekTicks(state, habit.id, date) : monthTicks(state, habit.id, date)
-  return Math.max(0, count - ticks)
-}
-
 /**
- * The one item to do next (FR-TODAY-2): the first undone block in time order. With no block left, the habit furthest behind its
- * count (`habitMissing`; ties keep the list order). Null when the day has no items (nothing planned: the plan action shows instead),
- * and when every item of the day is done (today is done). A weekly habit is only ever the focus of a day that has items
+ * The one item to do next (FR-TODAY-2): the first undone item of the day in list order, that is the first undone block in time
+ * order, then the first undone daily habit. The focus walks only the day's items (`todayItems`), so a tick by the focus and a
+ * tick in the list leave the same state. Null when the day has no items (nothing planned: the plan action shows instead) and
+ * when every item is done (today is done)
  */
-export const focusItem = (state: PlannerState, date: string, showSleep = false): TodayItem | null => {
-  const items = todayItems(state, date, showSleep)
-  if (!items.length || allItemsDone(items)) return null
-
-  const block = firstUndone(blockItems(state, date, showSleep))
-  if (block) return block
-
-  let best: Habit | null = null
-  let gap = 0
-
-  for (const habit of dayHabits(state, date, showSleep)) {
-    if (habitTicked(state, habit, date)) continue
-
-    const missing = habitMissing(state, habit, date)
-    if (missing > gap) {
-      best = habit
-      gap = missing
-    }
-  }
-
-  return best ? habitItem(state, best, date) : null
-}
+export const focusItem = (state: PlannerState, date: string, showSleep = false): TodayItem | null =>
+  firstUndone(todayItems(state, date, showSleep))
 
 /** The count of a day (FR-HOME-17): the ticked items and all of them. The numbers always show (Calm keeps every number) */
 export const doneCount = (items: TodayItem[], isToday: boolean): DoneCount => ({

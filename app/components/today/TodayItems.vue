@@ -3,8 +3,8 @@ import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import { timeSpan, type TodayItem } from '~/utils/today'
 
 /**
- * The rest of the day (FR-TODAY-2): each block or daily habit with its tick (FR-HOME-14), its time, and its life area, which
- * links to Dreams. Ticks keep the keyboard: each is a checkbox named for its thing.
+ * The rest of the day (FR-TODAY-2): each block or daily habit with its name, its time and its life area (a link to Dreams), and its
+ * tick at the right end (FR-TODAY-9). The tick is the same circle as the focus tick; each is a checkbox named for its thing.
  */
 const props = defineProps<{ title: string; items: TodayItem[] }>()
 
@@ -23,7 +23,6 @@ const timeOf = (item: TodayItem) => (item.kind === 'block' ? timeSpan(item.start
     <h2 id="today-items-title" class="section-title">{{ title }}</h2>
     <ul class="today-list">
       <li v-for="item in props.items" :key="item.key" class="today-row" :class="{ 'is-done': item.done }">
-        <UiTick :model-value="item.done" :label="`Mark ${item.title} done`" @update:model-value="emit('toggle', item.key)" />
         <div class="today-row-text">
           <p class="today-row-name">{{ item.title }}</p>
           <p class="today-row-meta">
@@ -34,6 +33,12 @@ const timeOf = (item: TodayItem) => (item.kind === 'block' ? timeSpan(item.start
             </template>
           </p>
         </div>
+        <UiTick
+          :data-tick="item.key"
+          :model-value="item.done"
+          :label="`Mark ${item.title} done`"
+          @update:model-value="emit('toggle', item.key)"
+        />
       </li>
     </ul>
   </section>

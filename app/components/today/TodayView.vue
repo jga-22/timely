@@ -8,7 +8,6 @@ import { dayRange, habitProgressText } from '~/utils/home'
 import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import {
   LAST_ONE_TEXT,
-  TODAY_FOCUS_TICK,
   TODAY_FOCUS_TITLE,
   allItemsDone,
   behindLine,
@@ -129,23 +128,30 @@ const habits = computed(() => (viewed.value ? habitRows(planner.$state, viewed.v
 const cheer = ref('')
 watch(viewed, () => (cheer.value = ''))
 
+// The tick of an item on the screen (the focus card or the list), by its key; a tick that is hidden (a closed list) does not count
+const tickOf = (key: string): HTMLElement | undefined =>
+  [...document.querySelectorAll<HTMLElement>('.today [data-tick]')].find(el => el.dataset.tick === key && el.getClientRects().length > 0)
+
+// A tick keeps the keyboard where it was (FR-TODAY-9): the tick pressed stays focused, and does not scroll the page. Only when the
+// tick is taken out of the page (its item moved into the focus card, or the day is done) does the keyboard go to the same item's
+// tick wherever it now is, and to the heading of the card when there is none
 const toggle = (key: string) => {
   if (!viewed.value) return
 
-  // A tick can leave the page (the focus is replaced, or the row moves into the focus card): when the keyboard was in Today and
-  // nothing has the focus after the tick, it goes to the next focus, or to the heading when the day is done
-  const inToday = !!document.activeElement?.closest('.today')
+  const active = document.activeElement
+  const pressed = active instanceof HTMLElement && active.closest('.today') ? active : null
 
   planner.toggleDone(viewed.value, key)
   cheer.value = isToday.value ? cheerLine(doneCount(items.value, true)) : ''
 
-  if (!inToday) return
+  if (!pressed) return
 
   nextTick(() => {
-    const active = document.activeElement
-    if (active && active !== document.body) return
+    const now = document.activeElement
+    if (now && now !== document.body) return
 
-    ;(document.getElementById(TODAY_FOCUS_TICK) ?? document.getElementById(TODAY_FOCUS_TITLE))?.focus()
+    const target = pressed.isConnected ? pressed : (tickOf(key) ?? document.getElementById(TODAY_FOCUS_TITLE))
+    target?.focus({ preventScroll: true })
   })
 }
 </script>
