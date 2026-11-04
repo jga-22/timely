@@ -7,7 +7,7 @@ const updated = formatLegalDate(legal.lastUpdated)
 </script>
 
 <template>
-  <main class="view legal">
+  <main id="main" tabindex="-1" class="view legal">
     <header class="page-head">
       <h1 class="page-title">{{ title }}</h1>
       <p class="page-meta">Last updated {{ updated }}</p>

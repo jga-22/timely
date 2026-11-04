@@ -5,6 +5,9 @@ import { usePlannerStore } from '~/stores/planner'
 import { focusEditById } from '~/utils/focus'
 import { mapCells } from '~/utils/goals'
 
+// headless: mounted under Plan, which holds the page title (the title row is not shown)
+defineProps<{ headless?: boolean }>()
+
 const planner = usePlannerStore()
 const { ambition, categories } = storeToRefs(planner)
 const { item, edit, setSelection } = useNav()
@@ -90,7 +93,7 @@ onUnmounted(() => window.removeEventListener('keydown', onWindowKeydown))
 
 <template>
   <div class="view harada-view" :data-selected="selected ? 'true' : 'false'">
-    <header class="page-head">
+    <header v-if="!headless" class="page-head">
       <h1 class="page-title">Goals</h1>
     </header>
 

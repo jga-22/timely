@@ -150,7 +150,7 @@ The old `--space-5` (24px) is now `--sp-6`; the names changed so the scale reads
 | `--z-raised` | 1 | Raised items inside a block |
 | `--z-sticky` | 10 | The top bar, the selection bar |
 | `--z-popover` | 20 | The account menu, the colour pop, the grid box and menu |
-| `--z-tabbar` | 40 | The phone tab bar |
+| `--z-tabbar` | 15 | The phone tab bar: over the page and the sticky bar, under the popovers (20; the week grid box and menu are above it) |
 | `--z-overlay` | 50 | The first-run screens |
 | `--z-toast` | 60 | The toast (when built) |
 | `--z-tooltip` | 80 | The tooltip (when built) |
@@ -440,6 +440,7 @@ Also in the ratchet, not an alias: the scoped `<style>` blocks (16), the colour 
 
 Dated entries with the app version. No separate version for the system.
 
+- **0.1.0, 2026-11-04: three screens.** The shell (the rail, the phone bar, the top bar, the skip link) is built from the tokens and `features/shell.css`. `--z-tabbar` is 15 (was 40): the bar is over the page and the sticky bar, and under the popovers (the grid box and menu, the colour pop), so they open over it. The guard baselines fall with the removed legacy values (zIndexLiteral 6 to 5, transitionLiteral 3 to 2, legacyTokenUse 450 to 445).
 - **0.0.2, 2026-11-03: design foundation.** Cascade layers (`reset`, `tokens`, `base`, `ui`, `features`, `motion`, `utilities`); the feature CSS moved to `features/`. Tokens in three tiers with the A2 palette (paper and card surfaces, cobalt accent, neutral dark) and rem type; old names aliased. `fillFor` checks both surfaces; the fallback colours are constants. `app/utils/breakpoints.ts` (768 is the phone edge). Preferences (`utils/prefs.ts`, `usePref`), dark mode and motion (`useTheme`, `useMotion`) and the head script (`utils/prepaint.ts`) set `data-theme`, `data-motion`, `data-choice` and `data-part` before first paint. The guards and the contrast test. This document. The focus ring is 3px.
 - **0.0.2, slice 3b: primitives and the style guide.** The legacy button, form, list, section, shared and layout files moved to `ui/`, and their look follows the A2 prototype (pill buttons and chips, a 44px target, the fields at 16px text). New Vue primitives: `UiIcon`, `UiRing` (replaces `AdherenceRing`), `UiSwitch` (replaces `SleepToggle` and the dark-mode toggle), `UiSegmented`, `UiTick` (the Home done checks), `UiDialog` (the reset dialog). The living style guide at `/_styleguide` (dev, or `TIMELY_STYLEGUIDE=1`). The ambient tint of the page under lively motion. The Motion choice in the Account menu. The active guards: the bare primitive selector and the style guide coverage.
 - 0.0.2: Vuetify and its icon font removed (no token change).

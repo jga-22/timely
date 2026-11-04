@@ -1,90 +1,184 @@
-/* App shell and topbar: the tab bar and its layout. */
-/* ── App shell and topbar ── */
+/* App shell (FR-NAV-6, the A2 look): the rail from 769px, the column (top bar, the page, the footer) and the tab bar on a
+   phone (768px and narrower). Also the Plan sub-nav and the frames of Plan and Progress (plan-, progress-). Layer features. */
+
 .app {
   position: relative;
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
   overflow-x: clip;
   background: var(--paper);
 }
 
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  height: 64px;
-  padding: 0 40px;
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule-2);
+/* The skip link: the first stop on the page, out of sight until it has focus */
+.shell-skip {
+  position: absolute;
+  left: var(--sp-4);
+  top: calc(var(--hit) * -2);
+  z-index: var(--z-skip);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--text-ui);
+  text-decoration: none;
 }
+.shell-skip:focus { top: var(--sp-4); }
 
-.brand {
-  font-size: var(--fs-lg);
+/* The brand: in the rail on a desktop, in the top bar on a phone */
+.shell-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--text-title-s);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
+  text-decoration: none;
   white-space: nowrap;
 }
+.shell-brand .ic { width: var(--sp-8); height: var(--sp-8); color: var(--accent); }
 
-.tabs {
-  display: flex;
-  align-items: stretch;
-  gap: var(--space-5);
-  flex: 1;
-  height: 100%;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+/* The desktop rail (A2): sticky, the brand and the three surfaces. Shown from 769px */
+.shell-rail {
+  position: sticky;
+  top: 0;
+  flex: 0 0 var(--rail-w);
+  align-self: flex-start;
+  height: 100vh;
+  display: none;
+  flex-direction: column;
+  gap: var(--sp-10);
+  padding: var(--sp-8) var(--sp-5) var(--sp-6) var(--sp-6);
 }
-.tabs::-webkit-scrollbar { display: none; }
-.topbar-spacer { flex: 1; }
+@media (min-width: 769px) {
+  .shell-rail { display: flex; }
+}
+.shell-rail-nav { display: grid; gap: var(--sp-1); }
 
-.tab {
-  position: relative;
+/* A surface link: the rail item, and the phone tab (below). The current one is on the card surface (A2) */
+.shell-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--hit-lg);
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  text-decoration: none;
+}
+.shell-nav-link:hover { background: var(--surface-hover); color: var(--ink); }
+.shell-nav-link[aria-current="page"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--elev-1);
+}
+.shell-nav-link[aria-current="page"] .ic { color: var(--accent); }
+
+/* The column: the top bar, the page and the footer */
+.shell-column {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The top bar: the brand on a phone (and when there is no rail), the theme switch and the account menu */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  padding-top: var(--sp-4);
+  background: var(--paper);
+}
+/* The row sits in the page's width (the .view maximum, 1120px) and keeps the side padding of the views, so the tools line up with the content */
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--sp-8);
+}
+@media (max-width: 768px) {
+  .topbar-inner { padding: 0 var(--sp-4); }
+}
+.shell-top-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+@media (min-width: 769px) {
+  .shell-rail + .shell-column > .topbar .shell-top-brand { display: none; }
+}
+
+/* The page's landmark: focus moves here from the skip link, and the frame draws no ring for it */
+.shell-main:focus { outline: none; }
+
+/* The phone tab bar (A2): three surfaces at the foot of the screen. The column leaves room for it, so it covers nothing */
+.shell-tabbar { display: none; }
+@media (max-width: 768px) {
+  .shell-column {
+    padding-bottom: calc(var(--hit-lg) + var(--sp-8) + env(safe-area-inset-bottom));
+  }
+  .shell-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-tabbar);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-3) calc(var(--sp-2) + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+  .shell-tabbar .shell-nav-link {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-1);
+    min-height: var(--hit-lg);
+    padding: 0;
+    font-size: var(--text-small);
+  }
+  .shell-tabbar .shell-nav-link[aria-current="page"] {
+    background: transparent;
+    box-shadow: none;
+    color: var(--accent);
+  }
+}
+
+/* Plan: the sub-nav (Dreams, Week, Year) under the page title, as the A2 pill row */
+.plan-subnav {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-8);
+  padding: var(--sp-1);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+.plan-subnav a {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex: none;
-  height: 100%;
-  padding: 0;
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--ink-3);
-  white-space: nowrap;
+  min-height: var(--hit);
+  padding: 0 var(--sp-5);
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: var(--text-ui);
+  text-decoration: none;
 }
-.tab:hover,
-.tab[aria-selected="true"] { color: var(--ink); }
-.tab::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transition: transform 0.18s ease;
+.plan-subnav a:hover { color: var(--ink); }
+.plan-subnav a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--elev-1);
 }
-.tab[aria-selected="true"]::after { transform: scaleX(1); }
 
-/* Phone topbar and tab bar (768px and narrower) */
-@media (max-width: 768px) {
-  .topbar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 0 var(--sp-4);
-    padding: var(--sp-3) var(--sp-4) 0;
-  }
-  .brand { flex: 1; }
-  .tabs {
-    order: 3;
-    flex-basis: 100%;
-    gap: var(--sp-6);
-    height: 44px;
-  }
-}
+/* Plan and Progress frame their views: the frame keeps the page padding, the view inside it adds none */
+.plan-view > .view,
+.progress-view > .view { padding: 0; }

@@ -18,6 +18,9 @@ import {
 // The Year tab: the year painter and the Weeks row (which week type each week uses), then the planned hours of the range
 // (the bars with their range controls) and the life areas of that range. The page's YearNav is the year for all of it.
 // The range controls are session state here: the granularity, the range and the unit reset when the tab is left.
+// headless: mounted under Plan, which holds the page title. The title is not shown; the year switcher stays
+defineProps<{ headless?: boolean }>()
+
 const planner = usePlannerStore()
 const { year } = usePlannerYear()
 const { link } = useNav()
@@ -49,7 +52,7 @@ const shareRows = computed(() => available.value.rows.map(row => ({
   color: colorOf(row.categoryId),
   value: amount(row.hours),
   pct: row.share,
-  to: link('goals', { item: row.categoryId })
+  to: link('dreams', { item: row.categoryId })
 })))
 const restRow = computed(() => ({
   key: NOT_PLANNED_KEY,
@@ -64,7 +67,7 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
 <template>
   <div class="view">
     <header class="page-head">
-      <h1 class="page-title">Year</h1>
+      <h1 v-if="!headless" class="page-title">Year</h1>
       <div class="year-controls">
         <YearNav />
       </div>
@@ -114,7 +117,7 @@ const capacityText = computed(() => capacityLabel(granularity.value, bars.value,
 
       <section v-else class="section insights-empty-state">
         <p class="insights-empty">Plan the week in Week and the hours show here.</p>
-        <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Week</NuxtLink>
+        <NuxtLink class="btn btn-sm btn-outline" :to="link('week')">Open Week</NuxtLink>
       </section>
     </template>
   </div>

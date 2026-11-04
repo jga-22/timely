@@ -1,62 +1,49 @@
+import {
+  DEFAULT_PLAN_VIEW,
+  navQuery,
+  placeQuery,
+  resolveNav,
+  type NavState,
+  type NavTarget,
+  type Place,
+  type PlanView
+} from '~/utils/nav'
+
+/** The last Plan view of this session (session state; a reload starts at Week). `plan` links and a plan URL without a view use it */
+export const usePlanView = () => useState<PlanView>('nav-plan-view', () => DEFAULT_PLAN_VIEW)
+
 /**
- * Screen navigation kept in the route query (FR-UX-5, assumption A5):
- *   ?tab=planner&item=<id>&edit=1
- * tab   home | goals | planner | year | insights. Missing or unknown falls back to home (an old ?tab=visualization too).
- *       planner is the Week tab; year is the Year tab (painter, Weeks row, planned hours, life areas).
- * item  id of the selected category, activity or habit; on the Year tab, a week type id (the Weeks row starts with it).
- *       A screen ignores an id it does not know.
- * edit  "1" puts the selected item in edit mode.
- * Switching tab drops item and edit. Use `go` for a history entry (Back works) and `link` for NuxtLink.
- * Within a screen, `setSelection` changes item and edit and keeps the tab.
+ * Screen navigation kept in the route query (FR-NAV-1 to 4; the rules are in utils/nav.ts):
+ *   ?tab=plan&view=week&item=<id>&edit=1
+ * surface today | plan | progress; view dreams | week | year on Plan. The old ?tab= values still resolve, and the shell
+ * rewrites them once (composables/useNavSync.ts).
+ * Callers name places: link(place, target) for a NuxtLink, go(place, target) for a history entry (Back works), and
+ * setSelection(target) to change the item or edit mode on the current place (it keeps the place).
+ * place is today, dreams, week, year, progress or plan (the last Plan view). item is a life area (Dreams), an entry (Week)
+ * or a week type (Year); a screen ignores an id it does not know. edit "1" puts the item in edit mode.
  */
-export const TABS = [
-  { id: 'home', label: 'Home' },
-  { id: 'goals', label: 'Goals' },
-  { id: 'planner', label: 'Week' },
-  { id: 'year', label: 'Year' },
-  { id: 'insights', label: 'Insights' }
-] as const
-
-export type TabId = (typeof TABS)[number]['id']
-
-export interface NavTarget {
-  item?: string
-  edit?: boolean
-}
-
-const TAB_IDS: string[] = TABS.map(tab => tab.id)
-
-const toLocation = (tab: TabId, target: NavTarget = {}) => ({
-  path: '/',
-  query: {
-    tab,
-    ...(target.item ? { item: target.item } : {}),
-    ...(target.edit ? { edit: '1' } : {})
-  }
-})
-
 export const useNav = () => {
   const route = useRoute()
   const router = useRouter()
+  const lastView = usePlanView()
 
-  const tab = computed<TabId>(() => {
-    const value = typeof route.query.tab === 'string' ? route.query.tab : ''
-    return (TAB_IDS.includes(value) ? value : 'home') as TabId
-  })
-  const item = computed(() => (typeof route.query.item === 'string' && route.query.item ? route.query.item : null))
-  const edit = computed(() => route.query.edit === '1')
+  const state = computed<NavState>(() => resolveNav(route.query, lastView.value))
+  const surface = computed(() => state.value.surface)
+  const view = computed(() => state.value.view)
+  const item = computed(() => state.value.item)
+  const edit = computed(() => state.value.edit)
 
-  /** Route to a screen, optionally with an item selected and in edit mode (for Edit links, FR-UX-4) */
-  const link = (to: TabId, target?: NavTarget) => toLocation(to, target)
+  /** A location for a place, optionally with an item selected and in edit mode (for Edit links, FR-UX-4) */
+  const link = (to: Place, target?: NavTarget) => ({ path: '/', query: placeQuery(to, target, lastView.value) })
 
-  /** Navigate with a history entry, so browser Back returns to the previous screen */
-  const go = (to: TabId, target?: NavTarget) => router.push(toLocation(to, target))
+  /** Navigate with a history entry, so browser Back returns to the previous place */
+  const go = (to: Place, target?: NavTarget) => router.push(link(to, target))
 
-  /** Change the selection or edit mode on the current screen. `replace` leaves no history entry (FR-UX-5) */
+  /** Change the selection or edit mode on the current place. `replace` leaves no history entry (FR-UX-5) */
   const setSelection = (target: NavTarget = {}, replace = false) => {
-    const location = toLocation(tab.value, target)
+    const location = { path: '/', query: navQuery(state.value.surface, state.value.view, target) }
     return replace ? router.replace(location) : router.push(location)
   }
 
-  return { tab, item, edit, link, go, setSelection }
+  return { surface, view, item, edit, link, go, setSelection }
 }

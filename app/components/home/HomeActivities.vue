@@ -34,7 +34,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
 
   <!-- The day's activities in time order (FR-HOME-4); each row ticks as done (FR-HOME-14) -->
   <p v-if="!hasActivities" class="home-empty">
-    No activities yet. <NuxtLink :to="link('planner')">Add activities in Week</NuxtLink>.
+    No activities yet. <NuxtLink :to="link('week')">Add activities in Week</NuxtLink>.
   </p>
 
   <template v-else>
@@ -52,7 +52,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
             {{ row.activity.name }}
             <span v-if="row.now" class="home-now">Now</span>
           </span>
-          <NuxtLink v-if="row.category" class="home-row-cat" :to="link('goals', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
+          <NuxtLink v-if="row.category" class="home-row-cat" :to="link('dreams', { item: row.category.id })">{{ row.category.name }}</NuxtLink>
         </div>
         <span class="home-row-hours">{{ row.block.end - row.block.start }} h</span>
         <UiTick :model-value="row.done" :label="`Mark ${row.activity.name} done`" @update:model-value="emit('toggle', row.key)" />
@@ -61,7 +61,7 @@ const progress = computed(() => progressText(done.value, total.value, props.comp
     <!-- Nothing planned: one next action, the Week tab, where the day's hours are planned -->
     <div v-else class="home-empty-state">
       <p class="home-empty">{{ isToday ? 'Nothing planned today.' : 'Nothing planned on this day.' }}</p>
-      <NuxtLink class="btn btn-sm btn-outline" :to="link('planner')">Open Week</NuxtLink>
+      <NuxtLink class="btn btn-sm btn-outline" :to="link('week')">Open Week</NuxtLink>
     </div>
   </template>
 </template>

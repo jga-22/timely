@@ -4,17 +4,17 @@ useHead({
   meta: [{ name: 'description', content: 'Design your ideal week, hour by hour.' }]
 })
 
-const { tab } = useNav()
+const { surface } = useNav()
 </script>
 
 <template>
-  <!-- The five views read the saved planner, which only exists in the browser. Rendering them on the server draws the empty
-       default and then mismatches the saved state on hydration, so they render on the client only. -->
-  <ClientOnly>
-    <HomeView                 v-if="tab === 'home'" />
-    <HaradaView               v-else-if="tab === 'goals'" />
-    <PlannerView              v-else-if="tab === 'planner'" />
-    <YearView                 v-else-if="tab === 'year'" />
-    <InsightsView             v-else />
-  </ClientOnly>
+  <!-- The main landmark, the target of the skip link. The three surfaces read the saved planner, which only exists in the
+       browser. Rendering them on the server draws the empty default and then mismatches the saved state on hydration, so they render on the client only. -->
+  <main id="main" tabindex="-1" class="shell-main">
+    <ClientOnly>
+      <HomeView          v-if="surface === 'today'" />
+      <PlanView          v-else-if="surface === 'plan'" />
+      <ProgressView      v-else />
+    </ClientOnly>
+  </main>
 </template>

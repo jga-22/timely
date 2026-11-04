@@ -95,8 +95,8 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
   <div class="adh">
     <template v-if="report.ticks === 0">
       <div class="adh-empty">
-        <p class="adh-empty-text">Tick activities on Home and your adherence shows here.</p>
-        <NuxtLink class="btn btn-sm btn-outline" :to="link('home')">Open Home</NuxtLink>
+        <p class="adh-empty-text">Tick activities on Today and your adherence shows here.</p>
+        <NuxtLink class="btn btn-sm btn-outline" :to="link('today')">Open Today</NuxtLink>
       </div>
     </template>
 
@@ -172,7 +172,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
           <li v-for="row in areaRows" :key="row.categoryId" class="adh-area">
             <span class="adh-area-name">
               <span class="dot" :style="{ background: row.color }" aria-hidden="true" />
-              <NuxtLink class="share-link" :to="link('goals', { item: row.categoryId })">{{ row.name }}</NuxtLink>
+              <NuxtLink class="share-link" :to="link('dreams', { item: row.categoryId })">{{ row.name }}</NuxtLink>
             </span>
             <span class="adh-area-meter" aria-hidden="true"><span class="adh-area-fill" :class="{ 'is-habits': row.basis === 'habits' }" :style="{ width: `${row.percent ?? 0}%` }" /></span>
             <span class="adh-area-value">{{ row.percent === null ? 'No plan' : `${row.percent}%` }}</span>
@@ -214,7 +214,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
           {{ report.journalDays }} of {{ report.elapsedDays }} counted days have a journal note.
           What helped this week? What got in the way?
         </p>
-        <NuxtLink class="btn btn-sm btn-outline" :to="link('home')">Open Home</NuxtLink>
+        <NuxtLink class="btn btn-sm btn-outline" :to="link('today')">Open Today</NuxtLink>
       </section>
     </template>
   </div>

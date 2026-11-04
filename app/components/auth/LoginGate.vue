@@ -22,7 +22,7 @@ const google = async () => {
 </script>
 
 <template>
-  <main class="login-gate">
+  <main id="main" tabindex="-1" class="login-gate">
     <div class="login-main">
       <div class="login-intro">
         <h1 class="login-heading">Your goals decide your week</h1>

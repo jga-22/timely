@@ -35,18 +35,18 @@ const steps = computed(() => {
     {
       title: 'Plan your week',
       body: (count
-        ? `This is your week: ${awakeText.value}. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Goals keeps the why: each area's goal and its habits.`
+        ? `This is your week: ${awakeText.value}. Timely placed ${placed.value}. Select an hour and apply or clear it to adjust. Dreams keeps the why: each area's goal and its habits.`
         : 'Plan your week hour by hour. Select an hour in the grid, then apply an activity to it.') + ' Sleep is set to 10 PM-7 AM and kept out of your totals; change it any time in Week.'
     },
     {
       title: 'Your year',
       body: count > 1
         ? `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. The chart has ${count} life areas, and the share of each is listed below it.`
-        : `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Goals and it fills.` : 'Add a life area in Goals and it fills the chart.'}`
+        : `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Dreams and it fills.` : 'Add a life area in Dreams and it fills the chart.'}`
     },
     {
       title: 'Daily follow-up',
-      body: 'Home shows today as a timeline with its activities, and a journal note for the day. What next: the other life areas are already in Goals for you to complete, edit, rename or remove, and you can add the activities for the rest of your week in Week.'
+      body: 'Today shows the day as a timeline with its activities, and a journal note for the day. What next: the other life areas are already in Dreams for you to complete, edit, rename or remove, and you can add the activities for the rest of your week in Week.'
     }
   ]
 })

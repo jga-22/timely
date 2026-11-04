@@ -150,7 +150,7 @@
   --z-raised: 1;
   --z-sticky: 10;                      /* top bar, selection bar */
   --z-popover: 20;                     /* account menu, colour pop, grid box and menu */
-  --z-tabbar: 40;
+  --z-tabbar: 15;                      /* the phone tab bar: over the page and the sticky bar, under the popovers */
   --z-overlay: 50;                     /* first run */
   --z-toast: 60;
   --z-tooltip: 80;
