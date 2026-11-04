@@ -2,7 +2,7 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
-## Unreleased
+## 0.1.1 - Today, rebuilt
 
 ### Changed
 - Today's focus follows the clock on today: the block in progress (ticked or not), else the next block, else the most recent ended block not ticked, else the first undone daily habit. Before, it was the first undone item in list order, so a block in progress could sit behind an earlier one left undone. The list under the focus is now "Today's list": every item of the day, the one in focus marked "On now", "Next" or "Ended". A ticked block in focus reads "Done · next at 2 PM". A clock tick keeps the keyboard on the same item.
