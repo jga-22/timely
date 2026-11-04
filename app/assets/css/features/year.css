@@ -80,6 +80,21 @@
   align-items: center;
   gap: var(--sp-1);
 }
+/* The month labels above a row: the same columns as the row, so each label sits over the first week of its month. Quiet text (ink-3,
+   the caption size); a label may run into the next column, since the rule that picks them leaves two columns between two labels */
+.year-months {
+  display: grid;
+  grid-template-columns: 52px repeat(14, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--sp-1);
+  height: var(--sp-4);
+}
+.year-month {
+  font-size: var(--text-caption);
+  line-height: 1;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
 .year-row-label {
   font-size: var(--text-small);
   color: var(--ink-3);
@@ -121,6 +136,11 @@
   height: 14px;
   border-radius: var(--radius-xs);
   background: var(--c);
+}
+/* A blank week: the empty cell's own colour and hairline, as on the grid */
+.year-swatch.is-blank {
+  background: var(--cell-empty);
+  box-shadow: inset 0 0 0 1px var(--cell-line);
 }
 .year-swatch.is-current {
   background: transparent;

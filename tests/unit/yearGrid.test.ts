@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isoWeekStarts } from '~/utils/dates'
-import { ERASE_TOOL, scheduleOfWeek, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, monthMarks, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 
 describe('yearRows', () => {
   it('cuts 2026 (53 weeks) into rows of 13, each labelled with the months its first and last week start in', () => {
@@ -57,10 +57,30 @@ describe('weekRangeHint and weekRangeResult', () => {
   })
 })
 
-describe('scheduleOfWeek', () => {
-  it('is the schedule a week is assigned to, else the active one (an unassigned week uses it)', () => {
-    expect(scheduleOfWeek('vacation-1', 'standard')).toBe('vacation-1')
-    expect(scheduleOfWeek(undefined, 'standard')).toBe('standard')
-    expect(scheduleOfWeek(undefined, null)).toBeNull()
+describe('monthMarks', () => {
+  it('labels the column of the first week of each month, by its Thursday, in each row of 14 weeks', () => {
+    const rows = monthMarks(isoWeekStarts(2026))
+
+    expect(rows).toHaveLength(4)
+    // Row 1: January from the first week, February from the sixth (Thursday 5 February), March from the tenth; April would have one column
+    // left in the row, so it is not labelled
+    expect(rows[0]).toEqual([
+      { col: 0, label: 'Jan' },
+      { col: 5, label: 'Feb' },
+      { col: 9, label: 'Mar' },
+    ])
+  })
+
+  it('never puts two labels within one column of each other, nor in the last column', () => {
+    for (const row of monthMarks(isoWeekStarts(2026))) {
+      row.forEach((mark, index) => {
+        const next = row[index + 1]?.col ?? 14
+        expect(next - mark.col).toBeGreaterThanOrEqual(2)
+      })
+    }
+  })
+
+  it('takes the number of weeks per row as an option, one list of marks per row', () => {
+    expect(monthMarks(isoWeekStarts(2026), 13)).toHaveLength(5)
   })
 })

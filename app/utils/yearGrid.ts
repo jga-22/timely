@@ -39,11 +39,41 @@ export const weekRangeError = (from: number, to: number, count: number): string 
   return ''
 }
 
+/** A month label above a row of the year grid: the column (0 for the row's first week) it sits over, and the month's short name */
+export interface MonthMark {
+  col: number
+  label: string
+}
+
+/** The month a week falls in, decided by its Thursday, as the bars are (insightsBars): the same month for every week of a bar */
+const monthOfWeek = (monday: string): string => {
+  const thursday = new Date(`${monday}T00:00:00Z`)
+  thursday.setUTCDate(thursday.getUTCDate() + 3)
+  return MONTHS[thursday.getUTCMonth()]!
+}
+
 /**
- * The schedule a week's cell shows: the one the week is assigned to, else the active one, since an unassigned week uses the active
- * schedule (effectiveTemplate). Null when there is no schedule at all.
+ * The month labels above each row of the year grid (`perRow` weeks a row): one at the column of the first week of each month, the first
+ * week of the year included. A label is left out when it would have no room, fewer than two columns before the next label or the row's end,
+ * so no two labels touch on a phone.
  */
-export const scheduleOfWeek = (assigned: string | undefined, activeId: string | null): string | null => assigned ?? activeId
+export const monthMarks = (weeks: string[], perRow = 14): MonthMark[][] => {
+  const months = weeks.map(monthOfWeek)
+  const rows: MonthMark[][] = []
+
+  for (let start = 0; start < weeks.length; start += perRow) {
+    const end = Math.min(start + perRow, weeks.length)
+    const marks: MonthMark[] = []
+
+    for (let wi = start; wi < end; wi++) {
+      if (wi === 0 || months[wi] !== months[wi - 1]) marks.push({ col: wi - start, label: months[wi]! })
+    }
+
+    rows.push(marks.filter((mark, index) => (marks[index + 1]?.col ?? end - start) - mark.col >= 2))
+  }
+
+  return rows
+}
 
 /** What Apply will do with the chosen paint tool, under the weeks fields: the schedule's name, or Clear's reset to the default one */
 export const weekRangeHint = (templateName: string | null, defaultName: string | null = null): string => (templateName

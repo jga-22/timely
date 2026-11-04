@@ -5,7 +5,7 @@ import { usePlannerFill } from '~/composables/usePlannerFill'
 import { FALLBACK_TEMPLATE_COLOR } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
 import { weeksUsing } from '~/utils/insights'
-import { ERASE_TOOL, scheduleOfWeek, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, monthMarks, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 import type { WeekTemplate } from '~/types/planner'
 
 /**
@@ -20,7 +20,6 @@ const { year, weeks, currentWeekIndex } = usePlannerYear()
 const { areaVars } = usePlannerFill()
 
 // The active schedule: the one a week without its own uses (named by Clear and in the lede)
-const activeId = computed(() => activeTemplate.value?.id ?? null)
 const activeName = computed(() => activeTemplate.value?.name ?? null)
 
 // ── Year painter ──
@@ -56,28 +55,27 @@ const paintName = computed(() => {
   return id ? (templateById.value.get(id)?.name ?? null) : null
 })
 
-/** Rows of the year grid, 14 weeks each (four rows a year), with their month labels */
+/** Rows of the year grid, 14 weeks each (four rows a year), and the month labels above each row */
 const gridRows = computed(() => yearRows(weeks.value, 14))
+const monthRows = computed(() => monthMarks(weeks.value, 14))
 
-/** The schedule a week's cell shows: its own, else the active one (an unassigned week uses the active schedule) */
-const scheduleOfCell = (startDate: string): WeekTemplate | undefined =>
-  templateById.value.get(scheduleOfWeek(appliedByDate.value.get(startDate), activeId.value) ?? '')
+/** The schedule a week was given in the year (its own); undefined for an unassigned week, whose cell stays blank */
+const ownSchedule = (startDate: string): WeekTemplate | undefined => templateById.value.get(appliedByDate.value.get(startDate) ?? '')
 
 function paintWeek(wi: number) {
   const startDate = weeks.value[wi]
   if (startDate) planner.setWeekTemplate(startDate, toolTemplateId(paintTool.value))
 }
 
-// The colour of a year cell: the schedule the week uses, painted with the area variables (--c); no colour when there is no schedule
+// The colour of a year cell: the schedule the week was given, painted with the area variables (--c); an unassigned week stays blank
 const cellStyle = (startDate: string) => {
-  const tpl = scheduleOfCell(startDate)
+  const tpl = ownSchedule(startDate)
   return tpl ? areaVars(tpl.color ?? FALLBACK_TEMPLATE_COLOR) : {}
 }
 
 const cellTitle = (startDate: string, wi: number) => {
-  const tpl = scheduleOfCell(startDate)
-  const own = appliedByDate.value.has(startDate)
-  return `Week ${wi + 1} · ${tpl?.name ?? 'no schedule'}${own ? '' : ' by default'}`
+  const tpl = ownSchedule(startDate)
+  return `Week ${wi + 1} · ${tpl ? tpl.name : 'unassigned'}`
 }
 
 // ── Apply to several weeks (FR-YEAR-7): the paint tool's schedule for a range of weeks. Closed by default ──
@@ -233,37 +231,49 @@ function applyWeekRange() {
 
           <div v-if="weeks.length" class="year-grid-scroll">
             <div class="year-grid" @mouseup="isYearPainting = false" @mouseleave="isYearPainting = false">
-              <div v-for="(row, r) in gridRows" :key="r" class="year-row">
-                <span class="year-row-label">{{ row.label }}</span>
-                <div
-                  v-for="week in row.weeks"
-                  :key="week.wi"
-                  class="week-cell"
-                  :class="{ 'is-filled': !!scheduleOfCell(week.startDate), 'is-current': week.wi === currentWeekIndex }"
-                  :style="{ ...cellStyle(week.startDate), '--i': week.wi }"
-                  :title="cellTitle(week.startDate, week.wi)"
-                  @mousedown="isYearPainting = true; paintWeek(week.wi)"
-                  @mouseenter="hoverWeek = week.wi; isYearPainting && paintWeek(week.wi)"
-                  @mouseleave="hoverWeek = null"
-                >{{ week.wi + 1 }}</div>
+              <div v-for="(row, r) in gridRows" :key="r" class="year-row-block">
+                <!-- The month labels over this row's weeks: quiet, one at the first week of each month (aria-hidden: the weeks say their own) -->
+                <div class="year-months" aria-hidden="true">
+                  <span
+                    v-for="mark in monthRows[r]"
+                    :key="mark.col"
+                    class="year-month"
+                    :style="{ gridColumnStart: mark.col + 2 }"
+                  >{{ mark.label }}</span>
+                </div>
+                <div class="year-row">
+                  <span class="year-row-label">{{ row.label }}</span>
+                  <div
+                    v-for="week in row.weeks"
+                    :key="week.wi"
+                    class="week-cell"
+                    :class="{ 'is-filled': !!ownSchedule(week.startDate), 'is-current': week.wi === currentWeekIndex }"
+                    :style="{ ...cellStyle(week.startDate), '--i': week.wi }"
+                    :title="cellTitle(week.startDate, week.wi)"
+                    @mousedown="isYearPainting = true; paintWeek(week.wi)"
+                    @mouseenter="hoverWeek = week.wi; isYearPainting && paintWeek(week.wi)"
+                    @mouseleave="hoverWeek = null"
+                  >{{ week.wi + 1 }}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- The legend: each schedule's colour, and the outline of this week -->
+          <!-- The legend: each schedule's colour, a blank week, and the outline of this week -->
           <ul class="year-legend" aria-label="Legend">
             <li v-for="t in templates" :key="t.id">
               <span class="year-swatch" :style="areaVars(t.color ?? FALLBACK_TEMPLATE_COLOR)" aria-hidden="true" />{{ t.name }}
             </li>
+            <li><span class="year-swatch is-blank" aria-hidden="true" />No schedule of its own</li>
             <li><span class="year-swatch is-current" aria-hidden="true" />This week</li>
           </ul>
 
           <div v-if="hoverWeek !== null" class="week-readout">
             Week {{ hoverWeek + 1 }} ·
-            <span v-if="appliedByDate.get(weeks[hoverWeek]!)">
-              {{ templateById.get(appliedByDate.get(weeks[hoverWeek]!)!)?.name }}
+            <span v-if="ownSchedule(weeks[hoverWeek]!)">
+              {{ ownSchedule(weeks[hoverWeek]!)?.name }}
             </span>
-            <span v-else class="muted">{{ scheduleOfCell(weeks[hoverWeek]!)?.name ?? 'no schedule' }} by default, click to paint</span>
+            <span v-else class="muted">unassigned, uses {{ activeName ?? 'the active schedule' }}. Click to paint.</span>
           </div>
         </div>
       </details>
