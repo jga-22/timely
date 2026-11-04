@@ -194,6 +194,20 @@
   padding-right: 24px;
   font-weight: 600;
 }
+/* Name on wide screens, code on phones (480 px and narrower, the phone breakpoint): one of the two is shown, the other is not
+   in the layout or the accessibility tree. Long names end in an ellipsis */
+.wk-block-full,
+.wk-block-code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wk-block-code { display: none; }
+@media (max-width: 480px) {
+  .wk-block-full { display: none; }
+  .wk-block-code { display: block; }
+}
 .wk-block-time {
   font-size: 11px;
   opacity: 0.85;
