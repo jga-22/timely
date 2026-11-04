@@ -9,6 +9,7 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 - "Which weeks use which schedule" is a card: the count of weeks each schedule uses, the year grid with its legend, and the current week outlined. A week with no schedule of its own stays blank and uses the active schedule; a quiet month label sits above each row of the grid.
 - The planned hours of the year are a card: the hours against the awake time, one bar with Free hatched, the life areas with Free as the last row, and Show sleep. The monthly bars and the range controls are under "More detail", closed by default. The card and its list are in hours; the unit applies to the bars.
 - The Year view says "schedule" where it said "week type". The entry form still says "week type".
+- The Year grid has no row labels any more: the month labels above the weeks say the months. The 14 columns take the width (squares 62 px on a desktop, 18 px on a phone). The current week's outline no longer touches a month label, and each week and row is named for screen readers.
 - The Week grid's edge handles are the border of the selected run: a flat line across its full width, 4px thick (6px and darker while hovered or pressed), with no round grip and no room taken inside the block. Each edge takes a 32px target on a mouse, centred on the edge, and a one-hour run splits its height between its top and bottom targets. Touch keeps the 44px target.
 
 ### Fixed

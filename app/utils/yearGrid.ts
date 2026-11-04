@@ -84,3 +84,15 @@ export const weekRangeHint = (templateName: string | null, defaultName: string |
 export const weekRangeResult = (from: number, to: number, templateName: string | null, defaultName: string | null = null): string => (templateName
   ? `Weeks ${from} to ${to} use ${templateName}.`
   : `Weeks ${from} to ${to} are cleared to ${defaultName ?? 'the active schedule'}.`)
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/**
+ * The name a week's cell has for a screen reader, since the grid no longer shows row labels: "Week 45, November 2026, Standard Week",
+ * or "unassigned" for a week with no schedule of its own. The month is the one the week's Thursday falls in, as the month labels are.
+ */
+export const weekCellName = (monday: string, wi: number, scheduleName: string | null): string => {
+  const thursday = new Date(`${monday}T00:00:00Z`)
+  thursday.setUTCDate(thursday.getUTCDate() + 3)
+  return `Week ${wi + 1}, ${MONTH_NAMES[thursday.getUTCMonth()]} ${thursday.getUTCFullYear()}, ${scheduleName ?? 'unassigned'}`
+}

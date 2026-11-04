@@ -76,7 +76,7 @@
 }
 .year-row {
   display: grid;
-  grid-template-columns: 52px repeat(14, minmax(0, 1fr));
+  grid-template-columns: repeat(14, minmax(0, 1fr));
   align-items: center;
   gap: var(--sp-1);
 }
@@ -84,22 +84,17 @@
    the caption size); a label may run into the next column, since the rule that picks them leaves two columns between two labels */
 .year-months {
   display: grid;
-  grid-template-columns: 52px repeat(14, minmax(0, 1fr));
+  grid-template-columns: repeat(14, minmax(0, 1fr));
   align-items: end;
   gap: var(--sp-1);
   height: var(--sp-4);
+  margin-bottom: var(--sp-2); /* room for the current week outline (2px, 2px out) above the squares */
 }
 .year-month {
   font-size: var(--text-caption);
   line-height: 1;
   color: var(--ink-3);
   white-space: nowrap;
-}
-.year-row-label {
-  font-size: var(--text-small);
-  color: var(--ink-3);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 .year-grid .week-cell {
   height: auto;

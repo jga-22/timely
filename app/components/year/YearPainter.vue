@@ -5,7 +5,7 @@ import { usePlannerFill } from '~/composables/usePlannerFill'
 import { FALLBACK_TEMPLATE_COLOR } from '~/utils/palette'
 import { focusEditField } from '~/utils/focus'
 import { weeksUsing } from '~/utils/insights'
-import { ERASE_TOOL, monthMarks, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, monthMarks, toolTemplateId, weekCellName, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 import type { WeekTemplate } from '~/types/planner'
 
 /**
@@ -73,10 +73,11 @@ const cellStyle = (startDate: string) => {
   return tpl ? areaVars(tpl.color ?? FALLBACK_TEMPLATE_COLOR) : {}
 }
 
-const cellTitle = (startDate: string, wi: number) => {
-  const tpl = ownSchedule(startDate)
-  return `Week ${wi + 1} · ${tpl ? tpl.name : 'unassigned'}`
-}
+/** A cell's name for a screen reader and its tooltip: its week, month and schedule (weekCellName). The grid shows no row labels */
+const cellName = (startDate: string, wi: number) => weekCellName(startDate, wi, ownSchedule(startDate)?.name ?? null)
+
+/** A row's name: the first and last week it holds */
+const rowName = (row: { weeks: { wi: number }[] }) => `Weeks ${row.weeks[0]!.wi + 1} to ${row.weeks[row.weeks.length - 1]!.wi + 1}`
 
 // ── Apply to several weeks (FR-YEAR-7): the paint tool's schedule for a range of weeks. Closed by default ──
 const weeksOpen = ref(false)
@@ -238,18 +239,19 @@ function applyWeekRange() {
                     v-for="mark in monthRows[r]"
                     :key="mark.col"
                     class="year-month"
-                    :style="{ gridColumnStart: mark.col + 2 }"
+                    :style="{ gridColumnStart: mark.col + 1 }"
                   >{{ mark.label }}</span>
                 </div>
-                <div class="year-row">
-                  <span class="year-row-label">{{ row.label }}</span>
+                <div class="year-row" role="group" :aria-label="rowName(row)">
                   <div
                     v-for="week in row.weeks"
                     :key="week.wi"
                     class="week-cell"
+                    role="img"
                     :class="{ 'is-filled': !!ownSchedule(week.startDate), 'is-current': week.wi === currentWeekIndex }"
                     :style="{ ...cellStyle(week.startDate), '--i': week.wi }"
-                    :title="cellTitle(week.startDate, week.wi)"
+                    :title="cellName(week.startDate, week.wi)"
+                    :aria-label="cellName(week.startDate, week.wi)"
                     @mousedown="isYearPainting = true; paintWeek(week.wi)"
                     @mouseenter="hoverWeek = week.wi; isYearPainting && paintWeek(week.wi)"
                     @mouseleave="hoverWeek = null"

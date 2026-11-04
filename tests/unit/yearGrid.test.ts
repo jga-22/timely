@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isoWeekStarts } from '~/utils/dates'
-import { ERASE_TOOL, monthMarks, toolTemplateId, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
+import { ERASE_TOOL, monthMarks, toolTemplateId, weekCellName, weekRangeError, weekRangeHint, weekRangeResult, yearRows } from '~/utils/yearGrid'
 
 describe('yearRows', () => {
   it('cuts 2026 (53 weeks) into rows of 13, each labelled with the months its first and last week start in', () => {
@@ -82,5 +82,14 @@ describe('monthMarks', () => {
 
   it('takes the number of weeks per row as an option, one list of marks per row', () => {
     expect(monthMarks(isoWeekStarts(2026), 13)).toHaveLength(5)
+  })
+})
+
+describe('weekCellName', () => {
+  it('says the week, its month and year (the month of its Thursday), and its schedule or unassigned', () => {
+    // Week 45 of 2026 starts on Monday 2 November; its Thursday is in November
+    expect(weekCellName('2026-11-02', 44, 'Standard Week')).toBe('Week 45, November 2026, Standard Week')
+    // Week 1 of 2026 starts on Monday 29 December 2025; its Thursday is 1 January 2026
+    expect(weekCellName('2025-12-29', 0, null)).toBe('Week 1, January 2026, unassigned')
   })
 })
