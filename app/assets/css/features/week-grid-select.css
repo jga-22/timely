@@ -29,6 +29,11 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
+/* Edge handles (FR-PLAN-23): the border of the selected run is the grip. A flat line, full width and square, 4px thick, centred on the
+   edge with a 1px surface hairline either side, so it takes no room inside the block. Its target is a 32px band on a mouse, centred on
+   the edge (16px out, 16px in); a one-hour run is 28px, so its two bands split it (the top takes the upper half, the bottom the lower)
+   and neither steals the other (a container query on the run). Hover and press thicken the line and turn it ink; focus is an outline */
+.wk-sel { container-type: size; }
 .wk-handle {
   position: absolute;
   left: 0;
@@ -37,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
+  height: 32px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -45,24 +50,37 @@
   pointer-events: auto;
   touch-action: none;
 }
-.wk-handle.is-top { top: -12px; z-index: 6; }
-.wk-handle.is-bottom { bottom: -12px; }
+.wk-handle.is-top { top: -16px; z-index: 6; }
+.wk-handle.is-bottom { bottom: -16px; }
+@media (pointer: fine) {
+  @container (max-height: 28px) {
+    .wk-handle.is-top { height: 30px; }
+    .wk-handle.is-bottom { top: 14px; bottom: auto; height: 30px; }
+  }
+}
 .wk-handle span {
-  width: 28px;
+  width: 100%;
   height: 4px;
-  border-radius: 2px;
+  flex: none;
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--bg);
+  box-shadow: 0 -1px 0 var(--surface), 0 1px 0 var(--surface);
 }
 .wk-handle:hover span,
-.wk-handle:focus-visible span { background: var(--ink); }
+.wk-handle:active span {
+  height: 6px;
+  background: var(--ink);
+}
+.wk-handle:focus-visible { outline: none; }
+.wk-handle:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Touch: each edge has a 44px target that reaches out of the run, only 6px into it, so a scroll that starts in the middle of a
-   one-hour block still scrolls. The pill sits on the edge */
+   one-hour block still scrolls. The line sits on the edge: 4px of padding on the inner side puts its centre on the edge */
 @media (pointer: coarse) {
   .wk-handle { height: 44px; }
-  .wk-handle.is-top { top: -38px; align-items: flex-end; padding-bottom: 2px; }
-  .wk-handle.is-bottom { bottom: -38px; align-items: flex-start; padding-top: 2px; }
+  .wk-handle.is-top { top: -38px; align-items: flex-end; padding-bottom: 4px; }
+  .wk-handle.is-bottom { bottom: -38px; align-items: flex-start; padding-top: 4px; }
 }
+/* A run with handles covers the top of its own block and of the blocks beside it: their ✕ steps aside (Delete is in the action bar) */
+.wk-day:has(> .wk-sel .wk-handle) .wk-block-del { display: none; }
 
 /* Undo: one quiet line under the grid after a change, gone after a few seconds */
 .wk-undo {

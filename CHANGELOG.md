@@ -2,6 +2,14 @@
 
 All notable changes to Timely, newest first. Versions follow [Semantic Versioning](https://semver.org/); `0.x` is dev mode: no production users, no backward compatibility promised. Saved state version is 8.
 
+## Unreleased
+
+### Changed
+- The Week grid's edge handles are the border of the selected run: a flat line across its full width, 4px thick (6px and darker while hovered or pressed), with no round grip and no room taken inside the block. Each edge takes a 32px target on a mouse, centred on the edge, and a one-hour run splits its height between its top and bottom targets. Touch keeps the 44px target.
+
+### Fixed
+- The edge handles were hard to click: a 4px grip on a 24px target, the target mostly beside the block, and on a one-hour block the two targets overlapped the block's middle. The grip is now the edge itself and the target is larger. The grid's behaviour (drag, keys, Save and Cancel) is unchanged.
+
 ## 0.1.1 - Today, rebuilt
 
 ### Changed
