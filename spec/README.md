@@ -98,6 +98,18 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 
 | File | Size | Notes |
 | --- | --- | --- |
+| `firstrun-welcome-desktop-light.png` | 1280 px wide | First run, light, Lively. Welcome as a full page: the line drawing, the headline, Start, Use a starter instead |
+| `firstrun-ambition-desktop-light.png` | 1280 px wide | Step 1 of 6, What do you want to become?, one sentence |
+| `firstrun-areas-desktop-light.png` | 1280 px wide | Step 2 of 6, What matters most this year?, eight area chips, three picked |
+| `firstrun-followup-desktop-light.png` | 1280 px wide | Step 3 of 6, the rule question for Physical, its two options and Not sure |
+| `firstrun-week-desktop-light.png` | 1280 px wide | Step 4 of 6, a normal week: working days, free evenings, free weekends |
+| `firstrun-hours-desktop-light.png` | 1280 px wide | Step 5 of 6, the hours stepper at 7 h, the footer with See my draft |
+| `firstrun-draft-desktop-light.png` | 1280 px wide | Step 6 of 6, the editable draft: note, ambition, a card per area, the mini week, the first action |
+| `firstrun-today-desktop-light.png` | 1280 px wide | After Accept plan: Today with the first action in its focus and the "Your plan is saved." toast |
+| `firstrun-areas-mobile-light.png` | 400 px wide, full page | Step 2 of 6 on a phone, light, Calm: the chips wrap, the footer keeps Back, Use a starter and Continue |
+| `firstrun-draft-mobile-dark.png` | 400 px wide, full page | Step 6 of 6 on a phone, dark, Lively: the mini week as one row per day, the first action, Accept plan |
+| `firstrun-today-mobile-dark.png` | 400 px wide, full page | Today after Accept on a phone, dark: the toast above the tab bar |
+| `firstrun-replay-confirm-desktop-light.png` | 1280 px wide | Account menu, Replay first run with a plan: the "Replay the first run?" confirmation, Cancel first |
 | `onboarding-welcome-desktop-light.png` | 1280 px wide | Welcome dialog over the empty Home: the idea, Guide me, Start empty, Explore with sample data |
 | `onboarding-ambition-desktop-light.png` | 1280 px wide | Step 1 of 5, Your 5-year ambition: the framing text and the one field, filled in |
 | `onboarding-goals-desktop-light.png` | 1280 px wide | Step 2 of 5, Goals and habits with one goal: the Physical chip, the habit Run, "Add a second goal" |
@@ -152,6 +164,12 @@ Built: a local-first Nuxt 4 app with three surfaces, Today, Plan (Dreams, Week a
 The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, the readings placeholder and the experiment label are gone (UX polish). Reset my data is built (FR-ONB-10); export and import are not built yet (FR-APP-5). Insights (the former Visualization) is the planned-hours chart and category shares; Configuration is removed.
 
 ## 2. Changelog
+
+### Rules-based first run (2026-11-05, branch `feat/first-run-a2`, from `origin/main`, committed locally, not pushed)
+
+- Slice 9 of the UX migration (`ux-migration-plan.md`): the first run is a full page in the A2 look (Welcome, five questions, an editable draft, Today with the toast). Rules only, no AI. Replay first run asks before it replaces a plan.
+- Removed: the guided path, the tour cards, the intro dialog from Welcome, Start empty. PRD 9.13 says which FR-ONB rows are kept, rewritten or superseded.
+- No data-model change (storage version 8). Screens: `firstrun-*`; the earlier `onboarding-*` screens show the removed guided path.
 
 ### Unreleased, Year planner and Week card (2026-11-05, branch `feat/year-planner-layout`, from `origin/main`, committed locally, not pushed)
 

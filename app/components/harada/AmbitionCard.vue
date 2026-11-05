@@ -5,7 +5,7 @@ import { horizonText } from '~/utils/goals'
 
 /**
  * The ambition at the top of Goals (FR-GOALS-13): the only place it is edited. Without one, the prompt writes the first one
- * (Start empty); with one, the view takes over: Edit applies at once, Done leaves. Edit mode is local: one field, one edit at a time.
+ * (a new user); with one, the view takes over: Edit applies at once, Done leaves. Edit mode is local: one field, one edit at a time.
  * Done and Escape return focus to Edit. `editing` is the parent's flag: the parent ends a life area edit when this one opens
  */
 const planner = usePlannerStore()
@@ -13,7 +13,7 @@ const { ambition } = storeToRefs(planner)
 const horizon = computed(() => horizonText(ambition.value))
 const editing = defineModel<boolean>('editing', { default: false })
 
-// A new user has no ambition yet (Start empty): the prompt writes the first one, and the view takes over once it exists
+// A new user has no ambition yet (a new user): the prompt writes the first one, and the view takes over once it exists
 const newAmbition = ref('')
 
 function saveNewAmbition() {

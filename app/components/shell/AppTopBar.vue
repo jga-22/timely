@@ -30,7 +30,7 @@ const { link } = useNav()
           <UiIcon :name="dark ? 'sun' : 'moon'" />
         </button>
 
-        <!-- The account menu (avatar, save status, Motion, Replay tour, Reset my data, Sign out); its dialog opens in the shell -->
+        <!-- The account menu (avatar, save status, Motion, Replay first run, Reset my data, Sign out); its dialog opens in the shell -->
         <AccountMenu v-if="showAccount" @reset="emit('reset')" />
       </div>
     </div>

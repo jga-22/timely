@@ -8,7 +8,7 @@ import { getActivePlannerStorage } from '~/utils/storage/active'
  */
 export const useResetData = () => {
   const planner = usePlannerStore()
-  const onboarding = useOnboarding()
+  const firstRun = useFirstRun()
   const { go } = useNav()
   const { resetYear } = usePlannerYear()
 
@@ -27,9 +27,9 @@ export const useResetData = () => {
 
     // Session state back to its first-run values, then the first-run flow from the start
     resetYear()
-    onboarding.close()
+    firstRun.close()
     go('today')
-    onboarding.openWelcome()
+    firstRun.begin()
     return null
   }
 

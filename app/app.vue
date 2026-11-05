@@ -17,11 +17,20 @@ const { state: auth } = useAuth()
 const resetOpen = ref(false)
 // The rail, the tab bar and the account menu show when there is a planner to open: local mode, or a signed-in session
 const showShell = computed(() => auth.value.status === 'off' || auth.value.status === 'signed-in')
+// The first run (FR-ONB) is a full page with no shell. Client only: its state is set before hydration, so the server markup keeps the shell and
+// `firstRunShown` turns on after mount (the same rule as the planner views)
+const { active: firstRunActive, replayAsk, toast } = useFirstRun()
+const firstRunShown = ref(false)
+const syncFirstRun = () => {
+  firstRunShown.value = firstRunActive.value && !legalPage.value && !styleGuidePage.value
+}
 
 onMounted(() => {
   // Date-dependent views read this only after mount, so server and client render the same first pass
   today.value = localDateKey()
+  syncFirstRun()
 })
+watch([firstRunActive, legalPage, styleGuidePage], syncFirstRun)
 </script>
 
 <template>
@@ -32,13 +41,16 @@ onMounted(() => {
     <!-- The first stop on the page: it moves focus past the navigation to the main landmark (FR-NAV-7) -->
     <a class="shell-skip" href="#main">Skip to content</a>
 
-    <ShellAppRail v-if="showShell" />
+    <ShellAppRail v-if="showShell && !firstRunShown" />
 
     <div class="shell-column">
-      <ShellAppTopBar :show-account="showShell" @reset="resetOpen = true" />
+      <ShellAppTopBar v-if="!firstRunShown" :show-account="showShell" @reset="resetOpen = true" />
 
-      <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />
-      <NuxtPage v-else-if="legalPage || auth.status !== 'loading'" />
+      <FirstRunPage v-if="firstRunShown" />
+      <template v-else>
+        <AuthLoginGate v-if="auth.status === 'signed-out' && !legalPage" />
+        <NuxtPage v-else-if="legalPage || auth.status !== 'loading'" />
+      </template>
 
       <!-- Also on the sign-in gate and the legal pages; hidden only while the session is loading -->
       <footer v-if="auth.status !== 'loading'" class="app-footer">
@@ -48,14 +60,12 @@ onMounted(() => {
       </footer>
     </div>
 
-    <ShellAppTabBar v-if="showShell" />
+    <ShellAppTabBar v-if="showShell && !firstRunShown" />
   </div>
-  <!-- Client only: the first-run state is set before hydration, so the server markup must not contain it -->
-  <!-- Hidden on the legal pages only: the state is kept, so Welcome or the tour shows again on Today -->
+  <!-- Client only: the dialogs and the toast are set after mount, so the server markup must not contain them -->
   <ClientOnly>
-    <OnboardingFlow v-if="!legalPage && !styleGuidePage" />
-    <OnboardingIntro v-if="!legalPage && !styleGuidePage" />
-    <OnboardingTour v-if="!legalPage && !styleGuidePage" />
+    <FirstRunReplayDialog v-if="replayAsk" />
+    <FirstRunToast v-if="toast && !firstRunShown" />
     <AccountResetDataDialog v-if="resetOpen" @close="resetOpen = false" />
   </ClientOnly>
   <NuxtRouteAnnouncer />

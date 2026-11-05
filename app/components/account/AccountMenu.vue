@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { usePlannerStore } from '~/stores/planner'
 import { accountInitials, avatarLabel, needsSaveAttention, saveLabel } from '~/utils/account'
 import type { MotionChoice } from '~/utils/prefs'
 
 /**
  * The account menu in the topbar (Supabase mode shows the name and Sign out; local mode shows "Local mode"): the avatar and its menu
- * with the save status, the Motion choice, Replay tour, Reset my data and Sign out. The theme is the top bar's button, not a row here.
+ * with the save status, the Motion choice, Replay first run, Reset my data and Sign out. The theme is the top bar's button, not a row here.
  * Escape closes it and returns focus to the avatar, and a click or tap outside closes it. On desktop the first control takes
  * focus, on a phone the menu panel does (FR-UX-9).
  * Reset my data opens its dialog in the shell (`reset`), so the dialog stays where it always was.
  */
 const emit = defineEmits<{ reset: [] }>()
 
-const planner = usePlannerStore()
-const onboarding = useOnboarding()
+const firstRun = useFirstRun()
 const { state: auth, signOut } = useAuth()
 const { status: storageStatus } = useStorageStatus()
 const { choice, motion, setChoice } = useMotion()
@@ -29,12 +27,7 @@ const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
 
-/** Replays the tour from Plan your week; without an ambition and a life area with habits there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
-const replayTour = () => {
-  if (planner.ambition && onboardedCategories(planner.$state).length) onboarding.startTour()
-  else onboarding.openWelcome()
-}
-
+/** Replay first run (FR-ONB-7): with a plan already in the account it asks first (app.vue shows the confirmation); an empty plan starts at once */
 /** Avatar initials from the Google name or the email; '' shows the person glyph (local mode, or no letters) */
 const initials = computed(() => (auth.value.status === 'signed-in' && auth.value.user ? accountInitials(auth.value.user.name, auth.value.user.email) : ''))
 
@@ -74,9 +67,9 @@ const openReset = () => {
   emit('reset')
 }
 
-const onReplayTour = () => {
+const onReplayFirstRun = () => {
   accountOpen.value = false
-  replayTour()
+  firstRun.askReplay()
 }
 
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointer))
@@ -123,9 +116,9 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
           <p v-if="forcedCalm" class="account-note">Your system asks for less motion, so Calm is in use.</p>
         </div>
 
-        <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayTour">
+        <button v-if="storageStatus.state !== 'loading'" type="button" class="account-item" @click="onReplayFirstRun">
           <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" /></svg>
-          <span class="account-label">Replay tour</span>
+          <span class="account-label">Replay first run</span>
         </button>
         <button type="button" class="account-item account-item-danger" :disabled="storageStatus.state === 'loading'" @click="openReset">
           <svg class="account-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" /></svg>

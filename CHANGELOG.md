@@ -5,11 +5,14 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Added
+- The first run is a full page in the A2 look: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give, 1 to 20), then an editable draft with a week preview and your first action. Nothing is saved until you accept, and "Use a starter instead" is on every step. Accepting ends on Today with a "Your plan is saved." line.
+- Replay first run in the Account menu (both modes). An account that already holds a plan asks first; Cancel and Escape change nothing.
 - Progress reads like the A2 mockup, in its words and look. The headline says how much of the planned time you ticked over the last eight weeks ("about three in four"). The week by week trend shows each week's share, with the current week marked "So far"; hover or focus a week for its figure.
 - A weekly recap: "Start the recap" walks through this week so far, the life area that went steadiest and the one that had the most misses, and one weekly habit to carry forward. "Done for the week" closes the week; from the next Monday the recap opens again. Reopen brings it back for the same week. Nothing is lost and nothing resets.
 - Progress settings: a Weekly recap switch (on by default). The adherence detail sits under "More detail", closed.
 
 ### Changed
+- The guided path, the three tour cards, the intro dialog from Welcome, Start empty and Explore with sample data (dev only) are replaced by the first run. "Replay tour" is "Replay first run". The intro player stays on the sign-in page.
 - One theme control: the moon or sun button in the top bar. The Dark mode switch in the Account menu is gone; the menu keeps the save status, Motion, Replay tour, Reset my data and Sign out.
 - A week with no schedule plans nothing: Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free (168 h less the active schedule's Sleep, or 168 h with Show sleep on), so the Year bar, its Free row and "of N awake hours" include blank weeks. Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
 - The Year planner's Clear leaves a week with no schedule; its tooltip says so. Its hint and result lines no longer name an active schedule, and the legend reads "No schedule".

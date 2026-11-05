@@ -2,8 +2,7 @@
 import { DESIGN_COLORS } from '~/utils/planner/templates'
 
 /**
- * The intro player (FR-ONB-9): five scenes of about 9 seconds each. Shared by the first-run dialog (OnboardingIntro.vue) and the
- * sign-in page (LoginGate.vue). Each caption is inside the stage in a band at the top (28 percent of the height); the graphics stay
+ * The intro player (FR-ONB-9): five scenes of about 9 seconds each. Used by the sign-in page (LoginGate.vue); the first run has no intro. Each caption is inside the stage in a band at the top (28 percent of the height); the graphics stay
  * below the band. The scenes are SVG and CSS only. One timer moves the scene and the progress bar; the CSS animations pause with it.
  * The player opens paused on scene 1, drawn whole (static, no animation), with a Play button over the stage. The first Play starts
  * the timer from scene 1; a segment clicked before that jumps to its scene and leaves it paused. The timer also holds while the tab

@@ -29,6 +29,7 @@
 @import './features/auth.css' layer(features);
 @import './features/legal.css' layer(features);
 @import './features/onboarding.css' layer(features);
+@import './features/firstrun.css' layer(features);
 @import './features/entry.css' layer(features);
 @import './features/planner.css' layer(features);
 @import './features/week-grid.css' layer(features);

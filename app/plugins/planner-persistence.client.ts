@@ -3,14 +3,14 @@ import { createPlannerStorage } from '~/utils/storage'
 import { bindPlannerStorage } from '~/utils/storage/bind'
 import { setActivePlannerStorage } from '~/utils/storage/active'
 import { resolveStorageMode } from '~/utils/storage/mode'
-import { needsOnboarding } from '~/utils/onboarding'
+import { needsOnboarding } from '~/utils/firstRun/saved'
 import type { StorageConfig } from '~/utils/storage/types'
 
 export default defineNuxtPlugin(async () => {
   const planner = usePlannerStore()
   const config = useRuntimeConfig().public as StorageConfig
   const { set: setStorageStatus } = useStorageStatus()
-  const onboarding = useOnboarding()
+  const firstRun = useFirstRun()
 
   // Supabase mode waits for a session; nothing is loaded or written without one
   if (resolveStorageMode(config) === 'supabase') {
@@ -29,5 +29,5 @@ export default defineNuxtPlugin(async () => {
   bindPlannerStorage(planner, storage)
   setActivePlannerStorage(storage)
 
-  if (needsOnboarding(restored)) onboarding.openWelcome()
+  if (needsOnboarding(restored)) firstRun.begin()
 })

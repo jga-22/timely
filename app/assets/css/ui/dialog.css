@@ -41,3 +41,9 @@ body:has(.dialog[open]) { overflow: hidden; }
     border-bottom-right-radius: 0;
   }
 }
+
+/* Dialog text and end actions (ResetDataDialog, the Replay confirmation, the style guide): one title, a lede, the buttons */
+.dialog-title { margin: 0 0 var(--sp-3); font-size: var(--text-title-s); font-weight: 600; line-height: 1.3; color: var(--ink); }
+.dialog-lede { margin: 0; font-size: var(--text-body); line-height: 1.6; color: var(--ink-2); }
+.dialog-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.dialog-actions-spaced { margin-top: var(--sp-4); }

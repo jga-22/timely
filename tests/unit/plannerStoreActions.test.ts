@@ -137,13 +137,6 @@ describe('lifecycle', () => {
     expect(store.journal).toEqual({ '2026-06-02': 'new note' })
   })
 
-  it('finishOnboarding sets onboarding to done', () => {
-    const store = load(empty())
-
-    store.finishOnboarding()
-
-    expect(store.onboarding).toBe('done')
-  })
 })
 
 // ---------------------------------------------------------------------

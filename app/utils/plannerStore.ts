@@ -4,7 +4,7 @@
 import type { Activity, Category, PlannerState } from '~/types/planner'
 import { SHORT_CODE_PATTERN } from '~/utils/planner/activities'
 import { createEmptySlots } from '~/utils/planner/slots'
-import { shortCodeFor } from '~/utils/onboarding'
+import { shortCodeFor } from '~/utils/activityCode'
 import { SLEEP_CODE, paintDefaultSleep, sleepActivityId } from '~/utils/sleep'
 import type { PresetRole } from '~/utils/presets'
 
