@@ -189,7 +189,8 @@ Browser preferences live in localStorage, outside the planner state (`utils/pref
 | `timely.dark` | `true` or `false` | off (light) | `useTheme`, the prepaint script |
 | `timely.motion` | `calm` or `lively` (anything else is lively) | lively | `useMotion`, the prepaint script |
 | `timely.showSleep` | `1` or `0` | off | `useShowSleep` (Home, Week, Year) |
-| `timely.weekClosed` | `1` or `0` | open | reserved for the Week sections (not read yet) |
+| `timely.recap` | `1` or `0` | on | the Weekly recap switch in Progress settings (`useRecapSetting`) |
+| `timely.weekClosed` | an ISO week key such as `2026-W45`, or empty | open | the week the weekly recap was closed for (Progress, `useWeekClosed`); closed for that week only |
 
 The composables: `usePref(key, { fallback, parse, serialise, state? })` is the generic one (shared state, read after mount, a blocked storage keeps the fallback). `useShowSleep`, `useTheme` and `useMotion` are built on it. `useTheme` shares the state name `dark` with `usePlannerFill`, so the planned fills follow the theme.
 

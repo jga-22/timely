@@ -69,7 +69,7 @@ useHead({
     <h2>Browser storage</h2>
     <p>
       Timely uses your browser's local storage for things it needs to work: your planner in local mode, your sign-in session
-      in account mode, and your light or dark theme. These are strictly necessary. Timely sets no tracking cookies, so no cookie banner is shown.
+      in account mode, and your choices: light or dark theme, motion, Show sleep, the weekly recap switch and the week you closed the recap for. These are strictly necessary. Timely sets no tracking cookies, so no cookie banner is shown.
     </p>
 
     <h2>Visit statistics</h2>

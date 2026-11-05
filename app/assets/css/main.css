@@ -37,6 +37,7 @@
 @import './features/year.css' layer(features);
 @import './features/insights.css' layer(features);
 @import './features/adherence.css' layer(features);
+@import './features/progress.css' layer(features);
 @import './features/today.css' layer(features);
 @import './features/styleguide.css' layer(features);
 @import './features/week-where.css' layer(features);

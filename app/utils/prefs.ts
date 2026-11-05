@@ -7,6 +7,7 @@ export const PREF_KEYS = {
   dark: 'timely.dark',
   motion: 'timely.motion',
   showSleep: 'timely.showSleep',
+  recap: 'timely.recap',
   weekClosed: 'timely.weekClosed',
 } as const
 
@@ -30,6 +31,10 @@ export type MotionChoice = 'calm' | 'lively'
 /** Motion choice: 'calm' only when saved as calm; anything else (no value, an unknown value) is lively */
 export const parseMotionChoice = (raw: string | null): MotionChoice => (raw === 'calm' ? 'calm' : 'lively')
 
-/** Week sections folded by the user: '1' is folded */
-export const parseWeekClosed = (raw: string | null): boolean => parseFlag(raw, '1')
-export const serialiseWeekClosed = (value: boolean): string => serialiseFlag(value, '1', '0')
+/** The weekly recap switch (Progress settings): on unless saved as '0' */
+export const parseRecap = (raw: string | null): boolean => raw !== '0'
+export const serialiseRecap = (value: boolean): string => serialiseFlag(value, '1', '0')
+
+/** The ISO week the recap was closed for ('2026-W45'): closed for that week only. No value, '' or anything else is open */
+export const parseClosedWeek = (raw: string | null): string | null => (raw && /^\d{4}-W\d{2}$/.test(raw) ? raw : null)
+export const serialiseClosedWeek = (value: string | null): string => value ?? ''

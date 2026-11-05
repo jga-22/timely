@@ -1,0 +1,196 @@
+/* Progress (A2; FR-PROG-1 to 3): the headline in words, the week by week trend with its tooltips, the weekly recap card and its
+   dialog, the settings card, and the adherence detail under "More detail" (adherence.css). Layer features; selectors prefixed
+   progress-. Colours, sizes and spacing come from tokens (spec/design-system.md). The keyframes are in motion.css, lively only. */
+
+/* The page's eyebrow ("Weeks 38 to 45") sits above the title in the mockup's words and size */
+.progress-view .page-meta { margin: 0; font-size: var(--text-meta); color: var(--ink-3); }
+
+.progress-headline {
+  max-width: 30ch;
+  margin: 0 0 var(--sp-8);
+  font-size: var(--text-title-l);
+  line-height: var(--leading-snug);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+.progress-headline b { color: var(--accent); font-weight: 600; }
+.progress-sub {
+  margin: calc(var(--sp-3) * -1) 0 var(--sp-8);
+  font-size: var(--text-meta);
+  color: var(--ink-2);
+}
+
+.progress-card { margin-top: var(--sp-5); }
+.progress-trend-card { margin-top: 0; }
+.progress-note {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--ink-3);
+}
+.progress-eyebrow { margin: 0 0 var(--sp-2); font-size: var(--text-meta); color: var(--ink-3); }
+.progress-big {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--text-title-m);
+  line-height: var(--leading-snug);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.progress-big:focus,
+.progress-slide-title:focus { outline: none; }
+.progress-text {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--ink-2);
+}
+.progress-number { font-size: var(--text-title-m); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.progress-btns { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-top: var(--sp-5); }
+
+.progress-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-5);
+  margin-top: var(--sp-5);
+}
+.progress-grid > .progress-card { margin-top: 0; }
+
+/* The trend: eight columns; the figure is always there, the bar grows under lively motion only */
+.progress-trend {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--sp-2);
+  margin: var(--sp-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.progress-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-1) 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-small);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.progress-col:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: var(--focus-offset); }
+.progress-pct { font-weight: 500; color: var(--ink-2); }
+.progress-col.is-untracked .progress-pct,
+.progress-col.is-empty .progress-pct { color: var(--ink-3); font-weight: 400; }
+.progress-bar { display: flex; align-items: flex-end; width: 100%; height: 9.375rem; }
+.progress-fill {
+  display: block;
+  width: 100%;
+  height: calc(var(--v, 0) * 100%);
+  border-radius: var(--radius-sm);
+  background: var(--accent-tint);
+  transform-origin: center bottom;
+}
+.progress-col.is-now:not(.is-empty) .progress-fill { background: transparent; border: 2px dashed var(--accent); box-sizing: border-box; }
+.progress-wk { white-space: nowrap; }
+
+/* The tooltip: the figure in words on hover or keyboard focus (the same text is read by screen readers); the first and last
+   columns align their tip to the card's edge so it stays on screen */
+.progress-col::after {
+  content: none;
+  position: absolute;
+  bottom: calc(100% - var(--sp-1));
+  z-index: var(--z-tooltip);
+  width: max-content;
+  max-width: 14rem;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--text-small);
+  line-height: var(--leading-snug);
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  box-shadow: var(--elev-2);
+}
+.progress-col:nth-child(-n + 4)::after { left: 0; }
+.progress-col:nth-child(n + 5)::after { right: 0; }
+.progress-col:hover::after,
+.progress-col:focus-visible::after { content: attr(data-tip); }
+
+/* The recap: the card and its ceremony dialog */
+.progress-recap-dialog { width: min(37.5rem, calc(100vw - var(--sp-8))); }
+.progress-recap-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.progress-slide { display: grid; align-content: center; gap: var(--sp-3); min-height: 15rem; padding: var(--sp-6) 0; }
+.progress-slide-title {
+  margin: 0;
+  font-size: var(--text-title-m);
+  line-height: var(--leading-tight);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.progress-big-number {
+  margin: 0;
+  font-size: var(--text-number);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.progress-list { display: grid; margin: var(--sp-2) 0 0; padding: 0; list-style: none; }
+.progress-list li {
+  display: grid;
+  grid-template-columns: var(--sp-3) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--hit);
+  border-top: 1px solid var(--line-2);
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+.progress-list li:last-child { border-bottom: 1px solid var(--line-2); }
+.progress-dot { width: var(--sp-3); height: var(--sp-3); border-radius: var(--radius-pill); background: var(--c); }
+.progress-num { color: var(--ink-2); }
+.progress-recap-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+.progress-dots { display: flex; gap: var(--sp-2); }
+.progress-dots i { width: var(--sp-2); height: var(--sp-2); border-radius: var(--radius-pill); background: var(--line); }
+.progress-dots i.is-on { background: var(--accent); }
+
+/* The settings: each switch on its own row */
+.progress-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: 3.75rem;
+  margin-top: var(--sp-4);
+  border-top: 1px solid var(--line-2);
+}
+.progress-setting-text { font-size: var(--text-body); color: var(--ink); }
+.progress-setting-text small { display: block; font-size: var(--text-small); color: var(--ink-3); }
+
+/* The adherence detail sits under "More detail", closed by default */
+.progress-more { margin-top: var(--sp-8); }
+
+@media (max-width: 768px) {
+  .progress-grid { grid-template-columns: minmax(0, 1fr); }
+  .progress-trend { gap: var(--sp-1); }
+  .progress-col { font-size: var(--text-caption); }
+}
+
+/* Motion (lively only; the keyframes are in motion.css): the bars grow, a recap slide rises in. Calm shows them at once */
+:root[data-motion="lively"] .progress-fill { animation: progress-grow var(--dur-enter) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms); }
+:root[data-motion="lively"] .progress-slide { animation: progress-slide-in var(--dur-enter) var(--ease-out) both; }

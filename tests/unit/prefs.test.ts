@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   PREF_KEYS,
   parseDark,
+  parseClosedWeek,
   parseMotionChoice,
+  parseRecap,
   parseShowSleep,
-  parseWeekClosed,
+  serialiseClosedWeek,
   serialiseDark,
+  serialiseRecap,
   serialiseShowSleep,
 } from '../../app/utils/prefs'
 import { partOfDay, resolveMotion } from '../../app/utils/motion'
@@ -16,6 +19,7 @@ describe('preference keys', () => {
       dark: 'timely.dark',
       motion: 'timely.motion',
       showSleep: 'timely.showSleep',
+      recap: 'timely.recap',
       weekClosed: 'timely.weekClosed',
     })
   })
@@ -45,9 +49,22 @@ describe('preference parsers', () => {
     expect(parseMotionChoice(null)).toBe('lively')
   })
 
-  it('reads the week section fold from 1', () => {
-    expect(parseWeekClosed('1')).toBe(true)
-    expect(parseWeekClosed(null)).toBe(false)
+  it('reads the weekly recap switch: on unless saved as 0', () => {
+    expect(parseRecap(null)).toBe(true)
+    expect(parseRecap('1')).toBe(true)
+    expect(parseRecap('0')).toBe(false)
+    expect(serialiseRecap(true)).toBe('1')
+    expect(serialiseRecap(false)).toBe('0')
+  })
+
+  it('reads the closed recap week as an ISO week key only, and writes nothing for open', () => {
+    expect(parseClosedWeek('2026-W45')).toBe('2026-W45')
+    expect(parseClosedWeek('')).toBeNull()
+    expect(parseClosedWeek(null)).toBeNull()
+    expect(parseClosedWeek('1')).toBeNull()
+    expect(parseClosedWeek('2026-45')).toBeNull()
+    expect(serialiseClosedWeek('2026-W45')).toBe('2026-W45')
+    expect(serialiseClosedWeek(null)).toBe('')
   })
 })
 
