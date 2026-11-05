@@ -9,6 +9,9 @@ export const PREF_KEYS = {
   showSleep: 'timely.showSleep',
   recap: 'timely.recap',
   weekClosed: 'timely.weekClosed',
+  milestones: 'timely.milestones',
+  celebrate: 'timely.celebrate',
+  lastToast: 'timely.lastToast',
 } as const
 
 /** A flag that is on when the stored text is the given one. Anything else (including no value) is off. */
@@ -38,3 +41,15 @@ export const serialiseRecap = (value: boolean): string => serialiseFlag(value, '
 /** The ISO week the recap was closed for ('2026-W45'): closed for that week only. No value, '' or anything else is open */
 export const parseClosedWeek = (raw: string | null): string | null => (raw && /^\d{4}-W\d{2}$/.test(raw) ? raw : null)
 export const serialiseClosedWeek = (value: string | null): string => value ?? ''
+
+/** Milestone lines (Progress settings and the toast): on unless saved as '0' (slice 11) */
+export const parseMilestones = (raw: string | null): boolean => raw !== '0'
+export const serialiseMilestones = (value: boolean): string => serialiseFlag(value, '1', '0')
+
+/** The calm line when a day is done (Progress settings): on unless saved as '0' (slice 11) */
+export const parseCelebrate = (raw: string | null): boolean => raw !== '0'
+export const serialiseCelebrate = (value: boolean): string => serialiseFlag(value, '1', '0')
+
+/** The day (a date key) the last toast was shown: at most one toast a day. No value or anything else is no toast yet */
+export const parseLastToast = (raw: string | null): string | null => (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null)
+export const serialiseLastToast = (value: string | null): string => value ?? ''

@@ -20,6 +20,8 @@ const showShell = computed(() => auth.value.status === 'off' || auth.value.statu
 // The first run (FR-ONB) is a full page with no shell. Client only: its state is set before hydration, so the server markup keeps the shell and
 // `firstRunShown` turns on after mount (the same rule as the planner views)
 const { active: firstRunActive, replayAsk, toast } = useFirstRun()
+// The one shell toast (a milestone or the calm line after a tick on Today, slice 11): at most one a day
+const { toast: appToast, dismiss: dismissAppToast } = useMilestoneToast()
 const firstRunShown = ref(false)
 const syncFirstRun = () => {
   firstRunShown.value = firstRunActive.value && !legalPage.value && !styleGuidePage.value
@@ -66,6 +68,7 @@ watch([firstRunActive, legalPage, styleGuidePage], syncFirstRun)
   <ClientOnly>
     <FirstRunReplayDialog v-if="replayAsk" />
     <FirstRunToast v-if="toast && !firstRunShown" />
+    <ShellAppToast v-if="appToast" :key="appToast.id" :title="appToast.title" :line="appToast.line" :kind="appToast.kind === 'milestone' ? 'sprout' : 'ring'" @dismiss="dismissAppToast" />
     <AccountResetDataDialog v-if="resetOpen" @close="resetOpen = false" />
   </ClientOnly>
   <NuxtRouteAnnouncer />

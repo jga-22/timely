@@ -5,6 +5,9 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Added
+- Progress has a Milestones card: the first planned hour ticked, the first full week of each life area, and the stages a life area reached (Building, Steady, Strong, Reached), each with the day it happened. It is worked out from your ticks, so nothing is stored and nothing is taken back; an empty card says how the first one comes.
+- A milestone or the calm line after a day is done shows one line at the foot of the screen (at most one a day). On a phone it sits above the tab bar. Two switches in Progress settings turn the milestone lines and the calm line off.
+- Lively motion on Today: a tick throws a few sparks, the day count climbs to its value, the focus card glides in and tilts a little toward the mouse. Route changes cross-fade. Calm, and the system's reduced motion, keep every number and line and stop the movement.
 - Progress shows a dream path: a node per life area filled to its share of a year's habits kept (the last 364 days, from the first tick, sleep not counted), with its stage in words and a link to Dreams. Today's focus and Dreams show the share too. Areas without a target or a tick show their words on a hollow dot; nothing is stored.
 - The first run is a full page in the A2 look: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give, 1 to 20), then an editable draft with a week preview and your first action. Nothing is saved until you accept, and "Use a starter instead" is on every step. Accepting ends on Today with a "Your plan is saved." line.
 - The theme button (moon or sun) is on the first-run page too, top right, on every step; it is the top bar's own control, now one shared component (`ThemeButton.vue`).

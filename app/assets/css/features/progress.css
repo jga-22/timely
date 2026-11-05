@@ -194,3 +194,12 @@
 /* Motion (lively only; the keyframes are in motion.css): the bars grow, a recap slide rises in. Calm shows them at once */
 :root[data-motion="lively"] .progress-fill { animation: progress-grow var(--dur-enter) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms); }
 :root[data-motion="lively"] .progress-slide { animation: progress-slide-in var(--dur-enter) var(--ease-out) both; }
+
+/* The Milestones card (slice 11): the firsts and the steps, a date column and the line; one column on a phone */
+.progress-milestones { display: grid; gap: var(--sp-3); margin: var(--sp-3) 0 0; padding: 0; list-style: none; }
+.progress-milestones li { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: var(--sp-3); align-items: baseline; font-size: var(--text-body); color: var(--ink); }
+.progress-milestones time { font-size: var(--text-small); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.progress-settings-row { margin-top: var(--sp-5); }
+@media (max-width: 480px) {
+  .progress-milestones li { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

@@ -7,7 +7,7 @@ import { recapOf } from '~/utils/recap'
 
 /**
  * Progress (A2 "Progress"; FR-PROG-1 to 3, FR-INS-P6, P7): the headline in words over the last eight weeks, the week by week trend,
- * the dream path toward each 1-year target (FR-PROG-5 to 7), the weekly recap with its settings, and the adherence detail
+ * the dream path toward each 1-year target (FR-PROG-5 to 7), the weekly recap and the milestones (slice 11), the settings, and the adherence detail
  * (InsightsView, headless) under "More detail". Read-only except the
  * recap's own choices (the closed week and the switch), which stay in this browser. Client only (index.vue).
  */
@@ -52,8 +52,10 @@ const weeksRange = computed(() => `Weeks ${trend.value[0]?.week} to ${trend.valu
 
     <div class="progress-grid">
       <ProgressRecap :recap="recap" />
-      <ProgressSettings />
+      <ProgressMilestones :today="today" />
     </div>
+
+    <ProgressSettings class="progress-settings-row" />
 
     <details class="disclosure progress-more">
       <summary>More detail</summary>

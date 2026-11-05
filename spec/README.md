@@ -52,6 +52,25 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `progress-dreampath-dreams-detail-desktop-light.png` | 1280 px wide, full page | Dreams > Physical: the stage eyebrow "Starting · 8% of the way there" and its bar |
 | `progress-dreampath-today-focal-desktop-light.png` | 1280 px wide, full page | Today, focal card with "Behind this: … 8% of the way there." (seed after four weeks of ticks) |
 | `progress-dreampath-today-focal-empty-desktop-light.png` | 1280 px wide, full page | Today, focal card with no ticks: no share line |
+| `lively-today-1280-light-lively.png` | 1280 px wide | Today with history (fixture, frozen clock Sunday 8 November 2026, 10:30), light, Lively: the focal card glides in, the day line with the count "1 of 7 done today" |
+| `lively-today-1280-light-calm.png` | 1280 px wide | The same, light, Calm: the same numbers and lines, no movement |
+| `lively-today-1280-dark-lively.png` | 1280 px wide | The same, dark, Lively |
+| `lively-today-1280-dark-calm.png` | 1280 px wide | The same, dark, Calm |
+| `lively-today-400-light-lively.png` | 400 px wide | Phone width, light, Lively |
+| `lively-today-400-light-calm.png` | 400 px wide | Phone width, light, Calm |
+| `lively-today-400-dark-lively.png` | 400 px wide | Phone width, dark, Lively |
+| `lively-today-400-dark-calm.png` | 400 px wide | Phone width, dark, Calm |
+| `lively-tick-after-1280-light-lively.png` | 1280 px wide | After one tick on an empty plan: the count reads "1 of 7", the day line fills, the cheer line shows |
+| `lively-toast-milestone-1280-light-lively.png` | 1280 px wide | The first tick of a plan: the one-line toast "First planned hour ticked." at the foot |
+| `lively-toast-phone-400-light-lively.png` | 400 px wide | The same toast at phone width, clear of the tab bar |
+| `progress-milestones-full-desktop-light-lively.png` | 1280 px wide, full page | Progress with the Milestones card beside the recap, the settings with the two new switches below (fixture: eight weeks of ticks) |
+| `progress-milestones-1280-light-lively.png` | 1280 px wide | The Milestones card on its own: seven dated lines |
+| `progress-milestones-1280-dark-calm.png` | 1280 px wide, dark, Calm | The same card in dark mode, Calm |
+| `progress-milestones-400-light-lively.png` | 400 px wide | The card at phone width: the date above each line |
+| `progress-milestones-400-dark-calm.png` | 400 px wide, dark, Calm | The same at phone width, dark, Calm |
+| `progress-milestones-1280-light-lively-empty.png` | 1280 px wide | The empty state: "No milestones yet." and how the first one comes |
+| `progress-before-desktop-light.png` | 1280 px wide, full page | Before slice 11 (`f692a4e`): Progress with no Milestones card |
+| `progress-mockup-desktop-light.png` | 1280 px wide | The A2 mockup (`prototype-a2.html`, sample data) for comparison |
 | `progress-blank-week-desktop-light.png` | 1280 px wide, full page | A blank current week (no schedule): the headline counts the three planned weeks; the recap says nothing is planned for this week |
 | `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (the block in focus with its pill: a countdown, or "Done · next at 1 PM" when ticked; "Behind this" line), the day line with the now marker, "1 of 7 done today", Today's list (every item, the one in focus marked), the week strip, the journal line and All habits collapsed (2026-11-05) |
 | `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |
