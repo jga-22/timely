@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The Week tab (the layout of 2026-11-05): the lede, then one Week card with the schedule bar, the week grid (Show sleep and the grid) and the
+// The Week tab (the layout of 2026-11-05): one Week card with the schedule bar, the Schedules section (its tip, Show sleep and the grid) and the
 // entry buttons (+ Add activity, Sleep hours); Where the week goes (the Time split) below the card. Each part is its own component; this view
 // holds what they share: the Edit schedule panel's open state and the schedule added last. The Year (the painter and the Weeks row) is the Year tab.
 // headless: mounted under Plan, which holds the page title (the title row is not shown)
@@ -46,9 +46,6 @@ function onTemplateCreated(templateId: string) {
       <h1 class="page-title">Week</h1>
     </header>
 
-    <!-- The lede (A2 words): what to do on the grid. It names no schedule: the bar in the card shows the one chosen -->
-    <p class="week-lede">Tap or drag hours on the grid, then choose what goes there.</p>
-
     <!-- The Week card: the schedules at the top, the grid (with Show sleep) and the entry buttons under it, on one surface -->
     <div class="week-card">
       <!-- Schedule bar: the switcher, New schedule and the Edit schedule panel -->
@@ -63,7 +60,11 @@ function onTemplateCreated(templateId: string) {
       <!-- Week grid: the original range-select grid, with its action bar and menu teleported to the body -->
       <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
       <ClientOnly>
-        <PlannerActivityGrid :close-token="gridCloseToken" @open="onGridOpen" />
+        <PlannerActivityGrid :close-token="gridCloseToken" @open="onGridOpen">
+          <template #tip>
+            <p class="week-tip">Tap or drag hours on the grid, then choose what goes there.</p>
+          </template>
+        </PlannerActivityGrid>
       </ClientOnly>
 
       <!-- Add an activity and set sleep: the one form opens under these buttons (entries are edited from Goals) -->

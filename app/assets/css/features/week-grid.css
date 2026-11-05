@@ -20,6 +20,14 @@
 @media (max-width: 480px) {
   .week-card { padding-inline: var(--sp-3); }
 }
+/* The tip of the Week view, at the top of the Schedules section (2026-11-05): quiet text under the title, collapsed with the section */
+.week-tip {
+  max-width: 60ch;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--text-ui);
+  line-height: var(--leading-body);
+  color: var(--ink-2);
+}
 .wk-head-line {
   display: flex;
   flex-wrap: wrap;

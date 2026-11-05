@@ -1,14 +1,4 @@
-/* Plan > Week (A2 words and look, slice 6): the lede, and Where the week goes, the card above the grid with the typical week's ring and its list. */
-
-/* ── The lede: which schedule every week uses, and how to use the grid ── */
-.week-lede {
-  max-width: 60ch;
-  margin: 0 0 var(--sp-6);
-  font-size: var(--text-lede);
-  line-height: var(--leading-body);
-  color: var(--ink-2);
-}
-.week-lede b { font-weight: var(--weight-bold); color: var(--ink); }
+/* Plan > Week (A2 words and look, slice 6): Where the week goes, the card below the Week card with the typical week's ring and its list. */
 
 /* ── The schedule chips (A2): 44 px high at every pointer, 15 px text; the chosen one is a little heavier ── */
 .template-switch .chip {
