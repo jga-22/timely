@@ -5,8 +5,9 @@ import type { MotionChoice } from '~/utils/prefs'
 
 /**
  * The account menu in the topbar (Supabase mode shows the name and Sign out; local mode shows "Local mode"): the avatar and its menu
- * with the save status, Dark mode, Replay tour, Reset my data and Sign out. Escape closes it and returns focus to the avatar, and a
- * click or tap outside closes it. On desktop the first control takes focus, on a phone the menu panel does (FR-UX-9).
+ * with the save status, the Motion choice, Replay tour, Reset my data and Sign out. The theme is the top bar's button, not a row here.
+ * Escape closes it and returns focus to the avatar, and a click or tap outside closes it. On desktop the first control takes
+ * focus, on a phone the menu panel does (FR-UX-9).
  * Reset my data opens its dialog in the shell (`reset`), so the dialog stays where it always was.
  */
 const emit = defineEmits<{ reset: [] }>()
@@ -15,7 +16,6 @@ const planner = usePlannerStore()
 const onboarding = useOnboarding()
 const { state: auth, signOut } = useAuth()
 const { status: storageStatus } = useStorageStatus()
-const { dark, toggle: toggleDark } = useTheme()
 const { choice, motion, setChoice } = useMotion()
 /** Lively or Calm (FR-UX, Motion): the choice is kept in this browser */
 const MOTION_OPTIONS: { value: MotionChoice; label: string }[] = [
@@ -28,7 +28,6 @@ const accountOpen = ref(false)
 const accountRef = ref<HTMLElement | null>(null)
 const avatarRef = ref<HTMLButtonElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
-const themeRef = ref<{ $el: HTMLButtonElement } | null>(null)
 
 /** Replays the tour from Plan your week; without an ambition and a life area with habits there is nothing to tour, so the welcome opens instead (FR-ONB-7) */
 const replayTour = () => {
@@ -43,12 +42,12 @@ const attention = computed(() => needsSaveAttention(storageStatus.value.state))
 
 const avatarText = computed(() => avatarLabel(auth.value.status === 'signed-in' ? auth.value.user?.name || auth.value.user?.email : '', storageStatus.value.state))
 
-/** Opens the menu; on desktop the first control takes focus, on a phone the menu panel does (app/utils/focus.ts) */
+/** Opens the menu; on desktop the first control takes focus (the Motion choice), on a phone the menu panel does (app/utils/focus.ts) */
 const toggleAccount = async () => {
   accountOpen.value = !accountOpen.value
   if (!accountOpen.value) return
   await nextTick()
-  focusEditField(themeRef.value?.$el, menuRef.value)
+  focusEditField(menuRef.value?.querySelector<HTMLElement>('.account-motion button'), menuRef.value)
 }
 
 /** Escape closes the menu from anywhere inside it and returns focus to the avatar */
@@ -118,18 +117,6 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       </div>
 
       <div class="account-items">
-        <div class="account-item account-row">
-          <UiIcon name="moon" size="sm" />
-          <span id="account-dark-label" class="account-label" @click="toggleDark">Dark mode</span>
-          <UiSwitch
-            ref="themeRef"
-            class="account-switch"
-            labelledby="account-dark-label"
-            :model-value="dark"
-            @update:model-value="toggleDark"
-          />
-        </div>
-
         <div class="account-motion">
           <p class="account-motion-label">Motion</p>
           <UiSegmented :model-value="choice" :options="MOTION_OPTIONS" label="Motion" @update:model-value="setChoice" />

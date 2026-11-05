@@ -69,7 +69,7 @@
 .account-status[data-state="error"] { color: var(--danger); }
 .account-status[data-state="error"] .account-status-dot { background: var(--danger); }
 .account-status-note { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); overflow-wrap: anywhere; }
-/* Menu rows: icon, left-aligned label; the Dark mode row adds the switch track at the right (text and aria-checked carry the state too) */
+/* Menu rows: icon, left-aligned label */
 .account-items { display: flex; flex-direction: column; gap: 2px; }
 .account-item {
   display: flex;
@@ -93,13 +93,7 @@
 .account-item-danger:hover:not(:disabled) { color: var(--danger); }
 .account-icon { width: 16px; height: 16px; flex: none; }
 .account-label { flex: 1; min-width: 0; }
-/* The Dark mode row: icon, label and the switch. The row is not the control; the switch is (its own 44px target and focus ring) */
-.account-row { gap: var(--sp-3); min-height: var(--hit); padding: 0 var(--sp-3); }
-.account-row .ic { color: var(--ink-2); }
-.account-row .account-label { cursor: pointer; color: var(--ink); }
-.account-switch { flex: none; min-height: var(--hit); }
-
-/* Motion choice (Lively or Calm) under the Dark mode switch, and the note when the system asks for less motion */
+/* Motion choice (Lively or Calm) at the top of the rows, and the note when the system asks for less motion */
 .account-motion { display: grid; gap: var(--sp-2); padding: var(--sp-3) var(--sp-3) var(--sp-2); }
 .account-motion-label { font-size: var(--text-small); color: var(--ink-3); }
 .account-note { margin: 0; font-size: var(--text-small); color: var(--ink-3); line-height: var(--leading-body); }
