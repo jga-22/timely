@@ -46,10 +46,6 @@ export const usePlannerStore = defineStore('planner', {
       this.$patch(current => replaceStateInto(current, next))
     },
 
-    /** Ends the first-run onboarding without creating data (FR-ONB-3, Start empty) */
-    finishOnboarding() {
-      this.onboarding = 'done'
-    },
 
     // ---------------------------------------------------------------
     // Week types
@@ -232,7 +228,7 @@ export const usePlannerStore = defineStore('planner', {
       updateAmbition(this.$state, changes)
     },
 
-    /** Writes the 5-year ambition: creates it when the state has none (Start empty). A blank statement creates nothing */
+    /** Writes the 5-year ambition: creates it when the state has none (a new user). A blank statement creates nothing */
     setAmbition(statement: string) {
       setAmbition(this.$state, statement, Date.now())
     },

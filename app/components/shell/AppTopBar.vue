@@ -7,7 +7,6 @@
 defineProps<{ showAccount: boolean }>()
 const emit = defineEmits<{ reset: [] }>()
 
-const { dark, toggle } = useTheme()
 const { link } = useNav()
 </script>
 
@@ -20,17 +19,9 @@ const { link } = useNav()
       </NuxtLink>
 
       <div class="shell-top-tools">
-        <button
-          type="button"
-          class="btn btn-icon"
-          aria-label="Dark mode"
-          :aria-pressed="dark"
-          @click="toggle"
-        >
-          <UiIcon :name="dark ? 'sun' : 'moon'" />
-        </button>
+        <ThemeButton />
 
-        <!-- The account menu (avatar, save status, Motion, Replay tour, Reset my data, Sign out); its dialog opens in the shell -->
+        <!-- The account menu (avatar, save status, Motion, Replay first run, Reset my data, Sign out); its dialog opens in the shell -->
         <AccountMenu v-if="showAccount" @reset="emit('reset')" />
       </div>
     </div>

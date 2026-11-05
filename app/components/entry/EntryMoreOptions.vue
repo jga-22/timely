@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { shortCodeFor } from '~/utils/onboarding'
+import { shortCodeFor } from '~/utils/activityCode'
 import type { EntryDraft, EntryErrors } from '~/utils/entries/draft'
 import { DESIGN_COLORS } from '~/utils/planner/templates'
 

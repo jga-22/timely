@@ -1,5 +1,5 @@
 /**
- * Ambition ops: the 5-year ambition of the Goals screen (Edit and Start empty). Owns updateAmbition and setAmbition
+ * Ambition ops: the 5-year ambition of the Goals screen (Edit and the first write). Owns updateAmbition and setAmbition
  */
 import type { Ambition, PlannerState } from '~/types/planner'
 import { newId } from '~/utils/store/ids'
@@ -9,7 +9,7 @@ export const updateAmbition = (d: PlannerState, changes: Partial<Pick<Ambition, 
   if (d.ambition) Object.assign(d.ambition, changes)
 }
 
-/** Writes the 5-year ambition: creates it when the state has none (Start empty). A blank statement creates nothing */
+/** Writes the 5-year ambition: creates it when the state has none (a new user). A blank statement creates nothing */
 export const setAmbition = (d: PlannerState, statement: string, stamp: number) => {
   if (d.ambition) {
     updateAmbition(d, { statement })

@@ -14,9 +14,9 @@ const confirmOpen = ref(true)
         <button type="button" class="btn btn-outline" @click="dialogOpen = true">Open a centred dialog</button>
       </div>
       <UiDialog v-model:open="dialogOpen" labelledby="sg-dialog-title" describedby="sg-dialog-body">
-        <h2 id="sg-dialog-title" class="onb-title">Delete this week type?</h2>
-        <p id="sg-dialog-body" class="onb-lede">Escape, Cancel and the close step all end the dialog and return focus to the button that opened it.</p>
-        <div class="onb-actions onb-actions-spaced">
+        <h2 id="sg-dialog-title" class="dialog-title">Delete this week type?</h2>
+        <p id="sg-dialog-body" class="dialog-lede">Escape, Cancel and the close step all end the dialog and return focus to the button that opened it.</p>
+        <div class="dialog-actions dialog-actions-spaced">
           <button type="button" class="btn btn-outline" @click="dialogOpen = false">Cancel</button>
           <button type="button" class="btn btn-danger-solid" @click="dialogOpen = false">Delete</button>
         </div>

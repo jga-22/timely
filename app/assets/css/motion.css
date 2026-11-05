@@ -45,3 +45,11 @@
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* First run (firstrun.css): a step rises in; the "plan is saved" toast slides up from the foot */
+@keyframes firstrun-rise {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes firstrun-toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

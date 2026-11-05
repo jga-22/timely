@@ -1,0 +1,234 @@
+/* The first run (FR-ONB, slice 9): a full page of five questions and a draft, then the one-line toast on Today.
+   Mockup: spec/mockups/prototype-a2 (setup). Tokens only; motion only under lively (keyframes in motion.css). */
+
+.firstrun {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-6) var(--sp-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  box-sizing: border-box;
+}
+.firstrun:focus { outline: none; }
+
+.firstrun-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.firstrun-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--text-title-s);
+  font-weight: 600;
+  color: var(--ink);
+}
+.firstrun-brand-mark { display: inline-grid; place-items: center; color: var(--accent); }
+.firstrun-top-end { display: flex; align-items: center; gap: var(--sp-3); }
+.firstrun-eyebrow { margin: 0; font-size: var(--text-small); color: var(--ink-3); }
+
+.firstrun-progress { height: 4px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
+.firstrun-progress > span { display: block; height: 100%; background: var(--accent); }
+:root[data-motion="lively"] .firstrun-progress > span { transition: width var(--dur-moderate) var(--ease-out); }
+
+.firstrun-body { display: grid; align-content: start; flex: 1; }
+:root[data-motion="lively"] .firstrun-body { animation: firstrun-rise var(--dur-enter) var(--ease-out) both; }
+
+.firstrun-step { display: grid; gap: var(--sp-4); }
+.firstrun-title {
+  margin: 0;
+  font-size: var(--text-page);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+.firstrun-title:focus { outline: none; }
+.firstrun-lede { margin: 0; font-size: var(--text-lede); line-height: 1.5; color: var(--ink-2); }
+.firstrun-note {
+  margin: 0;
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.firstrun-error {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-sm);
+  background: var(--danger-tint);
+  font-size: var(--text-small);
+  color: var(--danger);
+}
+.firstrun-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.firstrun-label { font-size: var(--text-small); color: var(--ink-3); }
+.firstrun-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Text fields: one line, or the ambition's paragraph. Touch targets are at least the hit size */
+.firstrun-line {
+  width: 100%;
+  min-height: var(--hit);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-body);
+  box-sizing: border-box;
+}
+.firstrun-line-area { min-height: 96px; line-height: 1.45; resize: vertical; }
+.firstrun-line[aria-invalid="true"] { border-color: var(--danger); }
+
+/* Choices: the chips of the ui layer, in a wrapping row */
+.firstrun-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.firstrun-chip { cursor: pointer; }
+.firstrun-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.firstrun-dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.firstrun-area {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Welcome: a small line drawing in the accent (the mockup's path) */
+.firstrun-ill { width: 120px; height: 90px; overflow: visible; }
+.firstrun-ill-line { fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; }
+.firstrun-ill-dot { fill: var(--accent); }
+.firstrun-ill-dot-soft { fill: var(--accent-tint); }
+
+/* Hours: a stepper with the number in the middle */
+.firstrun-stepper { display: inline-flex; align-items: center; gap: var(--sp-3); }
+.firstrun-hours {
+  min-width: 2.2em;
+  text-align: center;
+  font-size: var(--text-hero);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* The draft: one card, a row per area, the week under it, the first action on a tinted band */
+.firstrun-draft {
+  display: grid;
+  padding: var(--sp-2) var(--sp-6);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+}
+.firstrun-draft-row {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5) 0;
+  border-top: 1px solid var(--line-2);
+}
+.firstrun-draft-row:first-child { border-top: 0; }
+.firstrun-src { margin: 0; font-size: var(--text-caption); line-height: 1.45; color: var(--ink-3); }
+.firstrun-fa {
+  margin: 0;
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+/* The mini week: seven columns, each block in its life area's colour (the fill of the Week grid) */
+.firstrun-mini { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-1); }
+.firstrun-mini-day { display: grid; align-content: start; gap: var(--sp-1); min-height: 120px; }
+.firstrun-mini-head { font-size: var(--text-caption); color: var(--ink-3); text-align: center; }
+.firstrun-mini-blocks { display: grid; align-content: start; gap: var(--sp-1); min-width: 0; }
+.firstrun-mini-block {
+  padding: var(--sp-1);
+  border-left: 3px solid var(--c);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--c) 28%, var(--surface));
+  font-size: var(--text-caption);
+  line-height: 1.2;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+/* The blocks rise in one after another (the mockup's mini week): each waits its --i steps of --stagger. Lively only; Calm shows them at once */
+:root[data-motion="lively"] .firstrun-mini-block {
+  animation: firstrun-rise var(--dur-enter) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+/* The footer: Back at the start, the starter and the next step at the end */
+.firstrun-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-2);
+}
+.firstrun-end { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-left: auto; }
+
+/* The toast on Today: one line, ink on paper, fixed above the foot (it never blocks the page) */
+.firstrun-toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-6);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: max-content;
+  max-width: min(540px, calc(100vw - var(--sp-8)));
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  transform: translateX(-50%);
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  box-shadow: var(--elev-2);
+}
+:root[data-motion="lively"] .firstrun-toast { animation: firstrun-toast-in var(--dur-enter) var(--ease-spring) both; }
+.firstrun-toast-ill { flex: none; width: 36px; height: 36px; fill: none; stroke: var(--accent-tint); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.firstrun-toast-text { display: grid; gap: 2px; }
+.firstrun-toast-title { margin: 0; font-size: var(--text-body); font-weight: 600; }
+.firstrun-toast-line { margin: 0; font-size: var(--text-small); }
+.firstrun-toast-dismiss { color: inherit; text-decoration: underline; }
+
+@media (max-width: 768px) {
+  .firstrun { padding: var(--sp-6) var(--sp-4) var(--sp-8); }
+  .firstrun-title { font-size: var(--text-title-l); }
+  .firstrun-draft { padding: var(--sp-2) var(--sp-4); }
+  .firstrun-toast { bottom: var(--sp-16); }
+}
+/* A phone has no room for seven columns: each day is a row, its day name beside its blocks */
+@media (max-width: 480px) {
+  .firstrun-mini { grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); }
+  .firstrun-mini-day { grid-template-columns: 3rem minmax(0, 1fr); gap: var(--sp-2); min-height: 0; }
+  .firstrun-mini-head { text-align: left; padding-top: var(--sp-1); }
+}
