@@ -46,29 +46,32 @@ function onTemplateCreated(templateId: string) {
       <h1 class="page-title">Week</h1>
     </header>
 
-    <!-- The Week card: the schedules at the top, the grid (with Show sleep) and the entry buttons under it, on one surface -->
+    <!-- The Week card, as the Year planner card: one section, the "Schedules" title first. Its body holds the tip, the schedule chips with their
+         panels, Show sleep and the grid, and the entry buttons. Client only: the grid is state-driven, and server HTML would keep the seed cells -->
     <div class="week-card">
-      <!-- Schedule bar: the switcher, New schedule and the Edit schedule panel -->
-      <PlannerWeekTypeBar v-model:editOpen="templateEditOpen" @opened="addedTemplateId = null" @created="onTemplateCreated" />
-
-      <!-- The new schedule, with its way to the Year tab (applying it to weeks is there, not here; no tab change by itself) -->
-      <p v-if="addedTemplate" class="sched-result" role="status">
-        <span>{{ addedTemplate.name }} added.</span>
-        <NuxtLink :to="link('year', { item: addedTemplate.id })">Choose its weeks in Year</NuxtLink>
-      </p>
-
-      <!-- Week grid: the original range-select grid, with its action bar and menu teleported to the body -->
-      <!-- Client only: the grid is state-driven, and server HTML would keep the seed cells after hydration -->
       <ClientOnly>
         <PlannerActivityGrid :close-token="gridCloseToken" @open="onGridOpen">
           <template #tip>
             <p class="week-tip">Tap or drag hours on the grid, then choose what goes there.</p>
           </template>
+
+          <template #schedules>
+            <!-- Schedule bar: the switcher, New schedule and the Edit schedule panel (stays mounted when the section is collapsed) -->
+            <PlannerWeekTypeBar v-model:editOpen="templateEditOpen" @opened="addedTemplateId = null" @created="onTemplateCreated" />
+
+            <!-- The new schedule, with its way to the Year tab (applying it to weeks is there, not here; no tab change by itself) -->
+            <p v-if="addedTemplate" class="sched-result" role="status">
+              <span>{{ addedTemplate.name }} added.</span>
+              <NuxtLink :to="link('year', { item: addedTemplate.id })">Choose its weeks in Year</NuxtLink>
+            </p>
+          </template>
+
+          <template #entries>
+            <!-- Add an activity and set sleep: the one form opens under these buttons (entries are edited from Goals) -->
+            <PlannerEntryActions :close-token="formCloseToken" @form-open="onFormOpen" />
+          </template>
         </PlannerActivityGrid>
       </ClientOnly>
-
-      <!-- Add an activity and set sleep: the one form opens under these buttons (entries are edited from Goals) -->
-      <PlannerEntryActions :close-token="formCloseToken" @form-open="onFormOpen" />
     </div>
 
     <!-- Where the week goes: the typical week of the active schedule, below the card (client only: it reads the saved planner) -->

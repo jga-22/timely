@@ -126,7 +126,8 @@ watch(() => props.closeToken, () => {
 
 <template>
   <section class="section wk-section" aria-labelledby="week-title">
-    <!-- Collapsible like the Year section (open by default, in memory only); the Show sleep button is inside it, above the grid -->
+    <!-- Collapsible like the Year planner (open by default, in memory only). Its body, in order: the tip, the schedules (the chips with their panels, from the parent),
+         Show sleep and the grid, then the entry buttons (from the parent). The schedule chips stay mounted when collapsed (a delete confirmation survives) -->
     <div class="wk-head-line">
       <details class="wk-details" :open="weekOpen" @toggle="weekOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="section-summary wk-summary">
@@ -136,6 +137,8 @@ watch(() => props.closeToken, () => {
 
         <!-- The tip of the Week view (its words are the Week tab's): inside the section, so it collapses with the grid -->
         <slot name="tip" />
+        <!-- The schedules: the switcher, New schedule, Edit schedule and their panels, and the line after a new one (the parent's) -->
+        <slot name="schedules" />
 
         <p v-if="!hourly" class="wk-helper">This schedule has 30-minute slots, and this grid edits hourly schedules only.</p>
 
@@ -214,6 +217,8 @@ watch(() => props.closeToken, () => {
             <button type="button" class="btn btn-xs btn-outline" @click="undoLast">Undo</button>
           </p>
         </template>
+        <!-- The entry buttons, under the grid (the parent's): inside the section, so they collapse with it -->
+        <slot name="entries" />
       </details>
     </div>
 

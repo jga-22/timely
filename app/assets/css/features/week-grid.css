@@ -20,14 +20,16 @@
 @media (max-width: 480px) {
   .week-card { padding-inline: var(--sp-3); }
 }
-/* The tip of the Week view, at the top of the Schedules section (2026-11-05): quiet text under the title, collapsed with the section */
+/* The Week card's section body, as the Year planner's (2026-11-05): the title and its meta line, then the tip (the hint style of the Year card),
+   the schedule chips, the grid and the entry buttons, all inside the collapsible section */
+.week-card .wk-details > .wk-summary { margin-bottom: var(--sp-2); }
 .week-tip {
-  max-width: 60ch;
   margin: 0 0 var(--sp-4);
-  font-size: var(--text-ui);
+  font-size: var(--text-meta);
   line-height: var(--leading-body);
   color: var(--ink-2);
 }
+.week-card .wk-details > .entry-actions { margin-top: var(--sp-5); }
 .wk-head-line {
   display: flex;
   flex-wrap: wrap;
