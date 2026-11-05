@@ -54,6 +54,7 @@ const yearLabel = (index: number) => {
   const bar = props.report.bars[index]!
   return index === 0 || props.report.bars[index - 1]!.year !== bar.year ? `${bar.year}` : ''
 }
+const shortDay = (key: string) => new Date(`${key}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' })
 const formatDay = (key: string) => new Date(`${key}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 const barHead = (bar: AdherenceBar) => {
   if (props.mode === 'weekday') return bar.label
@@ -103,7 +104,7 @@ const earlierNote = computed(() => (props.mode === 'week' ? 'Earlier weeks are n
     <template v-else>
       <div class="adh-intro">
         <p class="adh-figure">{{ headingText }}</p>
-        <p v-if="report.trackingStart" class="adh-sub adh-muted">Counted from {{ formatDay(report.trackingStart) }} to today, {{ report.elapsedDays }} days.</p>
+        <p v-if="report.trackingStart" class="adh-sub adh-muted">Counted from {{ shortDay(report.trackingStart) }}, {{ report.elapsedDays }} days.</p>
         <p v-if="showSummaryNote" class="adh-sub adh-muted">Quarter and Year show one bar per month.</p>
         <p v-if="report.trimmedEarlier" class="adh-sub adh-muted">{{ earlierNote }}</p>
       </div>

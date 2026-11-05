@@ -86,7 +86,7 @@ function toggleTemplate(templateId: string, checked: boolean) {
     </div>
 
     <fieldset class="sched-days">
-      <legend class="field-label">Week types</legend>
+      <legend class="field-label">Schedules</legend>
       <div class="check-row">
         <label v-for="template in hourlyTemplates" :key="template.id" class="check">
           <input
@@ -97,12 +97,12 @@ function toggleTemplate(templateId: string, checked: boolean) {
           <span>{{ template.name }}</span>
         </label>
       </div>
-      <p v-if="!hourlyTemplates.length" class="form-hint">No week type can hold hours yet. Hours are painted in hourly week types only.</p>
+      <p v-if="!hourlyTemplates.length" class="form-hint">No schedule can hold hours yet. Hours are painted in hourly schedules only.</p>
       <p v-if="errors.weekTypes" class="field-error" role="alert">{{ errors.weekTypes }}</p>
-      <p v-if="!isNew && !draft.templateIds.length" class="form-hint">No week type is checked: saving takes it out of the week.</p>
+      <p v-if="!isNew && !draft.templateIds.length" class="form-hint">No schedule is checked: saving takes it out of the week.</p>
     </fieldset>
 
-    <p v-if="repaints" class="form-hint">Saving repaints this item in the checked week types.</p>
+    <p v-if="repaints" class="form-hint">Saving repaints this item in the checked schedules.</p>
   </template>
 </template>
 

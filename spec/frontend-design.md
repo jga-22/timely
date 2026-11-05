@@ -2,17 +2,18 @@
 
 This file describes the visual style that the code uses today. Every value here was read from the source (`app/assets/css/` (`tokens.css` and the feature files), the component `<style>` blocks, `app/app.vue`, `nuxt.config.ts`, `app/utils/planner/templates.ts`) and cross-checked where noted. Where a value could not be verified, it is marked **(unverified)**.
 
-Source of truth: the code. The old `design/` folder (terracotta and serif look) is a stale export and must not be used. The Harada prototype in `spec/references/grille-harada-meilleure-version.html` is the origin of the blue palette and the Goals layout; it is a reference only.
+Source of truth: the code. The old `design/` folder (terracotta and serif look) is a stale export and must not be used. The Harada prototype in `spec/references/grille-harada-meilleure-version.html` is the origin of the blue palette and the Dreams (Goals) layout; it is a reference only.
 
 Reference screenshots (current build, headless Edge, light unless noted):
 
 | Screen | Desktop 1280 | Mobile 400 |
 | --- | --- | --- |
-| Goals | [goals-desktop-light.png](screens/goals-desktop-light.png) (every life area listed, with its target status and entry counts; Grid view: [goals-grid-desktop-light.png](screens/goals-grid-desktop-light.png); category detail: [goals-detail-desktop-light.png](screens/goals-detail-desktop-light.png); category detail in edit mode: [goals-detail-edit-desktop-light.png](screens/goals-detail-edit-desktop-light.png)) | [goals-mobile-light.png](screens/goals-mobile-light.png) |
-| Planner | The week grid is the original range-select grid (`ActivityGrid.vue`, section 4.12): a 52 px hour gutter, seven day columns, 28 px hour rows and a frame of at least 540 px that scrolls sideways inside `.wk-scroll` on phones (the page does not). The Activities list (section 4.17) is a row of chips under the grid. The year grid is full width (13 week columns, 32 px cells, a quarter label per row) and collapsible. Measured in the 2026-10-26 run (section 11). |
-| Today | [today-desktop-light.png](screens/today-desktop-light.png) (dark: [today-desktop-dark.png](screens/today-desktop-dark.png); the past day: [today-past-desktop-light.png](screens/today-past-desktop-light.png)) | [today-mobile-light.png](screens/today-mobile-light.png) (dark, all done: [today-mobile-dark-all-done.png](screens/today-mobile-dark-all-done.png)) |
-| Year | [year-desktop-light.png](screens/year-desktop-light.png) (Apply to several weeks open: [year-apply-several-desktop-light.png](screens/year-apply-several-desktop-light.png); dark: [year-desktop-dark.png](screens/year-desktop-dark.png)) | [year-mobile-light.png](screens/year-mobile-light.png) (dark: [year-mobile-dark.png](screens/year-mobile-dark.png)) |
-| Insights | [insights-adherence-desktop-light.png](screens/insights-adherence-desktop-light.png) (Week: [insights-adherence-week-desktop-light.png](screens/insights-adherence-week-desktop-light.png)) | [insights-adherence-mobile-light.png](screens/insights-adherence-mobile-light.png) |
+| Today | [today-1280-light-calm.png](screens/today-1280-light-calm.png) (dark: [today-1280-dark-lively.png](screens/today-1280-dark-lively.png); nothing planned, new account: [today-nothing-1280-light-calm.png](screens/today-nothing-1280-light-calm.png); a blank week: [today-blank-week-1280-light-calm.png](screens/today-blank-week-1280-light-calm.png)) | [today-400-light-calm.png](screens/today-400-light-calm.png) (dark: [today-400-dark-lively.png](screens/today-400-dark-lively.png)) |
+| Plan: Dreams | [dreams-1280-light-calm.png](screens/dreams-1280-light-calm.png) (new account: [dreams-empty-1280-light-calm.png](screens/dreams-empty-1280-light-calm.png)) | [dreams-400-dark-lively.png](screens/dreams-400-dark-lively.png) |
+| Plan: Week | [week-1280-light-calm.png](screens/week-1280-light-calm.png) (new account, dark: [week-empty-1280-dark-calm.png](screens/week-empty-1280-dark-calm.png)) | [week-400-dark-lively.png](screens/week-400-dark-lively.png) |
+| Plan: Year | [year-1280-light-calm.png](screens/year-1280-light-calm.png) (new account: [year-empty-1280-light-calm.png](screens/year-empty-1280-light-calm.png)) | [year-400-dark-lively.png](screens/year-400-dark-lively.png) |
+| Progress | [progress-desktop-light-lively.png](screens/progress-desktop-light-lively.png) (dark: [progress-desktop-dark-calm.png](screens/progress-desktop-dark-calm.png)) | [progress-mobile-light-lively.png](screens/progress-mobile-light-lively.png) (dark: [progress-mobile-dark-calm.png](screens/progress-mobile-dark-calm.png)) |
+| First run | [firstrun-welcome-desktop-light.png](screens/firstrun-welcome-desktop-light.png) (the draft: [firstrun-draft-desktop-light.png](screens/firstrun-draft-desktop-light.png)) | [firstrun-draft-mobile-dark.png](screens/firstrun-draft-mobile-dark.png) |
 
 ---
 
@@ -49,7 +50,7 @@ The shell has three surfaces, Today, Plan and Progress (option A of `spec/ux-inf
 - **Plan sub-nav.** Under the page title Plan: `nav.plan-subnav` with Dreams, Week and Year as a row of pills (44px, `--radius-pill`, the current one on the card surface). Each view below it is mounted with the `headless` prop, so it shows no title of its own; its controls stay (the year switcher on Year, the List or Grid choice in Dreams).
 - **Progress (A2, slice 8, 2026-11-05).** The eyebrow "Weeks 38 to 45" and the title "Progress", then the headline in words (30px, the share in the accent: "about three in four"), the Week by week card (eight columns, the figure above each bar, the week label below; the current week is a dashed bar labelled "So far"; a tooltip on hover or focus; the bars grow under lively motion only), then two cards side by side: the Weekly recap (this week so far, "Start the recap", or "Week N is closed." with Plan next week and Reopen) and Settings (the Weekly recap switch, on by default). "More detail" is closed by default and holds the adherence view (`InsightsView`, headless). The recap dialog is a UiDialog with four slides (Back, Next, Close; the last slide has Plan next week and Done for the week). Words: "planned hours", "ticked", "steadiest", "most misses"; no streaks, no red, nothing compares the user with anyone. Colour: the figures are ink, the bars are the accent tint, the current week is the accent outline; area dots take their colour from `areaVars`. Not built yet: the milestones and the calm-line switch (slice 11).
 - **Dream path (slice 10, 2026-11-05).** Under the trend card, "Your dream path": a caption, then the average as a figure in ink with "Average of N life areas" and the method ("Each area is the share of a year's habits kept over the last 364 days. Sleep is not counted."), or "Your progress starts with your first tick." A winding line runs from a "Today" dot through the eight life areas. Each area is a button (44 px) in order: its dot fills clockwise to its percent in the area colour (`areaVars`), and its label holds the name and the words ("8% · Starting"; with no value, "Not started", "No 1-year target yet", "Add a habit to track it" or "Target to define", on a hollow dot). Wide, from 769 px up, the line runs across with the labels above and below; narrow, it runs down with the labels to the side. Tab reaches each node, and Enter opens Dreams for that area. Lively only: the line fades in and the nodes rise one after another; Calm shows all of it. Sizes and colours are tokens (`features/dreampath.css`).
-- **Account menu.** `AccountMenu.vue` keeps its place in the top bar, its rules and its look (`features/account.css`). It has the save status, Motion, Replay tour, Reset my data and Sign out. The theme is not in the menu: the top bar's button is the only theme control (2026-11-05).
+- **Account menu.** `AccountMenu.vue` keeps its place in the top bar, its rules and its look (`features/account.css`). It has the save status, Motion, Replay first run, Reset my data and Sign out. The theme is not in the menu: the top bar's button is the only theme control (2026-11-05).
 
 `NuxtRouteAnnouncer` is mounted. Its visually hidden span measures 199px wide and is `overflow: hidden`, so the overflow probe reports it. It is not a layout issue.
 
@@ -83,8 +84,8 @@ The side gutter is 16px at 400px, which meets the minimum.
 | 1024px | `layout.css` | `.view` padding |
 | 768px | `shell.css`, `shared.css`, others | Topbar wraps; page title 18px; metrics one column; goal rows and category rows compact; The Year chart defaults to monthly (`YearView.vue`) |
 | 1100px | `HaradaView.vue` (scoped) | The List / Grid toggle (`.goals-view-toggle`) shows from here up; the Harada matrix is the Grid view (opt-in) and hidden (`display: none`) below. The list is the default view and the only one below 1100px |
-| 480px | `home.css`, `shared.css`, others | Home: period selector full width, Day rows put the time on its own line |
-| `(hover: none)` | `home.css`, `week-grid.css` | Block hover actions hidden on touch devices |
+| 480px | `today.css`, `shared.css`, others | Today and Plan: the day switch and the period selector full width, the day rows put the time on its own line |
+| `(hover: none)` | `today.css`, `week-grid.css` | Block hover actions hidden on touch devices |
 
 
 ### 3.5 Phone behaviour at 400px
@@ -94,12 +95,12 @@ Measured with a headless Edge run against the production build, 400px wide, on e
 | Area | Behaviour |
 | --- | --- |
 | Shell | The rail is hidden; the top bar holds the brand, the theme switch and the account menu; the Today, Plan and Progress bar is fixed at the foot, with the safe-area inset, and the page leaves room for it. No horizontal overflow at 400px on any surface (checked). |
-| Goals | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
+| Dreams | Single column. Harada grid two columns; the centre ambition cell spans both columns first. Habit rows stack. |
 | Planner | The week grid (`ActivityGrid.vue`, section 4.12) has a 52px hour column, seven day columns and 28px hour rows, always editable for an hourly template. Its frame is at least 540px and scrolls sideways inside `.wk-scroll` on phones. |
 | Year grid | Fits without a scroll: 14 columns of squares, 23px at 400px, 20px at 360px and 62px at 1280, with the week numbers, and the month labels above each row (slice 7, 2026-11-04; the row labels are gone). |
 | Year | The summary card, the schedule card and More detail fit 400px with no page overflow (measured at 400px, light and dark, slice 7). |
-| Insights | The adherence view fits 400px with no page overflow (measured, light and dark). |
-| Home | The period selector is full width. Day rows put the time range on its own line above the name; Edit stays at the row end. Week and Month rows keep name, hours and share on one line. Measured at 400px: no page overflow in any period, light or dark. |
+| Progress | The adherence view (More detail) fits 400px with no page overflow (measured, light and dark). |
+| Today | The day switch is full width. Day rows put the time range on its own line above the name; Edit stays at the row end. Week and Month rows keep name, hours and share on one line. Measured at 400px: no page overflow in any period, light or dark. |
 
 Rule: only tables, the year grid and charts may be wider than the viewport, and each is in its own `overflow-x: auto` container. Everything else must wrap or stack.
 
@@ -133,9 +134,9 @@ Class names below are in the feature files in `app/assets/css/` (the file is nam
 
 Moved to [design-system.md](design-system.md), section 6 (built today, and the planned primitives for slice 3b). The rules that apply to every screen (one primary action per block, destructive actions text-coloured, icon-only buttons labelled) are in its section 6.1.
 
-### 4.9 Goals (Harada), `app/components/harada/HaradaView.vue` (scoped)
+### 4.9 Dreams (Harada), `app/components/harada/HaradaView.vue` (scoped)
 
-Slice 3 (FR-GOALS-13 to 22). Page: `h1` "Goals" and a lede. Order top to bottom: ambition, Harada map, then the life area list with its detail (PRD 11.5).
+Slice 3 (FR-GOALS-13 to 22). Plan > Dreams: the Plan title and sub-nav wrap the view, which is mounted headless (no title of its own). Order top to bottom: ambition, Harada map (Grid view), then the life area list with its detail (PRD 11.5).
 
 - **Ambition** (`section.vision`; with no ambition yet, `section.vision.vision-new` shows the prompt "Write your 5-year ambition" with "Save ambition", disabled while blank, and saving creates it): `h2.section-title` "Ambition, N years" (N from the stored horizon, shown, not editable) and an Edit button (`aria-label` "Edit ambition"). View mode: the statement at 18px 500, line height 1.45. Edit mode: `AutoTextarea` "Ambition statement" that applies at once; Done returns focus to Edit; Escape leaves. Vision edit mode is local to the screen (one field), not in the URL. Opening it ends a category edit, and selecting a category ends it.
 - **Map** (`.harada-grid`, read-only; shown only from 1100px, hidden below): 3x3 with hairline gaps. The centre (`.harada-centre`) shows "Ambition, N years" and the statement. Eight outer cells are `button.harada-cell` with a colour dot (16px), the order (`.cell-num`, "01" to "08"), the name (`.cell-title`) and "To define" (`.cell-status`, warn). Nothing else: no hints, counts or hours. A missing category leaves an empty placeholder (`.harada-empty`, `--bg-2`, `aria-hidden`). The selected cell has `--bg-4`, a 3px accent bar and `aria-pressed="true"`. Focus: the 2px inset accent ring (section 2.8). Keyboard: Tab between cells; Enter or Space selects; arrow keys move focus and skip the centre and empty slots without wrapping.
@@ -163,7 +164,7 @@ Since 2026-11-05 the card sits below the Week card (the schedule chips, the week
 - Selection: as before. A click or tap on a slice or a row selects it; the others dim (opacity 0.5); the centre names it; a second click, a click on the centre or Escape clears it. The name of the rest is Free.
 - Rules: `templateSplit(state, template, showSleep)` and `FREE_LABEL` in `app/utils/insights.ts`; `weeksUsing(state, templateId, year)` in the same file. Tests: `tests/unit/insights.test.ts` (the sum to 100, the sleep rule, the awake hours of the one awake rule, the weeks a schedule is used in).
 
-### 4.9d Insights adherence (`app/components/insights/AdherenceView.vue`, FR-INS-P6; rules in `app/utils/adherence.ts`)
+### 4.9d Progress: adherence under More detail (`app/components/insights/AdherenceView.vue`, FR-INS-P6; rules in `app/utils/adherence.ts`)
 
 This is the whole Insights page (since feat/year-tab, FR-INS-P7; there is no chart choice any more). The range controls sit above it (4.11). Top to bottom:
 
@@ -173,7 +174,7 @@ This is the whole Insights page (since feat/year-tab, FR-INS-P7; there is no cha
 - **By life area.** Rows (`.adh-area`, a grid with named areas): dot and name (a link to its Goals item), the detail line in `--ink-3` ("13 of 272 blocks, 30 of 673 habit ticks"), a meter and the percent in `--ink`. Stacked on phones below 560 px.
 - **Habits.** Two short lists side by side (`.adh-habits`, one column on a phone): "Kept up" and "Could use another go", each row the name and "8 of 10". Empty lists say so in neutral words.
 - **Journal nudge.** A quiet panel (`.adh-nudge`, a 1 px `--rule-2` frame): the count of days with a note, the prompt "What helped this week? What got in the way?" and an "Open Home" button.
-- **Empty state.** No tick in the range: "Tick activities on Home and your adherence shows here." and "Open Home" (`.adh-empty`). The other parts are not shown.
+- **Empty state.** No tick in the range: "Tick activities on Today and your adherence shows here." and "Open Today" (`.adh-empty`). The other parts are not shown.
 
 Wording stays neutral: no streaks, no "missed", no red. A quarter or year choice shows a note: "Quarter and Year show one bar per month." Verified at 1280 and 400 px, light and dark, with real mouse clicks; see the PRD row FR-INS-P6.
 ### 4.9e Adherence ring (`app/components/AdherenceRing.vue`)
@@ -200,7 +201,7 @@ A shared donut of an adherence percent. Props: `percent` (null shows "-" and no 
 - Removed 2026-10-29: the "Time against need" block and its "See in Insights" link. The habit lines keep "Needs 6 h a week" as plain text (`entries.ts`, `needText`).
 - Shared classes (`forms.css`, `shared.css`): `.form-stack`, `.form-row` and `.form-row-3`, `.form-actions`, `.inline-confirm`, `.inline-confirm-text`.
 
-### 4.11 Insights (`app/components/insights/InsightsView.vue`, the Adherence view)
+### 4.11 Progress: More detail (`app/components/insights/InsightsView.vue`, the Adherence view)
 
 Since feat/year-tab (2026-11-01) Insights is the adherence view only (FR-INS-P6, FR-INS-P7; the view is in 4.9d). The planned hours and the life areas moved to the Year tab (4.11a). Read-only.
 
@@ -372,7 +373,7 @@ One line of text for the day Today shows (FR-HOME-11 to 13), as the mockup has i
 - **Sign-in page** (`LoginGate.vue`, Supabase mode, signed out; `.login-*` in `auth.css`): one centred column, 640px at most, full width minus the gutters on phones, no card frame. In order: the heading `h1.login-heading` "Your goals decide your week" (clamp 24 to 32px, 600, `--ink`) and one line `.login-lede` (15px, `--ink-2`, 1.6), all centred; then `.login-showcase` with `OnboardingIntroPlayer loop quiet`; then `.login-action-block` (h2 "Sign in to Timely" 16px 600, the Google button `.btn-primary` at least 240px wide, the error text); then the consent line. The `quiet` variant of the player (`.is-quiet`) has no stage frame (no border; a tone shift to `--bg-2` and an 8px radius), its controls are `.onb-link` text links centred under the stage, and the five segments are the thin progress line. Looping; it opens paused behind the Play overlay (no autoplay), no sound, no tabs, no inputs. On phones the Google button and the player controls are 44px high.
 - Footer (`footer.app-footer`): "Terms · Privacy" in 13px `--ink-3` (hover `--ink`, underline), 1px `--rule-2` top border, padding 24px top and bottom, and sides that follow the page gutter (40px, 32px at 1280px, 28px at 1024px, 16px at 768px and below). Shown in local mode, on the sign-in page and for signed-in users; hidden only while the session loads. It wraps without causing overflow.
 - Legal pages are shown without a session: `app/app.vue` renders them instead of the gate, and the planner tabs stay hidden for a signed-out user.
-- Onboarding overlays (Welcome, tour) are not rendered on the legal pages, so they do not cover the text. The state is kept, so they appear again on Home.
+- The first run is not shown on the legal pages (`app.vue`), so it never covers the text. Its state is kept, so it appears again on Today.
 - Verified in headless Edge on the production build: 1280 and 400 px, light and dark, no horizontal overflow, no console errors; in dev no hydration warnings (only the known dev-only 404s for Vuetify and MDI CSS). Screenshots `spec/screens/legal-*`.
 
 ### 4.20 Activities and habits: the one form and the one list (`app/components/ActivityForm.vue`, `.entry-*` in `app/assets/css/`, `.row-*` in `lists.css`)
@@ -389,7 +390,7 @@ One line of text for the day Today shows (FR-HOME-11 to 13), as the mockup has i
 - **Sleep editor.** In the Sleep form (`ActivityForm.vue`, which has no days, duration or start for Sleep): a `.segmented` choice (Same every night / Weekdays and weekend), one or two rows of bedtime and wake-up selects (12 AM to 11 PM), the total and the nights in `.form-hint`. The short code is disabled with a note; Delete is replaced by "Sleep is built in; hide it instead."
 - **Hidden grid.** Rows that are sleep on all seven days collapse. A leading or trailing run is a full-width button band above or below the grid (`.wk-band`, "Sleep hidden: 12 AM to 7 AM" and "Show sleep" in `--accent`, the whole band clickable). A run between shown rows is a 14 px band (`.wk-gap`, quiet `--bg-2` with a dashed top rule). The hour labels follow the shown rows.
 
-Screens: `spec/screens/sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-insights-1280-hidden.png`.
+Screens: `spec/screens/week-1280-light-calm.png` (Show sleep sits at the left of the card; the hidden hours show as bands above and below the grid).
 ### 4.22 Lively layer, toast and milestones (slice 11, 2026-11-05)
 
 - **Today, lively only:** a tick that turns on throws six sparks from its circle (`ui/Tick.vue`; the burst is set for 900 ms and the sparks are `tick-spark` in `ui/tick.css`); the day count climbs to its value over 520 ms in the day line (`today/TodayDayLine.vue`, `countValue` in `utils/motion.ts`); the focus card glides in when the focus moves on (`today.css`); the card tilts up to 1.4 degrees toward a mouse pointer (`tiltOf`). Calm and reduced motion show the number and the state at once.
@@ -411,7 +412,7 @@ Moved to [design-system.md](design-system.md), section 4 (the 3:1 rule on both s
 | Body text contrast 4.5:1 or better | Pass for all text on `--bg`, `--bg-2`, `--bg-3` and `--bg-4`. Disabled buttons are the exception (see 4.4) | Measured in the DOM on all four tabs, both themes, after the fix pass. Text on tints uses `--ink-2`. Disabled "Add category" and "Add activity" are 2.44 to 3.05:1 (opacity 0.45). |
 | Non-text contrast 3:1 | Pass for interactive controls (`--control-border`, 3.26:1 minimum light, 3.44 dark). Pass for planned fills and empty-cell outlines (section 5). | Hairline frames (`--rule`) are decorative and stay below 3:1 by design. |
 | Visible focus | Pass | Harada cells: 2px inset accent ring. Block delete: global 2px accent outline. Other controls: the global 2px outline, or the accent border on fields. Checked by tabbing through each view in both themes; no stop is left without an indicator. |
-| Keyboard operation | Pass for topbar, Home (day switch and done checks), Goals, Year, Insights, the Week activity list, detail and forms (4.17) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
+| Keyboard operation | Pass for the top bar, Today (day switch and done checks), Plan (Dreams, Week, Year), Progress, the entry form (4.20) and the week grid (4.12). Fail for the year grid. | The year grid uses mouse events only (`mousedown`, `mouseenter`). |
 | Current tab announced | Pass | `aria-selected` on each `role="tab"`. |
 | Tab panel relation | Fail | No `aria-controls` and no `tabpanel`. |
 | Pressed and expanded state | Pass | `aria-pressed` on Harada cells and segmented buttons; `aria-expanded` on Habit "Details". |
@@ -498,20 +499,21 @@ These are facts about the code as it is today. They are not requirements for new
 2. Resolved: planned fills (chart segments included) reach 3:1 on their surface through `fillFor` (section 5.2). The legend and the focus strip still identify them.
 3. `role="tab"` buttons have no `aria-controls` and there is no `tabpanel`.
 4. There is no inline error style for forms. Failed actions have no visible feedback.
-5. Home's period selector is session state (Nuxt `useState`): it survives a tab switch, resets on reload and is not in the URL.
-6. Templates have no Edit button (FR-UX-2, Partial). They are renamed by double-click, recoloured from the chip dot, and deleted inline.
-7. Habit rows have no Edit button in view mode; habits are edited in the category's edit mode (FR-GOALS-18, Partial).
-8. No `prefers-reduced-motion` handling.
+5. Today's day is session state (Nuxt `useState`, `useShownDay.ts`): it survives a surface switch, resets on reload and is not in the URL.
+6. Week types are renamed by double-click and recoloured from the chip dot; their edit panel (Edit schedule) holds the rest.
+7. Entries (habits and activities) are edited in the one form (`ActivityForm.vue`), opened from Dreams or from `?item=<id>&edit=1` on Week.
+8. Reduced motion is handled: `prefers-reduced-motion: reduce` always means Calm (`resolveMotion`, `app/utils/motion.ts`).
 9. Theme is light by default and does not follow the OS setting.
 10. Resolved: `DESIGN_COLORS` no longer has an `fg` field; text on a planned fill is `inkOn` (section 5.2). Known limit: teal (`#4a8683`) reaches only 4.33:1 with its text, below 4.5:1 for 13px text, in both themes.
 11. Resolved in 0.0.2: the Vuetify theme that copied the tokens by hand went with the library.
 12. The 12px chart text is hard-coded rather than a token.
 13. Disabled buttons keep the 0.45 opacity rule, so "Add category" and "Add activity" are 2.44 to 3.05:1. Disabled controls are exempt; the dark one is faint but readable.
-14. The journal experiment on Home (FR-HOME-11 to 13) is not built; it is slice 6.
 
 ---
 
 ## 11. Verification log for this spec
+
+History. The entries in sections 11 to 13 describe the builds that produced them. Screens and names they mention may since have changed or been removed (the current screens are in the table at the top; the batches are in `spec/build-plan.md` and `CHANGELOG.md`).
 
 - Read in full: `app/assets/css/` (all files), `app/app.vue`, `vuetify.config.ts`, `nuxt.config.ts`, `app/components/AutoTextarea.vue`, `app/components/harada/HaradaView.vue`, `app/components/harada/HabitList.vue`, `app/components/planner/PlannerView.vue`, the old Insights and legend views (removed in slices 1 and 3). Read in part: `app/utils/planner.ts` (palette, constants, seed, state check) and `app/stores/planner.ts` (actions relevant to colour and categories).
 - Contrast ratios: computed from the hex values in the code with the WCAG formula. Block tint contrast: computed over the 16-swatch palette with the same mixing as `color-mix(in srgb, …)`.
@@ -526,10 +528,10 @@ These are facts about the code as it is today. They are not requirements for new
 - Fix pass, layout: 0px horizontal overflow at 1280px and 400px, light and dark, all tabs. `npx nuxi typecheck` exits 0. `npm run build` is clean; the existing Nuxt and Nitro warnings are unchanged.
 - Not verified: `prefers-color-scheme` absence beyond code reading; Vuetify's computed `on-primary`; behaviour on real touch hardware (only emulated viewports were checked).
 
-- Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `screens/home-desktop-light.png`, `screens/visualization-desktop-light.png`, `screens/visualization-mobile-light.png`.
-- Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (a Goals script in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `screens/goals-desktop-light.png`, `screens/goals-detail-edit-desktop-light.png`, `screens/goals-mobile-light.png`.
-- Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `screens/home-desktop-light.png`, `screens/home-week-desktop-light.png`, `screens/home-month-desktop-light.png`, `screens/home-mobile-light.png`, `screens/home-week-mobile-light.png`, `screens/home-desktop-dark.png`.
-- Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `screens/planner-desktop-light.png`, `planner-desktop-dark.png`, `planner-mobile-light.png`.
+- Slice 1 (shell, URL state, Visualization, Home placeholder): browser run on the production build at 1280 and 400 px, light and dark, no page overflow, no console messages; dev-server run with no hydration warnings. Screenshots: `home-desktop-light.png` (deleted in slice 12), `visualization-desktop-light.png` (deleted in slice 12), `visualization-mobile-light.png` (deleted in slice 12).
+- Slice 3 (Goals: vision, Harada map, category list and detail, habit rows; Configuration removed): browser run on the production build, 1280 and 400 px, light and dark, 90 checks (a Goals script in the session scratchpad, not committed). No page overflow, no console errors other than the known hydration message. Screenshots: `goals-desktop-light.png` (deleted in slice 12), `goals-detail-edit-desktop-light.png` (deleted in slice 12), `goals-mobile-light.png` (deleted in slice 12).
+- Slice 4 (Home: Day, Week, Month, time per category, goals signal): production build at 1280 and 400 px, light and dark; 48 browser checks plus 4 follow-up checks (Home scripts in the session scratchpad, not committed). Node checks of day blocks, months (28 to 31 days, straddling weeks), DST days, unassigned and deleted templates, shares and the below-target rule under UTC, Europe/Paris and America/New_York. No page overflow; no console messages in the runs. Screenshots: `home-desktop-light.png` (deleted in slice 12), `home-week-desktop-light.png` (deleted in slice 12), `home-month-desktop-light.png` (deleted in slice 12), `home-mobile-light.png` (deleted in slice 12), `home-week-mobile-light.png` (deleted in slice 12), `home-desktop-dark.png` (deleted in slice 12).
+- Week grid restored to the original interaction (2026-10-26, branch `fix/restore-original-week-grid`): 34 headless Edge checks on the production build (scratchpad script `restore-check`, not committed), all passing, covering drag, action bar, menu, Undo, block click, handles with Save and Cancel, day clear, keyboard, template switch, activity add and edit, the Goals handoff, touch tap, no overflow at 1280 and 400 px, and no console errors. Planner screenshots regenerated from a clean seed. Screenshots: `planner-desktop-light.png` (deleted in slice 12), `planner-desktop-dark.png`, `planner-mobile-light.png`.
 - Slice 5 (cleanup and docs audit): Node scan of every class, token, path and component named in this spec against `app/` and `app/assets/css/` (scratch script, not committed); browser runs on the production build (scratchpad scripts `s5-focus`, `s5-keys`, `s5-home` and the final regression pass). Swatch hit areas measured at 24px; Home contrast re-computed in both themes (ink-3 on the page 4.76:1 light, 7.04:1 dark). Screenshots regenerated from the final build (names unchanged, Home and Visualization added).
 
 ## 12. UX polish batch (feat/ux-polish)
@@ -569,4 +571,4 @@ Owner UX review, 2026-10-28: fewer concepts on screen, less to fill in, the powe
 
 - Headless Edge on the production build, 74 browser checks: the category detail order; Apply opening Edit range on the new block (handles, focus, ArrowUp and ArrowDown, Save, Undo, Escape); the Apply menu with 25 items at 400 by 800 (touch) and 1280 by 500 (wheel): on screen, the list scrolls, the page does not; a touch drag on a handle at 400 px; the Schedule block closed by default, Close, Escape, the result line after Close; the focus rule at 1280 px (a field takes focus) and at 400 px with touch emulation (no text field takes focus; the panel or dialog does).
 - Touch scroll of the menu was driven with manual touch moves; the headless `synthesizeScrollGesture` did not scroll the list. A real phone was not used.
-- Screenshots: `spec/screens/week-apply-edit-desktop-light.png`, `week-apply-menu-mobile-light.png`, `week-apply-menu-short-desktop-light.png`, and `goals-detail-desktop-light.png` (replaced).
+- Screenshots: `week-apply-edit-desktop-light.png` (deleted in slice 12), `week-apply-menu-mobile-light.png`, `week-apply-menu-short-desktop-light.png`, and `goals-detail-desktop-light.png` (replaced).

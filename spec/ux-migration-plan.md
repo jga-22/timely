@@ -352,6 +352,7 @@ NOT VERIFIED: a signed-in (Supabase) account; a real phone or a touch screen; a 
 
 ### Slice 12. Polish, docs, screens (S-M, 1 session)
 - Empty states per surface, copy pass against proposal 6e, `spec/screens/` replaced, `frontend-design.md` final, README, PRD changelog, `build-plan.md`, agent.md Current state trimmed. Tag 0.2.0.
+- **Status (2026-11-05, `chore/polish-a2` from `main` d4e860d, one local commit, not pushed): done.** The summary is section 10. The version stays 0.1.1 and nothing is tagged: the owner decides the version and the tag (the 0.2.0 above is not cut).
 
 ---
 
@@ -396,7 +397,7 @@ Old tabs: [rec] **direct replacement, no feature flag.** Dev mode, no users, sol
 ### 6.3 Rollout
 - Patch tag per merged slice (0.0.1 = slice 1, 0.0.2, ...), CHANGELOG section in each PR.
 - **0.1.0**: owner decision on 2026-11-04, cut at slice 4 (three screens: Today, Plan, Progress; old links redirected; saved state version 8 unchanged). It was planned after slice 9; the first-run rebuild (slice 9) follows in a later version. Release notes in CHANGELOG; the tag and the GitHub release are the owner's to make.
-- **0.2.0** after slice 12: Year kept, stages, ring, dream path, lively layer, milestones.
+- **0.2.0** after slice 12: Year kept, stages, ring, dream path, lively layer, milestones. Not cut (2026-11-05): the owner decides the version.
 - Before 0.1.0: load an export of the owner's save in a local build and walk every surface.
 
 ---
@@ -443,3 +444,56 @@ Also: keep the parity log (section 3) in `spec/` (for example in `ux-information
 15. Empty Today: "Plan Run in Week" (preselected hours) instead of A2's one-day block (needs a model change)?
 16. First-run "Anything else" text: drop it, or put it in today's journal note on Accept?
 17. Version cadence: patch tag per slice, 0.1.0 after the first run, 0.2.0 after polish?
+
+---
+
+## 10. Closing summary (2026-11-05)
+
+**Status.** The migration is done. Slices 1 to 12 are built, each on its own branch, none pushed; slice 12 is the last commit on `chore/polish-a2`. The version is 0.1.1 in the files and nothing is tagged after it. Storage version 8 throughout, no data-model change since 8, no dependency added for the migration.
+
+**Built.** Slice by slice: 1, the quick wins (one awake-hours rule, the sleep sentence out of Today, the first session on today's weekday); 2, Vuetify, `@mdi/font` and the icon font removed (the entry CSS from 560 KB to about 52 KB raw); 3, the A2 tokens in three tiers, the light and dark themes, Calm and Lively (`timely.motion`, reduced motion always Calm); 4, the rail, the phone tab bar, the top bar, the skip link and the three surfaces (Today, Plan with Dreams, Week and Year, Progress), the old `?tab=` links rewritten once; 5, Today (focus card and countdown, "Behind this", the day line, the week strip, the journal line, All habits); 6, Plan > Week (the schedule chips, Show sleep, the grid, "Where the week goes", the entry buttons); 7, Plan > Year (the paint tools, the schedule card with its grid, the summary with Free); 8, Progress (the headline in words, the eight-week trend, the recap and its four-step dialog, Done for the week, the settings); 9, the rules-based first run (Welcome, five questions, the draft, Accept; no tour, no intro, no Start empty); 10, the dream path and the Year kept share (derived, no stored value; the ambition ring left out by the owner's scope); 11, the Lively layer on Today, the route cross-fade, the milestones card and the toast; 12, the polish below.
+
+**Slice 12 (polish).**
+- Empty states, checked on a new account (`createOnboardingState`), the seed and a blank week (no schedule of its own), with screenshots at 1280 and 400 in light and dark. Each one says what to do next: Today ("Nothing planned for today." with "Give this week a schedule in Year"; the blank-week note with its link), Dreams ("No 5-year goal yet", "Add a goal"), Week ("Nothing planned in this schedule yet."), Year ("53 with no schedule", "Pick a schedule, then click or drag across the weeks.", "Open Week"), Progress ("Your progress starts with your first tick." with "Open Today"; the path's hollow dots; the recap and the milestones say what starts them), the first run's welcome. One gap found and fixed: the Dreams list showed "Target set" where the plan's table says "Not started" (and "No target yet" for "No 1-year target yet"); it now shows the progress words, as the detail already did.
+- Copy pass against the mockup and proposal 6e. The changed strings (old, new, where):
+
+| Old | New | Where |
+| --- | --- | --- |
+| Target set (with habits) | Not started (the progress words, as the detail) | Dreams list, `harada/LifeAreaList.vue` |
+| No target yet | No 1-year target yet | Dreams list, `utils/goals.ts` fallback for an area past the first eight |
+| Week types (legend) | Schedules | Entry form, `entry/EntryScheduleFields.vue` |
+| No week type can hold hours yet. Hours are painted in hourly week types only. | No schedule can hold hours yet. Hours are painted in hourly schedules only. | Entry form hint, the same file |
+| No week type is checked: saving takes it out of the week. | No schedule is checked: saving takes it out of the week. | Entry form hint, the same file |
+| Saving repaints this item in the checked week types. | Saving repaints this item in the checked schedules. | Entry form hint, the same file |
+| Hours are painted whole: … in each week type. | … in each schedule. | `ActivityForm.vue` |
+| Not in a week type | Not in a schedule | Entry lines, `utils/entries/rows.ts` |
+| Not in any week type now. | Not in any schedule now. | Paint result, `utils/entries/text.ts` |
+| Choose at least one week type. | Choose at least one schedule. | Entry error, `utils/entries/validate.ts` |
+| This clears its hours in N week type(s) … / Delete X? It clears its hours in N week types. | … in N schedule(s) … | Removal and delete confirmations, `utils/entries/form.ts` |
+| Counted from 9 October 2026 to today, 24 days. | Counted from 9 October, 24 days. | Progress, more detail, `insights/AdherenceView.vue` |
+
+Kept on purpose (not changed): "Apply to several weeks" (the owner's words on 2026-11-05; proposal 6e has "Set several weeks"), "Paint with" (the mockup's), "Clear" (the owner's, on 2026-11-05; the mockup says "Clear to My week"), "Planned as a block" on Today (the mockup's; 6e's "Planned session" is not adopted yet), "Today's list" (the list holds the focal item too, so "Also today", the mockup's heading, would be wrong), "Good morning." (no name in local mode, plan 2.3), "Plan" as the title over the sub-nav, "Weeks 38 to 45" as Progress's eyebrow, and the Milestones lede. No aria-label changed: the screen-reader names already follow the visible words (the changed strings above are visible text only).
+
+- Screenshots: `spec/screens` lost 93 files (the Onboarding, Goals, Planner, Insights, Sleep, unified, Year, old Today and five-tab pictures, the Account menu pictures with the Dark mode switch, and the before shot) and gained 22 (the current Today, Dreams, Week and Year at 1280 and 400, the empty states, and the mockup at 1280 for comparison). The rows of the index point at them; the history notes keep their old names, marked as deleted. Every PNG was checked with `file` after the change.
+- Docs: `frontend-design.md` (the screen table, the shell and account text, the breakpoints and phone table, the Dreams and Progress headings, the known gaps); the PRD history row; `build-plan.md` (the status log); the README changelog; `agent.md` Current state trimmed to the state and the open items.
+
+**Deliberate differences from the mockup (kept).**
+- No name in the greeting (local mode has no name; plan 2.3), and no ambition ring (the owner's scope for slice 10). The path's average is the figure on Progress.
+- No lede under the titles on Dreams, Week or Year (the owner removed the ledes on Week and Year on 2026-11-05; Dreams follows the same rule). The title over the sub-nav is "Plan".
+- Dreams has one "+ Add" form for habits and activities (FR-ITEM), and the pencil is the one edit control (`EditButton`); the mockup edits in place with text links.
+- Year: the hint line "Pick a schedule, then click or drag across the weeks." replaces the mockup's "Week 45 is outlined." (the owner's fix); the weeks are outlined in the grid. The summary's note says the awake time is each week less its Sleep hours.
+- Week: the card "Schedules" holds the chips, Show sleep, the grid and the entry buttons; "Where the week goes" is a card below it (the owner's 2026-11-05 order). The day heads show the day's hours and a clear button; the sleep hours show as bands above and below the grid.
+- First run: the theme button at the top right and the legal footer (the mockup has neither). The welcome copy is the mockup's word for word.
+
+**Open items for the owner.**
+1. The focal card when the focal block is already ticked: the rule (FR-TODAY-2) then moves to the next undone item. Decide whether the card should keep the block in progress until its time passes.
+2. The time budget in `ux-journey-map.md` (section 4): "ten minutes a week" for planning and review. If it was meant as ten minutes in total, the daily budget is about one minute. The app has no per-area budget (the idea "Time budget per life area" is open).
+3. Dark area colours against the 3:1 rule: the planned fills reach 3:1 on their surface (`usePlannerFill`); the area dots and swatches in dark mode were not measured.
+4. Year squares at phone width: 23 px at 400 px and 20 px at 360 px, below the 44 px target (a 44 px square would need a sideways scroll across 14 weeks). A seven-per-row layout would make them larger. Decide.
+5. Phone week day tabs (Q12): not built. The grid scrolls sideways inside its own box.
+6. The vocabulary of 6e not adopted: "Set several weeks", "Planned session" and "sessions" (see above). Decide with the five-person test the plan asked for.
+7. The Progress headline with nothing ticked this week says "fewer than half of the hours you planned", and the current week's trend shows 0% while planned hours exist (a real measure, not an empty state). Decide the words for zero.
+8. The Year kept percentages on the owner's real save (slice 10's check): not done. A fixture and the seed were used.
+9. Mockup "Dreams" and "Today" show sample numbers; the app's screens use the seed and the fixtures. The screenshots are on generic data, not the owner's save.
+
+**Not verified.** Supabase mode on a real project (sign-in, first run, save); a real phone or a touch screen (the phone layout is checked at 400 px in headless Edge); a screen reader pass (the names were read in the DOM); Firefox and Safari; the Tab order key by key on every surface (14 presses per surface were checked by script, with the first stops on the skip link and the top bar); the dark-mode dot contrast (item 3). The Lively cross-fade and the sparks were sampled, not measured per frame (slice 11).

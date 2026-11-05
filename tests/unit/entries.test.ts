@@ -173,7 +173,7 @@ describe('entryErrors', () => {
   it('needs a week type for a new timed activity', () => {
     const errors = entryErrors(planned(), validDraft({ activityId: null, templateIds: [] }))
 
-    expect(errors.weekTypes).toBe('Choose at least one week type.')
+    expect(errors.weekTypes).toBe('Choose at least one schedule.')
   })
 
   it('refuses a block that runs past midnight', () => {
@@ -222,7 +222,7 @@ describe('paintResultText', () => {
   })
 
   it('says when the activity is in no week type', () => {
-    expect(paintResultText({ added: [], days: 0, hours: 0, replaced: [], cleared: [] })).toBe('Not in any week type now.')
+    expect(paintResultText({ added: [], days: 0, hours: 0, replaced: [], cleared: [] })).toBe('Not in any schedule now.')
   })
 })
 

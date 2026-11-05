@@ -2,7 +2,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 
 // The Life areas list (Insights, Year and the Week tab's Where the week goes): one row per life area (its hours and its share of the
-// available time; the name links to Goals when the row has a target) and the rest, named by restLabel (Not planned by default).
+// available time; the name links to Goals when the row has a target) and the rest, named by restLabel (Free by default).
 // With selectable (the donut view) a row click selects its slice; a link inside a row still goes to Goals.
 type ShareRow = { key: string, label: string, color: string, value: string, pct: number, to?: RouteLocationRaw }
 
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
   restLabel?: string
   selectable?: boolean
   selected: string | null
-}>(), { restLabel: 'Not planned', selectable: false })
+}>(), { restLabel: 'Free', selectable: false })
 const emit = defineEmits<{ select: [key: string | null] }>()
 
 // Selects the row's slice, or clears the selection when it is the selected one

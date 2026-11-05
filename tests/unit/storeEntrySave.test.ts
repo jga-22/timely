@@ -258,7 +258,7 @@ describe('saveEntry (op)', () => {
     const state = empty()
     const before = JSON.stringify(state)
 
-    expect(saveEntry(state, runDraft(state, { templateIds: [] }), STAMP)).toEqual({ errors: { weekTypes: 'Choose at least one week type.' } })
+    expect(saveEntry(state, runDraft(state, { templateIds: [] }), STAMP)).toEqual({ errors: { weekTypes: 'Choose at least one schedule.' } })
     expect(JSON.stringify(state)).toBe(before)
   })
 

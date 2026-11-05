@@ -46,7 +46,7 @@ export const copyDraft = (draft: EntryDraft): EntryDraft => ({
 /** The removal confirmation: what Save without time does to the activity */
 export const noTimeText = (impact: RemovalImpact): string => {
   if (impact.keepsActivity) return 'This unlinks it from the habit. Its activity stays, because another habit uses it.'
-  if (impact.hours) return `This clears its hours in ${plural(impact.templateCount, 'week type', 'week types')} and removes its activity.`
+  if (impact.hours) return `This clears its hours in ${plural(impact.templateCount, 'schedule', 'schedules')} and removes its activity.`
   return 'This removes its activity.'
 }
 
@@ -59,6 +59,6 @@ export const deleteText = (saved: { name: string; habitId: string | null; activi
   }
 
   return impact.hours
-    ? `Delete ${saved.name}? It clears its hours in ${plural(impact.templateCount, 'week type', 'week types')}. This cannot be undone.`
+    ? `Delete ${saved.name}? It clears its hours in ${plural(impact.templateCount, 'schedule', 'schedules')}. This cannot be undone.`
     : `Delete ${saved.name}? This cannot be undone.`
 }

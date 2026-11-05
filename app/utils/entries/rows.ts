@@ -22,7 +22,7 @@ export const entryLines = (state: PlannerState, habitId: string | null, activity
     lines.push(draft.days.length ? `${dayText(draft.days)} at ${formatHour(draft.start)} for ${durationText(draft.durationMinutes)}` : 'No days yet')
 
     const names = draft.templateIds.map(id => state.templates.find(template => template.id === id)?.name ?? '').filter(Boolean)
-    lines.push(names.length ? `In ${joinNames(names)}` : 'Not in a week type')
+    lines.push(names.length ? `In ${joinNames(names)}` : 'Not in a schedule')
 
     const need = habit ? needText(habit) : null
     lines.push(need ?? `${hoursLabel(scheduledWeeklyMinutesForActivity(state, activityId))} a week`)
