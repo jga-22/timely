@@ -6,6 +6,8 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 
 ### Added
 - The first run is a full page in the A2 look: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give, 1 to 20), then an editable draft with a week preview and your first action. Nothing is saved until you accept, and "Use a starter instead" is on every step. Accepting ends on Today with a "Your plan is saved." line.
+- The theme button (moon or sun) is on the first-run page too, top right, on every step; it is the top bar's own control, now one shared component (`ThemeButton.vue`).
+- The first run's mini week: in Lively the day blocks rise in one after another, counted across the week. Calm shows the week at once.
 - Replay first run in the Account menu (both modes). An account that already holds a plan asks first; Cancel and Escape change nothing.
 - Progress reads like the A2 mockup, in its words and look. The headline says how much of the planned time you ticked over the last eight weeks ("about three in four"). The week by week trend shows each week's share, with the current week marked "So far"; hover or focus a week for its figure.
 - A weekly recap: "Start the recap" walks through this week so far, the life area that went steadiest and the one that had the most misses, and one weekly habit to carry forward. "Done for the week" closes the week; from the next Monday the recap opens again. Reopen brings it back for the same week. Nothing is lost and nothing resets.

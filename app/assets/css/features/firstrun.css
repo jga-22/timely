@@ -32,6 +32,7 @@
   color: var(--ink);
 }
 .firstrun-brand-mark { display: inline-grid; place-items: center; color: var(--accent); }
+.firstrun-top-end { display: flex; align-items: center; gap: var(--sp-3); }
 .firstrun-eyebrow { margin: 0; font-size: var(--text-small); color: var(--ink-3); }
 
 .firstrun-progress { height: 4px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
@@ -175,6 +176,11 @@
   line-height: 1.2;
   color: var(--ink);
   overflow-wrap: break-word;
+}
+/* The blocks rise in one after another (the mockup's mini week): each waits its --i steps of --stagger. Lively only; Calm shows them at once */
+:root[data-motion="lively"] .firstrun-mini-block {
+  animation: firstrun-rise var(--dur-enter) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 
 /* The footer: Back at the start, the starter and the next step at the end */

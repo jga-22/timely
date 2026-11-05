@@ -2,8 +2,8 @@
 import { FIRST_RUN_STEP_COUNT, useFirstRun } from '~/composables/useFirstRun'
 
 /**
- * The first run as a full page (FR-ONB, A2 setup): the brand, "Step n of 6", a progress line, one step at a time and the footer
- * with Back, Use a starter instead and Continue. It replaces the shell while it is open. Each step's heading takes focus when the
+ * The first run as a full page (FR-ONB, A2 setup): the brand, "Step n of 6" and the theme button (the same one as the top bar), a
+ * progress line, one step at a time and the footer with Back, Use a starter instead and Continue. It replaces the shell while it is open. Each step's heading takes focus when the
  * step changes, so the keyboard stays down on a phone (FR-UX-9); Escape does not close it (there is no skip).
  */
 const { step, error, next, back, useStarter } = useFirstRun()
@@ -27,7 +27,10 @@ onMounted(focusHeading)
         <span class="firstrun-brand-mark" aria-hidden="true"><UiIcon name="check" size="sm" /></span>
         <span>Timely</span>
       </p>
-      <p class="firstrun-eyebrow">{{ eyebrow }}</p>
+      <div class="firstrun-top-end">
+        <p class="firstrun-eyebrow">{{ eyebrow }}</p>
+        <ThemeButton />
+      </div>
     </header>
     <div class="firstrun-progress" aria-hidden="true"><span :style="{ width: `${progress}%` }" /></div>
 
