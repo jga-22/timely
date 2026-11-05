@@ -26,10 +26,10 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | File | Size | Notes |
 | --- | --- | --- |
 | `topbar-account-closed-desktop-light.png` | 1280 px wide | Topbar, Supabase mode, signed in: the avatar with the initials "JG" (Google name), no dot |
-| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name with "Saved" under it, the Dark mode switch, Replay tour, Reset my data, Sign out last |
-| `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark |
-| `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
-| `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
+| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name with "Saved" under it, the Dark mode switch, Replay tour, Reset my data, Sign out last. Stale since 2026-11-05 (the switch is gone): recapture in Supabase mode |
+| `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark. Stale since 2026-11-05 (shows the old switch) |
+| `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark. Stale since 2026-11-05 (shows the old switch) |
+| `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode, dark, menu open (recaptured 2026-11-05): the theme button in the top bar, the header "Local mode, saved in this browser", the Motion choice, Replay tour, Reset my data; no switch |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light (recaptured 2026-11-05; no switch) |
 | `progress-desktop-light-lively.png` | 1280 px wide, full page | Progress (slice 8, `feat/progress-a2`), sample data with ticks: the headline "Over the last four weeks you ticked about half...", the week by week trend, the recap and Settings, More detail closed |
 | `progress-desktop-dark-calm.png` | 1280 px wide, full page, dark, Calm | The same page in dark mode with Calm |
@@ -284,7 +284,7 @@ One form and one list for activities and habits (FR-ITEM-1 to 5). The Week tab s
 
 - The topbar shows one round avatar button instead of the "Account" text button, the save status and the theme toggle. Initials come from the Google name or the email (`app/utils/account.ts`); local mode shows a person glyph.
 - A dot on the avatar shows while saving (quiet, still with reduced motion) and when not saved (danger). The menu says the same in text ("Saving...", "Not saved", "Saved", "Loading...").
-- The Account menu, left aligned with an icon on each row: the name (no email; "Local mode, saved in this browser" in local mode) with the save status under it, a Dark mode switch (`role="switch"`, the same `timely.dark` key), Replay tour, Reset my data, and Sign out last (Supabase mode).
+- The Account menu, left aligned with an icon on each row: the name (no email; "Local mode, saved in this browser" in local mode) with the save status under it, the Motion choice, Replay tour, Reset my data, and Sign out last (Supabase mode). Dark mode is the top bar's theme button only (since 2026-11-05). The Supabase-mode menu screens (`topbar-account-menu-*`, `topbar-account-not-saved-mobile-dark.png`) were captured before that and still show the old switch; they need a signed-in recapture.
 - Focus: a desktop focuses the first control on open; a phone focuses the panel (FR-UX-9). Escape closes and returns focus to the avatar; a click outside closes.
 - Checks: typecheck 0 errors; build clean; the initials function (17 cases, `npx tsx`); headless Edge on the production build, 104 browser checks in local mode and against the fake Supabase server (names, initials, the dot states, the error and recovery, the theme persisting on reload, Escape, outside click, sign out) at 1280 and 400 px, light and dark. Not run against the real Supabase project, and not on a real phone.
 - Storage version unchanged (8). Screenshots `topbar-account-*.png`.

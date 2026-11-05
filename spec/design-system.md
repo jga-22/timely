@@ -174,7 +174,7 @@ The phone rules are at 768px, which matches the focus rule in `utils/focus.ts` (
 
 ### 3.1 Theme, motion and part of the day
 
-- **Theme:** `html[data-theme="dark"]` swaps the semantic colour and elevation tokens. Light has no attribute. Set by `useTheme()` (the Account menu's Dark mode switch).
+- **Theme:** `html[data-theme="dark"]` swaps the semantic colour and elevation tokens. Light has no attribute. Set by `useTheme()` (the top bar's theme button, the one theme control since 2026-11-05).
 - **Motion:** `html[data-motion="lively|calm"]` says what runs; `html[data-choice="lively|calm"]` says what the user picked. Reduced motion (the system's `prefers-reduced-motion`) makes `data-motion` calm whatever the choice, and the choice is kept, so the Account menu still shows it. Set by `useMotion()`. The control is the Motion choice in the Account menu (Lively or Calm, with a note when the system asks for less motion).
 - **Part:** `html[data-part="morning|afternoon|evening"]` swaps `--am-1` and `--am-2`. Morning from 05:00, afternoon from 12:00, evening from 17:00 and through the night (`PART_START_HOUR` in `utils/motion.ts`).
 - **The Lively ambient:** under `data-motion="lively"` two soft glows, of `--am-1` and `--am-2` (the part of the day), sit fixed behind the page: the mockup's A2 look (`.ambient` in `features/shell.css`). The glow drifts (`drift` in `motion.css`). Calm hides the layer, and the page is the plain paper. The top bar has no background of its own, so the glow shows behind it. `designContrast.test.ts` checks ink, the secondary and muted text and the accent on the full tint of every part and theme (4.5:1): the centre of a glow is the worst case.
