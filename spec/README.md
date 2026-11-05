@@ -1,4 +1,3 @@
-| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, a state with no week type on any week (blank weeks, 2026-11-05): the Year planner card with the count "53 with no schedule", the blank grid, and the card "Plan the week in Week and the hours show here." with Open Week || `planner-mobile-light.png` | 400 px wide, full page | Week, light, at 400 px (2026-11-05): the Schedules card, the grid scrolls sideways inside its box, the two buttons wrap under it, Where the week goes below, no page overflow || `planner-desktop-dark.png` | 1280 px wide, full page | Week, dark: the same layout, the card titled "Schedules" (2026-11-05) || `planner-desktop-light.png` | 1280 px wide, full page | Week, light, sample data (2026-11-05): the lede, the Schedules card (the schedule chips, the grid with Show sleep and its hours, the entry buttons), then Where the week goes as a card below it. The card is titled "Schedules" |# Timely specification
 
 This folder holds the product and design specification for Timely. The code is the source of truth for what is built. These documents explain intent, describe the current product and list open work.
 
@@ -21,14 +20,32 @@ This folder holds the product and design specification for Timely. The code is t
 | `screens/` | Reference screenshots of the current build (list below), from the production build at 1280 and 400 px. | Compare before and after a UI change. Keep the names; replace the files when a screen changes on purpose. |
 | `database/` | Draft design for storing the data in PostgreSQL or Supabase instead of localStorage (not built): data model, `schema.sql`, ERD (draw.io and Mermaid) and the effort evaluation. | Read before any storage change. The app does not depend on it yet; the storage decision is pending with the owner. |
 
-Screenshots in `screens/` (regenerated on 27 October 2026 from the production build of `feat/polish-v3`, generic sample data, no test paint):
+Screenshots in `screens/`. The first rows are the slice 12 set (2026-11-05, production build of `chore/polish-a2`: seed, new account and blank week fixtures, frozen clock Thursday 5 November 2026, 10:30). The rows below them are from the earlier builds named in each note. Slice 12 removed the screens that showed removed screens or old words (the guided onboarding, the tour, the old Goals, Planner, Year, Insights and Sleep pictures, the five-tab bar and the Account menu with its Dark mode switch).
 
 | File | Size | Notes |
 | --- | --- | --- |
-| `topbar-account-closed-desktop-light.png` | 1280 px wide | Topbar, Supabase mode, signed in: the avatar with the initials "JG" (Google name), no dot |
-| `topbar-account-menu-desktop-light.png` | 1280 px wide | The Account menu open: name with "Saved" under it, the Dark mode switch, Replay tour, Reset my data, Sign out last. Stale since 2026-11-05 (the switch is gone): recapture in Supabase mode |
-| `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark. Stale since 2026-11-05 (shows the old switch) |
-| `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark. Stale since 2026-11-05 (shows the old switch) |
+| `today-1280-light-calm.png` | 1280 px wide, full page | Today on the seed (generic sample data), light, Calm: the focal card with its countdown and "Behind this", the day line, "Today's list", the week strip, "One line for today" and "All habits" |
+| `today-1280-dark-lively.png` | 1280 px wide, full page, dark, Lively | The same page in dark mode with Lively (the glow and the focal card glide) |
+| `today-400-light-calm.png` | 400 px wide, full page | Phone width, light, Calm. The fixed tab bar sits mid-page in a full-page capture; it is at the foot of the screen |
+| `today-400-dark-lively.png` | 400 px wide, full page, dark, Lively | Phone width, dark, Lively |
+| `today-nothing-1280-light-calm.png` | 1280 px wide, full page | Empty state: a new account (no plan yet). "Nothing planned for today." with "Give this week a schedule in Year", the blank-week note and the week strip at 0 of 0 |
+| `today-blank-week-1280-light-calm.png` | 1280 px wide, full page | Empty state: a week with no schedule of its own. No blocks; the habits still show; the note links to Year |
+| `today-ticks-400-light-lively.png` | 400 px wide, full page | A saved plan after ticks on three days, with the journal line, at phone width (Lively) |
+| `dreams-1280-light-calm.png` | 1280 px wide, full page | Plan > Dreams with Physical open (seed, no ticks): "Not started" in the list and the detail, the 5-year goal and the 1-year target, the one "+ Add" for habits and activities |
+| `dreams-400-dark-lively.png` | 400 px wide, full page, dark, Lively | Dreams at phone width, dark, with the list and the detail under it |
+| `dreams-empty-1280-light-calm.png` | 1280 px wide, full page | Empty state: a new account. "No 5-year goal yet", "No 1-year target yet", "Add a goal"; the detail asks for a selection |
+| `week-1280-light-calm.png` | 1280 px wide, full page | Plan > Week (seed): the Schedules card with its chips, Show sleep, the grid and the entry buttons; "Where the week goes" below the card |
+| `week-400-dark-lively.png` | 400 px wide, full page, dark, Lively | Week at phone width (the grid scrolls sideways inside its own box) |
+| `week-empty-1280-dark-calm.png` | 1280 px wide, full page, dark, Calm | Empty state: a new account. "Nothing planned in this schedule yet." and "No week of 2026 uses My week yet." |
+| `year-1280-light-calm.png` | 1280 px wide, full page | Plan > Year (seed): the Year planner card with the paint tools, "Apply to several weeks", the 53-week grid, the legend and "Planned hours in 2026" with Free; More detail closed |
+| `year-400-dark-lively.png` | 400 px wide, full page, dark, Lively | Year at phone width, dark |
+| `year-empty-1280-light-calm.png` | 1280 px wide, full page | Empty state: a new account. "53 with no schedule", "Pick a schedule, then click or drag across the weeks.", and "Plan the week in Week and the hours show here." with Open Week |
+| `mockup-today-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, Today, light, Calm, for comparison (its own sample data and prototype notes) |
+| `mockup-dreams-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, Dreams, for comparison |
+| `mockup-week-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, Week, for comparison |
+| `mockup-year-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, Year, for comparison |
+| `mockup-progress-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, Progress, for comparison |
+| `mockup-firstrun-1280-light-calm.png` | 1280 px wide, full page | The A2 mockup, first run welcome, for comparison (the app adds the theme button and the legal footer) |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode, dark, menu open (recaptured 2026-11-05): the theme button in the top bar, the header "Local mode, saved in this browser", the Motion choice, Replay tour, Reset my data; no switch |
 | `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light (recaptured 2026-11-05; no switch) |
 | `progress-desktop-light-lively.png` | 1280 px wide, full page | Progress (slice 8, `feat/progress-a2`), sample data with ticks: the headline "Over the last four weeks you ticked about half...", the week by week trend, the recap and Settings, More detail closed |
@@ -43,7 +60,6 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `progress-dreampath-desktop-light.png` | 1280 px wide, full page | Progress with the dream path (slice 10, `feat/dream-path-a2`), the seed after four weeks of full keeping (fixture, frozen clock): average 9% of 8 life areas, Physical 8% Starting, Economic 17%, the wide path |
 | `progress-dreampath-desktop-dark.png` | 1280 px wide, full page, dark | The same page in dark mode, lively |
 | `progress-dreampath-mobile-light.png` | 400 px wide, full page | The same data at phone width: the narrow path, labels to the side |
-| `progress-dreampath-mobile-dark.png` | 400 px wide, full page, dark | The same at phone width, dark |
 | `progress-dreampath-empty-desktop-light.png` | 1280 px wide, full page | The seed with no ticks: every node a hollow dot with "Not started", and "Your progress starts with your first tick." |
 | `progress-dreampath-empty-mobile-dark.png` | 400 px wide, full page, dark | The seed with no ticks at phone width |
 | `progress-dreampath-new-account-desktop-light.png` | 1280 px wide, full page | A new account: eight hollow dots, "No 1-year target yet" |
@@ -69,61 +85,8 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `progress-milestones-400-light-lively.png` | 400 px wide | The card at phone width: the date above each line |
 | `progress-milestones-400-dark-calm.png` | 400 px wide, dark, Calm | The same at phone width, dark, Calm |
 | `progress-milestones-1280-light-lively-empty.png` | 1280 px wide | The empty state: "No milestones yet." and how the first one comes |
-| `progress-before-desktop-light.png` | 1280 px wide, full page | Before slice 11 (`f692a4e`): Progress with no Milestones card |
 | `progress-mockup-desktop-light.png` | 1280 px wide | The A2 mockup (`prototype-a2.html`, sample data) for comparison |
 | `progress-blank-week-desktop-light.png` | 1280 px wide, full page | A blank current week (no schedule): the headline counts the three planned weeks; the recap says nothing is planned for this week |
-| `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (the block in focus with its pill: a countdown, or "Done · next at 1 PM" when ticked; "Behind this" line), the day line with the now marker, "1 of 7 done today", Today's list (every item, the one in focus marked), the week strip, the journal line and All habits collapsed (2026-11-05) |
-| `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |
-| `today-mobile-light.png` | 400 px wide, full page | Today, light, phone: the focus card above the fold, the tab bar at the foot, nothing hidden at the end |
-| `today-all-done-desktop-light.png` | 1280 px wide, full page | Today, light, every item ticked: "Today is done." with the check, "Plan tomorrow" and the day line "All done today" |
-| `today-mobile-dark-all-done.png` | 400 px wide, full page | Today, dark, Calm, every item ticked (phone) |
-| `today-nothing-desktop-light.png` | 1280 px wide, full page | Today, light, nothing planned: the illustration, "Plan Run in Week" (the weekly habit furthest behind, with an activity) |
-| `today-past-desktop-light.png` | 1280 px wide, full page | The previous day (Tuesday 3 November): "A past day" eyebrow, "Looking back at this day.", the day switch with Back to today |
-| `goals-desktop-light.png` | 1280 px wide | Goals, light, the default List view on sample data with nothing selected: the ambition, the category list with each 5-year goal (a target icon under the name) and each 1-year target status (no time comparison since 2026-10-29) |
-| `goals-desktop-dark.png` | 1280 px wide | Goals, dark |
-| `goals-ambition-prompt-desktop-light.png` | 1280 px wide | Goals, light, Start empty: "Ambition, 5 years" with the prompt "Write your 5-year ambition" and "Save ambition" (disabled while blank) |
-| `goals-mobile-light.png` | 400 px wide | Goals, light: the category list at phone width, full page, each row with its 5-year goal (refreshed 2026-10-31) |
-| `goals-detail-mobile-light.png` | 400 px wide | Goals, light, the category detail in view mode at phone width: the 5-year goal, the 1-year target, the entries with "Needs 6 h a week" (refreshed 2026-10-29) |
-| `goals-detail-desktop-light.png` | 1280 px wide | Goals, light, the category detail in view mode on sample data: the 5-year goal, the 1-year target, "Activities and habits" with each habit's schedule and "Needs 6 h a week" (refreshed 2026-10-29) |
-| `planner-grid-apply-edit-desktop-light.png` | 1280 px wide | Week, light: a 2-hour block applied to an empty run; its box is open with the handles, Change…, the word button Edit (label Edit activity, opens the entry's form), Delete, Save (disabled until an edge moves) and Cancel, and the undo line (2026-11-05; replaces `week-apply-edit-desktop-light.png`, retired) |
-| `week-apply-menu-mobile-light.png` | 400 px wide | Week, light: the Apply menu at the bottom of the phone, fitted on screen, its list scrolled inside (fix/ux-batch-5) |
-| `week-apply-menu-short-desktop-light.png` | 1280 px by 500 | Week, light: the Apply menu on a short desktop, fitted and its list scrolled (fix/ux-batch-5) |
-| `goals-detail-edit-desktop-light.png` | 1280 px wide | Goals, light: Spiritual in edit mode |
-| `goals-grid-desktop-light.png` | 1280 px wide, full page | Goals, light, Grid view: the Harada map with the ambition in the centre and Physical's detail below it; the list is hidden |
-| `goals-start-empty-mobile-dark.png` | 400 px wide, full page | Goals, dark, Start empty: eight life areas as name rows, each with "No 5-year goal yet" under the name and "Add a goal" beside it, no target or bar lines; the List \| Grid toggle is hidden |
-| `planner-grid-block-selected-desktop-light.png` | 1280 px wide | Week, light: a block tapped, its edge handles at once, and the action bar beside its day column (Change…, the word button Edit, Delete, Save disabled, Cancel) (2026-11-05) |
-| `planner-grid-block-selected-mobile-light.png` | 400 px wide | Week, light: the same block on a phone; the action bar at the bottom of the screen and the handles on the block's edges (2026-11-05) |
-| `planner-desktop-light.png` | 1280 px wide, full page | Week, light, sample data (2026-11-05): the Week card with one collapsible "Schedules" section, as the Year planner: the title and meta, the tip, the schedule chips with their panels, Show sleep and the grid, the entry buttons; then Where the week goes as a card below |
-| `today-blank-week-desktop-light.png` | 1280 px wide | Today, light, on a day of a blank week (2026-11-04 with its week removed from the sample, 2026-11-05): the habits only, no day line, the line "This week has no schedule, so nothing is planned in it." with "Give the week a schedule in Year" |
-| `today-blank-week-mobile-light.png` | 400 px wide | The same blank-week Today at 400 px |
-| `planner-new-week-type-vacation-desktop-light.png` | 1280 px wide | New week type panel, light, Start from Vacation: the time-off note and the Sleep mapping row (FR-TPL-8) |
-| `planner-new-week-type-vacation-mobile-light.png` | 400 px wide | The same panel at 400 px |
-| `topbar-five-tabs-mobile-light.png` | 400 px wide, top 110 px | Topbar, light: the five tabs Home, Goals, Week, Year, Insights on one row (feat/year-tab; `.tabs` overflow 0 at 400 and 360 px) |
-| `year-desktop-light.png` | 1280 px wide | Year, light, full page at 1280 px, sample data (2026-11-05): the Year planner card (the title, the count of weeks each schedule uses, the year switcher, the hint, the paint tools with "Clear", "Apply to several weeks", the year grid with its legend and the current week outlined); the summary card (the planned hours against the awake time, Free last, Show sleep); More detail closed |
-| `year-desktop-dark.png` | 1280 px wide | Year, dark, full page at 1280 px: the same layout (2026-11-05) |
-| `year-apply-several-desktop-light.png` | 1280 px wide | Year, light: the Year planner card with "Apply to several weeks" open (the Week tab link opens it with Vacation chosen): "for weeks 1 to 1", the hint "Applies Vacation to these weeks.", the grid below (2026-11-05) |
-| `year-apply-several-mobile-light.png` | 400 px wide | Year, light, the same options at 400 px: the panel took focus, not the field (FR-UX-9; 2026-11-05) |
-| `year-mobile-light.png` | 400 px wide, full page | Year, light, full page at 400 px (2026-11-05): the year switcher on its own line under the title, the paint tools wrap, the squares take the width |
-| `year-mobile-dark.png` | 400 px wide, full page | Year, dark, full page at 400 px: the same layout (2026-11-05) |
-| `year-vacation-preselected-desktop-light.png` | 1280 px wide | Year, light, opened with `item=vacation-week` (the Week tab link after Vacation was added): Vacation chosen in Paint with, the options open (2026-11-05) |
-| `year-start-empty-desktop-light.png` | 1280 px wide | Year, light, no planned hours (Start empty): the Year planner card with its blank weeks, then the card "Plan the week in Week and the hours show here." with Open Week (2026-11-05) |
-| `planner-vacation-added-desktop-light.png` | 1280 px wide | Week, light, after a new Vacation week type: the line "Vacation added. Choose its weeks in Year" with its link (feat/year-tab; the Week tab has no Year section) |
-| `planner-desktop-dark.png` | 1280 px wide | Week, dark, full page at 1280 px: the same layout (2026-11-05) |
-| `planner-activity-edit-desktop-light.png` | 1280 px wide | Week, light, opened from `?item=training&edit=1`: the one form under the buttons ("Edit Exercise", Save, Cancel, Delete). Escape and Cancel close it and return focus to the button that opened it (2026-11-04: the Week tab has no entry list; entries are edited from Goals) |
-| `planner-add-activity-desktop-light.png` | 1280 px wide | Week, light: "+ Add activity" open, the form "New activity or habit" under the buttons with its name focused (2026-11-04) |
-| `planner-sleep-hours-desktop-light.png` | 1280 px wide | Week, light: "Sleep hours" open, the Sleep form ("Edit Sleep") with the editor for every night (2026-11-04) |
-| `planner-template-edit-desktop-light.png` | 1280 px wide | Week, light: Edit schedule with Done in the panel head (Escape and Done close it, FR-TPL-9) |
-| `planner-mobile-light.png` | 400 px wide | Week, light, full page at 400 px (2026-11-05): the Week card, the grid scrolls sideways inside its box, the two buttons wrap under it, Where the week goes below, no page overflow |
-| `planner-time-split-desktop-light.png` | 1280 px wide | Week, light: Where the week goes above the grid for Standard Week (slice 6, 2026-11-04): the ring of the typical week's available time and the list with hours and percent, Free last |
-| `planner-time-split-desktop-dark.png` | 1280 px wide | Week, dark: Where the week goes (slice 6) |
-| `planner-time-split-mobile-light.png` | 400 px wide | Week, light, at 400 px: Where the week goes above the grid, the ring above the words |
-| `planner-time-split-selected-desktop-light.png` | 1280 px wide | Week, light: Where the week goes with Professional selected: the others dimmed, the centre names it (40%, 42 h), its row marked |
-| `insights-adherence-desktop-light.png` | 1280 px wide | Insights, light, Adherence view (month, one year): the headline "Done 5% of planned", the week bars with dashed future weeks, By life area, Habits, the journal nudge. Sample data: the seed plus ticks over the last three weeks (from 9 to 29 October 2026); the chart starts at the first tick and ends at the current week, so earlier weeks are not drawn |
-| `insights-adherence-desktop-dark.png` | 1280 px wide | Insights, dark, Adherence view (month) |
-| `insights-adherence-week-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with Week: one bar per weekday, Monday to Sunday |
-| `insights-adherence-mobile-light.png` | 400 px wide | Insights, light, Adherence view at phone width, full page |
-| `insights-adherence-mobile-dark.png` | 400 px wide | Insights, dark, Adherence view at phone width, full page |
-| `insights-adherence-empty-desktop-light.png` | 1280 px wide | Insights, light, Adherence view with no tick in the range: the empty state with "Open Home" |
 
 Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user; step 2 offers the eight default life areas):
 
@@ -141,27 +104,10 @@ Onboarding screens (feat/polish-v3, 27 October 2026, local storage, a fresh user
 | `firstrun-draft-mobile-dark.png` | 400 px wide, full page | Step 6 of 6 on a phone, dark, Lively: the mini week as one row per day, the first action, Accept plan |
 | `firstrun-today-mobile-dark.png` | 400 px wide, full page | Today after Accept on a phone, dark: the toast above the tab bar |
 | `firstrun-replay-confirm-desktop-light.png` | 1280 px wide | Account menu, Replay first run with a plan: the "Replay the first run?" confirmation, Cancel first |
-| `onboarding-welcome-desktop-light.png` | 1280 px wide | Welcome dialog over the empty Home: the idea, Guide me, Start empty, Explore with sample data |
-| `onboarding-ambition-desktop-light.png` | 1280 px wide | Step 1 of 5, Your 5-year ambition: the framing text and the one field, filled in |
-| `onboarding-goals-desktop-light.png` | 1280 px wide | Step 2 of 5, Goals and habits with one goal: the Physical chip, the habit Run, "Add a second goal" |
-| `onboarding-goals-two-desktop-light.png` | 1280 px wide | Step 2 of 5 with two goals: the chip the first goal uses is disabled in the second; Remove on goal 2 |
-| `onboarding-tour-plan-desktop-light.png` | 1280 px wide | Card 3 Plan your week on Week, after Replay tour: "Timely placed 68 h for Physical and 0 h for Spiritual" and "Goals keeps the why" (refreshed 2026-10-29) |
-| `onboarding-tour-year-desktop-light.png` | 1280 px wide | Card 2 "Your year" after Replay tour and Next, over the Year tab: the card names the planned hours stacked by life area and the week type each week uses |
-| `onboarding-tour-plan-mobile-light.png` | 400 px wide | Step 3 of 5 on Planner at 400 px: the card at the bottom |
 | `login-gate-desktop-light.png` | 1280 px wide | Sign-in page in Supabase mode, signed out, light: one centred column: the headline and its supporting line, the intro player (scene 1 of 5, paused behind a Play button, frameless), the Google sign-in button and the consent line |
 | `login-gate-desktop-dark.png` | 1280 px wide | Sign-in page, dark, the same layout |
 | `login-gate-mobile-light.png` | 400 px wide | Sign-in page, light, one column: the copy, the intro player, the sign-in button, the consent line |
 | `login-gate-mobile-dark.png` | 400 px wide | Sign-in page, dark, one column |
-| `onboarding-intro-scene-1-desktop-light.png` | 1280 px wide | Intro scene 1 of 5, Ambition: the caption band at the top, the ambition in the centre of the grid and the life areas around it (stage only) |
-| `onboarding-intro-scene-3-desktop-light.png` | 1280 px wide | Intro scene 3 of 5, Plan the week: the caption band, the week grid, the three planned hours fill in (stage only) |
-| `onboarding-intro-scene-5-desktop-light.png` | 1280 px wide | Intro scene 5 of 5, Insights and daily follow-up: the year's stacked bars and the share of each life area (stage only) |
-| `onboarding-intro-dialog-mobile-{light,dark}-scene-{1..5}.png` | 390 by 700 px | The intro dialog at a phone size, light and dark, every scene: the stage and its caption band whole, the controls inside the dialog |
-| `goals-add-habit-desktop-light.png` | 1280 px wide | Goals, Cognitive with the "+ Add" form open (the unified entry form, FR-ITEM-3): name Run, duration 30 min, the Life area preselected, Days, Start, Week types, More options closed (refreshed 2026-10-29; the earlier "+ Add habit" form and its linked-activity select are gone) |
-| `goals-add-habit-mobile-light.png` | 390 px wide | The same unified add form at phone width (refreshed 2026-10-29) |
-| `onboarding-ambition-long-desktop-light.png` | 1280 px wide | Guided step 1 with a 228-character ambition: the field wraps and grows, nothing is cut |
-| `goals-vision-long-desktop-light.png` | 1280 px wide, full page | Goals with the long ambition in the vision and the Harada map centre |
-| `goals-vision-long-mobile-light.png` | 400 px wide, full page | The same at phone width |
-| `onboarding-tour-last-mobile-light.png` | 400 px wide | Step 5 of 5, Daily follow-up, with "Watch the intro again" at phone width |
 | `reset-confirm-desktop-light.png` | 1280 px wide | Reset my data confirmation over the sample data: "Reset my data?", the exact copy, Cancel focused and Delete my data |
 
 Legal pages (feat/legal-pages, 27 October 2026, the browser checks run with local storage and with a signed-out Supabase build):
@@ -219,6 +165,12 @@ The journal on Home (FR-HOME-11 to 13) keeps one note a day; the key message, th
 - Rules in `app/utils/today.ts` (tests `tests/unit/today.test.ts`); components in `app/components/today/`; CSS `features/today.css` replaces `home.css`; screens `today-*` replace `home-*`.
 - Fidelity pass (2026-11-05, new commits on the same branch): Today matched to the mockup (`spec/mockups/prototype-a2`): the day line, the focal card and its pill, the free-day picture, the one-line journal, All habits with Tick chips; the shell glow, the brand mark and the icons. Screens `today-*` re-captured at 9:20 with the mockup's sample plan.
 - Storage version unchanged (8); no data-model change. The version and the tag are not changed on this branch.
+
+### A2 migration complete (2026-11-05, branch `chore/polish-a2`, from `main` at d4e860d, not pushed; version 0.1.1 kept)
+
+- `ux-migration-plan.md` is done: section 10 is the closing summary (what was built, the deliberate differences from the mockup, the owner's open items and the checks not run).
+- Slice 12 (polish): the copy pass against proposal 6e (the entry form says schedule; the Dreams status words; the Progress counted line), the empty states checked on a new account, a seed and a blank week, `spec/screens` replaced (the old Onboarding, Goals, Planner, Insights, Sleep, Year and Today pictures removed; the index rows point at the current names; the mockup pictures kept for comparison), `frontend-design.md` made current, `agent.md` Current state trimmed.
+- Storage version 8; no data-model change; no dependency.
 
 ### Version 0.1.0, three screens (2026-11-04, branch `feat/three-screens`, from `main`, not pushed)
 

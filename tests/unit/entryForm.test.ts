@@ -88,9 +88,9 @@ describe('noTimeText', () => {
 
   it('says what its hours clear, in the right plural', () => {
     expect(noTimeText({ templateCount: 1, hours: 2, keepsActivity: false }))
-      .toBe('This clears its hours in 1 week type and removes its activity.')
+      .toBe('This clears its hours in 1 schedule and removes its activity.')
     expect(noTimeText({ templateCount: 2, hours: 5, keepsActivity: false }))
-      .toBe('This clears its hours in 2 week types and removes its activity.')
+      .toBe('This clears its hours in 2 schedules and removes its activity.')
   })
 
   it('says only that the activity goes when it has no hours', () => {
@@ -113,7 +113,7 @@ describe('deleteText', () => {
 
   it('names the week types an activity clears', () => {
     expect(deleteText({ name: 'Family time', habitId: null, activityId: 'a2' }, hours))
-      .toBe('Delete Family time? It clears its hours in 2 week types. This cannot be undone.')
+      .toBe('Delete Family time? It clears its hours in 2 schedules. This cannot be undone.')
   })
 
   it('deletes an activity with no hours plainly', () => {

@@ -154,7 +154,7 @@ function onEscape(event: KeyboardEvent) {
       </div>
 
       <p v-if="timed && draft.durationMinutes % 60" class="form-hint">
-        Hours are painted whole: {{ draft.durationMinutes }} min takes {{ hours }} h in each week type.
+        Hours are painted whole: {{ draft.durationMinutes }} min takes {{ hours }} h in each schedule.
       </p>
 
       <!-- Sleep: its nights, set per week type (FR-SLEEP-2, 5) -->

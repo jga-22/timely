@@ -20,7 +20,7 @@ export const paintResultText = (input: {
 
   parts.push(input.added.length
     ? `Added to ${joinNames(input.added)}: ${input.days} x ${input.hours} h.`
-    : 'Not in any week type now.')
+    : 'Not in any schedule now.')
 
   if (input.replaced.length) {
     parts.push(`Replaced ${input.replaced.map(item => `${item.hours} h of ${item.name}`).join(' and ')}.`)

@@ -4,6 +4,11 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 
 ## Unreleased
 
+### Polish
+- Dreams: a life area with a 1-year target and habits reads "Not started" until its first tick (it said "Target set"). An area with no target reads "No 1-year target yet" (it said "No target yet"), the words the Progress path uses.
+- The entry form says "schedule" where it said "week type": the Schedules legend and its hints, "Choose at least one schedule.", "Not in any schedule now." and the wording of the removal and delete confirmations.
+- Progress, more detail: "Counted from 9 October, 24 days." (it gave the year and "to today").
+
 ### Added
 - Progress has a Milestones card: the first planned hour ticked, the first full week of each life area, and the stages a life area reached (Building, Steady, Strong, Reached), each with the day it happened. It is worked out from your ticks, so nothing is stored and nothing is taken back; an empty card says how the first one comes.
 - A milestone or the calm line after a day is done shows one line at the foot of the screen (at most one a day). On a phone it sits above the tab bar. Two switches in Progress settings turn the milestone lines and the calm line off.

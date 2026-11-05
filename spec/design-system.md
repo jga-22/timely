@@ -188,7 +188,7 @@ Browser preferences live in localStorage, outside the planner state (`utils/pref
 | --- | --- | --- | --- |
 | `timely.dark` | `true` or `false` | off (light) | `useTheme`, the prepaint script |
 | `timely.motion` | `calm` or `lively` (anything else is lively) | lively | `useMotion`, the prepaint script |
-| `timely.showSleep` | `1` or `0` | off | `useShowSleep` (Home, Week, Year) |
+| `timely.showSleep` | `1` or `0` | off | `useShowSleep` (Today, Week, Year) |
 | `timely.recap` | `1` or `0` | on | the Weekly recap switch in Progress settings (`useRecapSetting`) |
 | `timely.milestones` | `1` or `0` | on | the milestone lines switch in Progress settings: the Milestones list and the milestone toast (`useMilestoneSettings`) |
 | `timely.celebrate` | `1` or `0` | on | the calm line switch in Progress settings: the all-done toast (`useMilestoneSettings`) |
@@ -207,15 +207,15 @@ Calm keeps every number, line, state and colour. It stops movement only: the cou
 
 ### 4.1 Planned time: the four states
 
-One palette covers every place where time is painted: the Home timeline, the week grid, the year grid, the Year bars and the category colours. An empty hour, a planned hour, the current week and the selection look the same wherever they appear.
+One palette covers every place where time is painted: the Today day line, the week grid, the year grid, the Year bars and the category colours. An empty hour, a planned hour, the current week and the selection look the same wherever they appear.
 
 | State | Token or rule | Light | Dark | Use | Contrast (light / dark, on paper / surface) |
 | --- | --- | --- | --- | --- | --- |
-| Empty (unplanned hour, empty week, empty bar) | `--cell-empty` (= `--surface`) | `#fffefb` | `#1b1e23` | Home timeline, year cells, week grid background | Equals the card |
+| Empty (unplanned hour, empty week, empty bar) | `--cell-empty` (= `--surface`) | `#fffefb` | `#1b1e23` | Today day line, year cells, week grid background | Equals the card |
 | Empty outline | `--cell-line` (= `--control-border`) | `#5c626b` | `#9ea3ab` | 1px hairline around every empty cell and unplanned segment | 5.49 / 6.10 (3:1 met) |
 | Planned | `fillFor(colour, dark)`, served as `--c` | the colour as given when it reaches 3:1 on both surfaces; otherwise shaded toward black | as given, or lightened toward white | Planned hour, week cell, Home segment, Year segment, week block, template paint dot | 3:1 on both surfaces (guard) |
 | Text on a planned fill | `inkOn(fill)` (= `--c-ink`): white or the dark paper, whichever contrasts more | `#ffffff` or `#121417` | same rule | Year cell numbers, week block names and times | 4.5 or more, except teal (4.42, section 4) |
-| Current | `--accent` | `#2a55c4` | `#9ab8f5` | Year cell outline, the Home "Now" tag | 5.87 / 6.52 on paper; 6.52 / 8.39 dark |
+| Current | `--accent` | `#2a55c4` | `#9ab8f5` | Year cell outline, the Today "now" marker | 5.87 / 6.52 on paper; 6.52 / 8.39 dark |
 | Selected | `--accent-soft` tint with a `--accent` frame (week grid); `--surface-hover` (year cell hover) | `#e4ebfb`; `#ebe8e0` | `#222c44`; `#23272e` | Week grid drag range and action bar; year cell hover | Accent on accent-soft: 3:1 (guard) |
 
 The year grid has no selected week: choosing a week is a paint action, so its hover state stands in for selection.
@@ -253,7 +253,7 @@ The palette swatches (`DESIGN_COLORS` in `utils/planner/templates.ts`) are data 
 | `tokens` | `tokens.css`, `tokens-legacy.css` | The three tiers and the old-name aliases |
 | `base` | `base.css` | `html`, `body`, headings, links, the focus ring, form defaults |
 | `ui` | `ui/*.css` | Primitives, one file per block: `button`, `card`, `page`, `chip`, `field`, `menu`, `disclosure`, `empty`, `bar`, `row`, `pill`, `seg`, `icon`, `ring`, `switch`, `tick`, `dialog` (section 6) |
-| `features` | `features/*.css` | One file per area: `shell`, `account`, `auth`, `legal`, `onboarding`, `entry`, `planner`, `week-grid`, `week-grid-select`, `week-panels`, `year`, `insights`, `adherence`, `home`, `styleguide` |
+| `features` | `features/*.css` | One file per area: `shell`, `account`, `auth`, `legal`, `onboarding` (the sign-in intro), `firstrun`, `today`, `entry`, `planner`, `week-grid`, `week-grid-select`, `week-panels`, `week-where`, `year`, `progress`, `insights`, `adherence`, `dreampath`, `styleguide` |
 | `motion` | `motion.css` | Every `@keyframes`, and the lively rules that belong to no one feature |
 | `utilities` | `utilities.css` | `.sr-only` (the label a screen reader reads), always winning |
 

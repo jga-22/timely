@@ -18,11 +18,11 @@ const listEl = ref<HTMLUListElement | null>(null)
 
 const entryStatus = (category: Category) => categoryEntryText(categoryEntryCounts(planner.$state, category.id))
 
-// Once the area has a value, its share and stage words stand in for "Target set" (2.1, 2026-11-05); the other states read as before
+// The area's progress words (2.1): a share and stage, "Not started", "Add a habit to track it" or "No 1-year target yet". The goal status text is the fallback for an area past the first eight
 const { progressOf } = useAreaProgress()
 const targetText = (category: Category) => {
   const progress = progressOf(category.id)
-  return progress?.state === 'value' ? progress.label : targetStatus(category).text
+  return progress?.label ?? targetStatus(category).text
 }
 
 function onListKeydown(event: KeyboardEvent) {

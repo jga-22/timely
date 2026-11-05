@@ -22,7 +22,7 @@ export const entryErrors = (state: PlannerState, draft: EntryDraft): EntryErrors
     const needsDays = !draft.activityId || draft.templateIds.length > 0
 
     if (needsDays && !draft.days.length) errors.days = 'Choose at least one day.'
-    if (!draft.activityId && !draft.templateIds.length) errors.weekTypes = 'Choose at least one week type.'
+    if (!draft.activityId && !draft.templateIds.length) errors.weekTypes = 'Choose at least one schedule.'
 
     const hours = blockHours(draft.durationMinutes)
     if (draft.days.length && draft.start + hours > 24) {

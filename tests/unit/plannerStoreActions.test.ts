@@ -1340,7 +1340,7 @@ describe('entries', () => {
       [{ name: '  ' }, { name: 'Name can\'t be empty' }],
       [{ categoryId: 'nope' }, { categoryId: 'Choose a life area' }],
       [{ days: [] }, { days: 'Choose at least one day.' }],
-      [{ days: [0], templateIds: [] }, { weekTypes: 'Choose at least one week type.' }],
+      [{ days: [0], templateIds: [] }, { weekTypes: 'Choose at least one schedule.' }],
       [{ durationMinutes: 180, start: 23 }, {
         start: `A 3 h block from ${formatHour(23)} would run past midnight. Choose an earlier start or a shorter block.`
       }],
