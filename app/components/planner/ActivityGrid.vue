@@ -134,6 +134,9 @@ watch(() => props.closeToken, () => {
           <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
         </summary>
 
+        <!-- The tip of the Week view (its words are the Week tab's): inside the section, so it collapses with the grid -->
+        <slot name="tip" />
+
         <p v-if="!hourly" class="wk-helper">This schedule has 30-minute slots, and this grid edits hourly schedules only.</p>
 
         <template v-else>
