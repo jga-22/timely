@@ -5,6 +5,7 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Changed
+- One theme control: the moon or sun button in the top bar. The Dark mode switch in the Account menu is gone; the menu keeps the save status, Motion, Replay tour, Reset my data and Sign out.
 - A week with no schedule plans nothing: Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free (168 h less the active schedule's Sleep, or 168 h with Show sleep on), so the Year bar, its Free row and "of N awake hours" include blank weeks. Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
 - The Year planner's Clear leaves a week with no schedule; its tooltip says so. Its hint and result lines no longer name an active schedule, and the legend reads "No schedule".
 - The Week tab's card is titled "Schedules" (it was "Week"), with the schedule chips at its top.

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The top bar: the brand on a phone (the rail carries it on a desktop), the theme switch (the same Dark mode state as the
- * Account menu's switch) and the account menu. The account menu and its reset dialog are the shell's, so the reset
+ * The top bar: the brand on a phone (the rail carries it on a desktop), the theme button (the one theme control: a moon or
+ * sun icon, aria-pressed on Dark mode) and the account menu. The account menu and its reset dialog are the shell's, so the reset
  * event goes up to app.vue.
  */
 defineProps<{ showAccount: boolean }>()
@@ -30,7 +30,7 @@ const { link } = useNav()
           <UiIcon :name="dark ? 'sun' : 'moon'" />
         </button>
 
-        <!-- The account menu (avatar, save status, Dark mode, Replay tour, Reset my data, Sign out); its dialog opens in the shell -->
+        <!-- The account menu (avatar, save status, Motion, Replay tour, Reset my data, Sign out); its dialog opens in the shell -->
         <AccountMenu v-if="showAccount" @reset="emit('reset')" />
       </div>
     </div>

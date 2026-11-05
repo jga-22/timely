@@ -466,7 +466,7 @@ Model check: confirmed unchanged (section 6.5). PlannerState, the storage versio
 Open risks:
 - "Dreams" may read as a wish list. It needs a test with users; the copy change went ahead on the owner's decision.
 - A segmented control inside Plan may feel like three apps.
-- The top bar has a theme switch and the Account menu keeps its own Dark mode switch: two controls for one setting. The owner decides whether the menu row stays.
+- The top bar has a theme switch and the Account menu kept its own Dark mode switch: two controls for one setting. Decided 2026-11-05: the menu row is removed; the top bar button is the one theme control.
 - Old docs and screenshots name the old tabs (copy only; no data).
 Next review date: proposed 2026-12-04, or after slice 8 (Progress), whichever comes first.
 ```
