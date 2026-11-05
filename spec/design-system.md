@@ -190,6 +190,9 @@ Browser preferences live in localStorage, outside the planner state (`utils/pref
 | `timely.motion` | `calm` or `lively` (anything else is lively) | lively | `useMotion`, the prepaint script |
 | `timely.showSleep` | `1` or `0` | off | `useShowSleep` (Home, Week, Year) |
 | `timely.recap` | `1` or `0` | on | the Weekly recap switch in Progress settings (`useRecapSetting`) |
+| `timely.milestones` | `1` or `0` | on | the milestone lines switch in Progress settings: the Milestones list and the milestone toast (`useMilestoneSettings`) |
+| `timely.celebrate` | `1` or `0` | on | the calm line switch in Progress settings: the all-done toast (`useMilestoneSettings`) |
+| `timely.lastToast` | a date key (`2026-11-05`), or nothing | none | the day of the last toast: at most one a day (`useMilestoneToast`) |
 | `timely.weekClosed` | an ISO week key such as `2026-W45`, or empty | open | the week the weekly recap was closed for (Progress, `useWeekClosed`); closed for that week only |
 
 The composables: `usePref(key, { fallback, parse, serialise, state? })` is the generic one (shared state, read after mount, a blocked storage keeps the fallback). `useShowSleep`, `useTheme` and `useMotion` are built on it. `useTheme` shares the state name `dark` with `usePlannerFill`, so the planned fills follow the theme.
@@ -314,7 +317,7 @@ Built in 0.0.2 (slice 3b). A primitive is either a class in `app/assets/css/ui/`
 
 Not primitives, kept as they are: `EditButton.vue` (an icon button with a name, `to` or click), `AutoTextarea.vue` (the growing textarea, its rules are in `ui/field.css`), `YearNav.vue` (the year stepper), `IntroPlayer.vue`, `AccountMenu.vue` (its menu and rows are in `features/account.css`).
 
-Still to come, when a view first needs them (slices 6 and 8): the tooltip (`v-tip`, `shell/Tooltip.vue`) and the toast (`shell/Toast.vue`, `useToast()`).
+Still to come, when a view first needs them (slices 6 and 8): the tooltip (`v-tip`, `shell/Tooltip.vue`) ; the toast is built as `shell/AppToast.vue` (`ShellAppToast`, slice 11), fed by `useMilestoneToast()`.
 
 ### 6.2 Feature parts
 
@@ -342,7 +345,7 @@ It is a page at `/_styleguide`. The `timely-styleguide` module in `nuxt.config.t
 - **Calm keeps**: every number, line, state, colour and label. Calm stops the count-up, the sparks, the drawing rings and bars, the view transition and the card tilt.
 - **Reduced motion** forces calm and kills animation and transition (`reset.css`).
 - **JS-driven effects** check `isLively()` from `useMotion()` before they run.
-- The view transition (`useViewTransition`) and the milestone toasts come with slices 10 and 11.
+- The view transition (`composables/useViewTransition.ts`) and the milestone toast (`shell/AppToast.vue`) are built in slice 11 (2026-11-05).
 
 ---
 

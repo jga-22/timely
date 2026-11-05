@@ -21,6 +21,9 @@ describe('preference keys', () => {
       showSleep: 'timely.showSleep',
       recap: 'timely.recap',
       weekClosed: 'timely.weekClosed',
+      milestones: 'timely.milestones',
+      celebrate: 'timely.celebrate',
+      lastToast: 'timely.lastToast',
     })
   })
 })

@@ -3,9 +3,10 @@ import { usePlannerStore } from '~/stores/planner'
 import { usePlannerMaps } from '~/composables/usePlannerMaps'
 import { useShownDay } from '~/composables/useShownDay'
 import { useNowMinutes } from '~/composables/useNowMinutes'
-import { habitDoneKey } from '~/utils/done'
+import { habitDoneKey, isDone } from '~/utils/done'
 import { dayRange, habitProgressText } from '~/utils/home'
 import { weekTemplate } from '~/utils/planner/templates'
+import { COUNT_UP_MS } from '~/utils/motion'
 import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
 import { ofTheWayText } from '~/utils/targetProgress'
 import {
@@ -146,6 +147,11 @@ const habits = computed(() => (viewed.value ? habitRows(planner.$state, viewed.v
 const cheer = ref('')
 watch(viewed, () => (cheer.value = ''))
 
+// The day count before a tick: the day line counts up from it under lively motion (cleared once the count has run). A tick today that
+// makes a milestone or completes the day may show one toast (useMilestoneToast: at most one a day)
+const countFrom = ref<number | null>(null)
+const { offer: offerToast } = useMilestoneToast()
+
 // The tick of an item on the screen (the focus card or the list), by its key; a tick that is hidden (a closed list) does not count
 const tickOf = (key: string): HTMLElement | undefined =>
   [...document.querySelectorAll<HTMLElement>('.today [data-tick]')].find(el => el.dataset.tick === key && el.getClientRects().length > 0)
@@ -159,8 +165,17 @@ const toggle = (key: string) => {
   const active = document.activeElement
   const pressed = active instanceof HTMLElement && active.closest('.today') ? active : null
 
+  // The state before the tick (its done keys copied), for the milestones that the tick made
+  const wasDone = isDone(planner.$state, viewed.value, key)
+  const before = { ...toRaw(planner.$state), done: structuredClone(toRaw(planner.$state.done ?? {})) }
+  const countBefore = doneCount(items.value, true).done
+
   planner.toggleDone(viewed.value, key)
   cheer.value = isToday.value ? cheerLine(doneCount(items.value, true)) : ''
+
+  countFrom.value = countBefore
+  setTimeout(() => (countFrom.value = null), COUNT_UP_MS + 100)
+  if (isToday.value && !wasDone) offerToast(before, planner.$state, viewed.value, showSleep.value)
 
   if (!pressed) return
 
@@ -232,7 +247,7 @@ watch(
       :cheer="cheer"
       @toggle="toggle"
     >
-      <TodayDayLine v-if="items.length" v-bind="dayLine" />
+      <TodayDayLine v-if="items.length" v-bind="dayLine" :from="countFrom" />
     </TodayFocus>
 
     <TodayDone v-else-if="allDone" :count="items.length" :is-today="isToday">

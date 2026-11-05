@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
- * Progress settings (A2 "Settings"): the Weekly recap switch, kept in this browser (useRecapSetting). Each switch turns off on its
- * own; nothing here compares the user with anyone. The milestone lines and the calm line come with their own features (slice 11).
+ * Progress settings (A2 "Settings"): the Weekly recap, the milestone lines and the calm line when a day is done, each kept in this
+ * browser (useRecapSetting, useMilestoneSettings). Each switch turns off on its own; nothing here compares the user with anyone.
  */
 const { recapOn, setRecapOn } = useRecapSetting()
+const { milestonesOn, setMilestonesOn, celebrateOn, setCelebrateOn } = useMilestoneSettings()
 </script>
 
 <template>
@@ -17,6 +18,22 @@ const { recapOn, setRecapOn } = useRecapSetting()
         <small>A short summary of your own week</small>
       </span>
       <UiSwitch :model-value="recapOn" labelledby="progress-recap-label" @update:model-value="setRecapOn" />
+    </div>
+
+    <div class="progress-setting">
+      <span id="progress-milestones-label" class="progress-setting-text">
+        Milestone lines
+        <small>One calm line at a time, never blocking a tick</small>
+      </span>
+      <UiSwitch :model-value="milestonesOn" labelledby="progress-milestones-label" @update:model-value="setMilestonesOn" />
+    </div>
+
+    <div class="progress-setting">
+      <span id="progress-celebrate-label" class="progress-setting-text">
+        Calm line when a day is done
+        <small>No sound, no confetti</small>
+      </span>
+      <UiSwitch :model-value="celebrateOn" labelledby="progress-celebrate-label" @update:model-value="setCelebrateOn" />
     </div>
   </section>
 </template>

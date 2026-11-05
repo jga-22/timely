@@ -390,6 +390,14 @@ One line of text for the day Today shows (FR-HOME-11 to 13), as the mockup has i
 - **Hidden grid.** Rows that are sleep on all seven days collapse. A leading or trailing run is a full-width button band above or below the grid (`.wk-band`, "Sleep hidden: 12 AM to 7 AM" and "Show sleep" in `--accent`, the whole band clickable). A run between shown rows is a 14 px band (`.wk-gap`, quiet `--bg-2` with a dashed top rule). The hour labels follow the shown rows.
 
 Screens: `spec/screens/sleep-week-1280-hidden.png`, `sleep-week-1280-shown.png`, `sleep-week-400-hidden.png`, `sleep-editor-1280.png`, `sleep-insights-1280-hidden.png`.
+### 4.22 Lively layer, toast and milestones (slice 11, 2026-11-05)
+
+- **Today, lively only:** a tick that turns on throws six sparks from its circle (`ui/Tick.vue`; the burst is set for 900 ms and the sparks are `tick-spark` in `ui/tick.css`); the day count climbs to its value over 520 ms in the day line (`today/TodayDayLine.vue`, `countValue` in `utils/motion.ts`); the focus card glides in when the focus moves on (`today.css`); the card tilts up to 1.4 degrees toward a mouse pointer (`tiltOf`). Calm and reduced motion show the number and the state at once.
+- **The count is read out once:** the visible count is `aria-hidden`; a visually hidden `role="status"` line carries "N of M done today." and changes only with the count.
+- **Toast:** `shell/AppToast.vue` (`ShellAppToast`): ink on paper, one line and a Dismiss, `role="status"`, 7 seconds. On a phone it sits above the tab bar (the column's own room for it). The first run's "Your plan is saved." uses it too (`first-run/FirstRunToast.vue`).
+- **Milestones on Progress:** the card (`progress/ProgressMilestones.vue`) lists the firsts with their dates ("14 Sept", "1 Nov"); the empty state says how the first one comes. Dates are written as day and short month, read as UTC so no time zone moves them.
+- **Route changes:** a cross-fade with the View Transitions API under lively only; without the API, a short fade of the page (`is-entering`). Calm changes at once.
+
 ## 5. Colour handling: one palette for planned time
 
 Moved to [design-system.md](design-system.md), section 4 (the 3:1 rule on both surfaces, `areaVars`, the tint rule, the fallback constants, the teal known limit). The planned-time states (empty, planned, current, selected) are in design-system.md, section 4.1.

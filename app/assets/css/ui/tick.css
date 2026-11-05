@@ -1,6 +1,7 @@
 /* Done tick (components/ui/Tick.vue): a target of --hit around a circle; the accent ring to do, the ok fill with a check
    when done (the check and the state carry it, not the colour alone). `lg` is the large tick. Layer ui. */
 .tick {
+  position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -40,3 +41,18 @@
 .tick-lg[aria-checked="true"] .tick-box { color: var(--accent-ink); }
 
 :root[data-motion="lively"] .tick.is-burst .tick-box { animation: pop var(--dur-base) var(--ease-spring); }
+
+/* The sparks of a tick that turns on (lively only; the burst class is set by Tick.vue for 900 ms). Six rays from the centre */
+.tick-sparks { position: absolute; inset: 0; pointer-events: none; }
+.tick-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+}
+:root[data-motion="lively"] .tick-spark { animation: spark var(--dur-draw) var(--ease-out) forwards; }

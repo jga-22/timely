@@ -25,3 +25,29 @@ export const partOfDay = (minutes: number): PartOfDay => {
   if (hour >= PART_START_HOUR.afternoon) return 'afternoon'
   return 'morning'
 }
+
+/** How long the day count takes to climb to its value, in ms (lively only) */
+export const COUNT_UP_MS = 520
+
+/**
+ * A number counting up (the day count on Today, lively only): the value after `elapsed` ms of `duration`, eased out, whole numbers.
+ * It lands on `to` exactly at the end, and at once when there is no time to run.
+ */
+export const countValue = (from: number, to: number, elapsed: number, duration: number): number => {
+  if (duration <= 0 || elapsed >= duration) return to
+
+  const progress = Math.max(0, elapsed) / duration
+  return Math.round(from + (to - from) * (1 - (1 - progress) ** 3))
+}
+
+/** The tilt of the focal card toward the pointer (lively, mouse only): degrees on the x and y axes, at most 1.4 each way */
+export const TILT_DEGREES = 1.4
+
+export const tiltOf = (pointerX: number, pointerY: number, box: { left: number, top: number, width: number, height: number }): { x: number, y: number } => {
+  if (box.width <= 0 || box.height <= 0) return { x: 0, y: 0 }
+
+  const px = Math.min(1, Math.max(-1, ((pointerX - box.left) / box.width) * 2 - 1))
+  const py = Math.min(1, Math.max(-1, ((pointerY - box.top) / box.height) * 2 - 1))
+
+  return { x: Number((-py * TILT_DEGREES).toFixed(2)), y: Number((px * TILT_DEGREES).toFixed(2)) }
+}

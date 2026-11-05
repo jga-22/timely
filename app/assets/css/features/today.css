@@ -266,3 +266,9 @@
 
 /* A blank week (2026-11-05): one quiet line above the list, with its link to Year */
 .today-blank-note { margin: 0 0 var(--sp-6); font-size: var(--text-ui); color: var(--ink-2); }
+
+/* Lively only: the focus card glides in when the focus moves on (backwards fill, so the pointer tilt can take over afterwards) */
+:root[data-motion="lively"] .today-focus {
+  animation: glide-in var(--dur-enter) var(--ease-out) backwards;
+  transition: transform var(--dur-fast) var(--ease-out);
+}

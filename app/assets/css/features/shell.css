@@ -217,3 +217,35 @@
 /* Plan and Progress frame their views: the frame keeps the page padding, the view inside it adds none */
 .plan-view > .view,
 .progress-view > .view { padding: 0; }
+
+/* The toast (AppToast): one line, ink on paper, fixed above the foot. On a phone it sits above the tab bar (the same room the column
+   leaves for it), so it covers nothing. It never blocks the page. */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-6);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: max-content;
+  max-width: min(540px, calc(100vw - var(--sp-8)));
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  transform: translateX(-50%);
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  box-shadow: var(--elev-2);
+}
+:root[data-motion="lively"] .app-toast { animation: toast-in var(--dur-enter) var(--ease-spring) both; }
+.app-toast-ill { flex: none; width: 36px; height: 36px; fill: none; stroke: var(--accent-tint); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.app-toast-text { display: grid; gap: 2px; }
+.app-toast-title { margin: 0; font-size: var(--text-body); font-weight: 600; }
+.app-toast-line { margin: 0; font-size: var(--text-small); }
+.app-toast-dismiss { color: inherit; text-decoration: underline; }
+@media (max-width: 768px) {
+  .app-toast { bottom: calc(var(--hit-lg) + var(--sp-8) + env(safe-area-inset-bottom)); }
+}
+
+/* A route change without the View Transitions API: the new page fades in (lively only; Calm shows it at once) */
+:root[data-motion="lively"] .shell-main.is-entering > * { animation: view-in var(--dur-moderate) var(--ease-out) both; }
