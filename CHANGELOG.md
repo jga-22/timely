@@ -5,6 +5,11 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Changed
+- A week with no schedule plans nothing: Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free (168 h less the active schedule's Sleep, or 168 h with Show sleep on), so the Year bar, its Free row and "of N awake hours" include blank weeks. Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
+- The Year planner's Clear leaves a week with no schedule; its tooltip says so. Its hint and result lines no longer name an active schedule, and the legend reads "No schedule".
+- The Week tab's card is titled "Schedules" (it was "Week"), with the schedule chips at its top.
+- Plan > Year: the card is called "Year planner". Its year switcher is in the card's head; the paint tools and "Apply to several weeks" are in the card, under a one-line hint. The last paint chip reads "Clear", and its tooltip says it sends the week back to the active schedule. The lede at the top is gone, and the grid has room under its last row.
+- Plan > Week: the schedules, the week grid and the entry buttons are one card, and "Where the week goes" is a card below it. The line at the top says how to use the grid and no longer names a schedule.
 - Plan > Year reads like the A2 mockup, in its words and look. A line at the top says which schedule a week without its own uses. The paint tools are the schedules and "Clear to <schedule>", which sends a week back to that schedule.
 - "Which weeks use which schedule" is a card: the count of weeks each schedule uses, the year grid with its legend, and the current week outlined. A week with no schedule of its own stays blank and uses the active schedule; a quiet month label sits above each row of the grid.
 - The planned hours of the year are a card: the hours against the awake time, one bar with Free hatched, the life areas with Free as the last row, and Show sleep. The monthly bars and the range controls are under "More detail", closed by default. The card and its list are in hours; the unit applies to the bars.

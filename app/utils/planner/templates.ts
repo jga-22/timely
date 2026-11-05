@@ -34,12 +34,13 @@ export const getActiveTemplate = (state: PlannerState) =>
   state.templates.find(template => template.id === state.settings.activeTemplateId) ?? state.templates[0]
 
 /**
- * Template that governs the week starting on the Monday of the given date (FR-DATE-2): the applied week's
- * template, else the active template. A deleted template is never returned; the active template takes its place.
+ * The week type a week is planned with (FR-DATE-2): the one applied to the week starting on the Monday of the given date. A week with no
+ * week type of its own is blank: it has no schedule and no planned hours (2026-11-05). The active week type is not a fallback: it is the
+ * one the Week tab edits. A deleted week type is never returned, so its weeks are blank.
  */
-export const effectiveTemplate = (state: PlannerState, date: string): WeekTemplate | undefined => {
+export const weekTemplate = (state: PlannerState, date: string): WeekTemplate | undefined => {
   const applied = state.appliedWeeks.find(week => week.startDate === mondayOf(date))
-  return (applied && getTemplateById(state, applied.templateId)) || getActiveTemplate(state)
+  return applied ? getTemplateById(state, applied.templateId) : undefined
 }
 
 export const isHourlyTemplate = (template: WeekTemplate | undefined) => template?.granularityMinutes === 60

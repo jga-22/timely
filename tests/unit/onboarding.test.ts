@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildOnboardingState, sessionDays, type OnboardingAnswers } from '~/utils/onboarding'
+import { isoWeekStarts } from '~/utils/dates'
 import { ONBOARDING_TEMPLATE_ID } from '~/utils/planner/seed'
-import { getTemplateById } from '~/utils/planner/templates'
+import { getTemplateById, weekTemplate } from '~/utils/planner/templates'
 
 /** One goal in Physical: a habit three times a week for two hours each. Dates are passed in; the stamp fixes the ids */
 const answers = (timesPerWeek = 3, hoursEach = 2): OnboardingAnswers => ({
@@ -17,6 +18,9 @@ describe('guided build sessions (FR-ONB-5)', () => {
   it('places the first session on today when building on a Sunday', () => {
     // 2026-11-01 is a Sunday (weekday 6)
     const state = buildOnboardingState(answers(2, 1), 2026, '2026-11-01', 1)
+
+    // A new user's build gives every week of the year its week type, so no week is blank and Today has a plan on every day (2026-11-05)
+    expect(isoWeekStarts(2026).every(startDate => weekTemplate(state, startDate)?.id === ONBOARDING_TEMPLATE_ID)).toBe(true)
     const slots = getTemplateById(state, ONBOARDING_TEMPLATE_ID)!.slots
 
     expect(slots[slotAt(6, 18)]).toBe(ACTIVITY_ID)

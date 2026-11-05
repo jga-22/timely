@@ -48,12 +48,11 @@ describe('toolTemplateId', () => {
 })
 
 describe('weekRangeHint and weekRangeResult', () => {
-  it('say what Apply does with the paint tool: the schedule, or clearing to the default one for Clear', () => {
+  it('say what Apply does with the paint tool: the schedule, or no schedule for Clear (no mention of an active schedule)', () => {
     expect(weekRangeHint('Vacation')).toBe('Applies Vacation to these weeks.')
-    expect(weekRangeHint(null, 'Standard Week')).toBe('Clears these weeks to Standard Week.')
-    expect(weekRangeHint(null)).toBe('Clears these weeks to the active schedule.')
+    expect(weekRangeHint(null)).toBe('Clears these weeks: they get no schedule.')
     expect(weekRangeResult(2, 5, 'Vacation')).toBe('Weeks 2 to 5 use Vacation.')
-    expect(weekRangeResult(2, 5, null, 'Standard Week')).toBe('Weeks 2 to 5 are cleared to Standard Week.')
+    expect(weekRangeResult(2, 5, null)).toBe('Weeks 2 to 5 have no schedule now.')
   })
 })
 
@@ -86,10 +85,10 @@ describe('monthMarks', () => {
 })
 
 describe('weekCellName', () => {
-  it('says the week, its month and year (the month of its Thursday), and its schedule or unassigned', () => {
+  it('says the week, its month and year (the month of its Thursday), and its schedule or no schedule', () => {
     // Week 45 of 2026 starts on Monday 2 November; its Thursday is in November
     expect(weekCellName('2026-11-02', 44, 'Standard Week')).toBe('Week 45, November 2026, Standard Week')
     // Week 1 of 2026 starts on Monday 29 December 2025; its Thursday is 1 January 2026
-    expect(weekCellName('2025-12-29', 0, null)).toBe('Week 1, January 2026, unassigned')
+    expect(weekCellName('2025-12-29', 0, null)).toBe('Week 1, January 2026, no schedule')
   })
 })

@@ -8,7 +8,7 @@ import { usePlannerYear } from '~/composables/usePlannerYear'
 import { FREE_LABEL, NOT_PLANNED_KEY, templateSplit, weeksUsing } from '~/utils/insights'
 
 // Where the week goes (the Week tab, FR-PLAN-27): how the typical week of the active schedule divides its available time, as a ring and
-// the life areas list (the same shares as Year, for one week). It sits above the grid. The selected slice is session state here: a change
+// the life areas list (the same shares as Year, for one week). It sits below the Week card. The selected slice is session state here: a change
 // of schedule or a slice that leaves the ring clears it.
 const planner = usePlannerStore()
 const { activeTemplate } = storeToRefs(planner)
@@ -36,9 +36,16 @@ const availableText = computed(() => hoursText(split.value?.available ?? 0))
 // The available time is the awake hours when sleep is hidden; shown, it is the whole week (sleep sits under Physical)
 const availableWords = computed(() => (showSleep.value ? 'in the week' : 'awake'))
 
-// "Standard Week is used in 48 weeks of 2026": applied weeks count for their own schedule, unassigned weeks for the active one
+// "Standard Week is used in 48 weeks of 2026": the weeks whose own schedule it is (a blank week has none)
 const usedWeeks = computed(() => (activeTemplate.value && year.value !== null ? weeksUsing(planner.$state, activeTemplate.value.id, year.value) : 0))
-const usedText = computed(() => `${usedWeeks.value} ${usedWeeks.value === 1 ? 'week' : 'weeks'}`)
+// The sentence under the list: the weeks that have this schedule of their own, or that none does yet
+const usedSentence = computed(() => {
+  const name = activeTemplate.value?.name ?? ''
+  const inYear = year.value !== null ? ` of ${year.value}` : ''
+  if (!usedWeeks.value) return `No week${inYear} uses ${name} yet.`
+
+  return `${name} is used in ${usedWeeks.value} ${usedWeeks.value === 1 ? 'week' : 'weeks'}${inYear}.`
+})
 
 // The ring: one slice per life area with planned hours, and the Free rest
 const slices = computed(() => (split.value?.rows ?? []).map(row => ({
@@ -120,7 +127,7 @@ watch(
 
         <p class="where-note">
           {{ showSleep ? 'Sleep is counted under Physical.' : 'Sleep is not counted.' }}
-          {{ activeTemplate.name }} is used in {{ usedText }}{{ year !== null ? ` of ${year}` : '' }}.
+          {{ usedSentence }}
         </p>
       </div>
     </div>

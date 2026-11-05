@@ -1,6 +1,25 @@
 /* Week grid (FR-PLAN-17 to 22): layout, hour rows, day columns, slots and blocks. */
 /* ── Planner: week grid (original range-select interaction, FR-PLAN-17 to 22) ── */
 .wk-section { min-width: 0; }
+/* The Week card (2026-11-05): the schedule bar, the grid and the entry buttons on one surface, as the Year planner card. Inside it the grid's
+   own section rule (a hairline and a gap) and its card (surface, shadow, radius) are flat, so the card is the only one */
+.week-card {
+  min-width: 0;
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-6) var(--sp-8);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-1);
+}
+.week-card .wk-section { margin-top: 0; padding-top: 0; border-top: 0; }
+.week-card .wk {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (max-width: 480px) {
+  .week-card { padding-inline: var(--sp-3); }
+}
 .wk-head-line {
   display: flex;
   flex-wrap: wrap;

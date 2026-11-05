@@ -41,8 +41,8 @@ const steps = computed(() => {
     {
       title: 'Your year',
       body: count > 1
-        ? `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. The chart has ${count} life areas, and the share of each is listed below it.`
-        : `Year shows where the planned hours of your year go, stacked by life area, and which week type each week uses. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Dreams and it fills.` : 'Add a life area in Dreams and it fills the chart.'}`
+        ? `Year shows where the planned hours of your year go, stacked by life area, and which week type each week has. The chart has ${count} life areas, and the share of each is listed below it.`
+        : `Year shows where the planned hours of your year go, stacked by life area, and which week type each week has. ${count ? `With ${lifeAreas.value[0]!.name} alone the chart has one colour: add another life area in Dreams and it fills.` : 'Add a life area in Dreams and it fills the chart.'}`
     },
     {
       title: 'Daily follow-up',

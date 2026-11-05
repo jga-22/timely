@@ -25,7 +25,7 @@ const templateDeleteText = computed(() => {
 
   const weeksUsing = appliedWeeks.value.filter(week => week.templateId === template.id).length
   const weekText = weeksUsing
-    ? `${weeksUsing === 1 ? '1 assigned week becomes' : `${weeksUsing} assigned weeks become`} unassigned.`
+    ? `${weeksUsing === 1 ? '1 week' : `${weeksUsing} weeks`} get no schedule.`
     : 'No week uses it.'
 
   return `Delete "${template.name}"? ${weekText} This cannot be undone.`

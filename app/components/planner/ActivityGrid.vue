@@ -130,7 +130,7 @@ watch(() => props.closeToken, () => {
     <div class="wk-head-line">
       <details class="wk-details" :open="weekOpen" @toggle="weekOpen = ($event.currentTarget as HTMLDetailsElement).open">
         <summary class="section-summary wk-summary">
-          <h2 id="week-title" class="section-title">Week</h2>
+          <h2 id="week-title" class="section-title">Schedules</h2>
           <p class="wk-meta">{{ templateName }} · {{ metaText }}</p>
         </summary>
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WeekTemplate } from '~/types/planner'
-import { DESIGN_COLORS, effectiveTemplate, getActiveTemplate, goalsTemplate, isHourlyTemplate, nextTemplateColor } from '~/utils/planner/templates'
+import { DESIGN_COLORS, getActiveTemplate, goalsTemplate, isHourlyTemplate, nextTemplateColor, weekTemplate } from '~/utils/planner/templates'
 import { DAYS, formatHour, hoursLabel } from '~/utils/planner/format'
 import { HOURS_PER_DAY, applyActivityCells, cellAtIndex, cellIndex, createEmptySlots, paintModeFor, rangeConflicts, rectangleCells, slotsToBlocks } from '~/utils/planner/slots'
 import { PLANNER_STATE_VERSION, isPlannerState } from '~/utils/planner/state'
@@ -87,17 +87,23 @@ describe('isPlannerState', () => {
   })
 })
 
-describe('effectiveTemplate and getActiveTemplate', () => {
-  it('uses the week type applied to the week of the date, else the active one', () => {
+describe('weekTemplate and getActiveTemplate', () => {
+  it('is the week type applied to the week of the date', () => {
     // Week 1 of 2026 starts on 29 December 2025; the seed applies deep work to its sixth week (2 February 2026)
-    expect(effectiveTemplate(seed(), '2026-02-04')!.id).toBe('deep-work-week')
-    expect(effectiveTemplate(seed(), '2026-03-04')!.id).toBe('standard-week')
+    expect(weekTemplate(seed(), '2026-02-04')!.id).toBe('deep-work-week')
+    expect(weekTemplate(seed(), '2026-10-28')!.id).toBe('standard-week')
   })
 
-  it('falls back to the active week type when the applied one is gone', () => {
+  it('is none for a blank week, even when a week type is active (2026-11-05: no fallback)', () => {
+    // The seed leaves 2 March 2026 blank (week 10); the active week type is Standard Week
+    expect(weekTemplate(seed(), '2026-03-04')).toBeUndefined()
+    expect(weekTemplate(empty(), '2026-10-28')).toBeUndefined()
+  })
+
+  it('is none when the applied week type is gone: the week is blank', () => {
     const state = applyWeek(empty(), '2026-10-26', 'deleted-week')
 
-    expect(effectiveTemplate(state, '2026-10-28')!.id).toBe('my-week')
+    expect(weekTemplate(state, '2026-10-28')).toBeUndefined()
   })
 
   it('uses the first week type when the active id matches none', () => {

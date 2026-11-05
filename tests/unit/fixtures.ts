@@ -1,6 +1,7 @@
 import type { Activity, Habit, PlannerState, WeekTemplate } from '~/types/planner'
 import { createEmptySlots } from '~/utils/planner/slots'
 import { createInitialState, createOnboardingState } from '~/utils/planner/seed'
+import { isoWeekStarts } from '~/utils/dates'
 
 /**
  * Shared test data. Every date is passed explicitly: tests never read the clock (localDateKey() without an argument is never called).
@@ -50,9 +51,16 @@ export const withActive = (state: PlannerState, templateId: string): PlannerStat
 })
 
 /** Assigns a week type to the ISO week that starts on the given Monday */
+/** Applies a week type to one week, replacing the week's own entry (a week keeps one, as the store does) */
 export const applyWeek = (state: PlannerState, startDate: string, templateId: string): PlannerState => ({
   ...state,
-  appliedWeeks: [...state.appliedWeeks, { id: `test-${startDate}`, startDate, templateId }],
+  appliedWeeks: [...state.appliedWeeks.filter(week => week.startDate !== startDate), { id: `test-${startDate}`, startDate, templateId }],
+})
+
+/** Every week of the year uses one week type, as the onboarding build does. Without it a week is blank (no week type of its own) */
+export const assignEveryWeek = (state: PlannerState, year: number, templateId: string): PlannerState => ({
+  ...state,
+  appliedWeeks: isoWeekStarts(year).map(startDate => ({ id: `test-${startDate}`, startDate, templateId })),
 })
 
 export const withActivities = (state: PlannerState, activities: Activity[]): PlannerState => ({
