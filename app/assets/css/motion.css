@@ -36,3 +36,12 @@
   from { opacity: 0; transform: scale(0.6); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* Progress: the week by week bars grow up from the base, one after another; a recap slide rises in (lively only) */
+@keyframes progress-grow {
+  from { transform: scaleY(0); }
+}
+@keyframes progress-slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

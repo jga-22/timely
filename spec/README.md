@@ -30,7 +30,17 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `topbar-account-menu-mobile-dark.png` | 400 px wide | The same menu at 400 px, dark |
 | `topbar-account-not-saved-mobile-dark.png` | 400 px wide | Dot on the avatar and "Not saved" with the error text in the menu, dark |
 | `topbar-account-local-desktop-dark.png` | 1280 px wide | Local mode: the person glyph, the header "Local mode, saved in this browser", dark |
-| `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light |
+| `topbar-account-local-mobile-light.png` | 400 px wide | Local mode menu at 400 px, light (recaptured 2026-11-05; no switch) |
+| `progress-desktop-light-lively.png` | 1280 px wide, full page | Progress (slice 8, `feat/progress-a2`), sample data with ticks: the headline "Over the last four weeks you ticked about half...", the week by week trend, the recap and Settings, More detail closed |
+| `progress-desktop-dark-calm.png` | 1280 px wide, full page, dark, Calm | The same page in dark mode with Calm |
+| `progress-mobile-light-lively.png` | 400 px wide, full page | The same page at phone width, light, Lively |
+| `progress-mobile-dark-calm.png` | 400 px wide, full page, dark, Calm | The same page at phone width, dark, Calm |
+| `progress-recap-dialog-desktop-light.png` | 1280 px wide | The recap dialog on its second slide ("Where it went"), with the life area dots |
+| `progress-recap-dialog-mobile-dark.png` | 400 px wide | The recap dialog on its first slide, dark, Calm |
+| `progress-recap-closed-desktop-light.png` | 1280 px wide, full page | The week closed by Done for the week: "Week 45 is closed.", Plan next week and Reopen |
+| `progress-recap-monday-mobile-dark.png` | 400 px wide, full page | A Monday (week 46) after the closed week (week 45): the recap is open again |
+| `progress-empty-mobile-dark.png` | 400 px wide, full page | No tick yet: "Your progress starts with your first tick.", an empty trend and the recap that starts with the first tick |
+| `progress-blank-week-desktop-light.png` | 1280 px wide, full page | A blank current week (no schedule): the headline counts the three planned weeks; the recap says nothing is planned for this week |
 | `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (the block in focus with its pill: a countdown, or "Done · next at 1 PM" when ticked; "Behind this" line), the day line with the now marker, "1 of 7 done today", Today's list (every item, the one in focus marked), the week strip, the journal line and All habits collapsed (2026-11-05) |
 | `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |
 | `today-mobile-light.png` | 400 px wide, full page | Today, light, phone: the focus card above the fold, the tab bar at the foot, nothing hidden at the end |

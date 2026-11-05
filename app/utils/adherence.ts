@@ -117,7 +117,7 @@ interface HabitDay {
   ticked: boolean
 }
 
-interface DayRecord {
+export interface DayRecord {
   date: string
   blocks: BlockDay[]
   habits: HabitDay[]
@@ -161,7 +161,8 @@ const expectedOn = (habit: Habit, date: string): number => {
   return count / daysInMonth(date)
 }
 
-const recordOf = (state: PlannerState, date: string): DayRecord => {
+/** The planned blocks and habits of one date, with their ticks (what Home lists for that day) */
+export const recordOf = (state: PlannerState, date: string): DayRecord => {
   const activities = getActivityMap(state.activities)
 
   return {
@@ -218,6 +219,24 @@ export const measureOf = (days: DayRecord[], categoryId?: string): Measure => {
 }
 
 const percentOf = (tally: Tally): number => Math.round((tally.done / tally.planned) * 100)
+
+/** Each habit of the days that expects something: its target ticks in the days (prorated), its ticks (capped at expected) and its percent */
+export const habitRowsOf = (days: DayRecord[]): HabitRow[] => {
+  const perHabit = new Map<string, { habit: Habit; expected: number; ticks: number }>()
+
+  for (const day of days) {
+    for (const { habit, expected, ticked } of day.habits) {
+      const entry = perHabit.get(habit.id) ?? { habit, expected: 0, ticks: 0 }
+      entry.expected += expected
+      if (ticked) entry.ticks += 1
+      perHabit.set(habit.id, entry)
+    }
+  }
+
+  return [...perHabit.values()]
+    .filter(entry => entry.expected > 0)
+    .map(entry => ({ ...entry, percent: Math.round((Math.min(entry.ticks, entry.expected) / entry.expected) * 100) }))
+}
 
 /** The percent of a measure: the blocks' hours when any are planned, else the habits' target ticks, else no plan */
 export const basisOf = (measure: Measure): Basis => {
@@ -306,20 +325,7 @@ export const adherenceReport = (state: PlannerState, years: number[], today: str
     .filter(area => area.measure.blockHours.planned > 0 || area.measure.habits.planned > 0)
     .map(area => ({ ...area, ...basisOf(area.measure) }))
 
-  const perHabit = new Map<string, { habit: Habit; expected: number; ticks: number }>()
-
-  for (const record of records) {
-    for (const { habit, expected, ticked } of record.habits) {
-      const entry = perHabit.get(habit.id) ?? { habit, expected: 0, ticks: 0 }
-      entry.expected += expected
-      if (ticked) entry.ticks += 1
-      perHabit.set(habit.id, entry)
-    }
-  }
-
-  const rows: HabitRow[] = [...perHabit.values()]
-    .filter(entry => entry.expected > 0)
-    .map(entry => ({ ...entry, percent: Math.round((Math.min(entry.ticks, entry.expected) / entry.expected) * 100) }))
+  const rows = habitRowsOf(records)
   const byBest = (a: HabitRow, b: HabitRow) => b.percent - a.percent || a.habit.name.localeCompare(b.habit.name)
   const byWorst = (a: HabitRow, b: HabitRow) => a.percent - b.percent || a.habit.name.localeCompare(b.habit.name)
   const kept = rows.filter(row => row.percent >= 50).sort(byBest).slice(0, 3)
