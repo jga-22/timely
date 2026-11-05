@@ -40,6 +40,18 @@ Screenshots in `screens/` (regenerated on 27 October 2026 from the production bu
 | `progress-recap-closed-desktop-light.png` | 1280 px wide, full page | The week closed by Done for the week: "Week 45 is closed.", Plan next week and Reopen |
 | `progress-recap-monday-mobile-dark.png` | 400 px wide, full page | A Monday (week 46) after the closed week (week 45): the recap is open again |
 | `progress-empty-mobile-dark.png` | 400 px wide, full page | No tick yet: "Your progress starts with your first tick.", an empty trend and the recap that starts with the first tick |
+| `progress-dreampath-desktop-light.png` | 1280 px wide, full page | Progress with the dream path (slice 10, `feat/dream-path-a2`), the seed after four weeks of full keeping (fixture, frozen clock): average 9% of 8 life areas, Physical 8% Starting, Economic 17%, the wide path |
+| `progress-dreampath-desktop-dark.png` | 1280 px wide, full page, dark | The same page in dark mode, lively |
+| `progress-dreampath-mobile-light.png` | 400 px wide, full page | The same data at phone width: the narrow path, labels to the side |
+| `progress-dreampath-mobile-dark.png` | 400 px wide, full page, dark | The same at phone width, dark |
+| `progress-dreampath-empty-desktop-light.png` | 1280 px wide, full page | The seed with no ticks: every node a hollow dot with "Not started", and "Your progress starts with your first tick." |
+| `progress-dreampath-empty-mobile-dark.png` | 400 px wide, full page, dark | The seed with no ticks at phone width |
+| `progress-dreampath-new-account-desktop-light.png` | 1280 px wide, full page | A new account: eight hollow dots, "No 1-year target yet" |
+| `progress-dreampath-mockup-desktop-light.png` | 1280 px wide, full page, Calm | The A2 mockup for comparison (its own sample numbers) |
+| `progress-dreampath-dreams-desktop-light.png` | 1280 px wide, full page | Dreams list with the share and stage in each row (seed after four weeks of ticks) |
+| `progress-dreampath-dreams-detail-desktop-light.png` | 1280 px wide, full page | Dreams > Physical: the stage eyebrow "Starting · 8% of the way there" and its bar |
+| `progress-dreampath-today-focal-desktop-light.png` | 1280 px wide, full page | Today, focal card with "Behind this: … 8% of the way there." (seed after four weeks of ticks) |
+| `progress-dreampath-today-focal-empty-desktop-light.png` | 1280 px wide, full page | Today, focal card with no ticks: no share line |
 | `progress-blank-week-desktop-light.png` | 1280 px wide, full page | A blank current week (no schedule): the headline counts the three planned weeks; the recap says nothing is planned for this week |
 | `today-desktop-light.png` | 1280 px wide, full page | Today, light, Calm: the focus card (the block in focus with its pill: a countdown, or "Done · next at 1 PM" when ticked; "Behind this" line), the day line with the now marker, "1 of 7 done today", Today's list (every item, the one in focus marked), the week strip, the journal line and All habits collapsed (2026-11-05) |
 | `today-desktop-dark.png` | 1280 px wide, full page | Today, dark, Lively: the same state |

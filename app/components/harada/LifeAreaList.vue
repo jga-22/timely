@@ -18,6 +18,13 @@ const listEl = ref<HTMLUListElement | null>(null)
 
 const entryStatus = (category: Category) => categoryEntryText(categoryEntryCounts(planner.$state, category.id))
 
+// Once the area has a value, its share and stage words stand in for "Target set" (2.1, 2026-11-05); the other states read as before
+const { progressOf } = useAreaProgress()
+const targetText = (category: Category) => {
+  const progress = progressOf(category.id)
+  return progress?.state === 'value' ? progress.label : targetStatus(category).text
+}
+
 function onListKeydown(event: KeyboardEvent) {
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
 
@@ -58,7 +65,7 @@ function onListKeydown(event: KeyboardEvent) {
               <span class="cat-goal-text">{{ category.goal5y?.trim() || 'No 5-year goal yet' }}</span>
             </span>
             <span class="cat-meta">
-              <span :class="{ 'is-warn': targetStatus(category).warn }">{{ targetStatus(category).text }}</span>
+              <span :class="{ 'is-warn': targetStatus(category).warn }">{{ targetText(category) }}</span>
               <span aria-hidden="true"> · </span>
               <span>{{ entryStatus(category) }}</span>
             </span>

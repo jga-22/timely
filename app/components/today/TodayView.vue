@@ -7,6 +7,7 @@ import { habitDoneKey } from '~/utils/done'
 import { dayRange, habitProgressText } from '~/utils/home'
 import { weekTemplate } from '~/utils/planner/templates'
 import { FALLBACK_EMPTY_COLOR } from '~/utils/palette'
+import { ofTheWayText } from '~/utils/targetProgress'
 import {
   LAST_ONE_TEXT,
   TODAY_FOCUS_TITLE,
@@ -115,6 +116,13 @@ const behind = computed(() => {
   return categoryId ? behindLine(categoryMap.value.get(categoryId)) : null
 })
 
+// The share of the way there for the focus's life area (2.1): only when that area has a value; no false 0% (Today, 2026-11-05)
+const { progressOf } = useAreaProgress()
+const progress = computed(() => {
+  const categoryId = focus.value?.categoryId
+  return categoryId ? ofTheWayText(progressOf(categoryId)) : null
+})
+
 // The day line over the awake range (sleep trimmed from the edges unless shown): a segment per block, in its life area's colour
 const range = computed(() => (viewed.value ? dayRange(planner.$state, viewed.value, showSleep.value) : { start: 0, end: 24 }))
 const dayLine = computed(() => ({
@@ -220,6 +228,7 @@ watch(
       :eyebrow="focusEyebrow"
       :pill="pill"
       :behind="behind"
+      :progress="progress"
       :cheer="cheer"
       @toggle="toggle"
     >

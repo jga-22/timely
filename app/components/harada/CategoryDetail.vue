@@ -16,6 +16,17 @@ const { setSelection } = useNav()
 
 const sortedCategories = computed(() => [...categories.value].sort((a, b) => a.order - b.order))
 const category = computed(() => categories.value.find(entry => entry.id === props.categoryId))
+
+// The share of the way there (2.1): the stage word and a bar once the area has a value; otherwise the state's words (Dreams, 2026-11-05)
+const { progressOf } = useAreaProgress()
+const { areaVars } = usePlannerFill()
+const progress = computed(() => progressOf(props.categoryId))
+const progressEyebrow = computed(() => {
+  const value = progress.value
+  if (!value) return ''
+
+  return value.state === 'value' ? `${value.stage} · ${value.percentText} of the way there` : value.label
+})
 const position = computed(() => sortedCategories.value.findIndex(entry => entry.id === props.categoryId))
 const isFirst = computed(() => position.value <= 0)
 const isLast = computed(() => position.value === sortedCategories.value.length - 1)
@@ -71,6 +82,16 @@ function onRemoved() {
         <button v-else type="button" class="btn btn-sm btn-primary" @click="finishEdit">Done</button>
       </div>
     </div>
+
+    <section v-if="progress" class="area-progress" :style="areaVars(category.color ?? FALLBACK_COLOR)">
+      <p class="area-progress-eyebrow">{{ progressEyebrow }}</p>
+      <div
+        v-if="progress.state === 'value'"
+        class="bar area-progress-bar"
+        role="img"
+        :aria-label="`${progress.percentText} of the way there, ${progress.stage}`"
+      ><i :style="{ '--v': `${(progress.percent ?? 0) / 100}` }" /></div>
+    </section>
 
     <!-- View mode: read-only. The 5-year goal and the 1-year target, then the entries -->
     <template v-if="!editing">
