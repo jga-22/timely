@@ -3,10 +3,11 @@ import { TODAY_FOCUS_TITLE, type Countdown, type TodayItem } from '~/utils/today
 
 /**
  * The item to do next (FR-TODAY-2): a large tick, the time and life area above the title, a pill with the countdown to a block
- * (FR-TODAY-3), and the 1-year target it stands behind (FR-TODAY-4). The day line sits under it, in the default slot, and the
+ * (FR-TODAY-3), and the 1-year target it stands behind (FR-TODAY-4), with the share of the way there when its life area has a value
+ * (FR-TODAY-4, 2.1: "8% of the way there."; null otherwise). The day line sits under it, in the default slot, and the
  * warm line after a tick (the cheer) under that.
  */
-defineProps<{ item: TodayItem; eyebrow: string; pill: Countdown | null; behind: string | null; cheer: string }>()
+defineProps<{ item: TodayItem; eyebrow: string; pill: Countdown | null; behind: string | null; progress: string | null; cheer: string }>()
 
 const emit = defineEmits<{ toggle: [key: string] }>()
 </script>
@@ -30,7 +31,7 @@ const emit = defineEmits<{ toggle: [key: string] }>()
           </span>
         </p>
         <h1 :id="TODAY_FOCUS_TITLE" class="today-title" tabindex="-1">{{ item.title }}</h1>
-        <p v-if="behind" class="today-behind">{{ behind }}</p>
+        <p v-if="behind" class="today-behind">{{ behind }} <span v-if="progress" class="today-progress">{{ progress }}</span></p>
       </div>
     </div>
     <slot />

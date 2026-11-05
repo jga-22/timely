@@ -5,6 +5,7 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 ## Unreleased
 
 ### Added
+- Progress shows a dream path: a node per life area filled to its share of a year's habits kept (the last 364 days, from the first tick, sleep not counted), with its stage in words and a link to Dreams. Today's focus and Dreams show the share too. Areas without a target or a tick show their words on a hollow dot; nothing is stored.
 - The first run is a full page in the A2 look: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give, 1 to 20), then an editable draft with a week preview and your first action. Nothing is saved until you accept, and "Use a starter instead" is on every step. Accepting ends on Today with a "Your plan is saved." line.
 - The theme button (moon or sun) is on the first-run page too, top right, on every step; it is the top bar's own control, now one shared component (`ThemeButton.vue`).
 - The first run's mini week: in Lively the day blocks rise in one after another, counted across the week. Calm shows the week at once.

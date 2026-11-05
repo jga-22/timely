@@ -7,7 +7,8 @@ import { recapOf } from '~/utils/recap'
 
 /**
  * Progress (A2 "Progress"; FR-PROG-1 to 3, FR-INS-P6, P7): the headline in words over the last eight weeks, the week by week trend,
- * the weekly recap with its settings, and the adherence detail (InsightsView, headless) under "More detail". Read-only except the
+ * the dream path toward each 1-year target (FR-PROG-5 to 7), the weekly recap with its settings, and the adherence detail
+ * (InsightsView, headless) under "More detail". Read-only except the
  * recap's own choices (the closed week and the switch), which stay in this browser. Client only (index.vue).
  */
 const planner = usePlannerStore()
@@ -46,6 +47,8 @@ const weeksRange = computed(() => `Weeks ${trend.value[0]?.week} to ${trend.valu
       <p class="progress-note">Share of planned hours ticked. This week is dashed until it ends. Hover or focus a week for its figure.</p>
       <ProgressTrend :weeks="trend" />
     </section>
+
+    <ProgressDreamPath :today="today" />
 
     <div class="progress-grid">
       <ProgressRecap :recap="recap" />

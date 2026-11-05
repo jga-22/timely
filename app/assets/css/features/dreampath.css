@@ -1,0 +1,118 @@
+/* The dream path (Progress, FR-PROG-5 to 7) and the area's share of the way there (Dreams detail; Today's focal line is in today.css).
+   Layer features; selectors prefixed dreampath- or area-progress-. Colours come from tokens and the area's --c (areaVars).
+   Sizes and spacing are tokens; the track's two heights are the two layouts. The keyframes are in motion.css, lively only. */
+
+.dreampath-average {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  font-size: var(--text-body);
+  color: var(--ink-2);
+}
+.dreampath-figure {
+  font-size: var(--text-title-m);
+  font-weight: var(--weight-bold);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.dreampath-empty { margin: var(--sp-4) 0 0; font-size: var(--text-body); color: var(--ink-2); }
+
+/* The track: the box the path and its nodes are placed in, in percent. Wide is a line across; narrow is a tall one for a phone */
+.dreampath-track { position: relative; width: 100%; height: 18rem; margin-top: var(--sp-4); }
+.dreampath-track[data-layout="narrow"] { height: 40rem; }
+
+.dreampath-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dreampath-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 42%, var(--surface));
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.dreampath-start {
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: -0.4375rem 0 0 -0.4375rem;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.dreampath-start-label {
+  position: absolute;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  white-space: nowrap;
+  transform: translate(-50%, 1rem);
+}
+.dreampath-track[data-layout="narrow"] .dreampath-start-label { transform: translate(1rem, -50%); }
+
+/* A node is a button the size of the touch target, centred on its point; its dot is the fill, its label the words */
+.dreampath-node {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: var(--hit);
+  height: var(--hit);
+  margin: calc(var(--hit) / -2) 0 0 calc(var(--hit) / -2);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.dreampath-node:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: var(--focus-offset); }
+
+/* The dot fills clockwise to the area's percent (--p) in its own colour; an area with no value is a hollow ring */
+.dreampath-dot {
+  display: block;
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: conic-gradient(var(--c, var(--accent)) calc(var(--p, 0) * 1%), var(--line-2) 0);
+  box-shadow: 0 0 0 1px var(--line), var(--elev-1);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.dreampath-node.is-empty .dreampath-dot {
+  border: 0;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--ink-3);
+}
+.dreampath-node:hover .dreampath-dot,
+.dreampath-node:focus-visible .dreampath-dot { transform: scale(1.15); }
+
+/* The words beside a node: the name in bold, then the share and stage (or the state) */
+.dreampath-label {
+  position: absolute;
+  display: grid;
+  width: max-content;
+  max-width: 9rem;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  font-size: var(--text-small);
+  line-height: var(--leading-snug);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  pointer-events: none;
+}
+.dreampath-label b { font-weight: var(--weight-medium); color: var(--ink); }
+.dreampath-node.up .dreampath-label { bottom: calc(100% - var(--sp-2)); left: 50%; transform: translateX(-50%); text-align: center; }
+.dreampath-node.down .dreampath-label { top: calc(100% - var(--sp-2)); left: 50%; transform: translateX(-50%); text-align: center; }
+.dreampath-node.right .dreampath-label { left: calc(100% - var(--sp-1)); top: 50%; transform: translateY(-50%); }
+.dreampath-node.left .dreampath-label { right: calc(100% - var(--sp-1)); top: 50%; transform: translateY(-50%); text-align: right; }
+
+/* Lively only: the line fades in and the nodes rise one after another (--d); Calm shows the whole path at once. The line does not
+   draw on a dash: a dash pattern on this stretched box breaks the line into pieces */
+:root[data-motion="lively"] .dreampath-line { animation: dreampath-fade var(--dur-draw) var(--ease-out) both; }
+:root[data-motion="lively"] .dreampath-node { animation: dreampath-in var(--dur-enter) var(--ease-spring) both; animation-delay: var(--d, 0s); }
+
+/* Dreams: the share and the stage of a life area under its name (LifeAreaList) and the detail's eyebrow and bar (CategoryDetail) */
+.area-progress { display: grid; gap: var(--sp-2); min-width: 0; }
+.area-progress-eyebrow { margin: 0; font-size: var(--text-meta); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.area-progress-bar { max-width: 24rem; }
