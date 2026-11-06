@@ -4,41 +4,25 @@ All notable changes to Timely, newest first. Versions follow [Semantic Versionin
 
 ## Unreleased
 
-### Polish
-- Dreams: a life area with a 1-year target and habits reads "Not started" until its first tick (it said "Target set"). An area with no target reads "No 1-year target yet" (it said "No target yet"), the words the Progress path uses.
-- The entry form says "schedule" where it said "week type": the Schedules legend and its hints, "Choose at least one schedule.", "Not in any schedule now." and the wording of the removal and delete confirmations.
-- Progress, more detail: "Counted from 9 October, 24 days." (it gave the year and "to today").
+## 0.2.0 - Plan, Progress and a new first run
 
 ### Added
-- Progress has a Milestones card: the first planned hour ticked, the first full week of each life area, and the stages a life area reached (Building, Steady, Strong, Reached), each with the day it happened. It is worked out from your ticks, so nothing is stored and nothing is taken back; an empty card says how the first one comes.
-- A milestone or the calm line after a day is done shows one line at the foot of the screen (at most one a day). On a phone it sits above the tab bar. Two switches in Progress settings turn the milestone lines and the calm line off.
-- Lively motion on Today: a tick throws a few sparks, the day count climbs to its value, the focus card glides in and tilts a little toward the mouse. Route changes cross-fade. Calm, and the system's reduced motion, keep every number and line and stop the movement.
-- Progress shows a dream path: a node per life area filled to its share of a year's habits kept (the last 364 days, from the first tick, sleep not counted), with its stage in words and a link to Dreams. Today's focus and Dreams show the share too. Areas without a target or a tick show their words on a hollow dot; nothing is stored.
-- The first run is a full page in the A2 look: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give, 1 to 20), then an editable draft with a week preview and your first action. Nothing is saved until you accept, and "Use a starter instead" is on every step. Accepting ends on Today with a "Your plan is saved." line.
-- The theme button (moon or sun) is on the first-run page too, top right, on every step; it is the top bar's own control, now one shared component (`ThemeButton.vue`).
-- The first run's mini week: in Lively the day blocks rise in one after another, counted across the week. Calm shows the week at once.
-- Replay first run in the Account menu (both modes). An account that already holds a plan asks first; Cancel and Escape change nothing.
-- Progress reads like the A2 mockup, in its words and look. The headline says how much of the planned time you ticked over the last eight weeks ("about three in four"). The week by week trend shows each week's share, with the current week marked "So far"; hover or focus a week for its figure.
-- A weekly recap: "Start the recap" walks through this week so far, the life area that went steadiest and the one that had the most misses, and one weekly habit to carry forward. "Done for the week" closes the week; from the next Monday the recap opens again. Reopen brings it back for the same week. Nothing is lost and nothing resets.
-- Progress settings: a Weekly recap switch (on by default). The adherence detail sits under "More detail", closed.
+- A first run in a full page: Welcome, five short questions (your ambition, one to three life areas, a follow-up for the first area with Not sure, a normal week, the hours you can give), then an editable draft with a mini week and a first action. Accept plan builds your plan and lands on Today. "Use a starter instead" is on every step. The theme button is on this page too.
+- Replay first run in the Account menu. An account that already holds a plan asks first; Cancel and Escape change nothing.
+- Progress in the A2 look: a headline in words over the last eight weeks, a week by week trend with tooltips, a weekly recap (this week so far, the steadiest life area, the one with most misses, a habit to carry forward; "Done for the week" closes it), and settings with a Weekly recap switch. The adherence detail sits under "More detail".
+- A dream path on Progress: a node per life area filled to its share of a year's habits kept (the last 364 days, from the first tick, sleep not counted), with its stage in words and a link to Dreams. Dreams rows and Today's focus show the same share ("8% of the way there") once an area has a tick.
+- Milestones on Progress: the first planned hour ticked, the first full week of each life area and the stages reached, each with its day. Two switches in Progress settings turn the milestone lines and the calm line off. A milestone or a finished day shows one line at the foot of the screen, at most once a day.
+- Lively motion (off in Calm and with the system's reduced motion): sparks on a tick, the day count climbing to its value, the focus card gliding in, a slight tilt toward the mouse, a cross-fade between screens.
 
 ### Changed
-- The guided path, the three tour cards, the intro dialog from Welcome, Start empty and Explore with sample data (dev only) are replaced by the first run. "Replay tour" is "Replay first run". The intro player stays on the sign-in page.
-- One theme control: the moon or sun button in the top bar. The Dark mode switch in the Account menu is gone; the menu keeps the save status, Motion, Replay tour, Reset my data and Sign out.
-- A week with no schedule plans nothing: Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free (168 h less the active schedule's Sleep, or 168 h with Show sleep on), so the Year bar, its Free row and "of N awake hours" include blank weeks. Weeks that used to show the active schedule as a default now show nothing until they are given one (paint them in Year, or start from onboarding, which gives every week one).
-- The Year planner's Clear leaves a week with no schedule; its tooltip says so. Its hint and result lines no longer name an active schedule, and the legend reads "No schedule".
-- The Week tab's card is titled "Schedules" (it was "Week"), with the schedule chips at its top.
-- Plan > Year: the card is called "Year planner". Its year switcher is in the card's head; the paint tools and "Apply to several weeks" are in the card, under a one-line hint. The last paint chip reads "Clear", and its tooltip says it sends the week back to the active schedule. The lede at the top is gone, and the grid has room under its last row.
-- Plan > Week: one collapsible "Schedules" section, as the Year planner card: its title first, then the tip, the schedule chips with their panels, Show sleep, the grid and the entry buttons. "Where the week goes" is a card below it.
-- Plan > Year reads like the A2 mockup, in its words and look. A line at the top says which schedule a week without its own uses. The paint tools are the schedules and "Clear to <schedule>", which sends a week back to that schedule.
-- "Which weeks use which schedule" is a card: the count of weeks each schedule uses, the year grid with its legend, and the current week outlined. A week with no schedule of its own stays blank and uses the active schedule; a quiet month label sits above each row of the grid.
-- The planned hours of the year are a card: the hours against the awake time, one bar with Free hatched, the life areas with Free as the last row, and Show sleep. The monthly bars and the range controls are under "More detail", closed by default. The card and its list are in hours; the unit applies to the bars.
-- The Year view says "schedule" where it said "week type". The entry form still says "week type".
-- The Year grid has no row labels any more: the month labels above the weeks say the months. The 14 columns take the width (squares 62 px on a desktop, 23 px on a 400 px phone; the squares on a phone have square corners and a 2 px gap, and the current week's frame is drawn inside its square). The current week's outline no longer touches a month label, and each week and row is named for screen readers.
-- The Week grid's edge handles are the border of the selected run: a flat line across its full width, 4px thick (6px and darker while hovered or pressed), with no round grip and no room taken inside the block. Each edge takes a 32px target on a mouse, centred on the edge, and a one-hour run splits its height between its top and bottom targets. Touch keeps the 44px target.
-
-### Fixed
-- The edge handles were hard to click: a 4px grip on a 24px target, the target mostly beside the block, and on a one-hour block the two targets overlapped the block's middle. The grip is now the edge itself and the target is larger. The grid's behaviour (drag, keys, Save and Cancel) is unchanged.
+- Plan > Year is the Year planner: one card with the year switcher, the paint tools (a chip per schedule and "Clear"), "Apply to several weeks" and the year grid with month labels above the weeks. Below it, the planned hours of the year against the awake time, with Free as the last row; the monthly bars sit under "More detail". The squares are 23 px on a 400 px phone, with square corners.
+- Plan > Week is one "Schedules" card: the tip, the schedule chips, Show sleep, the grid and the entry buttons. "Where the week goes" is a card below it.
+- A week with no schedule is blank: it plans nothing, Today shows no blocks for it, and Year and Progress count no planned hours. Its awake hours count as Free. Clear leaves a week with no schedule.
+- The word "schedule" replaces "week type" across Week, Year and the entry form.
+- One theme control: the moon or sun button in the top bar. The Dark mode switch in the Account menu is gone.
+- The Week grid's edge handles are the border of the selected run, a thicker flat line that is easier to grab.
+- Dreams reads "Not started" for an area with a target and habits but no tick, and "No 1-year target yet" for an area with no target.
+- Removed: the guided path, the tour cards, the intro dialog from Welcome and Start empty (the sign-in page keeps its intro).
 
 ## 0.1.1 - Today, rebuilt
 
